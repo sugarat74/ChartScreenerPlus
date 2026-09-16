@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --color-primary: #1a1a1a;
+  --color-primary-container: #ffcc00;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #1a1a1a;
+
+  --color-secondary: #e63b2e;
+  --color-secondary-container: #ffdad6;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #1a1a1a;
+
+  --color-tertiary: #0055ff;
+  --color-tertiary-container: #d6e3ff;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #1a1a1a;
+
+  --color-surface: #f5f0e8;
+  --color-surface-bright: #faf7f2;
+  --color-surface-dim: #d6d1c9;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2ede5;
+  --color-surface-container: #eee9e0;
+  --color-surface-container-high: #e8e3da;
+  --color-surface-container-highest: #e2ddd4;
+
+  --color-on-surface: #1a1a1a;
+  --color-on-surface-variant: #4a4a4a;
+  --color-outline: #1a1a1a;
+  --color-outline-variant: #d0cbc3;
+}
+
+body {
+  background-color: #f5f0e8;
+  color: #1a1a1a;
+  font-family: var(--font-body);
+}
+
+/* Custom scrollbar styling for terminal and tables */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #eee9e0;
+}
+::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+}

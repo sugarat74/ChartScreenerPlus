@@ -1,0 +1,6 @@
+{
+  "name": "AlphaPulse - EOD Stock Screener & Chartist AI",
+  "description": "Plataforma profesional de screening de acciones basada en indicadores técnicos, detección algorítmica de patrones chartistas, scraping EOD, gráficos interactivos y refinamiento por IA Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
