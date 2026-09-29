@@ -19,6 +19,14 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST** write schema/persistence tests with `RefreshDatabase` against the in-memory SQLite connection configured in `phpunit.xml`. Reason: tests stay isolated and need no local DB file.
 - Market-data Eloquent models **MUST** follow the Laravel 13 style: `#[Fillable([...])]` attributes, a `casts()` method, `HasFactory`, and the relationships defined in `docs/domain-model.md`. Reason: keeps Eloquent code consistent with `app/Models/User.php` and avoids legacy `$fillable` arrays.
 
+## Dataset And Seeding
+
+- The S&P 500 constituent dataset **MUST** live at `database/data/sp500.csv` with the header `ticker,company,sector,exchange` (UTF-8) and one row per constituent. Reason: a committed dataset keeps the universe reproducible without an external list at runtime.
+- The dataset **MUST** record its source and generation date in the seeder docblock (`database/seeders/Sp500UniverseSeeder.php`); regenerate it only from a named public source and update the date. Reason: dataset provenance and accuracy are the main risk of this slice.
+- Universe seeding **MUST** be offline: the seeder reads only the committed CSV and **MUST NOT** call the network. Reason: seeding and tests must work without external services.
+- Universe seeding **MUST** be idempotent: upsert the universe by unique `slug`, instruments by unique `ticker`, and attach membership with `syncWithoutDetaching` (add-only). Reason: re-running must never duplicate instruments/pivots or detach existing members.
+- Feature tests that touch the dataset **MUST NOT** use the network and **MUST** derive the expected row count from the CSV rather than hardcoding it. Reason: the dataset is the source of truth for the count.
+
 ## Frontend
 
 - **MUST** keep the React SPA in `frontend/` as a standalone npm project (own `package.json`, `vite.config.ts`, tsconfigs, lockfile) running on Node v22. Reason: it is a separate runtime surface from Laravel.

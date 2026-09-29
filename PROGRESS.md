@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `universe-sp500-seed`
+- Current next ready feature: `ingestion-scraper-eod`
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 27 tests incl. `AdminAccessTest`; SPA lint 0 warnings/errors + build; engine 1 test)
+- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 29 tests incl. `Sp500UniverseSeederTest`; SPA lint 0 warnings/errors + build; engine 1 test)
 
 ## Session Log
 
@@ -119,3 +119,17 @@
 - Status: `passing` — ready for independent validation (not `accepted`).
 - Validator verdict: independent `accept` (reran `php artisan test` 27 passed/101 assertions, `route:list`, migrate rollback/migrate round-trip, `.\init.ps1` exit 0 no server; live probe on :8126 torn down → guest 401, session non-admin 403, admin 200; registration `role=admin` → 201 with JSON/DB `role=user` and hashed password not serialized; model default confirmed not to override the DB-hydrated admin role; other surfaces untouched). Persisted: `auth-roles-admin` → `accepted`.
 - Next best step: `universe-sp500-seed`.
+
+### Session 010
+
+- Date: 2026-09-29
+- Goal: Implement `universe-sp500-seed`.
+- Dataset source/date/row count: Wikipedia "List of S&P 500 companies" (https://en.wikipedia.org/wiki/List_of_S%26P_500_companies) component table, generated once on **2026-09-29**, **503 rows**; `exchange` derived from each symbol's NYSE/NASDAQ/CBOE listing link (344/158/1).
+- Completed: Committed `database/data/sp500.csv` (header `ticker,company,sector,exchange`, UTF-8 without BOM, minimal RFC 4180 quoting). `database/seeders/Sp500UniverseSeeder.php` parses with `fgetcsv` (no CSV dependency; BOM/blank/quote handling), `updateOrCreate`s the universe by slug `sp500`, `updateOrCreate`s each Instrument by unique ticker (company/sector/exchange/active), and attaches membership with `syncWithoutDetaching` (add-only) inside one `DB::transaction`; source/date/exchange derivation documented in the seeder docblock. Wired into `database/seeders/DatabaseSeeder.php` via `$this->call(...)`.
+- Verification run: `php artisan migrate:fresh --force` exit 0; `php artisan db:seed --class=Sp500UniverseSeeder` -> RUN 1 instruments=503 universes=1 pivots=503 name=S&P 500; second run -> RUN 2 unchanged (idempotent); `php artisan db:seed --force` (DatabaseSeeder wiring) -> users=1 instruments=503 universes=1 pivots=503; NVDA spot-check = Nvidia / Information Technology / NASDAQ; `php artisan test` -> **29 passed (123 assertions)**, exit 0; `.\init.ps1` exit 0 (Laravel 29 tests + SPA lint 0 errors + SPA build + engine 1 test, starts no server).
+- Evidence captured: recorded in `feature_list.json` under `universe-sp500-seed`.
+- Files or artifacts updated: `database/data/sp500.csv`, `database/seeders/Sp500UniverseSeeder.php`, `database/seeders/DatabaseSeeder.php`, `tests/Feature/Sp500UniverseSeederTest.php`, `docs/specs/universe-sp500-seed.md`, `CONSTRAINTS.md`, `PROGRESS.md`, `feature_list.json`. `frontend/`, `engine/`, `alphapulse/` and the auth/market-data schema untouched.
+- Known risk or unresolved issue: the dataset is a point-in-time snapshot (503 names, 2026-09-29) with no refresh cadence, so index changes need a manual regeneration from the same source; `exchange` is derived from listing links rather than a dedicated source field. Neither blocks MVP.
+- Status: `passing` — ready for independent validation (not `accepted`).
+- Validator verdict: independent `accept` (reran migrate:fresh + seeder twice → 503/1/503 unchanged; `php artisan test` 29 passed/123 assertions; `.\init.ps1` exit 0 no server; dataset verified 503 unique uppercase tickers, valid UTF-8 no BOM, spot-checks NVDA/AAPL/MSFT/BXP; seeder/tests offline; other surfaces untouched). Low notes: the default `php artisan db:seed` is not re-runnable because it also creates a fixed `test@example.com` user (pre-existing; the idempotent path is `--class=Sp500UniverseSeeder`); a spec wording nit about the Brown–Forman en dash was corrected. Persisted: `universe-sp500-seed` → `accepted`.
+- Next best step: `ingestion-scraper-eod` (its data-source/legality open question still stands per `docs/risks-and-open-questions.md`).

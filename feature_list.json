@@ -189,14 +189,23 @@
     "depends_on": [
       "db-schema-market-data"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Seeding creates the S&P 500 universe and its instruments",
       "Instrument counts and a spot-checked ticker match the source list",
       "Re-seeding does not duplicate instruments"
     ],
-    "evidence": [],
-    "notes": "Constituent-list source and refresh cadence are implementation-time questions (docs/risks-and-open-questions.md)."
+    "evidence": [
+      "Dataset committed at database/data/sp500.csv: header ticker,company,sector,exchange, 503 constituents, UTF-8 without BOM, no duplicate tickers; source Wikipedia \"List of S&P 500 companies\" (https://en.wikipedia.org/wiki/List_of_S%26P_500_companies), generated 2026-09-29 from the id=constituents component table (Symbol/Security/GICS Sector); exchange derived from each symbol's NYSE/NASDAQ/CBOE listing link (344/158/1)",
+      "php artisan migrate:fresh --force -> exit 0; php artisan db:seed --class=Sp500UniverseSeeder -> RUN 1: instruments=503 universes=1 pivots=503 sp500_name=S&P 500; spot check NVDA=Nvidia/Information Technology/NASDAQ",
+      "php artisan db:seed --class=Sp500UniverseSeeder (second run) -> RUN 2: instruments=503 universes=1 pivots=503 (unchanged -> idempotent, no duplicates)",
+      "DatabaseSeeder wiring: php artisan db:seed --force -> users=1 instruments=503 universes=1 pivots=503 (runs the universe seeder). NOTE: the default seeder is only first-run safe because it also creates a fixed test@example.com user, so the idempotent re-run path is php artisan db:seed --class=Sp500UniverseSeeder twice (validator Low note)",
+      "php artisan test -> 29 passed (123 assertions), exit 0; tests/Feature/Sp500UniverseSeederTest.php adds 2 tests/22 assertions: creates universe (name S&P 500) + one instrument per dataset row + pivot count == instrument count + universe->instruments count, spot-checks NVDA company/sector/exchange/active/membership, reads the CSV row count + header dynamically (no hardcoded 503), and proves a second run leaves universe/instrument/pivot counts unchanged",
+      ".\\init.ps1 -> Laravel 13.34.0 + 29 tests (123 assertions) + SPA lint 0 warnings/0 errors + SPA build + engine 1 test, exit 0, starts no server",
+      "Scope: only database/data/sp500.csv, database/seeders/Sp500UniverseSeeder.php, database/seeders/DatabaseSeeder.php, tests/Feature/Sp500UniverseSeederTest.php, docs/specs/universe-sp500-seed.md, CONSTRAINTS.md, PROGRESS.md and feature_list.json changed; frontend/, engine/, alphapulse/ and the auth/market-data schema untouched; no quotes, indicators, signals, other universes, refresh scheduler, API or UI added",
+      "independent validator accept (2026-09-29): reran migrate:fresh + seeder twice (503/1/503 unchanged), php artisan test 29 passed/123 assertions, init.ps1 exit 0 no server; dataset verified 503 unique uppercase tickers, valid UTF-8 no BOM, spot checks NVDA/AAPL/MSFT/BXP; seeder/tests offline (no network); other surfaces untouched"
+    ],
+    "notes": "Committed dataset database/data/sp500.csv (offline, 503 rows) seeded by database/seeders/Sp500UniverseSeeder.php: universe updateOrCreate by slug sp500, Instrument updateOrCreate by unique ticker (company/sector/exchange/active), membership attached with syncWithoutDetaching (add-only) in one DB::transaction. Parsing uses fgetcsv with escape:'' (no CSV dependency); blank lines skipped, BOM stripped from the header, tickers trimmed/uppercased, rows deduped by ticker. Source/date/exchange derivation are documented in the seeder docblock. See docs/specs/universe-sp500-seed.md, CONSTRAINTS.md."
   },
   {
     "id": "ingestion-scraper-eod",
