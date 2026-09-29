@@ -4,10 +4,10 @@
 
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
-- Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`) and, when `frontend/` exists, the SPA lint/build (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22)
-- Current next ready feature: `db-schema-market-data` or `python-engine-scaffold`
+- Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
+- Current next ready feature: `db-schema-market-data` or `auth-registration-login`
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 2 tests passed; SPA lint 0 errors; SPA build OK; SPA route smoke on port 5177 all 200)
+- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 2 tests; SPA lint 0 errors + build; engine 1 test; engine `/health` 200 on port 8090)
 
 ## Session Log
 
@@ -57,3 +57,15 @@
 - Known risk or unresolved issue: `react-router@8.4.0` declares `engines.node >=22.22.0` while the environment runs Node v22.21.0, so the explicit install emits an `npm warn EBADENGINE`; a bare `npm install react-router` would resolve to 7.18.4. Build and dev smoke pass. Mitigation: upgrade Node to >= 22.22.0 (preferred) or pin `react-router@7.18.4`. Recorded in `CONSTRAINTS.md` and the spec findings.
 - Validator verdict: independent `accept` (reran `.\init.ps1` exit 0, lint/build exit 0, dev smoke port 57708 all routes 200, root Vite assets untouched, generated artifacts ignored; engine mismatch accepted as a documented low-risk note). Persisted: `app-shell-navigation` → `accepted`.
 - Next best step: `db-schema-market-data` or `python-engine-scaffold`.
+
+### Session 005
+
+- Date: 2026-09-29
+- Goal: Plan and implement `python-engine-scaffold`.
+- Completed: Created **`engine/`** as a standalone **FastAPI** service on Python 3.10 with its own venv and pinned `requirements.txt`/`requirements-dev.txt`; `engine/app/main.py` exposes `GET /health`; `engine/app/__main__.py` runs uvicorn; `engine/tests/test_health.py` uses `TestClient`; `engine/pyproject.toml` (pytest + ruff) and `engine/.gitignore`. Extended `init.ps1` with the engine test step. Resolved the Laravel <-> engine boundary as HTTP and updated `ARCHITECTURE.md`/`CONSTRAINTS.md`/`AGENTS.md`.
+- Verification run: `python --version` (3.10.6); `pytest -q` -> 1 passed (exit 0); `ruff check` -> All checks passed; uvicorn smoke `GET /health` -> 200 `{"status":"ok",...}` on port 8090 with teardown; `.\init.ps1` exit 0 (Laravel + SPA + engine).
+- Evidence captured: recorded in `feature_list.json` under `python-engine-scaffold`.
+- Files or artifacts updated: `engine/**`, `init.ps1`, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `AGENTS.md`, `docs/specs/python-engine-scaffold.md`, `PROGRESS.md`, `feature_list.json`.
+- Known risk or unresolved issue: pytest emits a Starlette deprecation warning (`httpx` -> `httpx2`) from `TestClient`; non-blocking. Data-source/legality for real scraping remains open (`docs/risks-and-open-questions.md`).
+- Validator verdict: independent `accept` (reran `pytest -q` 1 passed + `ruff check` clean on Python 3.10.6; `/health` 200 exact JSON via uvicorn 8091 and `-m app` 8090 with teardown; `.\init.ps1` exit 0; pins match requirements files; venv/caches ignored; other surfaces untouched). Persisted: `python-engine-scaffold` → `accepted`.
+- Next best step: `db-schema-market-data` or `auth-registration-login`.

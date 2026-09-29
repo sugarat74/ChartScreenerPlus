@@ -80,14 +80,22 @@
     "title": "Scaffold the Python engine",
     "user_visible_behavior": "A developer can run the Python engine locally and get a healthy response.",
     "depends_on": [],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "The engine starts from a virtual environment",
       "A health check (endpoint or CLI command) reports success",
       "The test runner executes an initial test"
     ],
-    "evidence": [],
-    "notes": "Owns scraping, indicator computation and signal detection. See docs/technical-discovery.md for the Laravel <-> engine boundary open question."
+    "evidence": [
+      "python --version -> Python 3.10.6 (Laragon); engine/.venv created",
+      "pinned deps: fastapi 0.141.1, uvicorn 0.54.0, pytest 9.1.1, httpx 0.28.1, ruff 0.16.9 (pydantic 2.13.5, starlette 1.7.0)",
+      "engine\\.venv\\Scripts\\python.exe -m pytest -q -> 1 passed (exit 0); ruff check -> All checks passed",
+      "health smoke: uvicorn on 127.0.0.1:8090 -> GET /health 200 {\"status\":\"ok\",\"service\":\"alphapulse-engine\",\"version\":\"0.1.0\"}; server + child stopped, port released",
+      "init.ps1 -> Laravel 2 tests + SPA lint/build + engine pytest (1 passed), exit 0, starts no server",
+      "alphapulse/, frontend/ and Laravel root files untouched",
+      "independent validator accept (2026-09-29): reran pytest -q (1 passed) + ruff check clean on venv Python 3.10.6; /health 200 exact JSON via uvicorn (8091) and python -m app (8090) with teardown/port release; init.ps1 exit 0; installed pins match requirements*.txt; .venv/caches ignored; alphapulse/, frontend/ and Laravel root untouched"
+    ],
+    "notes": "engine/ is a standalone FastAPI service (Python 3.10) with venv + requirements*.txt; resolves the Laravel<->engine boundary as HTTP. /health in engine/app/main.py; tests in engine/tests. init.ps1 now also gates the engine. See docs/specs/python-engine-scaffold.md, ARCHITECTURE.md, CONSTRAINTS.md."
   },
   {
     "id": "db-schema-market-data",

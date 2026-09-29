@@ -39,8 +39,25 @@ if (Test-Path "frontend/package.json") {
     Invoke-Checked npm @("--prefix", "frontend", "run", "build")
 }
 
+if (Test-Path "engine/requirements.txt") {
+    $enginePy = "engine\.venv\Scripts\python.exe"
+    if (-not (Test-Path $enginePy)) {
+        Write-Host "engine venv missing - creating and installing Python dependencies..."
+        Invoke-Checked python @("-m", "venv", "engine\.venv")
+        Invoke-Checked $enginePy @("-m", "pip", "install", "-r", "engine\requirements-dev.txt")
+    }
+    Write-Host "Running the engine tests..."
+    Push-Location engine
+    try {
+        Invoke-Checked ".venv\Scripts\python.exe" @("-m", "pytest", "-q")
+    } finally {
+        Pop-Location
+    }
+}
+
 Write-Host ""
 Write-Host "Baseline OK."
 Write-Host "Manual follow-up (not run by this gate):"
-Write-Host "  php artisan serve --port=8123        # Laravel API / admin"
-Write-Host "  npm --prefix frontend run dev        # SPA dev server (http://localhost:5173)"
+Write-Host "  php artisan serve --port=8123          # Laravel API / admin"
+Write-Host "  npm --prefix frontend run dev          # SPA dev server (http://localhost:5173)"
+Write-Host "  engine\.venv\Scripts\python.exe -m app  # engine (http://127.0.0.1:8090)"

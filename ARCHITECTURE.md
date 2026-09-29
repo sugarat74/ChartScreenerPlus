@@ -6,12 +6,13 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 
 - **Laravel (repository root)** — API, auth and admin. PHP 8.4 / Laravel 13. Owns the database, the framework migrations and Laravel's own Vite assets under `resources/`.
 - **React SPA (`frontend/`)** — the trader surface (Screener, Chart, Portal). React 19 + Vite + Tailwind 4 with its own toolchain and dev server.
-- **Python engine (planned)** — scraping, indicators and signals. Not created yet.
+- **Python engine (`engine/`)** — FastAPI HTTP service that will own scraping, indicators and signals. Python 3.10 with its own venv and requirements files; exposes `/health`.
 
 ## Directory Boundaries
 
 - `frontend/` is a standalone npm project: its own `package.json`, `vite.config.ts`, `tsconfig*.json` and lockfile. It MUST NOT be wired into Laravel's root Vite pipeline.
 - Laravel's root `package.json`, `vite.config.js` and `resources/` belong to Laravel assets only.
+- `engine/` is a standalone Python project: its own `.venv`, `requirements*.txt` and `pyproject.toml`. It MUST NOT be entangled with Laravel's PHP code.
 - `alphapulse/` is a design/intent reference prototype; it is not a product runtime surface.
 
 ## SPA Routing And Shell
@@ -31,10 +32,10 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 ## Dependency Direction
 
 - The SPA talks to Laravel over HTTP (API) once endpoints exist; there is no code sharing between `frontend/` and the Laravel app yet.
-- The Python engine will be invoked by Laravel (internal API/queue), not directly by the SPA.
+- The Python engine is invoked by Laravel over HTTP (internal service), not directly by the SPA. The engine exposes `/health`; endpoints for scraping/indicators/signals are added by later features.
 
 ## Configuration
 
 - Local dev/test database is SQLite (`database/database.sqlite`, git-ignored).
-- Dev servers: Laravel on 8000 (default), SPA on 5173 (Vite default).
-- Harness gate: `.\init.ps1` runs the Laravel checks plus the SPA typecheck/lint/build.
+- Dev servers: Laravel on 8000 (default), SPA on 5173 (Vite default), engine on 8090 (`python -m app`).
+- Harness gate: `.\init.ps1` runs the Laravel checks, the SPA typecheck/lint/build, and the engine tests.

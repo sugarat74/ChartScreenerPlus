@@ -24,7 +24,14 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST NOT** add a Copilot route or surface to the SPA. Reason: the AI Copilot is explicitly out of MVP scope.
 - **MUST** pin `react-router` explicitly instead of a bare `npm install react-router`. Reason: react-router v8 declares `node >=22.22.0` while the local runtime is Node v22.21.0, so npm auto-resolves the bare install to v7; the intended fix is either an explicit `react-router@^8.4.0` install (current, works with an `EBADENGINE` warning) or upgrading Node to >= 22.22.0.
 
+## Engine
+
+- **MUST** keep the Python engine in `engine/` targeting **Python 3.10**, as a **FastAPI** HTTP service with its own venv and `requirements*.txt`. Reason: it is a separate runtime surface and the Laravel <-> engine boundary is HTTP.
+- **MUST** invoke the engine venv Python by path (`engine\.venv\Scripts\python.exe`) and run engine commands with `engine/` as the working directory; do not rely on venv activation. Reason: Windows activation is shell-dependent and imports resolve from `engine/`.
+- **MUST NOT** commit the venv or Python caches; `engine/.gitignore` covers `.venv/`, `__pycache__/`, `.pytest_cache/`, `.ruff_cache/`. Reason: local state, not source.
+- **MUST** pin exact dependency versions in `requirements*.txt`. Reason: reproducible engine installs.
+
 ## Harness
 
-- **MUST** keep `init.ps1` a non-blocking gate: it runs the Laravel checks (`php artisan --version`, `php artisan test`) and, when `frontend/` exists, the SPA typecheck/lint/build. It **MUST NOT** start long-running processes such as `php artisan serve` or the Vite dev server.
+- **MUST** keep `init.ps1` a non-blocking gate: it runs the Laravel checks (`php artisan --version`, `php artisan test`), the SPA typecheck/lint/build when `frontend/` exists, and the engine tests when `engine/requirements.txt` exists. It **MUST NOT** start long-running processes such as `php artisan serve`, the Vite dev server or uvicorn.
 - **MUST** keep the repository restartable via `.\init.ps1` after every accepted feature.
