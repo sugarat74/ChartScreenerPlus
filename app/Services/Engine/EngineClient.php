@@ -62,4 +62,31 @@ class EngineClient
 
         return is_array($snapshots) ? $snapshots : [];
     }
+
+    /**
+     * Detect the deterministic signals that hold on the as-of bar of a series.
+     *
+     * The engine owns the signal rules; Laravel persists the returned signals.
+     * The response carries the signals detected on the last submitted bar
+     * (`{signals: [{date, type, metadata}]}`); an empty result is valid.
+     *
+     * @param  array<int, array<string, mixed>>  $bars
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws RequestException when the engine responds with an error status.
+     * @throws ConnectionException when the engine is unreachable.
+     */
+    public function detectSignals(array $bars): array
+    {
+        $baseUrl = rtrim((string) config('engine.url'), '/');
+
+        $payload = Http::acceptJson()
+            ->post($baseUrl.'/signals/detect', ['bars' => $bars])
+            ->throw()
+            ->json();
+
+        $signals = is_array($payload) ? ($payload['signals'] ?? []) : [];
+
+        return is_array($signals) ? $signals : [];
+    }
 }

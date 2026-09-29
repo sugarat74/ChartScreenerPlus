@@ -6,7 +6,7 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 
 - **Laravel (repository root)** — API, auth and admin. PHP 8.4 / Laravel 13. Owns the database, the framework migrations and Laravel's own Vite assets under `resources/`.
 - **React SPA (`frontend/`)** — the trader surface (Screener, Chart, Portal). React 19 + Vite + Tailwind 4 with its own toolchain and dev server.
-- **Python engine (`engine/`)** — FastAPI HTTP service that owns scraping, indicators, and (later) signals. Python 3.10 with its own venv and requirements files; exposes `/health`, `GET /eod/{symbol}` (fetch + parse only) and `POST /indicators/compute` (pure indicator math). It has no database access.
+- **Python engine (`engine/`)** — FastAPI HTTP service that owns scraping, indicators and deterministic signals. Python 3.10 with its own venv and requirements files; exposes `/health`, `GET /eod/{symbol}` (fetch + parse only), `POST /indicators/compute` (pure indicator math) and `POST /signals/detect` (deterministic signal rules). It has no database access.
 
 ## Directory Boundaries
 
@@ -76,10 +76,19 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - **Laravel persistence.** `App\Services\Engine\EngineClient::computeIndicators(array $bars)` POSTs `{bars: [...]}` to `/indicators/compute` and returns `{snapshots: [...]}`. `php artisan indicators:compute {--ticker=} {--universe=}` loads an instrument's `DailyBar`s ordered by date, calls the engine, and upserts one `IndicatorSnapshot` per `(instrument_id, date)` inside a transaction, keying the date with `Carbon::parse($date)->startOfDay()` so re-runs are idempotent. `--ticker` targets one instrument; otherwise `--universe` (default `sp500`) targets every member that has stored bars. Nothing is written when the engine fails.
 - Tests never use the network: the engine math/endpoint tests read the committed fixtures (`engine/tests/fixtures/indicator_series.csv`, `indicator_constant.csv`, `stooq_nvda.csv`) and Laravel uses `Http::fake`.
 
+## Signals Path
+
+- **Chinese wall — engine detects, Laravel replaces.** The engine evaluates the fixed signal rules on the bar series and returns only the signals that hold on the **as-of bar** (the latest bar); it has **no** database access. Laravel (the DB owner) keeps `signals` as the *current active* set per instrument.
+- **Engine rules (`engine/app/signals/`).** `rules.py` holds the 9 pure, stdlib-only predicates in one `RULES` registry (`golden_cross`, `death_cross`, `ma_alignment_bullish`, `ma_alignment_bearish`, `pivot_breakout_rvol`, `rsi_overbought`, `rsi_oversold`, `macd_bullish_cross`, `macd_bearish_cross`). Each takes the `Snapshot` for the as-of bar plus the previous bar (and the bars for the pivot) and returns `(fired, metadata)` or `None` when a needed indicator is unavailable. `detect.py::detect_signals(bars)` computes snapshots with the existing indicator math and evaluates every rule at the last index; fewer than two bars yields `[]`.
+- **Fixed rules/thresholds:** SMA50/200 and EMA/MACD crosses need the previous bar; alignment is `sma20 > sma50 > sma200` (or reversed); `pivot_breakout_rvol` needs `close > max(high)` of the prior 20 sessions and `rvol >= 2.0`; `rsi_overbought` is `rsi14 >= 70`, `rsi_oversold` is `rsi14 <= 30`. Crosses/alignment use strict inequalities (equality is no signal); a null indicator never fires. Signals are date-stamped with the as-of bar date.
+- **Engine endpoint.** `POST /signals/detect` accepts `{bars: [...]}` and returns `{signals: [{date, type, metadata}]}` (pydantic-validated; a malformed body is a controlled `422`; an empty series returns `{signals: []}`).
+- **Laravel persistence (replace semantics).** `App\Services\Engine\EngineClient::detectSignals(array $bars)` POSTs to `/signals/detect`. `php artisan signals:detect {--ticker=} {--universe=}` loads an instrument's `DailyBar`s ordered by date, calls the engine **before** touching the stored rows (an engine failure leaves the previous set intact and exits `1`), then inside one transaction deletes every `Signal` for the instrument and inserts the freshly detected set (date keyed with `Carbon::parse($date)->startOfDay()`, metadata numeric only, deduped by type). Re-running the same bars is idempotent and a signal that no longer holds disappears. A unique key on `(instrument_id, date, type)` enforces one row per type per instrument/date.
+- Tests never use the network: `engine/tests/test_signals.py` is offline (synthetic `Snapshot`s, crafted bars, committed fixtures) and Laravel uses `Http::fake`.
+
 ## Dependency Direction
 
 - The SPA talks to Laravel over HTTP (JSON API); the auth endpoints above are the first ones. There is no code sharing between `frontend/` and the Laravel app.
-- The Python engine is invoked by Laravel over HTTP (internal service), not directly by the SPA. The engine exposes `/health`, `GET /eod/{symbol}` (fetch + parse) and `POST /indicators/compute` (indicator math); a signals endpoint is added by a later feature. Laravel talks to the engine through `App\Services\Engine\EngineClient` using the `ENGINE_URL` base URL.
+- The Python engine is invoked by Laravel over HTTP (internal service), not directly by the SPA. The engine exposes `/health`, `GET /eod/{symbol}` (fetch + parse), `POST /indicators/compute` (indicator math) and `POST /signals/detect` (deterministic rules). Laravel talks to the engine through `App\Services\Engine\EngineClient` using the `ENGINE_URL` base URL.
 
 ## Configuration
 

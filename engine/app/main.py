@@ -5,7 +5,14 @@ from fastapi import FastAPI, HTTPException
 
 from app import __version__
 from app.indicators.snapshots import compute_snapshots
-from app.models import EodResponse, IndicatorsComputeRequest, IndicatorsComputeResponse
+from app.models import (
+    EodResponse,
+    IndicatorsComputeRequest,
+    IndicatorsComputeResponse,
+    SignalsDetectRequest,
+    SignalsDetectResponse,
+)
+from app.signals.detect import detect_signals
 from app.sources.stooq import fetch_eod
 
 
@@ -53,6 +60,12 @@ def create_app() -> FastAPI:
         """Compute one indicator snapshot per supplied bar (pure, stateless)."""
 
         return IndicatorsComputeResponse(snapshots=compute_snapshots(request.bars))
+
+    @application.post("/signals/detect", response_model=SignalsDetectResponse)
+    def signals_detect(request: SignalsDetectRequest) -> SignalsDetectResponse:
+        """Detect the deterministic signals that hold on the as-of bar (pure)."""
+
+        return SignalsDetectResponse(signals=detect_signals(request.bars))
 
     return application
 

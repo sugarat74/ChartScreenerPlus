@@ -57,3 +57,27 @@ class IndicatorsComputeResponse(BaseModel):
     """One indicator snapshot per submitted bar, in the same order."""
 
     snapshots: list[Snapshot]
+
+
+class Signal(BaseModel):
+    """A deterministic signal detected on the as-of bar.
+
+    ``date`` is the as-of (latest) bar date and ``type`` is one of the fixed
+    vocabulary strings; ``metadata`` carries the numeric values the rule used.
+    """
+
+    date: date
+    type: str
+    metadata: dict[str, float]
+
+
+class SignalsDetectRequest(BaseModel):
+    """Request body for ``POST /signals/detect``."""
+
+    bars: list[Bar]
+
+
+class SignalsDetectResponse(BaseModel):
+    """The signals that hold on the as-of bar of the submitted series."""
+
+    signals: list[Signal]
