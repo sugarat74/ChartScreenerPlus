@@ -4,7 +4,8 @@ import httpx
 from fastapi import FastAPI, HTTPException
 
 from app import __version__
-from app.models import EodResponse
+from app.indicators.snapshots import compute_snapshots
+from app.models import EodResponse, IndicatorsComputeRequest, IndicatorsComputeResponse
 from app.sources.stooq import fetch_eod
 
 
@@ -44,6 +45,14 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail=f"No EOD data for {normalized}.")
 
         return EodResponse(symbol=normalized, bars=bars)
+
+    @application.post("/indicators/compute", response_model=IndicatorsComputeResponse)
+    def indicators_compute(
+        request: IndicatorsComputeRequest,
+    ) -> IndicatorsComputeResponse:
+        """Compute one indicator snapshot per supplied bar (pure, stateless)."""
+
+        return IndicatorsComputeResponse(snapshots=compute_snapshots(request.bars))
 
     return application
 

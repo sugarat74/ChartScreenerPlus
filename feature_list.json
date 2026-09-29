@@ -273,14 +273,27 @@
     "depends_on": [
       "ingestion-run-orchestration"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Computed indicators match hand-calculated fixtures for a small set of tickers",
       "Instruments with insufficient history are flagged rather than producing wrong values",
       "Snapshots are reproducible from stored bars without network access"
     ],
-    "evidence": [],
-    "notes": "Exact indicator parameters are an implementation-time question; fixtures are the source of correctness."
+    "evidence": [
+      "Engine: engine\\.venv\\Scripts\\python.exe -m pytest -q -> 26 passed, exit 0; -m ruff check . -> All checks passed, exit 0 (offline fixtures only, no network)",
+      "Closed-form (engine/tests/fixtures/indicator_series.csv, 60 monotonic bars close 100..159): sma20 = 109.5 at bar 20 (mean 100..119), ema21 seed 110.0 then 111.0 (k = 1/11), ema55 seed 127.0 (mean 100..154), RSI 100 from bar 15, ADX 100 from bar 28 (constant TR 2, +DM 1, -DM 0 -> DI+ 50, DX 100), MACD/signal 7.0 and histogram 0.0 from the EMA steady-state lag ((26-1)/2 - (12-1)/2), bb_middle = trailing 20-close mean, RVOL 1.0 from bar 51 (flat 1000 volume)",
+      "Closed-form (indicator_constant.csv, 60 flat bars): Bollinger width 0 (upper = middle = lower = 50), MACD/signal/hist 0, ADX 0, RSI 100 (no-loss convention), RVOL 1.0, sma200 null",
+      "Insufficient history: a 25-bar prefix computes the available indicators (sma20 114.5, ema21, rsi14 100, bb_middle 114.5) and returns null for sma50/sma200/ema55/adx/macd/macd_signal/macd_hist/rvol; a 5-bar prefix yields all 14 indicator fields null; the 252-bar NVDA fixture has every field defined on the last bar",
+      "Engine endpoint: POST /indicators/compute returns {snapshots:[...]} with exactly one snapshot per submitted bar (JSON nulls where history is insufficient, pydantic-validated); malformed bodies -> 422; empty series -> {snapshots:[]} (engine/tests/test_indicators.py via TestClient)",
+      "Laravel: php artisan test -> 48 passed (259 assertions), exit 0; tests/Feature/ComputeIndicatorsCommandTest.php adds 7 cases (Http::fake only): one snapshot per bar stored with decimal:4 casts and the stored bars sent to the engine ordered by date; re-run idempotent (count stays 2); insufficient history stored as null (not 0 or a wrong value); engine 502 -> exit 1 with 0 rows written; unknown ticker -> exit 1 + Http::assertNothingSent; universe mode processes only instruments with stored bars; unknown universe -> exit 1",
+      "php artisan list -> indicators:compute registered; .\\vendor\\bin\\pint --test on the changed PHP files -> pass",
+      "Live engine smoke (python -m app on 8090, torn down, port 8090 released): 60-bar monotonic series -> 60 snapshots, bar 20 sma20=109.5/rsi14=100/bb_middle=109.5, last adx=100/macd=7/macd_signal=7/macd_hist=0/rvol=1; malformed body -> 422",
+      "Live Laravel->engine chain (real engine, temporary instrument ZZTEST with 60 monotonic bars, then cleaned up): php artisan indicators:compute --ticker=ZZTEST wrote 60 snapshots, a second run left the count at 60 (idempotent), stored values matched the closed forms (sma20=109.5000, rsi14=100.0000, adx=100.0000, macd=7.0000, macd_signal=7.0000, macd_hist=0.0000, rvol=1.0000); engine stopped, port released, cleanup left 0 instrument/bars/snapshots",
+      ".\\init.ps1 -> exit 0 (Laravel 13.34.0 + 48 tests + SPA lint 0 warnings/0 errors + SPA build + engine 26 tests), starts no server",
+      "Scope: only engine/app/indicators/**, engine/app/{models.py,main.py}, engine/tests/{test_indicators.py,fixtures/indicator_series.csv,fixtures/indicator_constant.csv}, app/Services/Engine/EngineClient.php, app/Console/Commands/ComputeIndicators.php, tests/Feature/ComputeIndicatorsCommandTest.php and the docs/harness files changed; frontend/ and alphapulse/ untouched; no schema change; no signals/scheduling/admin/API/UI; the engine computes only and does not touch the DB (Laravel persists)",
+      "independent validator accept (2026-09-29): reran engine pytest 26 passed + ruff clean, php artisan test 48 passed/259 assertions, indicators:compute registered, init.ps1 exit 0 no server; independently recomputed SMA/EMA/RSI/MACD/ADX/Bollinger/RVOL from scratch with 0 mismatches, exact null boundaries, insufficient history -> null (never 0/partial); live engine + live Laravel->engine chain (temp instrument, cleaned up) stored idempotent snapshots matching closed forms and wrote nothing on engine failure; no pandas/numpy/DB access in the engine; frontend/, alphapulse/ and schema untouched"
+    ],
+    "notes": "Engine owns the indicator math (pure Python stdlib only, no pandas/numpy) and returns one Snapshot per bar with nulls where history is insufficient; Laravel persists via EngineClient::computeIndicators + `php artisan indicators:compute {--ticker=} {--universe=}` (upsert on the unique (instrument_id, date), keyed on Carbon::parse($date)->startOfDay(), inside a transaction; nothing written on engine failure; per-instrument try/catch). Fixed periods: SMA 20/50/200, EMA 21/55, RSI 14, MACD 12/26/9, ADX 14, Bollinger 20/2 (population std dev), RVOL vs the previous 50-session average (first value at bar 51). Insufficient history -> null, never a partial/wrong value. Tests are offline (committed fixtures + Http::fake). RVOL baseline and the flat-series RSI convention are documented decisions; a second fixture (indicator_constant.csv) covers the constant case. See docs/specs/indicators-compute.md (Implementation Findings), ARCHITECTURE.md, CONSTRAINTS.md."
   },
   {
     "id": "signals-detect",

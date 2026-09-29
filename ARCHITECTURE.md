@@ -6,7 +6,7 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 
 - **Laravel (repository root)** — API, auth and admin. PHP 8.4 / Laravel 13. Owns the database, the framework migrations and Laravel's own Vite assets under `resources/`.
 - **React SPA (`frontend/`)** — the trader surface (Screener, Chart, Portal). React 19 + Vite + Tailwind 4 with its own toolchain and dev server.
-- **Python engine (`engine/`)** — FastAPI HTTP service that owns scraping, and (later) indicators and signals. Python 3.10 with its own venv and requirements files; exposes `/health` and `GET /eod/{symbol}` (fetch + parse only).
+- **Python engine (`engine/`)** — FastAPI HTTP service that owns scraping, indicators, and (later) signals. Python 3.10 with its own venv and requirements files; exposes `/health`, `GET /eod/{symbol}` (fetch + parse only) and `POST /indicators/compute` (pure indicator math). It has no database access.
 
 ## Directory Boundaries
 
@@ -68,10 +68,18 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - `php artisan ingestion:run {--universe=sp500} {--retry=<runId>}` orchestrates a run: it creates the run row (`running`, `started_at`, `total`), processes each instrument in its own try/catch (one failure cannot abort the run), records a `success` item (with `bars_stored`) or a `failed` item (with `message`), and finalizes (`completed` when `failed=0`, `failed` when `succeeded=0`, otherwise `partial`) with `finished_at`. `--retry` creates a NEW run containing only the previously failed instruments of the referenced run and inherits its `universe_id`; succeeded instruments are never reprocessed.
 - Exit codes: `0` for `completed`/`partial`, `1` for a `failed` run or a pre-flight error (unknown universe slug or retry run id, no run row created). Scheduling (`ingestion-scheduler`) and the admin panel (`admin-ingestion-panel`) are separate features and do not exist yet.
 
+## Indicators Path
+
+- **Chinese wall — engine computes, Laravel persists.** The engine receives a bar series and returns one Indicator Snapshot per bar; it has **no** database access. Laravel (the DB owner) persists the snapshots into `indicator_snapshots`.
+- **Engine math (`engine/app/indicators/`).** `core.py` holds pure, stdlib-only per-indicator functions over plain lists: `sma` (20/50/200), `ema` (21/55), `rsi` (14, Wilder), `macd` (12/26/9 line/signal/histogram), `adx` (14, Wilder), `bollinger` (20/2, population std dev) and `rvol` (current volume vs the previous 50-session average). `snapshots.py::compute_snapshots(bars)` returns a value-aligned `Snapshot` per bar. No pandas/numpy; the math is deterministic.
+- **Insufficient history is `null`, never a wrong value.** Every function returns a value-aligned list and emits `None` wherever the window is not fully available (e.g. `sma200` before bar 200, `macd_signal` before bar 34, `adx` before bar 28, `rvol` before bar 51). `POST /indicators/compute` serializes those as JSON `null`s; pydantic validation rejects a malformed body with `422`.
+- **Laravel persistence.** `App\Services\Engine\EngineClient::computeIndicators(array $bars)` POSTs `{bars: [...]}` to `/indicators/compute` and returns `{snapshots: [...]}`. `php artisan indicators:compute {--ticker=} {--universe=}` loads an instrument's `DailyBar`s ordered by date, calls the engine, and upserts one `IndicatorSnapshot` per `(instrument_id, date)` inside a transaction, keying the date with `Carbon::parse($date)->startOfDay()` so re-runs are idempotent. `--ticker` targets one instrument; otherwise `--universe` (default `sp500`) targets every member that has stored bars. Nothing is written when the engine fails.
+- Tests never use the network: the engine math/endpoint tests read the committed fixtures (`engine/tests/fixtures/indicator_series.csv`, `indicator_constant.csv`, `stooq_nvda.csv`) and Laravel uses `Http::fake`.
+
 ## Dependency Direction
 
 - The SPA talks to Laravel over HTTP (JSON API); the auth endpoints above are the first ones. There is no code sharing between `frontend/` and the Laravel app.
-- The Python engine is invoked by Laravel over HTTP (internal service), not directly by the SPA. The engine exposes `/health` and `GET /eod/{symbol}` (fetch + parse); indicators/signals endpoints are added by later features. Laravel talks to the engine through `App\Services\Engine\EngineClient` using the `ENGINE_URL` base URL.
+- The Python engine is invoked by Laravel over HTTP (internal service), not directly by the SPA. The engine exposes `/health`, `GET /eod/{symbol}` (fetch + parse) and `POST /indicators/compute` (indicator math); a signals endpoint is added by a later feature. Laravel talks to the engine through `App\Services\Engine\EngineClient` using the `ENGINE_URL` base URL.
 
 ## Configuration
 

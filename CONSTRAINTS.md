@@ -78,6 +78,16 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - Re-running failures **MUST** use `ingestion:run --retry=<runId>`, which creates a NEW run containing only the previously failed instruments and **MUST NOT** reprocess succeeded instruments. Reason: cheap, correct retries without redoing successful work.
 - Run/item enums **MUST** stay the two backed enums (`IngestionRunStatus`, `IngestionRunItemStatus`) and models **MUST** cast them; **MUST NOT** store raw status strings or add extra statuses here without updating `docs/domain-model.md`. Reason: one vocabulary for the ledger, the CLI and the future admin panel.
 
+## Indicators
+
+- The engine **MUST** own the indicator math (`engine/app/indicators/core.py`, `snapshots.py`) and **MUST NOT** add pandas/numpy or any non-stdlib numeric dependency. Reason: the engine is a small, deterministic, pinned service; pure stdlib keeps it portable and reproducible.
+- The engine **MUST NOT** read or write the database; Laravel **MUST** own persistence (the same Chinese wall as ingestion). Reason: one database owner; the engine is a stateless HTTP service.
+- `POST /indicators/compute` **MUST** accept `{bars: [...]}` and return `{snapshots: [...]}` with exactly one snapshot per submitted bar, in order, and **MUST** validate the body with pydantic (a malformed body is a controlled `422`). Reason: the persistence layer relies on a 1:1 bar ↔ snapshot mapping.
+- Indicator values **MUST** be `null` whenever the indicator's window is not fully available at that bar (e.g. `sma200` before bar 200, `adx` before bar 28, `macd_signal` before bar 34, `rvol` before bar 51); the engine **MUST NOT** emit a partial-window, placeholder or zero value. Reason: `docs/domain-model.md` requires insufficient history to be flagged, never silently misreported.
+- Snapshot upserts **MUST** be keyed on the unique `(instrument_id, date)` and **MUST** normalize the date with `Carbon::parse($date)->startOfDay()`; the command **MUST** write nothing when the engine call fails. Reason: it shares the `indicator_snapshots` unique index with the rest of the pipeline, so re-runs must be idempotent and failures must not leave partial data.
+- Indicator tests **MUST** be offline: engine tests read the committed fixtures, Laravel tests use `Http::fake`. No test may hit the network. Reason: the math must be provable from hand-derived fixtures, and the live source is unreliable.
+- The fixed periods are SMA 20/50/200, EMA 21/55, RSI 14, MACD 12/26/9, ADX 14, Bollinger 20/2 (population std dev) and RVOL against the **previous** 50-session average. Reason: `signals-detect` and the screener depend on one shared vocabulary; changing a period is a product decision, not an implementation detail.
+
 ## Harness
 
 - **MUST** keep `init.ps1` a non-blocking gate: it runs the Laravel checks (`php artisan --version`, `php artisan test`), the SPA typecheck/lint/build when `frontend/` exists, and the engine tests when `engine/requirements.txt` exists. It **MUST NOT** start long-running processes such as `php artisan serve`, the Vite dev server or uvicorn.

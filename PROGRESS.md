@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `indicators-compute`
+- Current next ready feature: `signals-detect`
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 41 tests incl. `IngestionRunTest` + `ScrapeInstrumentCommandTest`; SPA lint 0 warnings/errors + build; engine 11 tests incl. `test_stooq.py`)
+- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 48 tests incl. `ComputeIndicatorsCommandTest`; SPA lint 0 warnings/errors + build; engine 26 tests incl. `test_indicators.py`)
 
 ## Session Log
 
@@ -163,3 +163,19 @@
 - Status: `passing` — ready for independent validation (not `accepted`).
 - Validator verdict: independent `accept` (reran `php artisan test` 41 passed/213 assertions, `ingestion:run` registered, migrate rollback/migrate round-trip clean with verified set-null/cascade FKs + unique item index, `.\init.ps1` exit 0 no server, pint pass, `schedule:list` empty; scenarios completed/partial/failed asserted, a failure does not abort, retry reprocesses only failed instruments; tests offline). Persisted: `ingestion-run-orchestration` → `accepted`.
 - Next best step: `indicators-compute`.
+
+### Session 013
+
+- Date: 2026-09-29
+- Goal: Implement `indicators-compute`.
+- Goal outcome: the engine computes indicator snapshots from a bar series (pure Python, stdlib only) and Laravel persists one snapshot per `(instrument, date)`; insufficient history is stored as `null`, never a wrong value.
+- Completed (engine): `engine/app/indicators/core.py` (pure functions `sma`, `ema`, `rsi`, `macd`, `adx`, `bollinger`, `rvol`; value-aligned lists with `None` for missing history) and `engine/app/indicators/snapshots.py` (`compute_snapshots` → one `Snapshot` per bar). `engine/app/models.py` gained `Snapshot`, `IndicatorsComputeRequest`, `IndicatorsComputeResponse`; `engine/app/main.py` gained `POST /indicators/compute` (pydantic-validated, controlled `422`). Fixed periods: SMA 20/50/200, EMA 21/55, RSI 14, MACD 12/26/9, ADX 14, Bollinger 20/2 (population std dev), RVOL vs the previous 50-session average. No pandas/numpy added.
+- Completed (Laravel): `EngineClient::computeIndicators(array $bars): array` (POST `/indicators/compute`, `->throw()`); `app/Console/Commands/ComputeIndicators.php` (`indicators:compute {--ticker=} {--universe=}`, `--ticker` precedence, `--universe` defaults to `sp500` and only instruments with stored bars) loads the bars ordered by date, calls the engine, and upserts `IndicatorSnapshot` by `(instrument_id, date)` with `Carbon::parse($date)->startOfDay()` inside a transaction; per-instrument try/catch, writes nothing on engine failure, reports instruments processed and snapshots written.
+- Closed-form correctness: monotonic fixture (close 100..159) → RSI 100 from bar 15, ADX 100 from bar 28, MACD/signal 7 and histogram 0 from the EMA steady-state lag, `sma20=109.5` at bar 20, `ema21` seed 110.0 then 111.0, `ema55` seed 127.0, `bb_middle` = trailing 20-close mean; constant fixture (60 flat bars) → zero Bollinger width, MACD/signal/hist 0, ADX 0, RSI 100, RVOL 1.0; 25-bar prefix → the available indicators computed and every window indicator `null`; 252-bar NVDA fixture smoke → every indicator present on the last bar.
+- Verification run: engine `-m pytest -q` → **26 passed** (exit 0); `-m ruff check .` → **All checks passed** (exit 0); `php artisan test` → **48 passed (259 assertions)**, exit 0 (`ComputeIndicatorsCommandTest` 7 cases, `Http::fake` only); `php artisan list` → `indicators:compute`; `.\vendor\bin\pint --test` on the changed PHP files → pass; live engine smoke (8090, torn down, port released) → 60 snapshots with the expected values and `422` for a malformed body; live Laravel → engine chain (temporary `ZZTEST` with 60 monotonic bars, cleaned up) → 60 snapshots written, re-run stayed at 60 (idempotent), stored values matched the closed forms, engine stopped and port released, cleanup left 0 rows; `.\init.ps1` → exit 0 (Laravel 48 tests + SPA lint 0/build + engine 26 tests), starts no server.
+- Evidence captured: recorded in `feature_list.json` under `indicators-compute`; spec findings in `docs/specs/indicators-compute.md`.
+- Files or artifacts updated: `engine/app/indicators/{__init__.py,core.py,snapshots.py}`, `engine/app/{models.py,main.py}`, `engine/tests/{test_indicators.py,fixtures/indicator_series.csv,fixtures/indicator_constant.csv}`, `app/Services/Engine/EngineClient.php`, `app/Console/Commands/ComputeIndicators.php`, `tests/Feature/ComputeIndicatorsCommandTest.php`, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `docs/specs/indicators-compute.md`, `PROGRESS.md`, `feature_list.json`. `frontend/` and `alphapulse/` untouched; no signals, scheduling, admin panel/UI, API endpoints or charting added; no schema change.
+- Known risk or unresolved issue: none blocking. The RVOL baseline (excludes the current bar, so the first value needs 51 bars) and the RSI flat-series convention (100) are documented decisions; a second committed fixture was added for the constant case. No persistent E2E harness exists; the CLI/engine flow is covered by feature tests plus the live smoke.
+- Status: `passing` — ready for independent validation (not `accepted`).
+- Validator verdict: independent `accept` (reran engine `pytest` 26 passed + `ruff` clean, `php artisan test` 48 passed/259 assertions, `indicators:compute` registered, `.\init.ps1` exit 0 no server; independently recomputed SMA/EMA/RSI/MACD/ADX/Bollinger/RVOL with 0 mismatches and exact null boundaries; live engine + live Laravel→engine chain stored idempotent snapshots matching closed forms and wrote nothing on engine failure; no pandas/numpy/DB access in the engine). Persisted: `indicators-compute` → `accepted`.
+- Next best step: `signals-detect`.

@@ -2,6 +2,8 @@
 
 namespace App\Services\Engine;
 
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -17,8 +19,8 @@ class EngineClient
      *
      * @return array<int, array<string, mixed>>
      *
-     * @throws \Illuminate\Http\Client\RequestException when the engine responds with an error status.
-     * @throws \Illuminate\Http\Client\ConnectionException when the engine is unreachable.
+     * @throws RequestException when the engine responds with an error status.
+     * @throws ConnectionException when the engine is unreachable.
      */
     public function eodBars(string $ticker): array
     {
@@ -32,5 +34,32 @@ class EngineClient
         $bars = is_array($payload) ? ($payload['bars'] ?? []) : [];
 
         return is_array($bars) ? $bars : [];
+    }
+
+    /**
+     * Compute indicator snapshots for a bar series in the engine.
+     *
+     * The engine computes only; Laravel persists the returned snapshots. One
+     * snapshot is returned per submitted bar, with JSON `null`s where an
+     * indicator does not have enough history.
+     *
+     * @param  array<int, array<string, mixed>>  $bars
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws RequestException when the engine responds with an error status.
+     * @throws ConnectionException when the engine is unreachable.
+     */
+    public function computeIndicators(array $bars): array
+    {
+        $baseUrl = rtrim((string) config('engine.url'), '/');
+
+        $payload = Http::acceptJson()
+            ->post($baseUrl.'/indicators/compute', ['bars' => $bars])
+            ->throw()
+            ->json();
+
+        $snapshots = is_array($payload) ? ($payload['snapshots'] ?? []) : [];
+
+        return is_array($snapshots) ? $snapshots : [];
     }
 }
