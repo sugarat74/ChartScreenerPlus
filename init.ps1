@@ -28,7 +28,19 @@ Invoke-Checked php @("artisan", "--version")
 Write-Host "Running the test suite..."
 Invoke-Checked php @("artisan", "test")
 
+if (Test-Path "frontend/package.json") {
+    if (-not (Test-Path "frontend/node_modules")) {
+        Write-Host "frontend/node_modules missing - installing npm dependencies..."
+        Invoke-Checked npm @("--prefix", "frontend", "install")
+    }
+    Write-Host "Typechecking and linting the SPA..."
+    Invoke-Checked npm @("--prefix", "frontend", "run", "lint")
+    Write-Host "Building the SPA..."
+    Invoke-Checked npm @("--prefix", "frontend", "run", "build")
+}
+
 Write-Host ""
 Write-Host "Baseline OK."
 Write-Host "Manual follow-up (not run by this gate):"
-Write-Host "  php artisan serve --port=8123   # start the dev server"
+Write-Host "  php artisan serve --port=8123        # Laravel API / admin"
+Write-Host "  npm --prefix frontend run dev        # SPA dev server (http://localhost:5173)"

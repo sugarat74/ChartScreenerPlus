@@ -16,6 +16,7 @@ Target stack: **Laravel** (API, auth, admin) + **Python engine** (scraping, indi
 - Use backslash paths (`.\scripts\...`) and quote any path that contains spaces.
 - The standard startup/verification script is `.\init.ps1`. If Git Bash is available, `bash init.sh` is an acceptable fallback, but PowerShell is the default.
 - Runtime: **PHP 8.4.8** (Laragon) with **Laravel 13.x**, **Composer 2.10.3**. Local dev/test database is **SQLite** (`pdo_sqlite` enabled). `php` and `composer` must be on PATH.
+- Frontend: the React SPA lives in **`frontend/`** (React 19 + Vite + Tailwind 4, Node v22). Run it with `npm --prefix frontend run dev`; it is separate from Laravel's root Vite assets.
 
 ## Commands
 

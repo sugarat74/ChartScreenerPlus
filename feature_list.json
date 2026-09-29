@@ -5,7 +5,7 @@
     "title": "Scaffold the Laravel application",
     "user_visible_behavior": "A developer can start the Laravel app locally and receive a successful response from its health endpoint.",
     "depends_on": [],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "php artisan --version succeeds in the Laravel app directory",
       "The app boots and GET /up (or equivalent health route) returns HTTP 200",
@@ -19,7 +19,8 @@
       "php artisan migrate --force -> users/cache/jobs framework tables migrated (SQLite)",
       "serve smoke on port 8124 -> GET /up 200, GET / 200; server and child process stopped",
       "init.ps1 (PowerShell gate) -> exit 0 (runs artisan --version + artisan test, starts no server)",
-      "README.md and .gitignore preserved during scaffolding"
+      "README.md and .gitignore preserved during scaffolding",
+      "independent validator accept (2026-09-29): reran init.ps1 (Laravel 13.34.0, 2 tests passed), GET /up 200 and GET / 200 on port 8125, framework-only migrations, no domain models; README/.gitignore preserved"
     ],
     "notes": "Scaffolded latest Laravel 13.x at repo root via temp dir + selective copy (--no-scripts). Framework migrations only; domain schema deferred to db-schema-market-data. init.ps1 is now a real non-blocking gate. See docs/specs/repo-scaffold-laravel.md, CONSTRAINTS.md."
   },
@@ -29,14 +30,23 @@
     "title": "Scaffold the React SPA",
     "user_visible_behavior": "A developer can build and start the React SPA and see a placeholder page styled with the AlphaPulse Tailwind tokens.",
     "depends_on": [],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "npm install and npm run build succeed",
       "The dev server serves a placeholder page that loads the DESIGN.md token stylesheet",
       "Type checking / lint runs clean"
     ],
-    "evidence": [],
-    "notes": "Reuse alphapulse/ only as a visual reference; do not ship its Express server or seeded data. See DESIGN.md."
+    "evidence": [
+      "node -v / npm -v -> v22.21.0 / 11.8.0",
+      "frontend/ scaffolded with create-vite react-ts (Vite 8.3.1, Vite react plugin 6.1.1, React 19.3.0, TypeScript 6.0.2) + Tailwind 4.3.3 via @tailwindcss/vite",
+      "npm --prefix frontend run lint -> tsc -b + oxlint: 0 warnings, 0 errors, exit 0",
+      "npm --prefix frontend run build -> tsc -b + vite build OK, dist/ produced (index.html + css + js), exit 0",
+      "dev server smoke on port 5173 -> GET / 200, title contains AlphaPulse; listener process stopped",
+      "init.ps1 -> runs Laravel checks + SPA lint/build, exit 0, starts no server",
+      "root package.json, root vite.config.js and resources/ untouched",
+      "independent validator accept (2026-09-29): reran init.ps1 (Laravel 2 tests + SPA lint 0 errors + build OK), dev smoke port 5176 GET / 200, built CSS contains tokens f5f0e8/ffcc00/1a1a1a; root Laravel Vite assets unmodified"
+    ],
+    "notes": "SPA isolated in frontend/ (own package.json/vite.config/tsconfig/lockfile). Design tokens ported from DESIGN.md/alphapulse into frontend/src/index.css @theme. init.ps1 now also gates the SPA. See docs/specs/repo-scaffold-frontend.md, ARCHITECTURE.md, CONSTRAINTS.md."
   },
   {
     "id": "app-shell-navigation",
@@ -46,14 +56,23 @@
     "depends_on": [
       "repo-scaffold-frontend"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Header and tab bar render per DESIGN.md (2px borders, hard shadows, accent button, mono metrics)",
       "Tabs switch the active surface without a full reload",
       "Layout is usable at desktop and tablet widths"
     ],
-    "evidence": [],
-    "notes": "Visual source of truth is DESIGN.md and the alphapulse/ prototype. Copilot tab is out of MVP scope, do not add it."
+    "evidence": [
+      "react-router 8.4.0 installed in frontend/ (package.json \"react-router\": \"^8.4.0\"); imports confirmed for createBrowserRouter, RouterProvider, NavLink, Outlet, Navigate",
+      "EBADENGINE warning: react-router@8.4.0 declares node >=22.22.0 while the runtime is v22.21.0; a bare `npm install react-router` resolves to 7.18.4, so the v8 pin is explicit",
+      "npm --prefix frontend run lint -> tsc -b + oxlint: 0 warnings, 0 errors (12 files), exit 0",
+      "npm --prefix frontend run build -> tsc -b + vite build OK, 101 modules transformed (css 13.96 kB / js 318.96 kB), exit 0",
+      "dev smoke on port 5177: / 200, /screener 200, /chart 200, /admin 200, /portal 200, /does-not-exist 200; transformed /src/router.tsx 200 and /src/main.tsx 200; index.html contains #root and loads /src/main.tsx; router module contains all four route paths; main module uses RouterProvider; server tree killed and port 5177 released (no orphan vite process)",
+      "built CSS contains #ffcc00 / #1a1a1a / .sticky / position:sticky / overflow-x:auto / font-black; built JS contains /screener /chart /admin /portal",
+      "init.ps1 -> Laravel 13.34.0 + 2 tests passed + SPA lint 0 errors + SPA build OK, exit 0, starts no server",
+      "independent validator accept (2026-09-29): reran init.ps1 exit 0, lint/build exit 0, dev smoke port 57708 all routes 200 with teardown, root Vite assets untouched, generated artifacts ignored; react-router engine mismatch accepted as documented low-risk note"
+    ],
+    "notes": "Routing: react-router data router (createBrowserRouter + RouterProvider) with AppLayout (AppHeader + Outlet); / redirects to /screener; routes /screener /chart /admin /portal and * -> NotFoundPage. Tab labels/paths single-sourced in frontend/src/nav.ts. No Copilot route. Header follows DESIGN.md tokens (2px ink borders, hard shadows, #ffcc00 primary button, mono status, 2px active underline) and the tab bar scrolls horizontally on narrow widths. See docs/specs/app-shell-navigation.md, ARCHITECTURE.md, CONSTRAINTS.md."
   },
   {
     "id": "python-engine-scaffold",
