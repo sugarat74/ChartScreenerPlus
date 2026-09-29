@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `ingestion-run-orchestration`
+- Current next ready feature: `indicators-compute`
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 35 tests incl. `ScrapeInstrumentCommandTest`; SPA lint 0 warnings/errors + build; engine 11 tests incl. `test_stooq.py`)
+- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 41 tests incl. `IngestionRunTest` + `ScrapeInstrumentCommandTest`; SPA lint 0 warnings/errors + build; engine 11 tests incl. `test_stooq.py`)
 
 ## Session Log
 
@@ -150,3 +150,16 @@
 - Status: `passing` — ready for independent validation (not `accepted`).
 - Validator verdict: independent `accept` (reran engine `pytest` 11 passed + `ruff` clean, `php artisan test` 35 passed/147 assertions, `ingestion:scrape` registered, `.\init.ps1` exit 0 no server, ports free; fixture audited for header/order/dupes; offline-only tests confirmed; engine writes no DB and Laravel persists; idempotency and no-write-on-failure proven). The blocked live Stooq source was accepted as a documented integration concern per the spec. Persisted: `ingestion-scraper-eod` → `accepted`.
 - Next best step: `ingestion-run-orchestration` (develop/verify against fakes while the live source stays blocked).
+
+### Session 012
+
+- Date: 2026-09-29
+- Goal: Implement `ingestion-run-orchestration`.
+- Completed: Two ledger migrations (`ingestion_runs`: status/universe_id nullable FK (set null)/started_at/finished_at/total/succeeded/failed/timestamps; `ingestion_run_items`: cascade FKs to runs+instruments, status, bars_stored, message, unique `(ingestion_run_id, instrument_id)`). Backed enums `App\Enums\IngestionRunStatus` (queued,running,completed,failed,partial) + `IngestionRunItemStatus` (success,failed) and models `IngestionRun`/`IngestionRunItem` (`#[Fillable]` + `casts()` + relationships). Extracted `App\Services\Ingestion\InstrumentIngestor::ingest(Instrument): int` (engine fetch + idempotent `daily_bars` upsert; `ingestDetailed()` also returns the skipped count) plus `App\Exceptions\EmptyIngestionResponseException`; refactored `ingestion:scrape` onto it with unchanged output. New `php artisan ingestion:run {--universe=sp500} {--retry=<runId>}` creates the run, processes each instrument in its own try/catch (one failure cannot abort the run), records success/failed items, and finalizes `completed`/`failed`/`partial` (`--retry` makes a NEW run with only the previously failed instruments and inherits the universe). Factories for run/items.
+- Verification run: `php artisan migrate --force` (2 new tables, batch 2) -> `php artisan migrate:rollback --force` (both rolled back) -> `php artisan migrate --force` (re-applied; DB left working); `php artisan db:table` confirmed the nullable set-null universe FK, cascade item FKs and unique item index; `php artisan test` -> **41 passed (213 assertions)**, exit 0 (6 new `IngestionRunTest` cases; `ScrapeInstrumentCommandTest` still green); `php artisan list` -> `ingestion:run`; `.\vendor\bin\pint --test` -> pass; `.\init.ps1` -> exit 0 (Laravel 41 tests + SPA lint/build + engine 11 tests, no server started).
+- Evidence captured: recorded in `feature_list.json` under `ingestion-run-orchestration`.
+- Files or artifacts updated: `database/migrations/2026_09_29_180000_create_ingestion_runs_table.php`, `database/migrations/2026_09_29_180001_create_ingestion_run_items_table.php`, `app/Enums/{IngestionRunStatus,IngestionRunItemStatus}.php`, `app/Exceptions/EmptyIngestionResponseException.php`, `app/Models/{IngestionRun,IngestionRunItem}.php`, `app/Services/Ingestion/InstrumentIngestor.php`, `app/Console/Commands/{RunIngestion.php,ScrapeInstrument.php}`, `database/factories/{IngestionRunFactory,IngestionRunItemFactory}.php`, `tests/Feature/IngestionRunTest.php`, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `docs/specs/ingestion-run-orchestration.md`, `PROGRESS.md`, `feature_list.json`. `frontend/`, `engine/`, `alphapulse/` and the market-data/auth schema untouched.
+- Known risk or unresolved issue: none blocking. The spec's `ingest(): int` signature could not carry the scrape command's skipped-row count, so `ingestDetailed()` was added and a dedicated empty-response exception was introduced (recorded as spec findings). Live ingestion is still unproven because the Stooq source remains blocked; runs are verified against `Http::fake`. No E2E harness exists (the CLI flow is covered by feature tests). Exit codes (completed/partial -> 0, failed -> 1) were not specified and are documented.
+- Status: `passing` — ready for independent validation (not `accepted`).
+- Validator verdict: independent `accept` (reran `php artisan test` 41 passed/213 assertions, `ingestion:run` registered, migrate rollback/migrate round-trip clean with verified set-null/cascade FKs + unique item index, `.\init.ps1` exit 0 no server, pint pass, `schedule:list` empty; scenarios completed/partial/failed asserted, a failure does not abort, retry reprocesses only failed instruments; tests offline). Persisted: `ingestion-run-orchestration` → `accepted`.
+- Next best step: `indicators-compute`.

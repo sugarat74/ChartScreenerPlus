@@ -246,14 +246,24 @@
     "depends_on": [
       "ingestion-scraper-eod"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "A run over a fixture universe reaches completed and stores its results",
       "A forced per-ticker failure yields a partial run with the failure recorded, not a crash",
       "One run can be re-run for the failed instruments"
     ],
-    "evidence": [],
-    "notes": "Implements the queued -> running -> completed/failed/partial lifecycle in docs/domain-model.md."
+    "evidence": [
+      "php artisan migrate --force -> 2026_09_29_180000_create_ingestion_runs_table + 2026_09_29_180001_create_ingestion_run_items_table DONE (batch 2); php artisan migrate:rollback --force -> both rolled back cleanly; php artisan migrate --force -> re-applied (clean round-trip, DB left working)",
+      "php artisan db:table ingestion_runs -> status varchar indexed, universe_id integer nullable FK (on delete: set null), started_at/finished_at datetime nullable, total/succeeded/failed integer default 0; php artisan db:table ingestion_run_items -> cascade FKs to ingestion_runs and instruments, unique(ingestion_run_id, instrument_id), bars_stored default 0, message text nullable",
+      "php artisan test -> 41 passed (213 assertions), exit 0; tests/Feature/IngestionRunTest.php adds 6 cases: all-success -> status completed, universe_id set, total/succeeded/failed = 2/2/0, started_at+finished_at set, 2 success items with bars_stored 2 and 3, 5 daily_bars; mixed -> status partial, 1 succeeded/1 failed, failed item has a non-empty message and 0 bars_stored, good instrument stored 2 bars and the failed instrument wrote none (assertDatabaseMissing); all-fail -> status failed, exit code 1, 0 succeeded/2 failed, both items failed with messages, 0 daily_bars; retry -> new run (2 runs total) with total=1 containing only the previously failed BBB instrument, completed, 4 bars stored, AAA absent from the retry items, Http::assertSentCount(3) and AAA requested exactly once (succeeded instrument not reprocessed); unknown universe slug and unknown --retry id both exit 1, create no run row and send no HTTP",
+      "ScrapeInstrumentCommandTest stays green (6 cases) after the InstrumentIngestor extraction; ingestion:scrape output is unchanged (Stored N bars ...; skipped M malformed rows / Engine failed / no EOD bars)",
+      "php artisan list -> ingestion:run 'Run EOD ingestion over a universe and record a per-instrument ledger'",
+      ".\\vendor\\bin\\pint --test <changed php files> -> pass (no style violations)",
+      ".\\init.ps1 -> exit 0 (Laravel 13.34.0 + 41 tests (213 assertions) + SPA lint 0 warnings/0 errors + SPA build + engine 11 tests), starts no server",
+      "Scope: only the two migrations, App\\Enums\\{IngestionRunStatus,IngestionRunItemStatus}, App\\Exceptions\\EmptyIngestionResponseException, App\\Models\\{IngestionRun,IngestionRunItem}, App\\Services\\Ingestion\\InstrumentIngestor, App\\Console\\Commands\\{RunIngestion,ScrapeInstrument}, the two factories, tests/Feature/IngestionRunTest.php and the docs/harness files changed; frontend/, engine/, alphapulse/ untouched; no scheduling, admin panel/UI, API endpoints, indicators or signals added",
+      "independent validator accept (2026-09-29): reran php artisan test 41 passed/213 assertions, ingestion:run registered, migrate rollback/migrate round-trip clean with verified set-null/cascade FKs + unique item index, init.ps1 exit 0 no server, pint pass, schedule:list empty; scenarios completed/partial/failed asserted, a failure does not abort (all-fail yields 2 items), retry creates a new run with only the previously failed instrument (AAA requested once); tests offline; frontend/, engine/, alphapulse/ untouched"
+    ],
+    "notes": "Laravel orchestrates and owns the ledger: ingestion_runs (status/universe_id/started_at/finished_at/total/succeeded/failed) + ingestion_run_items (status/bars_stored/message, unique per (ingestion_run_id, instrument_id), cascade FKs). App\\Enums\\IngestionRunStatus (queued,running,completed,failed,partial) and IngestionRunItemStatus (success,failed) drive the models' enum casts. App\\Services\\Ingestion\\InstrumentIngestor::ingest(Instrument): int extracts the engine fetch + idempotent daily_bars upsert (ingestDetailed() also returns the skipped count; empty engine payload raises EmptyIngestionResponseException); ingestion:scrape was refactored onto it with unchanged behavior. php artisan ingestion:run {--universe=sp500} {--retry=<runId>} creates the run, processes each instrument in its own try/catch (one failure cannot abort the run; per-item transactions), records the item, and finalizes (completed if failed=0, failed if succeeded=0, else partial). --retry creates a NEW run with only the previously failed instruments and inherits the universe_id. Exit codes: completed/partial -> 0, failed -> 1, pre-flight error -> 1. See docs/specs/ingestion-run-orchestration.md (Implementation Findings), ARCHITECTURE.md, CONSTRAINTS.md."
   },
   {
     "id": "indicators-compute",
