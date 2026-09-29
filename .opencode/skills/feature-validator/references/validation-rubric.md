@@ -21,9 +21,9 @@ Status convention:
 | Durable docs | Did durable knowledge land in the right artifact? | `../../../../AGENTS.md`, `../../../../ARCHITECTURE.md`, `../../../../CONSTRAINTS.md`, specs, progress are updated only when warranted. | Important rules remain only in chat/code, or docs are stale/duplicative. |
 | Handoff readiness | Can the next session continue safely? | `../../../../PROGRESS.md` and `feature_list.json` reflect actual state and next step. | State files lie, omit blockers, or require oral context. |
 
-## `init.sh` Validation Rule
+## `init.ps1` / `init.sh` Validation Rule
 
-After the repo has a runnable baseline, `init.sh` is expected to execute the non-blocking standard gate. It should not merely print the commands.
+After the repo has a runnable baseline, the startup script (`init.ps1` on Windows/PowerShell, `init.sh` on Git Bash) is expected to execute the non-blocking standard gate. It should not merely print the commands.
 
 Acceptable:
 
@@ -99,4 +99,4 @@ Update:
 - <state/doc artifact>
 ```
 
-The repair brief should not be vague. Prefer "change `init.sh` so it executes `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`, but does not start `pnpm dev`" over "improve init.sh".
+The repair brief should not be vague. Prefer "change `init.ps1` so it executes `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`, but does not start `pnpm dev`" over "improve init.ps1".

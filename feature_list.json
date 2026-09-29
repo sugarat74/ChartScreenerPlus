@@ -1,0 +1,406 @@
+[
+  {
+    "id": "repo-scaffold-laravel",
+    "area": "bootstrap",
+    "title": "Scaffold the Laravel application",
+    "user_visible_behavior": "A developer can start the Laravel app locally and receive a successful response from its health endpoint.",
+    "depends_on": [],
+    "status": "not_started",
+    "verification": [
+      "php artisan --version succeeds in the Laravel app directory",
+      "The app boots and GET /up (or equivalent health route) returns HTTP 200",
+      "The Laravel test suite runs (php artisan test)"
+    ],
+    "evidence": [],
+    "notes": "First slice of the Laravel + Python engine + React SPA target stack. Pre-bootstrap: no framework exists yet. See docs/technical-discovery.md."
+  },
+  {
+    "id": "repo-scaffold-frontend",
+    "area": "bootstrap",
+    "title": "Scaffold the React SPA",
+    "user_visible_behavior": "A developer can build and start the React SPA and see a placeholder page styled with the AlphaPulse Tailwind tokens.",
+    "depends_on": [],
+    "status": "not_started",
+    "verification": [
+      "npm install and npm run build succeed",
+      "The dev server serves a placeholder page that loads the DESIGN.md token stylesheet",
+      "Type checking / lint runs clean"
+    ],
+    "evidence": [],
+    "notes": "Reuse alphapulse/ only as a visual reference; do not ship its Express server or seeded data. See DESIGN.md."
+  },
+  {
+    "id": "app-shell-navigation",
+    "area": "frontend",
+    "title": "Build the app shell and navigation",
+    "user_visible_behavior": "A user sees the AlphaPulse header, EOD status, primary action and tab navigation (Screener, Chart, Admin, Portal) with the design tokens applied.",
+    "depends_on": [
+      "repo-scaffold-frontend"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Header and tab bar render per DESIGN.md (2px borders, hard shadows, accent button, mono metrics)",
+      "Tabs switch the active surface without a full reload",
+      "Layout is usable at desktop and tablet widths"
+    ],
+    "evidence": [],
+    "notes": "Visual source of truth is DESIGN.md and the alphapulse/ prototype. Copilot tab is out of MVP scope, do not add it."
+  },
+  {
+    "id": "python-engine-scaffold",
+    "area": "bootstrap",
+    "title": "Scaffold the Python engine",
+    "user_visible_behavior": "A developer can run the Python engine locally and get a healthy response.",
+    "depends_on": [],
+    "status": "not_started",
+    "verification": [
+      "The engine starts from a virtual environment",
+      "A health check (endpoint or CLI command) reports success",
+      "The test runner executes an initial test"
+    ],
+    "evidence": [],
+    "notes": "Owns scraping, indicator computation and signal detection. See docs/technical-discovery.md for the Laravel <-> engine boundary open question."
+  },
+  {
+    "id": "db-schema-market-data",
+    "area": "data",
+    "title": "Create the market-data database schema",
+    "user_visible_behavior": "Migrations create and roll back the tables for instruments, universes, daily bars, indicator snapshots and signals.",
+    "depends_on": [
+      "repo-scaffold-laravel"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Migrations run and roll back cleanly",
+      "Daily bars are unique per (instrument, date)",
+      "A test persists and reads back one instrument with one bar, one snapshot and one signal"
+    ],
+    "evidence": [],
+    "notes": "Entities and relationships are defined in docs/domain-model.md."
+  },
+  {
+    "id": "auth-registration-login",
+    "area": "auth",
+    "title": "Register and log in a user",
+    "user_visible_behavior": "A Visitor can create an account and sign in, and receives an authenticated session.",
+    "depends_on": [
+      "repo-scaffold-laravel"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Registration validates input and creates a user",
+      "Login with valid credentials returns an authenticated session; invalid credentials fail",
+      "Logout revokes the session"
+    ],
+    "evidence": [],
+    "notes": "See docs/user-and-access-model.md. Email verification depth is an implementation-time question."
+  },
+  {
+    "id": "auth-roles-admin",
+    "area": "auth",
+    "title": "Enforce admin role server-side",
+    "user_visible_behavior": "Admin-only endpoints reject non-admin users, regardless of the UI.",
+    "depends_on": [
+      "auth-registration-login"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A registered non-admin receives 403 on an admin-only route",
+      "An admin account reaches the admin-only route",
+      "A test covers both cases"
+    ],
+    "evidence": [],
+    "notes": "Admin is granted out of band (seed/manual), never self-service. See docs/user-and-access-model.md."
+  },
+  {
+    "id": "universe-sp500-seed",
+    "area": "data",
+    "title": "Seed the S&P 500 universe",
+    "user_visible_behavior": "The S&P 500 universe is populated with instruments carrying ticker, company, sector and exchange.",
+    "depends_on": [
+      "db-schema-market-data"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Seeding creates the S&P 500 universe and its instruments",
+      "Instrument counts and a spot-checked ticker match the source list",
+      "Re-seeding does not duplicate instruments"
+    ],
+    "evidence": [],
+    "notes": "Constituent-list source and refresh cadence are implementation-time questions (docs/risks-and-open-questions.md)."
+  },
+  {
+    "id": "ingestion-scraper-eod",
+    "area": "ingestion",
+    "title": "Scrape EOD bars for one instrument",
+    "user_visible_behavior": "The engine fetches one instrument's end-of-day OHLCV from the public source and stores its daily bars.",
+    "depends_on": [
+      "python-engine-scaffold",
+      "db-schema-market-data",
+      "universe-sp500-seed"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A single-ticker fetch stores correctly parsed OHLCV bars",
+      "Re-running does not duplicate the same bar date (upsert)",
+      "Parsing is tested against a saved fixture, not only live network"
+    ],
+    "evidence": [],
+    "notes": "Data source and its legality are a blocking open question; treat live scraping as an integration concern."
+  },
+  {
+    "id": "ingestion-run-orchestration",
+    "area": "ingestion",
+    "title": "Orchestrate a full Ingestion Run",
+    "user_visible_behavior": "An Ingestion Run processes the whole universe and records an overall status plus per-instrument success or failure.",
+    "depends_on": [
+      "ingestion-scraper-eod"
+    ],
+    "status": "not_started",
+    "verification": [
+      "A run over a fixture universe reaches completed and stores its results",
+      "A forced per-ticker failure yields a partial run with the failure recorded, not a crash",
+      "One run can be re-run for the failed instruments"
+    ],
+    "evidence": [],
+    "notes": "Implements the queued -> running -> completed/failed/partial lifecycle in docs/domain-model.md."
+  },
+  {
+    "id": "indicators-compute",
+    "area": "engine",
+    "title": "Compute indicator snapshots",
+    "user_visible_behavior": "The engine computes and stores indicator snapshots (SMA/EMA, RSI, MACD, ADX, Bollinger, RVOL) for each stored daily bar.",
+    "depends_on": [
+      "ingestion-run-orchestration"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Computed indicators match hand-calculated fixtures for a small set of tickers",
+      "Instruments with insufficient history are flagged rather than producing wrong values",
+      "Snapshots are reproducible from stored bars without network access"
+    ],
+    "evidence": [],
+    "notes": "Exact indicator parameters are an implementation-time question; fixtures are the source of correctness."
+  },
+  {
+    "id": "signals-detect",
+    "area": "engine",
+    "title": "Detect deterministic signals",
+    "user_visible_behavior": "The engine stores deterministic signals per instrument: moving-average crosses, trend/MA alignment, breakout with RVOL, RSI and MACD conditions.",
+    "depends_on": [
+      "indicators-compute"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Each signal rule has a fixture test for positive and negative cases",
+      "Signals are date-stamped and recomputed per Ingestion Run",
+      "A signal that no longer holds disappears on the next run"
+    ],
+    "evidence": [],
+    "notes": "MVP uses deterministic Signals only; geometric chartist patterns are later scope (docs/build-brief.md)."
+  },
+  {
+    "id": "ingestion-scheduler",
+    "area": "operations",
+    "title": "Schedule the daily EOD ingestion",
+    "user_visible_behavior": "An Ingestion Run executes automatically after Market Close on trading days.",
+    "depends_on": [
+      "ingestion-run-orchestration",
+      "indicators-compute",
+      "signals-detect"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The scheduler triggers a run after the configured close time",
+      "The schedule is DST-aware and skips non-trading days",
+      "A missed run can still be triggered manually"
+    ],
+    "evidence": [],
+    "notes": "Scheduling across DST and US market holidays is an implementation-time question."
+  },
+  {
+    "id": "admin-ingestion-panel",
+    "area": "admin",
+    "title": "Admin panel to control ingestion",
+    "user_visible_behavior": "An Admin triggers or re-runs an Ingestion Run and sees status, telemetry and the run log.",
+    "depends_on": [
+      "ingestion-run-orchestration",
+      "auth-roles-admin",
+      "app-shell-navigation"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Admin can trigger a run and see it move through queued/running/completed",
+      "Admin can re-run failed instruments",
+      "The log stream shows per-instrument results; non-admins are denied"
+    ],
+    "evidence": [],
+    "notes": "Mirrors the admin surface in the alphapulse prototype, but only for real runs/logs."
+  },
+  {
+    "id": "instrument-detail-api",
+    "area": "api",
+    "title": "Expose instrument detail API",
+    "user_visible_behavior": "An API response provides an instrument's daily bars plus its latest snapshot and signals.",
+    "depends_on": [
+      "signals-detect",
+      "db-schema-market-data"
+    ],
+    "status": "not_started",
+    "verification": [
+      "GET of an instrument returns ordered bars, latest indicators and active signals",
+      "An unknown ticker returns a not-found response",
+      "Response shape is covered by a test"
+    ],
+    "evidence": [],
+    "notes": "Backs the chart screen. Keep payloads bounded for responsive charts."
+  },
+  {
+    "id": "screener-api",
+    "area": "api",
+    "title": "Expose the screener API",
+    "user_visible_behavior": "An API applies multi-criteria technical filters over the universe and returns a ranked candidate list.",
+    "depends_on": [
+      "signals-detect",
+      "db-schema-market-data"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Filters (pattern/signal, RSI range, min RVOL, price above SMA200, MA cross) narrow results correctly on fixtures",
+      "Supported sort orders change the ranking",
+      "An empty result returns an empty list, not an error"
+    ],
+    "evidence": [],
+    "notes": "Filter set comes from FilterState in the alphapulse prototype; implement only MVP-relevant filters."
+  },
+  {
+    "id": "screener-filters-ui",
+    "area": "screener",
+    "title": "Screener filter UI",
+    "user_visible_behavior": "A Visitor sets technical filters and receives a candidate list from the screener API.",
+    "depends_on": [
+      "screener-api",
+      "app-shell-navigation"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Changing filters issues a refreshed request and updates the list",
+      "Loading and empty states are visible",
+      "The filter controls follow DESIGN.md"
+    ],
+    "evidence": [],
+    "notes": "Anonymous browsing must work without login (docs/user-and-access-model.md)."
+  },
+  {
+    "id": "candidate-list-ranking",
+    "area": "screener",
+    "title": "Rank and sort the candidate list",
+    "user_visible_behavior": "A user sorts the candidate list by RVOL, confidence/signal strength, RSI or change, and the ranking updates.",
+    "depends_on": [
+      "screener-api",
+      "app-shell-navigation"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Each supported sort order reorders the visible list consistently",
+      "Sorting is reflected in the API request, not only client-side",
+      "The selected sort persists while filters change"
+    ],
+    "evidence": [],
+    "notes": "Keep sort options limited to those the screener API supports."
+  },
+  {
+    "id": "chart-interactive",
+    "area": "chart",
+    "title": "Interactive candidate chart",
+    "user_visible_behavior": "A user opens a candidate and sees an interactive candlestick chart with moving averages, volume and the signal's pivot/stop/target levels.",
+    "depends_on": [
+      "instrument-detail-api",
+      "app-shell-navigation"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The chart renders price, volume and MA overlays from the detail API",
+      "Signal reference levels are drawn from the instrument's active signal",
+      "The chart handles a ticker with insufficient history gracefully"
+    ],
+    "evidence": [],
+    "notes": "Charting library choice is a blocking open question (TradingView Lightweight Charts vs embedded widget)."
+  },
+  {
+    "id": "watchlist",
+    "area": "watchlist",
+    "title": "Manage a personal watchlist",
+    "user_visible_behavior": "A Registered User adds and removes instruments from their own watchlist and sees its current entries.",
+    "depends_on": [
+      "auth-registration-login",
+      "instrument-detail-api",
+      "app-shell-navigation"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Adding and removing an instrument updates the user's watchlist",
+      "A user cannot see or modify another user's watchlist",
+      "Anonymous access redirects to sign-in"
+    ],
+    "evidence": [],
+    "notes": "Ownership boundaries are defined in docs/user-and-access-model.md."
+  },
+  {
+    "id": "saved-screeners",
+    "area": "screener",
+    "title": "Save and re-apply screeners",
+    "user_visible_behavior": "A Registered User saves the current filter set as a named Screener and re-applies it later.",
+    "depends_on": [
+      "auth-registration-login",
+      "screener-api",
+      "app-shell-navigation"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Saving persists the filter definition under the user's ownership",
+      "Applying a saved Screener restores its filters and results",
+      "A second user cannot read or delete the first user's Screener"
+    ],
+    "evidence": [],
+    "notes": "Implements the Saved Screener lifecycle in docs/domain-model.md."
+  },
+  {
+    "id": "user-portal",
+    "area": "portal",
+    "title": "User portal for screeners and watchlist",
+    "user_visible_behavior": "A Registered User sees and manages their saved Screeners and watchlist in one place.",
+    "depends_on": [
+      "watchlist",
+      "saved-screeners",
+      "app-shell-navigation"
+    ],
+    "status": "not_started",
+    "verification": [
+      "The portal lists the user's saved Screeners and watchlist entries",
+      "Deleting a Screener removes it from the list",
+      "Only the owner's data is shown"
+    ],
+    "evidence": [],
+    "notes": "The mockup also shows a decorative PRO plan and P&L; those are explicitly out of scope."
+  },
+  {
+    "id": "access-control-guard",
+    "area": "security",
+    "title": "Enforce anonymous vs registered access",
+    "user_visible_behavior": "Anonymous visitors can browse the screener and charts, while saving screeners, editing the watchlist and admin actions require authentication and enforce ownership.",
+    "depends_on": [
+      "watchlist",
+      "saved-screeners",
+      "screener-filters-ui"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Anonymous browse of screener and chart works",
+      "Protected actions require auth and redirect anonymous users",
+      "Ownership is enforced server-side for every owned resource"
+    ],
+    "evidence": [],
+    "notes": "Consolidates the access rules in docs/user-and-access-model.md into enforced behavior."
+  }
+]

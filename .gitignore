@@ -29,3 +29,6 @@ Homestead.json
 .phpactor.json
 auth.json
 ai-expert-project-main.zip
+
+# Local mirror of .opencode exposed as .agents (junction/symlink)
+/.agents

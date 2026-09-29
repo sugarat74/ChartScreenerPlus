@@ -97,7 +97,7 @@ Before finishing, check:
 - The tasks are ordered and executable.
 - Verification includes commands or manual checks available in the repo's current state.
 - If a persistent E2E command exists and the feature changes user-visible behavior, authentication, authorization, routing, or API flows, the verification plan should include adding/updating focused E2E coverage or explicitly justify why unit/integration coverage is enough.
-- For shell scripts such as `init.sh`, the spec states whether the script must execute checks, print guidance, start services, or provide modes. The default harness rule is: `init.sh` executes non-blocking startup/verification checks and must not start long-running dev servers.
+- For the startup script such as `init.ps1` (or the optional `init.sh`), the spec states whether the script must execute checks, print guidance, start services, or provide modes. The default harness rule is: the startup script executes non-blocking startup/verification checks and must not start long-running dev servers.
 - Durable documentation impact is explicit: `../../../ARCHITECTURE.md`, `../../../CONSTRAINTS.md`, `../../../AGENTS.md`, and other durable docs are each marked create/update/not needed with a reason.
 - Non-goals prevent scope creep.
 - Unknowns are explicit and do not hide blocking ambiguity.

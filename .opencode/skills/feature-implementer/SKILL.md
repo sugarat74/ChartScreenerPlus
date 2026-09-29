@@ -81,7 +81,7 @@ Rules:
 
 Run the spec's verification plan and the repo's standard gate. If a required check cannot run, document exactly why and what is missing.
 
-If the feature creates or updates `init.sh`, make it an executable non-blocking gate: it should run the standard verification checks for the current repo state and must not start long-running dev servers. A script that only prints the checks is not enough unless the spec explicitly says this repository is still pre-bootstrap.
+If the feature creates or updates `init.ps1` (or the optional `init.sh`), make it a non-blocking gate: it should run the standard verification checks for the current repo state and must not start long-running dev servers. A script that only prints the checks is not enough unless the spec explicitly says this repository is still pre-bootstrap.
 
 Self-verification should include the strongest applicable levels available today:
 

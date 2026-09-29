@@ -112,11 +112,11 @@ Use these rules:
 - <Expected result.>
 - If the repo has a persistent E2E command such as `pnpm test:e2e` and this feature changes user-visible behavior, authentication, authorization, routing, or API flows, add or update focused E2E coverage and include the E2E command here. If E2E is not appropriate, state why.
 
-For `init.sh`, be explicit:
+For the startup script (`init.ps1` on Windows/PowerShell, `init.sh` on Git Bash), be explicit:
 
-- `./init.sh` should execute the non-blocking standard gate for the current repo state.
-- `./init.sh` must not start long-running processes such as `pnpm dev`.
-- It may print manual follow-up commands after the non-blocking checks pass.
+- the script should execute the non-blocking standard gate for the current repo state.
+- the script must not start long-running processes such as `pnpm dev`.
+- it may print manual follow-up commands after the non-blocking checks pass.
 
 ## Evidence To Capture
 

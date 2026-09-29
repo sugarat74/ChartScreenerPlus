@@ -29,10 +29,10 @@ Read optional docs only when relevant:
 
 Before writing code:
 
-1. Confirm the working directory with `pwd`.
+1. Confirm the working directory with `Get-Location` (Windows/PowerShell) or `pwd` (POSIX).
 2. Read `../../../../PROGRESS.md` for current verified state and next step.
 3. Read `feature_list.json` and pick the first ready unfinished feature in list order.
-4. Run `./init.sh`.
+4. Run `.\init.ps1` (Windows/PowerShell), or `./init.sh` if using Git Bash.
 5. If baseline verification fails, fix the baseline before adding new feature work.
 
 ## Working Rules
@@ -47,7 +47,7 @@ Before writing code:
 
 - `feature_list.json`: source of truth for feature state.
 - `../../../../PROGRESS.md`: current verified state and lightweight session log.
-- `init.sh`: standard startup and verification path.
+- `init.ps1`: standard Windows (PowerShell) startup and verification path. `init.sh` is the optional cross-platform/Git Bash equivalent.
 
 ## Definition Of Done
 
@@ -66,12 +66,52 @@ Before ending a session:
 1. Update `../../../../PROGRESS.md`.
 2. Update `feature_list.json`.
 3. Record unresolved risks or blockers.
-4. Leave the repo clean enough for the next session to run `./init.sh` immediately.
+4. Leave the repo clean enough for the next session to run `.\init.ps1` immediately.
 ```
 
-## `init.sh`
+## `init.ps1`
 
-Purpose: canonical start/verification path. Use a real script once the stack exists; use the pre-bootstrap version if it does not.
+Purpose: canonical Windows (PowerShell 5.1) start/verification path. Prefer this on Windows repositories. Use a real script once the stack exists; use the pre-bootstrap version if it does not.
+
+### Pre-bootstrap variant
+
+```powershell
+#Requires -Version 5.1
+$ErrorActionPreference = "Stop"
+
+Write-Host "Repository: $(Get-Location)"
+Write-Host "Harness status: pre-bootstrap"
+Write-Host "Application stack is not initialized yet."
+Write-Host "Next step: choose the first feature from feature_list.json and perform technical bootstrap."
+Write-Host "Expected future commands should be recorded here after bootstrap."
+```
+
+### Bootstrapped variant
+
+```powershell
+#Requires -Version 5.1
+$ErrorActionPreference = "Stop"
+
+$InstallCmd = "[replace]"  # e.g. "composer install"
+$VerifyCmd  = "[replace]"  # e.g. "vendor\bin\phpunit"
+$StartCmd   = "[replace]"  # e.g. "php artisan serve"
+
+Write-Host "Repository: $(Get-Location)"
+Write-Host "Installing dependencies..."
+if ($InstallCmd -ne "[replace]") { Invoke-Expression $InstallCmd }
+
+Write-Host "Running baseline verification..."
+if ($VerifyCmd -ne "[replace]") { Invoke-Expression $VerifyCmd }
+
+Write-Host "Startup command: $StartCmd"
+if ($env:RUN_START_COMMAND -eq "1" -and $StartCmd -ne "[replace]") {
+  Invoke-Expression $StartCmd
+}
+```
+
+## `init.sh` (optional, cross-platform / Git Bash)
+
+Purpose: optional equivalent for environments that also have Git Bash. Skip it when the repository is Windows-only. Keep it behavior-compatible with `init.ps1`.
 
 ### Pre-bootstrap variant
 
@@ -119,7 +159,7 @@ Purpose: current verified state first, lightweight history second.
 ## Current Verified State
 
 - Repository root: `[absolute or relative path]`
-- Standard startup path: `./init.sh`
+- Standard startup path: `.\init.ps1` (Windows) or `./init.sh` (Git Bash)
 - Standard verification path: `[command or provisional: not bootstrapped yet]`
 - Current next ready feature: `[feature id]`
 - Current blocker: `[none / blocker]`
@@ -131,7 +171,7 @@ Purpose: current verified state first, lightweight history second.
 
 - Date: `[date]`
 - Goal: Create the minimal startup harness.
-- Completed: `../../../../AGENTS.md`, `init.sh`, `../../../../PROGRESS.md`, and `feature_list.json` created or updated.
+- Completed: `../../../../AGENTS.md`, `init.ps1`, `../../../../PROGRESS.md`, and `feature_list.json` created or updated.
 - Verification run: `[json validation / chmod / none]`
 - Evidence captured: `[what was checked]`
 - Files or artifacts updated: `[list]`

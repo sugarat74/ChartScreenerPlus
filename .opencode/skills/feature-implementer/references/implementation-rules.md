@@ -28,27 +28,27 @@ Feature status convention:
 
 Do not use `passing` to mean final approval. Final approval is a validator verdict persisted by the main orchestrator as `accepted` in `feature_list.json`, with concise evidence in `feature_list.json` and/or `../../../../PROGRESS.md`.
 
-## `init.sh` Rule
+## `init.ps1` Rule (with optional `init.sh`)
 
-Once a repository has a runnable baseline, `init.sh` should be an executable non-blocking gate, not a help screen.
+Once a repository has a runnable baseline, the startup script (`init.ps1` on Windows/PowerShell, `init.sh` on Git Bash) should be a non-blocking gate, not a help screen.
 
 Default behavior:
 
 - execute the standard checks that can run without external long-lived services,
-- fail fast on errors via `set -euo pipefail`,
+- fail fast on errors (`$ErrorActionPreference = "Stop"` in PowerShell, `set -euo pipefail` in bash),
 - avoid starting blocking commands such as `pnpm dev`,
 - optionally print manual follow-up commands after checks pass.
 
 For a Next.js baseline, a good default is:
 
-```bash
+```powershell
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
 ```
 
-Only allow an informational-only `init.sh` during an explicitly pre-bootstrap phase.
+Only allow an informational-only startup script during an explicitly pre-bootstrap phase.
 
 Use the strongest applicable available checks:
 
