@@ -162,14 +162,24 @@
     "depends_on": [
       "auth-registration-login"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "A registered non-admin receives 403 on an admin-only route",
       "An admin account reaches the admin-only route",
       "A test covers both cases"
     ],
-    "evidence": [],
-    "notes": "Admin is granted out of band (seed/manual), never self-service. See docs/user-and-access-model.md."
+    "evidence": [
+      "php artisan migrate --force -> 2026_09_29_170000_add_role_to_users_table DONE; php artisan db:table users shows role varchar default 'user' + users_role_index",
+      "php artisan migrate:rollback --force -> role migration rolled back; php artisan migrate --force -> re-applied cleanly (SQLite down() drops the index before the column)",
+      "php artisan test -> 27 passed (101 assertions), exit 0; tests/Feature/AdminAccessTest.php adds 7 cases: guest GET /api/admin/ping 401; authenticated role=user 403; admin 200 + {ok:true}; registration payload with role=admin still yields role=user (DB, model and JSON response); new User(['role'=>'admin']) is ignored and role stays 'user'; app:make-admin promotes an existing account to admin; app:make-admin fails (exit 1) for an unknown email",
+      "php artisan route:list --path=api -v -> GET api/admin/ping with api + Illuminate\\Auth\\Middleware\\Authenticate:sanctum + App\\Http\\Middleware\\EnsureUserIsAdmin (guests 401, non-admins 403)",
+      "php artisan list -> app:make-admin registered by auto-discovery of app/Console/Commands (no bootstrap change needed)",
+      "manual smoke on the local DB: tinker-created user role=user -> php artisan app:make-admin role-smoke@example.com -> 'Granted admin' + role=admin -> smoke user deleted (0 rows)",
+      ".\\init.ps1 -> Laravel 13.34.0 + 27 tests (101 assertions) + SPA lint 0 errors + SPA build + engine 1 test, exit 0, starts no server",
+      "Scope: only the migration, User model, EnsureUserIsAdmin middleware, bootstrap/app.php alias, routes/api.php admin group, MakeAdmin command, UserFactory admin() state, AdminAccessTest, docs and harness files changed; engine/, frontend/, alphapulse/ and the market-data schema untouched; no admin UI/ingestion endpoints, multi-role RBAC, teams/ownership or self-service role selection added",
+      "independent validator accept (2026-09-29): reran php artisan test (27 passed, 101 assertions), route:list (api/admin/ping guarded by auth:sanctum + EnsureUserIsAdmin), migrate rollback/migrate round-trip with users_role_index, init.ps1 exit 0 no server; live probe (serve :8126, torn down) guest 401 / session non-admin 403 / admin 200; registration payload role=admin -> 201 with JSON+DB role=user and hashed password not serialized; model default confirmed not to override DB-hydrated admin role; frontend/, engine/, alphapulse/ untouched"
+    ],
+    "notes": "Role model: users.role string default 'user' (indexed); User::ROLE_USER/ROLE_ADMIN + User::isAdmin(); role is NOT fillable (structural privilege-escalation guard) and a model-level default keeps new instances/register responses at 'user'. Admin boundary: App\\Http\\Middleware\\EnsureUserIsAdmin registered as the 'admin' alias; routes/api.php admin group uses ['auth:sanctum','admin'] so guests get 401 and non-admins 403; GET /api/admin/ping is a guard probe only. Admin granted out of band via php artisan app:make-admin {email} (forceFill, fails for unknown email) or UserFactory::admin(); no HTTP path sets a role. See docs/specs/auth-roles-admin.md, ARCHITECTURE.md, CONSTRAINTS.md, docs/user-and-access-model.md."
   },
   {
     "id": "universe-sp500-seed",

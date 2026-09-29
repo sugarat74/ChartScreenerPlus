@@ -40,6 +40,14 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST** write session-auth feature tests by sending an `Origin`/`Referer` that matches a `sanctum.stateful` domain (set it explicitly in the test) and by calling `$this->app['auth']->forgetGuards()` between simulated requests. Reason: Sanctum only applies the session middleware to stateful-looking requests, and a single test app instance caches guard users across requests unlike real HTTP.
 - Passwords **MUST** be hashed via the `User` model's `hashed` cast and **MUST NOT** appear in JSON responses (the model's `#[Hidden]` keeps `password`/`remember_token` out).
 
+## Authorization
+
+- `users.role` **MUST** stay limited to `user`/`admin`, default `user`, and **MUST NOT** be added to `User`'s `#[Fillable]`. Reason: `role` is the privilege boundary; keeping it out of mass assignment makes privilege escalation via a request payload structurally impossible (registration validates only `name`/`email`/`password` and the DB/model default applies).
+- `role` **MUST** only change **out of band**: the `php artisan app:make-admin {email}` command for an existing account, or `UserFactory::admin()` in tests. There **MUST NOT** be any HTTP endpoint that sets or accepts a role. Reason: admin is operator-granted, never self-service.
+- Admin endpoints **MUST** be enforced server-side by the `admin` middleware alias (`App\Http\Middleware\EnsureUserIsAdmin`), applied **after** `auth:sanctum` on the admin route group. Guests **MUST** get 401 and authenticated non-admins **MUST** get 403; hiding admin UI is not access control. Reason: the API is reachable independently of the SPA, and the middleware ordering defines the status contract.
+- New admin surfaces **MUST** be added under the existing `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')` group rather than registering a separate guard. Reason: one boundary keeps the 401/403 contract consistent.
+- **MUST NOT** expand beyond the two roles or introduce a permissions matrix/teams/ownership/revocation here. Reason: multi-role RBAC is out of scope for this feature.
+
 ## Engine
 
 - **MUST** keep the Python engine in `engine/` targeting **Python 3.10**, as a **FastAPI** HTTP service with its own venv and `requirements*.txt`. Reason: it is a separate runtime surface and the Laravel <-> engine boundary is HTTP.

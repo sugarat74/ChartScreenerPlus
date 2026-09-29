@@ -12,6 +12,8 @@
 - `registered` (user account)
 - `admin` (privileged account)
 
+**Concrete storage:** every account row carries a single `role` column (`users.role`), a string defaulting to `user`; the two stored values are `user` (Registered User) and `admin` (Admin). `visitor` is implicit — it means "no authenticated account", not a stored role. The model exposes `User::ROLE_USER` / `User::ROLE_ADMIN` and `User::isAdmin()`. There is no multi-role or permissions table.
+
 ## Permissions
 
 | Capability | Visitor | Registered User | Admin |
@@ -35,6 +37,8 @@
 - Browsing requires no session.
 - Saving a Screener, editing a Watchlist, or running ingestion requires authentication.
 - Only Admin-role accounts see the Admin panel; hiding it in the UI is not sufficient, the API must enforce the role.
+- **Enforcement mechanism (implemented):** admin API routes are grouped under `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')` in `routes/api.php`. `auth:sanctum` rejects a guest with **401**; the `admin` middleware alias (`App\Http\Middleware\EnsureUserIsAdmin`) then rejects an authenticated non-admin with **403**. An Admin passes.
+- **Role granting:** registration and every request can only ever produce `role=user`. The role is not mass-assignable and no endpoint accepts it. Admin is granted out of band with `php artisan app:make-admin {email}` (promotes an existing account; unknown email fails) or `UserFactory::admin()` in tests.
 - Registration is email-based; no paid plan gating in the MVP.
 
 ## Revocation / Expiry

@@ -44,6 +44,15 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - The SPA client is `frontend/src/lib/api.ts` (fetch, `credentials: 'include'`, `X-XSRF-TOKEN` echoed from the `XSRF-TOKEN` cookie, `/sanctum/csrf-cookie` before mutations). Auth state is `frontend/src/auth/` (`AuthContext.tsx` provider, `context.ts`, `useAuth`), bootstrapped from `GET /api/user`.
 - **Dev same-origin model:** the Vite dev server proxies `/api` and `/sanctum` to `http://127.0.0.1:8000`, so the browser is same-origin and cookies/CSRF work without CORS. `SANCTUM_STATEFUL_DOMAINS` lists `localhost`, `127.0.0.1`, `localhost:5173` and `127.0.0.1:5173`. Production is expected to serve the SPA and API from the same origin.
 
+## Authorization And Admin Boundary
+
+- Accounts carry a single `role` string on `users.role`, defaulting to `user`. Two roles exist: `User::ROLE_USER` (`user`) and `User::ROLE_ADMIN` (`admin`); `User::isAdmin()` is the only check callers need. Multi-role/RBAC, teams and ownership are out of scope.
+- The role is **not** mass-assignable (`role` is deliberately absent from `User`'s `#[Fillable]`), so it can never be set through registration or any request payload. The DB/model default keeps new accounts at `user`.
+- Admin is enforced **server-side** by `App\Http\Middleware\EnsureUserIsAdmin` (alias `admin`, registered in `bootstrap/app.php`): the authenticated user must exist and be an admin, otherwise `abort(403)`.
+- Admin-only routes live in a dedicated group in `routes/api.php`: `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')`. Ordering matches the status contract — guests fail `auth:sanctum` with **401**, authenticated non-admins fail `admin` with **403**, admins pass.
+- `GET /api/admin/ping` is the current member of that group and exists only as a guard probe (`{ok:true}`); later admin features (`admin-ingestion-panel`) extend the same group. It is not product behavior.
+- Admin is granted **out of band only** via `php artisan app:make-admin {email}` (promotes an existing account, fails if the email is unknown) or `UserFactory::admin()` in tests. There is no HTTP path to grant admin.
+
 ## Dependency Direction
 
 - The SPA talks to Laravel over HTTP (JSON API); the auth endpoints above are the first ones. There is no code sharing between `frontend/` and the Laravel app.

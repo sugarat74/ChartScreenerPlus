@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `universe-sp500-seed` or `auth-roles-admin`
+- Current next ready feature: `universe-sp500-seed`
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 20 tests incl. `AuthTest` (post-repair); SPA lint 0 warnings/errors + build; engine 1 test)
+- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 27 tests incl. `AdminAccessTest`; SPA lint 0 warnings/errors + build; engine 1 test)
 
 ## Session Log
 
@@ -106,3 +106,16 @@
 - Status: `passing` again — ready for independent re-validation (not `accepted`).
 - Re-validation verdict: independent `accept` (re-ran `php artisan test` 20 passed/82 assertions, `route:list`, SPA lint/build, `.\init.ps1` exit 0 no server; adversarial non-stateful register/login now return 400 with 0 users; stateful proxy flow 201/200/204/401/422/200; passwords hashed/never returned; other surfaces untouched). Persisted: `auth-registration-login` → `accepted`.
 - Next best step: `universe-sp500-seed` or `auth-roles-admin`.
+
+### Session 009
+
+- Date: 2026-09-29
+- Goal: Implement `auth-roles-admin`.
+- Completed: Added `users.role` (string, default `user`, indexed) via `2026_09_29_170000_add_role_to_users_table.php`; `User::ROLE_USER`/`User::ROLE_ADMIN` constants, `User::isAdmin()` and a model-level default `role=user` (the DB default is not hydrated back into new instances, which would otherwise make register/factory echo `role: null`). `role` stays out of `#[Fillable]`. New `App\Http\Middleware\EnsureUserIsAdmin` (403 unless authenticated admin) registered as the `admin` alias in `bootstrap/app.php`. Admin route group in `routes/api.php`: `Route::middleware(['auth:sanctum','admin'])->prefix('admin')` with guard probe `GET /api/admin/ping` returning `{ok:true}`. Out-of-band grant: `php artisan app:make-admin {email}` (promotes an existing account via `forceFill`, fails for unknown email) and `UserFactory::admin()`. New `tests/Feature/AdminAccessTest.php` (7 cases).
+- Verification run: `php artisan migrate --force` (role column + `users_role_index` present), `php artisan migrate:rollback --force` then `migrate --force` (clean round-trip), `php artisan test` → **27 passed (101 assertions)**, exit 0; `php artisan route:list --path=api -v` → `GET api/admin/ping` with `Authenticate:sanctum` + `EnsureUserIsAdmin`; `php artisan list` shows `app:make-admin`; manual tinker smoke (create → `role=user`, `app:make-admin` → `role=admin`, then deleted the smoke user); `.\init.ps1` → Laravel 27 tests + SPA lint 0 errors + build + engine 1 test, exit 0, no server started.
+- Evidence captured: recorded in `feature_list.json` under `auth-roles-admin`.
+- Files or artifacts updated: `database/migrations/2026_09_29_170000_add_role_to_users_table.php`, `app/Models/User.php`, `app/Http/Middleware/EnsureUserIsAdmin.php`, `app/Console/Commands/MakeAdmin.php`, `bootstrap/app.php`, `routes/api.php`, `database/factories/UserFactory.php`, `tests/Feature/AdminAccessTest.php`, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `docs/user-and-access-model.md`, `docs/specs/auth-roles-admin.md`, `PROGRESS.md`, `feature_list.json`. `engine/`, `frontend/`, `alphapulse/` and the market-data schema untouched.
+- Known risk or unresolved issue: none blocking. `GET /api/admin/ping` is deliberately a guard probe, not product behavior; `admin-ingestion-panel` extends the same group. No frontend/E2E harness exists; the API flows are covered at the feature-test level (per the spec). Admin grants are not audit-logged (a future operations concern).
+- Status: `passing` — ready for independent validation (not `accepted`).
+- Validator verdict: independent `accept` (reran `php artisan test` 27 passed/101 assertions, `route:list`, migrate rollback/migrate round-trip, `.\init.ps1` exit 0 no server; live probe on :8126 torn down → guest 401, session non-admin 403, admin 200; registration `role=admin` → 201 with JSON/DB `role=user` and hashed password not serialized; model default confirmed not to override the DB-hydrated admin role; other surfaces untouched). Persisted: `auth-roles-admin` → `accepted`.
+- Next best step: `universe-sp500-seed`.
