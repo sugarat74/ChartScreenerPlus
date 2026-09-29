@@ -217,14 +217,26 @@
       "db-schema-market-data",
       "universe-sp500-seed"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "A single-ticker fetch stores correctly parsed OHLCV bars",
       "Re-running does not duplicate the same bar date (upsert)",
       "Parsing is tested against a saved fixture, not only live network"
     ],
-    "evidence": [],
-    "notes": "Data source and its legality are a blocking open question; treat live scraping as an integration concern."
+    "evidence": [
+      "Engine: `engine\\.venv\\Scripts\\python.exe -m pytest -q` (cwd engine/) -> 11 passed, exit 0; `-m ruff check .` -> All checks passed, exit 0",
+      "Fixture: engine/tests/fixtures/stooq_nvda.csv -> 252 NVDA bars (header Date,Open,High,Low,Close,Volume), 2025-09-29..2026-09-29, 12614 bytes; parser tests read it from disk and never use the network",
+      "Fixture provenance finding: Stooq's CSV download endpoint is blocked from this environment (HTML SHA-256 proof-of-work challenge, then `200 text/plain` body `Access denied` on stooq.com/www/stooq.pl for any symbol; quote HTML reachable but carries no OHLCV). The fixture was therefore serialized from real NVDA daily OHLCV (fetched once from Yahoo Finance chart JSON) in the exact Stooq CSV layout. Recorded in docs/specs/ingestion-scraper-eod.md and docs/risks-and-open-questions.md",
+      "Engine parser/source: engine/app/sources/stooq.py `parse_eod_csv` (pure; BOM/blank-line tolerance, strict malformed-row rejection) + `fetch_eod` (httpx); engine/app/models.py `Bar`; `GET /eod/{symbol}` -> 200 {symbol,bars}; 404 empty/unknown; 502 upstream HTTP error or unusable payload (controlled JSON {detail}, no stack trace) — covered by 5 endpoint tests in engine/tests/test_stooq.py (TestClient + monkeypatched fetch_eod, offline)",
+      "Laravel: `php artisan test` -> 35 passed (147 assertions), exit 0; tests/Feature/ScrapeInstrumentCommandTest.php adds 6 cases: stores bars (decimal casts 176.5000/179.7500 + volume), re-run idempotent (count stays 2), unknown ticker exit 1 + Http::assertNothingSent + 0 rows, engine 502 handled exit 1 + 0 rows, empty bars exit 1 + 0 rows, malformed bars skipped/reported (1 stored)",
+      "`php artisan list` -> `ingestion:scrape` (Fetch one instrument's EOD bars from the engine and upsert them)",
+      "Idempotency bug found+fixed: the DailyBar `date` cast stores/compares `Y-m-d H:i:s`, so a raw `Y-m-d` upsert key missed the row and hit the unique index on re-run; the command now keys updateOrCreate on `Carbon::parse($date)->startOfDay()`",
+      "Live smoke (engine on 8090, torn down, port released): GET /health 200; GET /eod/NVDA 502 {\"detail\":\"Upstream EOD source returned an unusable response for NVDA.\"}; `php artisan ingestion:scrape NVDA` -> exit 1 with that 502 message and 0 daily_bars (source block; controlled error, nothing written)",
+      ".\\init.ps1 -> exit 0 (Laravel 35 tests, SPA lint/build, engine pytest 11), no server started",
+      "Scope: only engine/app/{models.py,sources/*,main.py}, engine/requirements.txt, engine/tests/{test_stooq.py,fixtures/*}, config/engine.php, app/Services/Engine/EngineClient.php, app/Console/Commands/ScrapeInstrument.php, tests/Feature/ScrapeInstrumentCommandTest.php, .env.example and docs/harness files changed; frontend/ and alphapulse/ untouched; no orchestration, indicators, signals, scheduling, admin panel or bar API added",
+      "independent validator accept (2026-09-29): reran engine pytest 11 passed + ruff clean, php artisan test 35 passed/147 assertions, `ingestion:scrape` registered, init.ps1 exit 0 no server, ports free; fixture audited (252 rows, correct header/order/no dups/weekends); offline-only tests confirmed; engine writes no DB and Laravel persists; idempotency and no-write-on-failure proven; blocked live Stooq source accepted as a documented integration concern per the spec; frontend/ and alphapulse/ untouched"
+    ],
+    "notes": "Chinese wall: the engine fetches+parses Stooq EOD CSV only (no DB writes) and returns {symbol,bars} over HTTP; Laravel persists via EngineClient + `ingestion:scrape {ticker}` (idempotent updateOrCreate on the unique (instrument_id,date), transaction-scoped, writes nothing on engine failure). ENGINE_URL (config/engine.php, default http://127.0.0.1:8090) configures the engine base URL; httpx is now an engine runtime dep. Tests are offline (committed fixture + Http::fake). Open follow-up: Stooq's CSV download path is anti-bot blocked from this environment, so re-fetch the real Stooq CSV (same layout) and confirm live ingestion when reachable. See docs/specs/ingestion-scraper-eod.md, ARCHITECTURE.md, CONSTRAINTS.md."
   },
   {
     "id": "ingestion-run-orchestration",

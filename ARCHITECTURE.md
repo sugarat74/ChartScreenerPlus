@@ -6,7 +6,7 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 
 - **Laravel (repository root)** — API, auth and admin. PHP 8.4 / Laravel 13. Owns the database, the framework migrations and Laravel's own Vite assets under `resources/`.
 - **React SPA (`frontend/`)** — the trader surface (Screener, Chart, Portal). React 19 + Vite + Tailwind 4 with its own toolchain and dev server.
-- **Python engine (`engine/`)** — FastAPI HTTP service that will own scraping, indicators and signals. Python 3.10 with its own venv and requirements files; exposes `/health`.
+- **Python engine (`engine/`)** — FastAPI HTTP service that owns scraping, and (later) indicators and signals. Python 3.10 with its own venv and requirements files; exposes `/health` and `GET /eod/{symbol}` (fetch + parse only).
 
 ## Directory Boundaries
 
@@ -53,14 +53,22 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - `GET /api/admin/ping` is the current member of that group and exists only as a guard probe (`{ok:true}`); later admin features (`admin-ingestion-panel`) extend the same group. It is not product behavior.
 - Admin is granted **out of band only** via `php artisan app:make-admin {email}` (promotes an existing account, fails if the email is unknown) or `UserFactory::admin()` in tests. There is no HTTP path to grant admin.
 
+## Ingestion Path (EOD)
+
+- **Source:** Stooq daily EOD CSV (`https://stooq.com/q/d/l/?s={symbol}.us&i=d`, columns `Date,Open,High,Low,Close,Volume`). It is a free public source with no key; its markup/availability can change and it may serve an HTML anti-bot challenge instead of CSV, so parsing is isolated and strict (a non-CSV payload becomes a controlled upstream error, never bad data).
+- **Chinese wall — engine fetches/parses, Laravel persists.** The engine does **not** touch the database. `engine/app/sources/stooq.py` exposes a pure `parse_eod_csv(text)` (fixture-tested) and `fetch_eod(symbol)` (httpx); the `Bar` pydantic model lives in `engine/app/models.py`. `GET /eod/{symbol}` returns `{symbol, bars: [{date, open, high, low, close, volume}]}`; empty/unknown data is `404` and an upstream failure/unusable payload is `502` (controlled JSON `{detail}`).
+- **Laravel persistence.** `App\Services\Engine\EngineClient::eodBars($ticker)` calls `Http::get(config('engine.url').'/eod/'.$ticker)->throw()`. The artisan command `ingestion:scrape {ticker}` resolves the `Instrument` by ticker, fetches the bars, and upserts them into `daily_bars` by the unique `(instrument_id, date)` key inside a transaction; it writes nothing when the engine fails. Re-running is idempotent.
+- Tests never use the network: the engine parser runs against the committed fixture `engine/tests/fixtures/stooq_nvda.csv`, and Laravel uses `Http::fake`.
+
 ## Dependency Direction
 
 - The SPA talks to Laravel over HTTP (JSON API); the auth endpoints above are the first ones. There is no code sharing between `frontend/` and the Laravel app.
-- The Python engine is invoked by Laravel over HTTP (internal service), not directly by the SPA. The engine exposes `/health`; endpoints for scraping/indicators/signals are added by later features.
+- The Python engine is invoked by Laravel over HTTP (internal service), not directly by the SPA. The engine exposes `/health` and `GET /eod/{symbol}` (fetch + parse); indicators/signals endpoints are added by later features. Laravel talks to the engine through `App\Services\Engine\EngineClient` using the `ENGINE_URL` base URL.
 
 ## Configuration
 
 - Local dev/test database is SQLite (`database/database.sqlite`, git-ignored).
 - Dev servers: Laravel on 8000 (default), SPA on 5173 (Vite default, proxying `/api` + `/sanctum` to `127.0.0.1:8000`), engine on 8090 (`python -m app`).
 - `SANCTUM_STATEFUL_DOMAINS` (`.env`/`.env.example`) controls which dev SPA origins Sanctum treats as stateful.
+- `ENGINE_URL` (`.env`/`.env.example`, default `http://127.0.0.1:8090`) is the engine base URL used by `EngineClient`; it is read through `config/engine.php`.
 - Harness gate: `.\init.ps1` runs the Laravel checks, the SPA typecheck/lint/build, and the engine tests. It starts no server.

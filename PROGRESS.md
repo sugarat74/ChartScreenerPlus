@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `ingestion-scraper-eod`
+- Current next ready feature: `ingestion-run-orchestration`
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 29 tests incl. `Sp500UniverseSeederTest`; SPA lint 0 warnings/errors + build; engine 1 test)
+- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 35 tests incl. `ScrapeInstrumentCommandTest`; SPA lint 0 warnings/errors + build; engine 11 tests incl. `test_stooq.py`)
 
 ## Session Log
 
@@ -133,3 +133,20 @@
 - Status: `passing` — ready for independent validation (not `accepted`).
 - Validator verdict: independent `accept` (reran migrate:fresh + seeder twice → 503/1/503 unchanged; `php artisan test` 29 passed/123 assertions; `.\init.ps1` exit 0 no server; dataset verified 503 unique uppercase tickers, valid UTF-8 no BOM, spot-checks NVDA/AAPL/MSFT/BXP; seeder/tests offline; other surfaces untouched). Low notes: the default `php artisan db:seed` is not re-runnable because it also creates a fixed `test@example.com` user (pre-existing; the idempotent path is `--class=Sp500UniverseSeeder`); a spec wording nit about the Brown–Forman en dash was corrected. Persisted: `universe-sp500-seed` → `accepted`.
 - Next best step: `ingestion-scraper-eod` (its data-source/legality open question still stands per `docs/risks-and-open-questions.md`).
+
+### Session 011
+
+- Date: 2026-09-29
+- Goal: Implement `ingestion-scraper-eod`.
+- Goal outcome: one instrument round-trips from a public EOD source into `daily_bars` without duplicates on re-runs. The Python engine fetches + parses; Laravel (DB owner) persists.
+- Completed (engine): `engine/app/sources/stooq.py` (pure `parse_eod_csv` + httpx `fetch_eod`), `engine/app/models.py` (`Bar`, `EodResponse`), `GET /eod/{symbol}` in `engine/app/main.py` (200 / 404 empty-unknown / 502 upstream-or-unusable, controlled JSON, no stack traces), `httpx` added as a runtime dep in `engine/requirements.txt` (pinned 0.28.1; reinstalled), committed fixture `engine/tests/fixtures/stooq_nvda.csv` and `engine/tests/test_stooq.py` (parser + malformed-row + endpoint tests, all offline).
+- Completed (Laravel): `config/engine.php` (`ENGINE_URL`, default `http://127.0.0.1:8090`), `app/Services/Engine/EngineClient.php` (`eodBars()` via `Http::get(...)->throw()`), `app/Console/Commands/ScrapeInstrument.php` (`ingestion:scrape {ticker}`: resolve Instrument → fetch → transactional `updateOrCreate` on unique `(instrument_id,date)` → stored/skipped report; writes nothing on engine failure), `tests/Feature/ScrapeInstrumentCommandTest.php` (6 cases, `Http::fake`), `.env.example` (`ENGINE_URL`).
+- Fixture source/row count: Stooq EOD CSV is the designed source, but its download endpoint is anti-bot blocked from this environment (HTML SHA-256 proof-of-work challenge, then `200 text/plain` `Access denied`), so the committed 252-row NVDA fixture (2025-09-29..2026-09-29, Stooq `Date,Open,High,Low,Close,Volume` layout) was serialized from real NVDA daily OHLCV fetched once from Yahoo Finance. Documented as a spec finding and in `docs/risks-and-open-questions.md`; re-fetch the real Stooq CSV when reachable.
+- Finding + fix: `updateOrCreate` keyed on a raw `Y-m-d` string missed the stored `Y-m-d H:i:s` (the `date` cast format) and violated the unique index on re-run; the command now keys the upsert on `Carbon::parse($date)->startOfDay()`. Proven by the re-run idempotency test.
+- Verification run: engine `-m pytest -q` → 11 passed (exit 0); `-m ruff check .` → All checks passed (exit 0); `php artisan test` → 35 passed / 147 assertions (exit 0); `php artisan list` → `ingestion:scrape`; live smoke (engine on 8090): `/health` 200, `/eod/NVDA` 502 controlled JSON, `php artisan ingestion:scrape NVDA` → exit 1 with the 502 message and 0 bars, then engine + child stopped and port 8090 released; `.\init.ps1` → exit 0 (Laravel 35 tests + SPA lint/build + engine 11 tests, no server).
+- Evidence captured: recorded in `feature_list.json` under `ingestion-scraper-eod`.
+- Files or artifacts updated: `engine/app/{models.py,main.py}`, `engine/app/sources/{__init__.py,stooq.py}`, `engine/requirements.txt`, `engine/tests/{test_stooq.py,fixtures/stooq_nvda.csv}`, `config/engine.php`, `app/Services/Engine/EngineClient.php`, `app/Console/Commands/ScrapeInstrument.php`, `tests/Feature/ScrapeInstrumentCommandTest.php`, `.env.example`, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `docs/risks-and-open-questions.md`, `docs/specs/ingestion-scraper-eod.md`, `PROGRESS.md`, `feature_list.json`. `frontend/` and `alphapulse/` untouched; no orchestration, indicators, signals, scheduling, admin panel or bar API added.
+- Known risk or unresolved issue: Stooq's CSV download path is blocked from this environment (controlled 502; nothing written), so live ingestion is unproven here; the fixture's provenance deviates from "downloaded from Stooq once" and is documented. No persistent E2E harness exists; engine and Laravel flows are covered by feature tests plus the optional live smoke.
+- Status: `passing` — ready for independent validation (not `accepted`).
+- Validator verdict: independent `accept` (reran engine `pytest` 11 passed + `ruff` clean, `php artisan test` 35 passed/147 assertions, `ingestion:scrape` registered, `.\init.ps1` exit 0 no server, ports free; fixture audited for header/order/dupes; offline-only tests confirmed; engine writes no DB and Laravel persists; idempotency and no-write-on-failure proven). The blocked live Stooq source was accepted as a documented integration concern per the spec. Persisted: `ingestion-scraper-eod` → `accepted`.
+- Next best step: `ingestion-run-orchestration` (develop/verify against fakes while the live source stays blocked).

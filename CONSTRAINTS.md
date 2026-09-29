@@ -62,6 +62,16 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST** invoke the engine venv Python by path (`engine\.venv\Scripts\python.exe`) and run engine commands with `engine/` as the working directory; do not rely on venv activation. Reason: Windows activation is shell-dependent and imports resolve from `engine/`.
 - **MUST NOT** commit the venv or Python caches; `engine/.gitignore` covers `.venv/`, `__pycache__/`, `.pytest_cache/`, `.ruff_cache/`. Reason: local state, not source.
 - **MUST** pin exact dependency versions in `requirements*.txt`. Reason: reproducible engine installs.
+- **MUST** keep `httpx` as a pinned **runtime** dependency in `engine/requirements.txt` (not only in `requirements-dev.txt`). Reason: `app/sources/stooq.py` uses it when the process runs, so it is not test-only.
+
+## Ingestion
+
+- The engine **MUST** only fetch and parse source data and **MUST NOT** write the database. Laravel **MUST** own persistence (the Chinese wall for ingestion). Reason: one database owner; the engine is a stateless HTTP service.
+- The Laravel <-> engine base URL **MUST** come from `ENGINE_URL` via `config/engine.php` (default `http://127.0.0.1:8090`); callers **MUST** go through `App\Services\Engine\EngineClient` rather than hardcoding URLs. Reason: one place to reconfigure the engine for other environments.
+- EOD persistence **MUST** be idempotent on the unique `(instrument_id, date)` key and **MUST NOT** write when the engine call fails. Reason: re-running ingestion must not duplicate bars or leave partial data.
+- Upserts into `daily_bars` **MUST** key the `date` column with a date object (e.g. `Carbon::parse($date)->startOfDay()`), not a raw `Y-m-d` string. Reason: the model's `date` cast stores/compares `Y-m-d H:i:s`, so a string key misses the stored row and violates the unique index on re-run.
+- Engine tests **MUST** be offline and read the committed fixture (`engine/tests/fixtures/stooq_nvda.csv`); Laravel engine tests **MUST** use `Http::fake`. No test may hit the network. Reason: the external source is unreliable; tests must be deterministic.
+- The Stooq source is a **single, fragile, unofficial** public source: parser/endpoint behavior **MUST** stay isolated (`app/sources/stooq.py`) and strict (a non-CSV payload raises, and the endpoint answers `404` for no data and `502` for upstream failure) so a source change or anti-bot block becomes a controlled error, not bad data or a crash. Reason: the source can change markup, block IPs (observed `Access denied` on the CSV download path) or throttle; live fetching is an integration concern.
 
 ## Harness
 

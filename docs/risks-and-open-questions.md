@@ -2,7 +2,7 @@
 
 ## Blocking Next Phase
 
-- **Data source and legality:** which public source is scraped, its terms of use, and whether its structure is stable enough. This gates any real ingestion work.
+- **Data source and legality:** Stooq daily EOD CSV (`https://stooq.com/q/d/l/?s={symbol}.us&i=d`) is the chosen source for `ingestion-scraper-eod`. Its terms of use still need review, and the download endpoint is currently blocked from this environment (see Risks). This no longer gates the single-instrument path, which is fixture-tested, but it does gate reliable live ingestion at scale.
 - **Charting approach:** TradingView Lightweight Charts (free library) vs embedded TradingView widget (licensing/ToS/attribution). Decides what the chart screen can show.
 - **Hosting target:** concrete deployment target and how the Laravel app, Python engine, database and scheduler are co-located.
 
@@ -36,6 +36,7 @@
 ## Risks
 
 - **Scraping fragility / blocking:** source markup changes, IP bans or throttling can break ingestion; mitigated by throttling, retries, run logs and re-run.
+- **Stooq anti-bot block (observed 2026-09-29):** `GET https://stooq.com/q/d/l/?s=nvda.us&i=d` returns an HTML SHA-256 proof-of-work challenge from this environment, and after solving it the download path answers `200 text/plain` with `Access denied` (also via `stooq.pl`/`www.stooq.com`). The HTML quote page is reachable but has no embedded OHLCV. Consequence: the live `ingestion:scrape` smoke returns a controlled `502` and stores nothing; `engine/tests/fixtures/stooq_nvda.csv` was therefore serialized from real NVDA daily data. Follow-ups: confirm whether the block is IP/rate-based, evaluate an alternative permitted EOD source, and re-fetch the real Stooq CSV when reachable.
 - **Incorrect math presented as signals:** indicator and Signal bugs would mislead users; mitigated by fixture-based tests.
 - **Scope creep back to the mockup:** the prototype shows AI, alerts, plans and geometric patterns that are explicitly out of MVP scope.
 - **Licensing of charts/data:** embedding third-party widgets or redistributing scraped data may carry legal constraints.
