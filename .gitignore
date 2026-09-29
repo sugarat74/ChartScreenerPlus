@@ -32,3 +32,6 @@ ai-expert-project-main.zip
 
 # Local mirror of .opencode exposed as .agents (junction/symlink)
 /.agents
+
+# Local SQLite database (Laravel framework default connection)
+/database/*.sqlite*

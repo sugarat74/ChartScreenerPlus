@@ -3,16 +3,32 @@ $ErrorActionPreference = "Stop"
 
 if ($PSScriptRoot) { Set-Location $PSScriptRoot }
 
+function Invoke-Checked {
+    param([string]$Exe, [string[]]$CmdArgs)
+    & $Exe @CmdArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command failed with exit code $LASTEXITCODE`: $Exe $($CmdArgs -join ' ')"
+    }
+}
+
 Write-Host "Repository: $(Get-Location)"
-Write-Host "Harness status: pre-bootstrap"
-Write-Host "The AlphaPulse product stack (Laravel + Python engine + React SPA) is not initialized yet."
-Write-Host "The 'alphapulse' directory is a UI reference prototype only; it is not the product baseline."
+
+if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
+    throw "PHP is not on PATH. Add Laragon's PHP (e.g. C:\laragon\bin\php\php-8.4.8-Win32-vs17-x64) to PATH."
+}
+
+if (-not (Test-Path "vendor")) {
+    Write-Host "vendor/ missing - installing Composer dependencies..."
+    Invoke-Checked composer @("install", "--no-interaction")
+}
+
+Write-Host "Checking Laravel version..."
+Invoke-Checked php @("artisan", "--version")
+
+Write-Host "Running the test suite..."
+Invoke-Checked php @("artisan", "test")
+
 Write-Host ""
-Write-Host "Next step: pick the first ready feature from feature_list.json (see PROGRESS.md)."
-Write-Host ""
-Write-Host "Expected future commands (wire these here after bootstrap):"
-Write-Host "  Laravel:  composer install; php artisan migrate; php artisan test"
-Write-Host "  Engine:   python -m venv .venv; pip install -r requirements.txt; pytest"
-Write-Host "  Frontend: npm install; npm run build; npm run test"
-Write-Host ""
-Write-Host "This script is intentionally informational until the stack exists."
+Write-Host "Baseline OK."
+Write-Host "Manual follow-up (not run by this gate):"
+Write-Host "  php artisan serve --port=8123   # start the dev server"

@@ -15,6 +15,7 @@ Target stack: **Laravel** (API, auth, admin) + **Python engine** (scraping, indi
 - Do not rely on `bash`-only syntax (`&&`, `chmod`, `rm -rf`, heredocs). Use PowerShell equivalents: chain with `;` or `cmd1; if ($?) { cmd2 }`, and use `Remove-Item`, `New-Item`, `Copy-Item`, `Test-Path`.
 - Use backslash paths (`.\scripts\...`) and quote any path that contains spaces.
 - The standard startup/verification script is `.\init.ps1`. If Git Bash is available, `bash init.sh` is an acceptable fallback, but PowerShell is the default.
+- Runtime: **PHP 8.4.8** (Laragon) with **Laravel 13.x**, **Composer 2.10.3**. Local dev/test database is **SQLite** (`pdo_sqlite` enabled). `php` and `composer` must be on PATH.
 
 ## Commands
 

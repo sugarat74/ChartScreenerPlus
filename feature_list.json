@@ -5,14 +5,23 @@
     "title": "Scaffold the Laravel application",
     "user_visible_behavior": "A developer can start the Laravel app locally and receive a successful response from its health endpoint.",
     "depends_on": [],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "php artisan --version succeeds in the Laravel app directory",
       "The app boots and GET /up (or equivalent health route) returns HTTP 200",
       "The Laravel test suite runs (php artisan test)"
     ],
-    "evidence": [],
-    "notes": "First slice of the Laravel + Python engine + React SPA target stack. Pre-bootstrap: no framework exists yet. See docs/technical-discovery.md."
+    "evidence": [
+      "php -v -> PHP 8.4.8 (cli, ZTS Visual C++ 2022 x64)",
+      "composer --version -> Composer 2.10.3",
+      "php artisan --version -> Laravel Framework 13.34.0",
+      "php artisan test -> 2 passed (2 assertions), exit 0",
+      "php artisan migrate --force -> users/cache/jobs framework tables migrated (SQLite)",
+      "serve smoke on port 8124 -> GET /up 200, GET / 200; server and child process stopped",
+      "init.ps1 (PowerShell gate) -> exit 0 (runs artisan --version + artisan test, starts no server)",
+      "README.md and .gitignore preserved during scaffolding"
+    ],
+    "notes": "Scaffolded latest Laravel 13.x at repo root via temp dir + selective copy (--no-scripts). Framework migrations only; domain schema deferred to db-schema-market-data. init.ps1 is now a real non-blocking gate. See docs/specs/repo-scaffold-laravel.md, CONSTRAINTS.md."
   },
   {
     "id": "repo-scaffold-frontend",
