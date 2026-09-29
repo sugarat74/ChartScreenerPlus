@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `auth-registration-login` or `universe-sp500-seed`
+- Current next ready feature: `universe-sp500-seed` or `auth-roles-admin`
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 6 tests incl. `MarketDataSchemaTest`; SPA lint 0 errors + build; engine 1 test)
+- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 20 tests incl. `AuthTest` (post-repair); SPA lint 0 warnings/errors + build; engine 1 test)
 
 ## Session Log
 
@@ -81,3 +81,28 @@
 - Known risk or unresolved issue: the `decimal:4` cast renders fixed 4-decimal strings (`61.5` → `"61.5000"`), recorded in `CONSTRAINTS.md` and the spec; signal-type vocabulary is intentionally only a string until `signals-detect`.
 - Validator verdict: independent `accept` (reran `migrate:fresh`/`rollback`/`migrate:fresh` exit 0, `php artisan test` 6 passed / 27 assertions, `.\init.ps1` exit 0 no server; inspected the SQLite schema for both unique indexes, cascade FKs and decimal/json types; verified cascade deletes with `PRAGMA foreign_keys=ON`; other surfaces untouched; `decimal:4` fixed-string behavior confirmed as expected). Persisted: `db-schema-market-data` → `accepted`.
 - Next best step: `auth-registration-login` or `universe-sp500-seed`.
+
+### Session 007
+
+- Date: 2026-09-29
+- Goal: Implement `auth-registration-login`.
+- Completed: Sanctum **v4.3.3** first-party SPA auth (session cookie + CSRF, **no tokens**) via `php artisan install:api --no-interaction` plus a manual `$middleware->statefulApi()` (Laravel 13's `install:api` no longer adds it). `app/Http/Controllers/Auth/AuthController.php` + `routes/api.php`: `POST /api/register` (201 + user), `POST /api/login` (200, `throttle:6,1`, 422 on bad credentials), `POST /api/logout` (`auth:sanctum`, 204), `GET /api/user` (`auth:sanctum`, 200/401). `tests/Feature/AuthTest.php` (10 cases). SPA: Vite dev proxy `/api` + `/sanctum` -> `http://127.0.0.1:8000`; `frontend/src/lib/api.ts` (fetch, `credentials: include`, `X-XSRF-TOKEN` from the cookie, `/sanctum/csrf-cookie` before mutations); auth state in `frontend/src/auth/` (`context.ts`, `AuthContext.tsx`, `useAuth.ts`) bootstrapped from `GET /api/user`; `/login` + `/register` token-styled pages; auth-aware `AppHeader`; `SANCTUM_STATEFUL_DOMAINS` in `.env`/`.env.example`.
+- Verification run: `php artisan test` -> **16 passed (70 assertions)**, exit 0; `php artisan route:list --path=api -v` -> 4 auth routes with expected middleware + Sanctum CSRF route; `npm --prefix frontend run lint` -> 0 warnings/0 errors (19 files), exit 0; `npm --prefix frontend run build` -> 108 modules, exit 0; live dev smoke (`php artisan serve` :8000 + Vite :5173 with proxy): register 201 -> `/api/user` 200 -> logout 204 -> `/api/user` 401 -> wrong-password login 422 -> correct login 200 -> `/api/user` 200 -> duplicate register 422, plus `/sanctum/csrf-cookie` 204 and SPA `/`/`/login` 200; `.\init.ps1` exit 0 (Laravel + SPA + engine, no server).
+- Evidence captured: recorded in `feature_list.json` under `auth-registration-login`.
+- Files or artifacts updated: `composer.json`, `composer.lock`, `bootstrap/app.php`, `config/sanctum.php`, `routes/api.php`, `app/Http/Controllers/Auth/AuthController.php`, `database/migrations/2026_09_29_162539_create_personal_access_tokens_table.php`, `tests/Feature/AuthTest.php`, `.env`, `.env.example`, `frontend/vite.config.ts`, `frontend/src/lib/api.ts`, `frontend/src/auth/{context.ts,AuthContext.tsx,useAuth.ts}`, `frontend/src/components/{AuthField.tsx,AppHeader.tsx}`, `frontend/src/pages/{LoginPage.tsx,RegisterPage.tsx}`, `frontend/src/{main.tsx,nav.ts,router.tsx}`, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `AGENTS.md`, `docs/specs/auth-registration-login.md`, `PROGRESS.md`, `feature_list.json`. `engine/`, `alphapulse/` and the market-data schema untouched.
+- Known risk or unresolved issue: no frontend test runner or E2E harness exists, so SPA behavior is verified by typecheck/lint/build plus the live dev smoke (browser rendering itself remains manual). Orphaned dev servers from a previous session were found on ports 8000/5173 and stopped; the smoke user created during verification was deleted from the local dev DB.
+- Next best step: independent validation of `auth-registration-login`, then `universe-sp500-seed` (or `auth-roles-admin` once this is accepted).
+
+### Session 008
+
+- Date: 2026-09-29
+- Goal: Repair `auth-registration-login` after the independent validator returned `revise` (Medium defect).
+- Finding: `POST /api/register` with a non-matching `Origin`/`Referer` follows Sanctum's **non-stateful** path, so `statefulApi()` never attaches a session; the controller still validated, ran `User::create` and then threw `Session store not set on request` → HTTP 500 plus an orphaned user row. `login()` and `logout()` made the same session assumption.
+- Completed: `app/Http/Controllers/Auth/AuthController.php` now calls a private `requireStatefulSession()` (`abort_unless($request->hasSession(), 400, 'A stateful session is required.')`) at the very top of `register()`, `login()` and `logout()`, before validation/writes; `register()` wraps `User::create` + `Auth::guard('web')->login()` + `session()->regenerate()` in `DB::transaction()` so no user can be committed without the session step. `tests/Feature/AuthTest.php` gained 4 negative cases (register/login × non-matching `Origin` and no `Origin`/`Referer`) asserting HTTP 400 (not 500), `assertDatabaseCount('users', 0)` + `assertGuest()`.
+- Verification run: `php artisan test` -> **20 passed (82 assertions)**, exit 0 (was 16/70); `AuthTest` alone 14 passed (55 assertions); `php artisan route:list --path=api -v` -> 4 auth routes with unchanged middleware; `npm --prefix frontend run lint` -> 0 warnings/0 errors (19 files), exit 0; `npm --prefix frontend run build` -> 108 modules, exit 0; `.\init.ps1` -> Laravel 20 tests (82 assertions) + SPA lint/build + engine 1 test, exit 0, starts no server.
+- Evidence captured: recorded in `feature_list.json` under `auth-registration-login` (REPAIR entries).
+- Files or artifacts updated: `app/Http/Controllers/Auth/AuthController.php`, `tests/Feature/AuthTest.php`, `CONSTRAINTS.md`, `docs/specs/auth-registration-login.md`, `PROGRESS.md`, `feature_list.json`. SPA client, Vite proxy, the stateful SPA flow, `engine/` and `alphapulse/` unchanged.
+- Known risk or unresolved issue: none new. SPA behavior is still covered by typecheck/lint/build plus the earlier live dev smoke (no frontend test runner/E2E harness).
+- Status: `passing` again — ready for independent re-validation (not `accepted`).
+- Re-validation verdict: independent `accept` (re-ran `php artisan test` 20 passed/82 assertions, `route:list`, SPA lint/build, `.\init.ps1` exit 0 no server; adversarial non-stateful register/login now return 400 with 0 users; stateful proxy flow 201/200/204/401/422/200; passwords hashed/never returned; other surfaces untouched). Persisted: `auth-registration-login` → `accepted`.
+- Next best step: `universe-sp500-seed` or `auth-roles-admin`.

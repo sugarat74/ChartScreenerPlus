@@ -1,0 +1,119 @@
+/**
+ * Same-origin API client for the Laravel backend.
+ *
+ * Auth is first-party Sanctum session-cookie auth (never bearer tokens), so
+ * every call sends cookies (`credentials: 'include'`) and mutating calls first
+ * fetch `/sanctum/csrf-cookie` and echo it back in `X-XSRF-TOKEN`. In dev the
+ * Vite server proxies `/api` and `/sanctum` to Laravel, keeping the browser
+ * same-origin.
+ */
+
+export type AuthUser = {
+  id: number
+  name: string
+  email: string
+}
+
+export type RegisterPayload = {
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
+export type ValidationErrors = Record<string, string[]>
+
+export class ApiError extends Error {
+  readonly status: number
+  readonly errors: ValidationErrors
+
+  constructor(status: number, message: string, errors: ValidationErrors = {}) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.errors = errors
+  }
+}
+
+function readCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers)
+  headers.set('Accept', 'application/json')
+  if (init.body !== undefined) {
+    headers.set('Content-Type', 'application/json')
+  }
+
+  const token = readCookie('XSRF-TOKEN')
+  if (token) {
+    headers.set('X-XSRF-TOKEN', token)
+  }
+
+  const response = await fetch(path, { credentials: 'include', ...init, headers })
+
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  const contentType = response.headers.get('content-type') ?? ''
+  const payload = contentType.includes('application/json')
+    ? ((await response.json()) as Record<string, unknown>)
+    : null
+
+  if (!response.ok) {
+    const message =
+      typeof payload?.message === 'string' ? payload.message : `Error ${response.status}`
+    const errors = (payload?.errors ?? {}) as ValidationErrors
+    throw new ApiError(response.status, message, errors)
+  }
+
+  return payload as T
+}
+
+async function ensureCsrfCookie(): Promise<void> {
+  await fetch('/sanctum/csrf-cookie', {
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export const authApi = {
+  /** Returns the authenticated user, or `null` when there is no session. */
+  async currentUser(): Promise<AuthUser | null> {
+    try {
+      const payload = await request<{ user: AuthUser }>('/api/user')
+      return payload.user
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        return null
+      }
+      throw error
+    }
+  },
+
+  async login(email: string, password: string): Promise<AuthUser> {
+    await ensureCsrfCookie()
+    const payload = await request<{ user: AuthUser }>('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+    return payload.user
+  },
+
+  async register(data: RegisterPayload): Promise<AuthUser> {
+    await ensureCsrfCookie()
+    const payload = await request<{ user: AuthUser }>('/api/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    return payload.user
+  },
+
+  async logout(): Promise<void> {
+    await ensureCsrfCookie()
+    await request<void>('/api/logout', { method: 'POST' })
+  },
+}

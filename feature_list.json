@@ -131,14 +131,28 @@
     "depends_on": [
       "repo-scaffold-laravel"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Registration validates input and creates a user",
       "Login with valid credentials returns an authenticated session; invalid credentials fail",
       "Logout revokes the session"
     ],
-    "evidence": [],
-    "notes": "See docs/user-and-access-model.md. Email verification depth is an implementation-time question."
+    "evidence": [
+      "php artisan test -> 20 passed (82 assertions), exit 0 (repair re-run; was 16/70 before the 4 new negative cases); tests/Feature/AuthTest.php adds 14 cases: register valid (201 + hashed password + authenticated), session persists to GET /api/user, duplicate email 422, weak password 422, mismatched confirmation 422, login valid 200, wrong password 422, logout invalidates then GET /api/user 401, GET /api/user 401 guest / 200 auth, logout 401 guest, plus the 4 repair cases below",
+      "php artisan route:list --path=api -v -> POST api/register (api), POST api/login (api + throttle:6,1), POST api/logout (api + auth:sanctum), GET api/user (api + auth:sanctum); GET sanctum/csrf-cookie registered by Sanctum",
+      "Sanctum v4.3.3 installed via php artisan install:api --no-interaction (composer.json/lock, config/sanctum.php, personal_access_tokens migration, routes/api.php); bootstrap/app.php calls $middleware->statefulApi() because Laravel 13 install:api does not add it",
+      "SANCTUM_STATEFUL_DOMAINS=localhost,127.0.0.1,localhost:5173,127.0.0.1:5173 in .env and .env.example; Vite proxies /api and /sanctum to http://127.0.0.1:8000",
+      "npm --prefix frontend run lint -> 0 warnings, 0 errors (19 files), exit 0; npm --prefix frontend run build -> 108 modules transformed, exit 0",
+      "Live dev smoke (php artisan serve :8000 + Vite :5173 with proxy): GET / 200, GET /login 200 (SPA fallback), GET /sanctum/csrf-cookie 204 + XSRF-TOKEN cookie, POST /api/register 201 + user (no password/remember_token), GET /api/user 200 (session survives via proxy), POST /api/logout 204, GET /api/user 401 after logout, POST /api/login wrong password 422, correct login 200, GET /api/user 200, duplicate register 422; both servers and children stopped and ports 8000/5173 released",
+      ".\\init.ps1 -> Laravel 16 tests + SPA lint 0 errors + build + engine 1 test, exit 0, starts no server",
+      "Scope: engine/, alphapulse/ and the market-data schema untouched; no roles, password reset, email verification, remember-me or API tokens added",
+      "REPAIR (validator returned revise): POST /api/register with a non-matching Origin/Referer reached the controller without a session store, ran validation + User::create, then threw 'Session store not set on request' -> HTTP 500 with an orphaned user row; login()/logout() shared the same session assumption. Fixed in app/Http/Controllers/Auth/AuthController.php: register()/login()/logout() now call requireStatefulSession() (abort_unless($request->hasSession(), 400, 'A stateful session is required.')) before validation/writes, and register() wraps create + login + session regenerate in DB::transaction()",
+      "REPAIR verification: php artisan test -> 20 passed (82 assertions), exit 0; the 4 new tests assert HTTP 400 (not 500), assertDatabaseCount('users', 0) + assertGuest() for register with a non-matching Origin, register with no Origin/Referer, login with a non-matching Origin, and login with no Origin/Referer; AuthTest alone is 14 passed (55 assertions)",
+      "REPAIR verification: php artisan route:list --path=api -v -> unchanged (POST api/register [api], POST api/login [api + throttle:6,1], POST api/logout [api + auth:sanctum], GET api/user [api + auth:sanctum]); npm --prefix frontend run lint -> 0 warnings/0 errors (19 files), exit 0; npm --prefix frontend run build -> 108 modules, exit 0; .\\init.ps1 -> Laravel 20 tests (82 assertions) + SPA lint/build + engine 1 test, exit 0, no server started",
+      "REPAIR scope: no API tokens/Bearer auth, roles, password reset, email verification, remember-me or protected resources added; SPA client, Vite proxy and the stateful SPA flow unchanged; engine/ and alphapulse/ untouched",
+      "independent validator accept (2026-09-29): re-ran php artisan test (20 passed, 82 assertions), route:list, SPA lint/build, init.ps1 exit 0 no server; adversarial non-stateful POST /api/register and /api/login now return 400 with 0 users (no 500/orphans); stateful proxy flow 201/200/204/401/422/200; passwords hashed and never returned; engine/ and alphapulse/ untouched"
+    ],
+    "notes": "First-party Sanctum session cookie + CSRF auth (no tokens). Endpoints in routes/api.php -> app/Http/Controllers/Auth/AuthController.php (register/login/logout/user); SPA client frontend/src/lib/api.ts, auth state frontend/src/auth/ (context.ts, AuthContext.tsx, useAuth.ts), /login + /register pages and an auth-aware AppHeader; Vite dev proxy keeps the browser same-origin. See docs/specs/auth-registration-login.md, ARCHITECTURE.md, CONSTRAINTS.md."
   },
   {
     "id": "auth-roles-admin",

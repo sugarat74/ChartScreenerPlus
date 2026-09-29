@@ -29,6 +29,17 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST NOT** add a Copilot route or surface to the SPA. Reason: the AI Copilot is explicitly out of MVP scope.
 - **MUST** pin `react-router` explicitly instead of a bare `npm install react-router`. Reason: react-router v8 declares `node >=22.22.0` while the local runtime is Node v22.21.0, so npm auto-resolves the bare install to v7; the intended fix is either an explicit `react-router@^8.4.0` install (current, works with an `EBADENGINE` warning) or upgrading Node to >= 22.22.0.
 
+## Auth
+
+- **MUST** authenticate the SPA with **Laravel Sanctum first-party SPA auth** (session cookie + CSRF) and **MUST NOT** issue or accept API tokens / Bearer auth for the SPA. Reason: the SPA is same-origin with Laravel; tokens would add rotation/expiry surface the product does not need.
+- **MUST** call `GET /sanctum/csrf-cookie` before a mutating auth request and send the returned `XSRF-TOKEN` back in the `X-XSRF-TOKEN` header, with `credentials: 'include'` / cookies on every API call. Reason: Sanctum's stateful middleware validates CSRF; omitting it yields HTTP 419.
+- **MUST** keep `$middleware->statefulApi()` in `bootstrap/app.php`. Reason: Laravel 13's `php artisan install:api` adds `routes/api.php` and Sanctum but does **not** enable the stateful API middleware, so without this line the API group never starts the session and cookie login silently fails.
+- **MUST** keep the Vite dev proxy forwarding `/api` and `/sanctum` to the Laravel dev server (`http://127.0.0.1:8000`) and list the dev SPA origins in `SANCTUM_STATEFUL_DOMAINS`. Reason: same-origin in dev means no CORS + credentialed-cookie complexity.
+- **MUST** enforce auth server-side with the `auth:sanctum` middleware on protected API routes; hiding UI is not access control. Reason: the API is reachable independently of the SPA.
+- **MUST** fail fast (`abort_unless($request->hasSession(), 400, ...)` or equivalent) at the top of every session-only auth endpoint, before validation or any database write. Reason: Sanctum only attaches the session/CSRF middleware to requests that look like the first-party SPA, so a non-matching `Origin`/`Referer` request otherwise reaches a controller with no session store and dies with a 500 (`Session store not set on request`) after potentially writing a user row.
+- **MUST** write session-auth feature tests by sending an `Origin`/`Referer` that matches a `sanctum.stateful` domain (set it explicitly in the test) and by calling `$this->app['auth']->forgetGuards()` between simulated requests. Reason: Sanctum only applies the session middleware to stateful-looking requests, and a single test app instance caches guard users across requests unlike real HTTP.
+- Passwords **MUST** be hashed via the `User` model's `hashed` cast and **MUST NOT** appear in JSON responses (the model's `#[Hidden]` keeps `password`/`remember_token` out).
+
 ## Engine
 
 - **MUST** keep the Python engine in `engine/` targeting **Python 3.10**, as a **FastAPI** HTTP service with its own venv and `requirements*.txt`. Reason: it is a separate runtime surface and the Laravel <-> engine boundary is HTTP.

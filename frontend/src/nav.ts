@@ -17,3 +17,18 @@ export const NAV_ITEMS = [
 ] satisfies readonly NavItem[]
 
 export const DEFAULT_ROUTE: string = NAV_ITEMS[0].path
+
+/**
+ * Auth surfaces. They are routes but not tabs: the header links to them and
+ * the router mounts them inside the shell.
+ */
+export const LOGIN_ROUTE = '/login'
+export const REGISTER_ROUTE = '/register'
+
+/**
+ * react-router nested routes must be relative; `NAV_ITEMS`/auth routes store
+ * absolute paths for links. Strip the leading slash when declaring a child.
+ */
+export function routeSegment(path: string): string {
+  return path.startsWith('/') ? path.slice(1) : path
+}

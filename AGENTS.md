@@ -17,6 +17,7 @@ Target stack: **Laravel** (API, auth, admin) + **Python engine** (scraping, indi
 - The standard startup/verification script is `.\init.ps1`. If Git Bash is available, `bash init.sh` is an acceptable fallback, but PowerShell is the default.
 - Runtime: **PHP 8.4.8** (Laragon) with **Laravel 13.x**, **Composer 2.10.3**. Local dev/test database is **SQLite** (`pdo_sqlite` enabled). `php` and `composer` must be on PATH.
 - Frontend: the React SPA lives in **`frontend/`** (React 19 + Vite + Tailwind 4, Node v22). Run it with `npm --prefix frontend run dev`; it is separate from Laravel's root Vite assets.
+- Auth dev flow: the SPA uses Laravel Sanctum first-party session cookies + CSRF (no API tokens). Run Laravel on port 8000; the Vite dev server proxies `/api` and `/sanctum` to it, and the dev SPA origins come from `SANCTUM_STATEFUL_DOMAINS` in `.env`.
 - Engine: the Python engine lives in **`engine/`** (Python 3.10 + FastAPI). Run it with `engine\.venv\Scripts\python.exe -m app`; its tests run via `.\init.ps1`.
 
 ## Commands
