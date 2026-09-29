@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `db-schema-market-data` or `auth-registration-login`
+- Current next ready feature: `auth-registration-login` or `universe-sp500-seed`
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 2 tests; SPA lint 0 errors + build; engine 1 test; engine `/health` 200 on port 8090)
+- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 6 tests incl. `MarketDataSchemaTest`; SPA lint 0 errors + build; engine 1 test)
 
 ## Session Log
 
@@ -69,3 +69,15 @@
 - Known risk or unresolved issue: pytest emits a Starlette deprecation warning (`httpx` -> `httpx2`) from `TestClient`; non-blocking. Data-source/legality for real scraping remains open (`docs/risks-and-open-questions.md`).
 - Validator verdict: independent `accept` (reran `pytest -q` 1 passed + `ruff check` clean on Python 3.10.6; `/health` 200 exact JSON via uvicorn 8091 and `-m app` 8090 with teardown; `.\init.ps1` exit 0; pins match requirements files; venv/caches ignored; other surfaces untouched). Persisted: `python-engine-scaffold` → `accepted`.
 - Next best step: `db-schema-market-data` or `auth-registration-login`.
+
+### Session 006
+
+- Date: 2026-09-29
+- Goal: Implement `db-schema-market-data`.
+- Completed: Six Laravel 13 anonymous-class migrations (`universes`, `instruments`, `instrument_universe`, `daily_bars`, `indicator_snapshots`, `signals`) and five Eloquent models using `#[Fillable]` + `casts()` + `HasFactory`. `daily_bars` stores `decimal(12,4)` OHLC + `unsignedBigInteger` volume and is unique per `(instrument_id, date)`; `indicator_snapshots` stores nullable `decimal(12,4)` indicators + `decimal(8,4)` `rvol` and is unique per `(instrument_id, date)`; `signals` has an indexed `type`, nullable `json` `metadata` and an `(instrument_id, date)` index; all domain tables have `timestamps()` and cascade FKs. Five factories with coherent defaults. `tests/Feature/MarketDataSchemaTest.php` (`RefreshDatabase`) covers the round-trip, both unique constraints and the pivot.
+- Verification run: `php artisan migrate:fresh` (exit 0, 6 domain tables created), `php artisan migrate:rollback` (exit 0, all 9 rolled back cleanly; re-ran `migrate:fresh` to leave a working DB, `php artisan db:show` lists the 6 domain tables), `php artisan test` (6 passed, 27 assertions, exit 0), `.\init.ps1` (Laravel 13.34.0 + 6 tests + SPA lint 0 errors + SPA build + engine 1 test, exit 0, no server).
+- Evidence captured: recorded in `feature_list.json` under `db-schema-market-data`.
+- Files or artifacts updated: `database/migrations/2026_09_29_10000{1..6}_*.php`, `app/Models/{Universe,Instrument,DailyBar,IndicatorSnapshot,Signal}.php`, `database/factories/*Factory.php` (5), `tests/Feature/MarketDataSchemaTest.php`, `CONSTRAINTS.md`, `docs/specs/db-schema-market-data.md`, `PROGRESS.md`, `feature_list.json`. `frontend/`, `engine/`, `alphapulse/` untouched.
+- Known risk or unresolved issue: the `decimal:4` cast renders fixed 4-decimal strings (`61.5` → `"61.5000"`), recorded in `CONSTRAINTS.md` and the spec; signal-type vocabulary is intentionally only a string until `signals-detect`.
+- Validator verdict: independent `accept` (reran `migrate:fresh`/`rollback`/`migrate:fresh` exit 0, `php artisan test` 6 passed / 27 assertions, `.\init.ps1` exit 0 no server; inspected the SQLite schema for both unique indexes, cascade FKs and decimal/json types; verified cascade deletes with `PRAGMA foreign_keys=ON`; other surfaces untouched; `decimal:4` fixed-string behavior confirmed as expected). Persisted: `db-schema-market-data` → `accepted`.
+- Next best step: `auth-registration-login` or `universe-sp500-seed`.

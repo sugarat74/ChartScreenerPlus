@@ -12,7 +12,12 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 
 - **MUST** use **SQLite** (`pdo_sqlite`, enabled) for local development and tests unless a feature explicitly requires another connection. Reason: it is the enabled default and keeps the gate DB-free of external services.
 - **MUST NOT** commit the local SQLite database file; `/database/*.sqlite*` is git-ignored. Reason: it is local state, not source.
-- Framework tables (`users`, `cache`, `jobs`, `sessions`) come from Laravel's default migrations. Domain schema (instruments, daily bars, snapshots, signals) is added by later features, not here.
+- Framework tables (`users`, `cache`, `jobs`, `sessions`) come from Laravel's default migrations. Market-data domain tables (`universes`, `instruments`, `instrument_universe`, `daily_bars`, `indicator_snapshots`, `signals`) are created by `db-schema-market-data`.
+- **MUST** store prices and indicator values as `decimal` columns (`decimal(12,4)`; `rvol` as `decimal(8,4)`) and cast them with `decimal:4`, never as floats/reals. Reason: monetary/indicator precision must be stable and portable to MySQL/PostgreSQL later; `decimal:4` renders fixed 4-decimal strings (`61.5` -> `"61.5000"`), so tests compare 4-decimal strings.
+- **MUST** keep `daily_bars` and `indicator_snapshots` unique per `(instrument_id, date)`. Reason: EOD ingestion upserts one bar/snapshot per instrument per trading day; duplicates would corrupt indicators and signals.
+- **MUST** give every market-data domain table `timestamps()` and use `cascadeOnDelete` foreign keys to `instruments`/`universes`. Reason: consistent audit columns and no orphan rows when an instrument or universe is removed.
+- **MUST** write schema/persistence tests with `RefreshDatabase` against the in-memory SQLite connection configured in `phpunit.xml`. Reason: tests stay isolated and need no local DB file.
+- Market-data Eloquent models **MUST** follow the Laravel 13 style: `#[Fillable([...])]` attributes, a `casts()` method, `HasFactory`, and the relationships defined in `docs/domain-model.md`. Reason: keeps Eloquent code consistent with `app/Models/User.php` and avoids legacy `$fillable` arrays.
 
 ## Frontend
 

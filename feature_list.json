@@ -105,14 +105,23 @@
     "depends_on": [
       "repo-scaffold-laravel"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Migrations run and roll back cleanly",
       "Daily bars are unique per (instrument, date)",
       "A test persists and reads back one instrument with one bar, one snapshot and one signal"
     ],
-    "evidence": [],
-    "notes": "Entities and relationships are defined in docs/domain-model.md."
+    "evidence": [
+      "php artisan migrate:fresh -> users/cache/jobs plus universes, instruments, instrument_universe, daily_bars, indicator_snapshots, signals created, exit 0",
+      "php artisan migrate:rollback -> all 9 migrations rolled back cleanly (6 new + 3 framework), exit 0; ran migrate:fresh again and php artisan db:show lists the 6 domain tables in database/database.sqlite",
+      "php artisan test -> 6 passed (27 assertions), exit 0",
+      "tests/Feature/MarketDataSchemaTest.php (RefreshDatabase) proves: instrument+bar+snapshot+signal round-trip through Eloquent relationships with decimal/date/array casts; duplicate daily_bars (instrument_id, date) rejected with QueryException; duplicate indicator_snapshots (instrument_id, date) rejected; universe<->instrument pivot resolves both ways",
+      ".\\.init.ps1 -> Laravel 13.34.0 + 6 Laravel tests + SPA lint 0 errors + SPA build + engine 1 test, exit 0, no server started",
+      "Scope check: only the new app/Models, database/migrations, database/factories, tests and spec files plus CONSTRAINTS.md/PROGRESS.md/feature_list.json changed; frontend/, engine/ and alphapulse/ untouched; no seeding, indicators/signals logic, controllers or API added",
+      "Finding: the decimal:4 cast renders fixed 4-decimal strings (61.5 -> '61.5000'), so the round-trip test uses 4-decimal values",
+      "independent validator accept (2026-09-29): reran migrate:fresh/rollback/migrate:fresh (exit 0), php artisan test (6 passed, 27 assertions), init.ps1 exit 0 no server; inspected sqlite schema (both unique indexes, cascade FKs, decimal/json); verified cascade deletes with PRAGMA foreign_keys=ON; frontend/, engine/ and alphapulse/ untouched"
+    ],
+    "notes": "Laravel 13 style: anonymous-class migrations; models use #[Fillable] attributes + casts() + HasFactory. Tables: universes(name/slug unique), instruments(ticker unique, active bool), instrument_universe pivot (unique pair, cascade deletes), daily_bars (decimal(12,4) OHLC, unsignedBigInteger volume, unique instrument_id+date), indicator_snapshots (nullable decimal(12,4) indicators + decimal(8,4) rvol, unique instrument_id+date), signals (type string indexed, json metadata, index instrument_id+date). See docs/specs/db-schema-market-data.md, CONSTRAINTS.md."
   },
   {
     "id": "auth-registration-login",
