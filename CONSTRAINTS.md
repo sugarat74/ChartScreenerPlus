@@ -43,6 +43,17 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - `sort` **MUST NOT** count as an active Screener filter (`hasActiveFilters`/`countActiveFilters` ignore it) and **MUST** survive "Limpiar filtros", which patches only the six criteria. Reason: filtering and ranking are independent concerns; clearing criteria must not discard the user's chosen order.
 - The Screener **MUST** treat a valid-but-empty `200 candidates: []` as an empty state (never an error) and **MUST NOT** auto-retry a failed request. Reason: the API distinguishes empty from error (`404` unknown universe, `422` invalid params), and the unnamed `throttle:60,1` is shared with the login limiter, so retries must stay manual.
 
+## Frontend Chart
+
+- The chart **MUST** use the self-hosted **`lightweight-charts`** npm package (pinned to the verified version, currently **5.2.1**, Apache-2.0) and **MUST NOT** embed the TradingView widget or load the library from a CDN. Reason: a self-hosted, pinned bundle keeps the dependency auditable and avoids the embedded widget's ToS/look-and-feel constraints.
+- `layout.attributionLogo` **MUST** stay enabled on the chart. Reason: the library's Apache-2.0 NOTICE requires the TradingView attribution link on the page that shows the chart; hiding it would breach the license.
+- The chart page (`/instruments/:ticker` and the no-ticker `/chart`) **MUST** stay anonymous: no `useAuth`, no redirect and no login prompt. Reason: browsing charts requires no session (`docs/user-and-access-model.md`) and `GET /api/instruments/{ticker}` is public.
+- Chart data **MUST** come only from the frozen `GET /api/instruments/{ticker}` payload, requested with the named `CHART_BAR_LIMIT` (`252`) and rendered in the API's ascending order. Reason: `instrument-detail-api` is frozen; no new endpoint, no re-ordering and no extra fetch belong to the chart.
+- The SPA **MUST NOT** compute indicator math client-side. The `sma20`/`sma50`/`sma200` overlays **MUST** be horizontal reference price lines at the **latest snapshot** values only (a `null` value draws nothing; a `null` snapshot draws no lines). Reason: the engine owns indicator math (`CONSTRAINTS.md` -> Indicators) and the frozen payload has no per-bar indicator series; a client copy would duplicate and could drift.
+- The chart **MUST** draw at most the active `pivot_breakout_rvol` signal's `metadata.pivot` as a price line (guarded by `Number.isFinite`) and **MUST NOT** draw or derive a stop or a target. Reason: stop/target are not modeled anywhere; deriving them would be new product behavior (the engine/signals pipeline must model them first).
+- The chart instance **MUST** be created in one effect whose cleanup always calls `chart.remove()`, so unmount, ticker change and React StrictMode double-invocation cannot leak a canvas or leave an orphaned chart. Reason: Lightweight Charts owns a canvas and observers.
+- `bars.length === 0` **MUST** render the empty state and **MUST NOT** create a chart; an absent snapshot or missing SMA values **MUST** still render the chart and show the "historial insuficiente" note instead of fabricating values.
+
 ## Auth
 
 - **MUST** authenticate the SPA with **Laravel Sanctum first-party SPA auth** (session cookie + CSRF) and **MUST NOT** issue or accept API tokens / Bearer auth for the SPA. Reason: the SPA is same-origin with Laravel; tokens would add rotation/expiry surface the product does not need.

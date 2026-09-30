@@ -3,7 +3,6 @@
 ## Blocking Next Phase
 
 - **Data source and legality:** Stooq daily EOD CSV (`https://stooq.com/q/d/l/?s={symbol}.us&i=d`) is the chosen source for `ingestion-scraper-eod`. Its terms of use still need review, and the download endpoint is currently blocked from this environment (see Risks). This no longer gates the single-instrument path, which is fixture-tested, but it does gate reliable live ingestion at scale.
-- **Charting approach:** TradingView Lightweight Charts (free library) vs embedded TradingView widget (licensing/ToS/attribution). Decides what the chart screen can show.
 - **Hosting target:** concrete deployment target and how the Laravel app, Python engine, database and scheduler are co-located.
 
 ## Implementation-Time Questions
@@ -13,6 +12,7 @@
 - How the S&P 500 constituent list is obtained and refreshed.
 - Where the Python engine boundary sits: internal HTTP API vs queue/CLI invoked by Laravel.
 - Auth method details (session vs token), registration/email verification requirements for the MVP.
+- **Decided by `chart-interactive` (2026-09-30):** charting approach. The chart uses the **self-hosted `lightweight-charts` npm package** (TradingView Lightweight Charts, pinned **5.2.1**, Apache-2.0) — not the embedded TradingView widget and not a CDN. The chart page is anonymous, consumes only `GET /api/instruments/{ticker}`, draws the latest-snapshot SMA values as reference lines and only the `pivot_breakout_rvol` pivot (never a derived stop/target). The library's `attributionLogo` stays enabled to satisfy its NOTICE; the residual requirement is that any future chart surface must also keep the attribution link visible. See `ARCHITECTURE.md` → "Chart UI" and `CONSTRAINTS.md` → "Frontend Chart".
 - **Decided by `ingestion-scheduler` (2026-09-30):** scheduler time relative to Market Close across DST and US market holidays. The daily event runs at `16:30 America/New_York` (config-driven `market_close` + `schedule_buffer_minutes`), DST-aware via the event timezone, skipping weekends and a committed NYSE holiday list in `config/ingestion.php`. See `ARCHITECTURE.md` → "Scheduling (Daily EOD Pipeline)" and `CONSTRAINTS.md` → "Operations And Scheduling".
 
 ## Later / Not MVP
@@ -42,13 +42,13 @@
 - **Stooq anti-bot block (observed 2026-09-29):** `GET https://stooq.com/q/d/l/?s=nvda.us&i=d` returns an HTML SHA-256 proof-of-work challenge from this environment, and after solving it the download path answers `200 text/plain` with `Access denied` (also via `stooq.pl`/`www.stooq.com`). The HTML quote page is reachable but has no embedded OHLCV. Consequence: the live `ingestion:scrape` smoke returns a controlled `502` and stores nothing; `engine/tests/fixtures/stooq_nvda.csv` was therefore serialized from real NVDA daily data. Follow-ups: confirm whether the block is IP/rate-based, evaluate an alternative permitted EOD source, and re-fetch the real Stooq CSV when reachable.
 - **Incorrect math presented as signals:** indicator and Signal bugs would mislead users; mitigated by fixture-based tests.
 - **Scope creep back to the mockup:** the prototype shows AI, alerts, plans and geometric patterns that are explicitly out of MVP scope.
-- **Licensing of charts/data:** embedding third-party widgets or redistributing scraped data may carry legal constraints.
+- **Licensing of charts/data:** embedding third-party widgets or redistributing scraped data may carry legal constraints. Concrete residual for the chart: `lightweight-charts` is Apache-2.0 and its NOTICE requires the TradingView attribution link on the page showing the chart, so the chart's `layout.attributionLogo` must stay enabled and future chart surfaces must keep it visible.
 - **Trust/positioning:** users may treat output as financial advice; the product must state it is an analytical tool.
 
 ## Research Tasks
 
 - Evaluate 1-2 candidate public EOD sources for structure stability, coverage and rate limits.
-- Decide the charting library by testing Lightweight Charts against the chart requirements.
+- ~~Decide the charting library by testing Lightweight Charts against the chart requirements.~~ Done: `chart-interactive` (2026-09-30) chose the self-hosted `lightweight-charts` 5.2.1 package and verified the v5 API against the installed typings.
 - Prototype the Python indicator/Signal pipeline on a fixture dataset and compare with hand calculations.
 - Spike the Laravel <-> Python contract (HTTP vs queue) with a trivial end-to-end job.
 - Confirm the S&P 500 constituent list source and refresh cadence.

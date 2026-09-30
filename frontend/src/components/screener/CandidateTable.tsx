@@ -1,9 +1,10 @@
 /**
- * Fixed-column Candidate table using the API's default ranking. Rows are not
- * interactive (no chart navigation, no watchlist actions) — those are later
- * features. Styling is DESIGN.md tokens only.
+ * Fixed-column Candidate table using the API's default ranking. The only
+ * interactive element is the ticker link into the instrument chart; there are
+ * no watchlist actions. Styling is DESIGN.md tokens only.
  */
 
+import { Link } from 'react-router'
 import type { ScreenerCandidate } from '../../lib/api.ts'
 import {
   formatChangePercent,
@@ -55,9 +56,12 @@ export default function CandidateTable({ candidates }: { candidates: ScreenerCan
               <tr key={candidate.ticker} className="border-b border-outline-variant align-top">
                 <th scope="row" className="px-4 py-2 text-left font-normal">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-headline text-sm font-black text-on-surface">
+                    <Link
+                      to={`/instruments/${encodeURIComponent(candidate.ticker)}`}
+                      className="font-headline text-sm font-black text-on-surface underline-offset-2 hover:underline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+                    >
                       {candidate.ticker}
-                    </span>
+                    </Link>
                     <span className="rounded-[4px] border border-outline bg-surface-container px-1 py-0.5 font-mono text-[10px] font-bold text-on-surface-variant">
                       {candidate.exchange}
                     </span>

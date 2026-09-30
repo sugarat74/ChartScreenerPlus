@@ -1,7 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router'
 import AppLayout from './layouts/AppLayout.tsx'
 import AdminPage from './pages/AdminPage.tsx'
-import ChartPage from './pages/ChartPage.tsx'
+import InstrumentChartPage from './pages/InstrumentChartPage.tsx'
 import LoginPage from './pages/LoginPage.tsx'
 import NotFoundPage from './pages/NotFoundPage.tsx'
 import PortalPage from './pages/PortalPage.tsx'
@@ -16,7 +16,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to={DEFAULT_ROUTE} replace /> },
       { path: 'screener', element: <ScreenerPage /> },
-      { path: 'chart', element: <ChartPage /> },
+      { path: 'chart', element: <InstrumentChartPage /> },
+      { path: 'instruments/:ticker', element: <InstrumentChartPage /> },
       { path: 'admin', element: <AdminPage /> },
       { path: 'portal', element: <PortalPage /> },
       { path: routeSegment(LOGIN_ROUTE), element: <LoginPage /> },

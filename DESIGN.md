@@ -123,7 +123,7 @@ None. The prototype already provides the visual language; no image generation wa
 - **Table:** mono numerals, right-aligned figures, colored change values, sparkline column.
 - **Badge/chip:** small, bordered, mono, color-coded per category.
 - **Tabs:** uppercase headline labels, 2px bottom border for the active tab, subtle surface fill.
-- **Chart:** candlesticks with SMA overlays, volume bars, marked Signal levels (pivot/stop/target).
+- **Chart:** candlesticks with SMA overlays, volume bars, marked Signal levels (pivot/stop/target). MVP (`chart-interactive`) renders with the self-hosted `lightweight-charts` and draws the **latest-snapshot** SMA reference lines plus the pivot only; stop/target stay an ambition until the engine models them. Chart canvas colors use the exact token hexes, and the library's TradingView attribution stays visible.
 
 ## Core Screens
 
@@ -156,6 +156,6 @@ None. The prototype already provides the visual language; no image generation wa
 
 ## Open Design Questions
 
-- Charting library and whether the embedded TradingView widget's built-in look conflicts with the terminal aesthetic.
+- ~~Charting library and whether the embedded TradingView widget's built-in look conflicts with the terminal aesthetic.~~ Resolved by `chart-interactive` (2026-09-30): **self-hosted Lightweight Charts 5.2.1**, not the embedded widget. The terminal aesthetic is preserved by mapping every canvas color to an `index.css` token (surface/grid/text/gain/loss/accent) inside the same 2px-border, hard-shadow card; the library's attribution logo stays visible.
 - Density of the Candidate table on smaller laptops.
 - How to represent "stale" vs "fresh" EOD data visually.

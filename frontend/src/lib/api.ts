@@ -8,6 +8,8 @@
  * same-origin.
  */
 
+import { CHART_BAR_LIMIT } from './chartData.ts'
+
 export type UserRole = 'user' | 'admin'
 
 export type AuthUser = {
@@ -299,5 +301,76 @@ export const screenerApi = {
   async search(filters: ScreenerFilters, signal?: AbortSignal): Promise<ScreenerResponse> {
     const query = screenerQueryString(filters)
     return request<ScreenerResponse>(`/api/screener${query ? `?${query}` : ''}`, { signal })
+  },
+}
+
+/**
+ * Frozen instrument-detail contract (`GET /api/instruments/{ticker}`).
+ * `snapshot` carries only the latest as-of values (13 indicator keys, each
+ * `number | null`) — there is no per-bar indicator series; a `null` means
+ * history was insufficient at that date, never zero.
+ */
+export type InstrumentBar = {
+  date: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
+export type InstrumentSnapshot = {
+  date: string
+  sma20: number | null
+  sma50: number | null
+  sma200: number | null
+  ema21: number | null
+  ema55: number | null
+  rsi14: number | null
+  adx: number | null
+  macd: number | null
+  macd_signal: number | null
+  macd_hist: number | null
+  bb_upper: number | null
+  bb_middle: number | null
+  bb_lower: number | null
+  rvol: number | null
+}
+
+export type InstrumentSignal = {
+  type: string
+  date: string
+  /** Signals-detect guarantees numeric metadata, but a guard is still applied. */
+  metadata: Record<string, number> | null
+}
+
+export type InstrumentDetailResponse = {
+  instrument: {
+    ticker: string
+    company: string
+    sector: string
+    exchange: string
+    active: boolean
+  }
+  bars: InstrumentBar[]
+  snapshot: InstrumentSnapshot | null
+  signals: InstrumentSignal[]
+  meta: { limit: number; bar_count: number; latest_bar_date: string | null }
+}
+
+/**
+ * Anonymous instrument-detail client. `GET /api/instruments/{ticker}` is
+ * public (`api` middleware only) and needs no CSRF/session
+ * (`docs/user-and-access-model.md`). The ticker is path-encoded and the bar
+ * window defaults to `CHART_BAR_LIMIT`; `signal` aborts an in-flight request.
+ */
+export const instrumentApi = {
+  async detail(
+    ticker: string,
+    options: { limit?: number; signal?: AbortSignal } = {},
+  ): Promise<InstrumentDetailResponse> {
+    const limit = options.limit ?? CHART_BAR_LIMIT
+    const path = `/api/instruments/${encodeURIComponent(ticker)}?limit=${limit}`
+    return request<InstrumentDetailResponse>(path, { signal: options.signal })
   },
 }
