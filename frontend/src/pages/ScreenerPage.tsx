@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
+import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
 import ScreenerFilterPanel from '../components/screener/ScreenerFilterPanel.tsx'
 import ScreenerSortControl from '../components/screener/ScreenerSortControl.tsx'
 import { ApiError, screenerApi } from '../lib/api.ts'
@@ -110,6 +111,12 @@ export default function ScreenerPage() {
     setSearchParams((prev) => patchScreenerFilters(prev, patch), { replace: true })
   }
 
+  function applySavedFilters(patch: Partial<ScreenerFilters>) {
+    // Applying a stored Screener writes the same owned keys as `update`, so the
+    // fetch effect keyed on `screenerFiltersKey` restores the results.
+    setSearchParams((prev) => patchScreenerFilters(prev, patch), { replace: true })
+  }
+
   function clearFilters() {
     // Only the criteria are cleared: the selected ranking must survive.
     setSearchParams((prev) => patchScreenerFilters(prev, EMPTY_SCREENER_CRITERIA), {
@@ -149,6 +156,8 @@ export default function ScreenerPage() {
         onChange={update}
         onClear={clearFilters}
       />
+
+      <SavedScreenersPanel filters={filters} onApply={applySavedFilters} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         {data !== null ? (

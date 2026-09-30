@@ -9,6 +9,7 @@
  */
 
 import type {
+  SavedScreenerFilters,
   ScreenerFilters,
   ScreenerMaCross,
   ScreenerSignalType,
@@ -229,6 +230,55 @@ export function screenerFiltersKey(filters: ScreenerFilters): string {
     filters.maCross ?? '',
     filters.sort,
   ].join('|')
+}
+
+/**
+ * Serialize the live filter state into the canonical seven-key definition that
+ * is stored with a Saved Screener (API param names, `sort` included). The SPA
+ * always emits all seven keys, so a stored definition is always complete and
+ * re-appliable without defaults.
+ */
+export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreenerFilters {
+  return {
+    signal: normalizeSignals(filters.signals),
+    rsi_min: filters.rsiMin,
+    rsi_max: filters.rsiMax,
+    min_rvol: filters.minRvol,
+    price_above_sma200: filters.priceAboveSma200,
+    ma_cross: filters.maCross,
+    sort: filters.sort,
+  }
+}
+
+/** Number or `null`; anything else (missing key, string, NaN) is dropped. */
+function storedNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+/**
+ * Leniently deserialize a stored definition into a `Partial<ScreenerFilters>`
+ * patch. Unknown keys/values are dropped and the RSI values are re-parsed
+ * through `parseRsiInput` (clamped to `0..100`), so a stored payload can never
+ * produce an invalid URL or an API `422`. Every owned key is returned, so
+ * applying restores the saved view exactly.
+ */
+export function deserializeScreenerFilters(
+  payload: SavedScreenerFilters,
+): Partial<ScreenerFilters> {
+  const rsiMin = storedNumber(payload.rsi_min)
+  const rsiMax = storedNumber(payload.rsi_max)
+  const minRvol = storedNumber(payload.min_rvol)
+
+  return {
+    signals: normalizeSignals(Array.isArray(payload.signal) ? payload.signal : []),
+    rsiMin: rsiMin === null ? null : parseRsiInput(String(rsiMin)),
+    rsiMax: rsiMax === null ? null : parseRsiInput(String(rsiMax)),
+    minRvol: minRvol !== null && minRvol >= 0 ? minRvol : null,
+    priceAboveSma200: payload.price_above_sma200 === true,
+    maCross:
+      payload.ma_cross === 'bullish' || payload.ma_cross === 'bearish' ? payload.ma_cross : null,
+    sort: parseScreenerSort(typeof payload.sort === 'string' ? payload.sort : null),
+  }
 }
 
 export function formatPrice(value: number | null): string {

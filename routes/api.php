@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\IngestionRunController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\InstrumentController;
+use App\Http\Controllers\SavedScreenerController;
 use App\Http\Controllers\ScreenerController;
 use App\Http\Controllers\WatchlistController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/watchlist', [WatchlistController::class, 'index']);
     Route::post('/watchlist', [WatchlistController::class, 'store']);
     Route::delete('/watchlist/{ticker}', [WatchlistController::class, 'destroy']);
+
+    // Saved Screeners: user-owned named screener definitions. Every query is
+    // scoped to `$request->user()->savedScreeners()`; no endpoint accepts a
+    // `user_id`. `/screeners` does not collide with the public `/screener`.
+    Route::get('/screeners', [SavedScreenerController::class, 'index']);
+    Route::post('/screeners', [SavedScreenerController::class, 'store']);
+    Route::delete('/screeners/{screener}', [SavedScreenerController::class, 'destroy']);
 });
 
 // Admin-only boundary. `auth:sanctum` runs first (guests -> 401) and `admin`

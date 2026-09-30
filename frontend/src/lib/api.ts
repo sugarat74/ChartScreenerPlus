@@ -305,6 +305,56 @@ export const screenerApi = {
 }
 
 /**
+ * The seven-key canonical definition stored with a Saved Screener. It uses the
+ * API's own param names (snake_case) and includes `sort`, so applying a Screener
+ * restores the exact filters and ranking the user saved.
+ */
+export type SavedScreenerFilters = {
+  signal: ScreenerSignalType[]
+  rsi_min: number | null
+  rsi_max: number | null
+  min_rvol: number | null
+  price_above_sma200: boolean
+  ma_cross: ScreenerMaCross | null
+  sort: ScreenerSort
+}
+
+/** One user-owned Saved Screener returned by the API. */
+export type SavedScreener = {
+  id: number
+  name: string
+  filters: SavedScreenerFilters
+}
+
+/**
+ * Authenticated Saved Screeners client. Every call is scoped server-side to the
+ * session user (`auth:sanctum`); the SPA never sends a `user_id` and a guest
+ * gets a `401`. Mutations fetch the CSRF cookie first, like every other write.
+ */
+export const savedScreenersApi = {
+  async list(): Promise<SavedScreener[]> {
+    const payload = await request<{ screeners: SavedScreener[] }>('/api/screeners')
+    return payload.screeners
+  },
+
+  /** Save the current filter definition under a name (a duplicate name is a `422`). */
+  async create(name: string, filters: SavedScreenerFilters): Promise<SavedScreener> {
+    await ensureCsrfCookie()
+    const payload = await request<{ screener: SavedScreener }>('/api/screeners', {
+      method: 'POST',
+      body: JSON.stringify({ name, filters }),
+    })
+    return payload.screener
+  },
+
+  /** Delete one of the caller's Screeners (`204`); another user's id is a `404`. */
+  async remove(id: number): Promise<void> {
+    await ensureCsrfCookie()
+    await request<void>(`/api/screeners/${id}`, { method: 'DELETE' })
+  },
+}
+
+/**
  * Frozen instrument-detail contract (`GET /api/instruments/{ticker}`).
  * `snapshot` carries only the latest as-of values (13 indicator keys, each
  * `number | null`) — there is no per-bar indicator series; a `null` means
