@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['ticker', 'company', 'sector', 'exchange', 'active'])]
 class Instrument extends Model
@@ -48,6 +49,20 @@ class Instrument extends Model
     }
 
     /**
+     * The most recent end-of-day bar for this instrument.
+     *
+     * `daily_bars` is unique per `(instrument_id, date)`, so `latestOfMany`
+     * always resolves exactly one row and the screener can eager load it
+     * without an N+1 query.
+     *
+     * @return HasOne<DailyBar, $this>
+     */
+    public function latestBar(): HasOne
+    {
+        return $this->hasOne(DailyBar::class)->latestOfMany('date');
+    }
+
+    /**
      * The indicator snapshots computed for this instrument.
      *
      * @return HasMany<IndicatorSnapshot, $this>
@@ -55,6 +70,20 @@ class Instrument extends Model
     public function indicatorSnapshots(): HasMany
     {
         return $this->hasMany(IndicatorSnapshot::class);
+    }
+
+    /**
+     * The most recent indicator snapshot for this instrument.
+     *
+     * `indicator_snapshots` is unique per `(instrument_id, date)`, so
+     * `latestOfMany` always resolves exactly one row and the screener can
+     * eager load it without an N+1 query.
+     *
+     * @return HasOne<IndicatorSnapshot, $this>
+     */
+    public function latestSnapshot(): HasOne
+    {
+        return $this->hasOne(IndicatorSnapshot::class)->latestOfMany('date');
     }
 
     /**
