@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `user-portal` is implemented (`passing`) and awaiting independent validation. `watchlist` and `saved-screeners` are accepted.
+- Current next ready feature: `access-control-guard` is implemented (`passing`) and awaiting independent validation. `watchlist`, `saved-screeners`, and `user-portal` are accepted.
 - Current blocker: none
-- Last verified at: 2026-09-30 (`.\init.ps1` exit 0; Laravel 150 tests (956 assertions) incl. `SavedScreenersApiTest` 17; SPA lint 0 warnings/errors (36 files) + build 130 modules; engine 45 tests; saved-screeners live smoke through the Vite proxy: guest 401 ×3, user A save 201 with canonical stored filters (incl. `sort`), duplicate name/unknown key/`rsi_min=150`/unknown sort 422, a client `user_id` ignored, B list `[]` + cross-user delete 404 + A's row untouched, delete own 204 then 404, apply-equivalence `MSFT,AAPL`; servers/children killed, ports 8000/5173 released, temp users/fixtures removed and DB restored to users=1/instruments=503/universes=1/bars=0/snapshots=0/signals=0/saved_screeners=0)
+- Last verified at: 2026-09-30 (`.\init.ps1` exit 0; Laravel 153 tests / 977 assertions incl. `AccessControlGuardTest` 3 / 21; SPA lint 0 warnings/errors (37 files) + build 131 modules; engine 45 tests; focused owned/admin suites 52 / 247; route middleware audited; local DB restored to users=1/watchlist_items=0/saved_screeners=0 and ports 8000/5173 released)
 
 ## Session Log
 
@@ -334,3 +334,14 @@
 - Known risk or unresolved issue: no frontend browser/E2E runner exists. The live stateful proxy smoke covers ownership, delete/reload and server-ranked apply equivalence, while browser rendering/focus behavior is reviewed from the rendered component source/classes rather than automated in a real browser. Full-repository `pint --test` reports a pre-existing `bootstrap/app.php` line-ending issue; no PHP file belongs to this feature.
 - Status: `passing` — ready for independent validation (not `accepted`).
 - Next best step: independent validation of `user-portal`.
+
+### Session 025
+
+- Date: 2026-09-30
+- Goal: Implement `access-control-guard`.
+- Completed: Audited the frozen route/controller/component boundary. `/portal` remains the sole `RequireAuth` redirect surface (loading state, `Navigate` to `LOGIN_ROUTE` with `replace`, no destination); `/admin` retains loading, guest-link and non-admin restricted states; public Screener/Chart routes and APIs remain anonymous. Added `tests/Feature/AccessControlGuardTest.php` (public reads, all six guest owned-resource calls, and a two-user isolation fixture). The only audit-proven code correction is `WatchlistButton`: a `401` while an authenticated user's membership check or toggle is in flight now redirects to `/login` with `replace`, matching existing Saved Screeners/Portal expiry handling; Visitors retain the in-place sign-in link.
+- Verification run: `php artisan test --filter=AccessControlGuardTest` -> **3 passed (21 assertions)**; `php artisan test --filter="WatchlistApiTest|SavedScreenersApiTest|AdminAccessTest|AdminIngestionApiTest"` -> **52 passed (247 assertions)**; full `php artisan test` -> **153 passed (977 assertions)**; `php artisan route:list --path=api -v` confirmed public reads, `auth:sanctum` owned routes, and ordered admin middleware; Pint on the new test passed; SPA lint -> **0 warnings/errors (37 files)** and build -> **131 modules**; `./init.ps1` -> exit 0 (Laravel 153/977 + SPA lint/build + engine 45), no server started.
+- Evidence/limitations: a Vite proxy smoke (Laravel :8000 + Vite :5173, `Accept: application/json`) returned public Screener/detail `200`, guest Watchlist/Saved Screeners `401`, and SPA `/portal` fallback `200`; servers/listener children were stopped and ports released. Route/component source audit confirms guest links, Portal's no-destination `replace` redirect and Admin's non-redirect states. A browser/E2E runner does not exist, so no persistent browser redirect/focus test was added. An earlier ad-hoc PowerShell smoke attempt exposed the PS 5.1 lack of `Invoke-WebRequest -SkipHttpErrorCheck`; temporary users from that attempt were removed and DB verified `users=1/watchlist_items=0/saved_screeners=0`. Laravel feature tests remain the complete mutation/A-B authorization proof.
+- Files or artifacts updated: `tests/Feature/AccessControlGuardTest.php` (new), `frontend/src/components/watchlist/WatchlistButton.tsx`, `docs/specs/access-control-guard.md`, `PROGRESS.md`, `feature_list.json`. No routes, controllers, models, migrations, policies, middleware, API contract, role model, engine, dependency or durable architecture/constraint docs changed.
+- Status: `passing` — ready for independent validation (not `accepted`).
+- Next best step: independent validation of `access-control-guard`.

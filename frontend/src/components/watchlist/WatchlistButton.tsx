@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../../auth/useAuth.ts'
 import { ApiError, watchlistApi } from '../../lib/api.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
@@ -27,6 +27,7 @@ const BASE_BUTTON_CLASS =
 
 export default function WatchlistButton({ ticker }: { ticker: string }) {
   const { user, status: authStatus } = useAuth()
+  const navigate = useNavigate()
 
   // Membership is keyed to `user.id|ticker` so a session or ticker change never
   // renders a stale "Siguiendo" while the fresh check is in flight.
@@ -56,6 +57,11 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
         }
       } catch (caught) {
         if (active) {
+          if (caught instanceof ApiError && caught.status === 401) {
+            // The session expired after auth bootstrap; return through sign-in.
+            navigate(LOGIN_ROUTE, { replace: true })
+            return
+          }
           setError({ key, message: messageFor(caught) })
         }
       }
@@ -64,7 +70,7 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
     return () => {
       active = false
     }
-  }, [user, ticker])
+  }, [user, ticker, navigate])
 
   async function toggle() {
     if (user === null || following === null) {
@@ -91,6 +97,10 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
         setMembership({ key, following: true })
       }
     } catch (caught) {
+      if (caught instanceof ApiError && caught.status === 401) {
+        navigate(LOGIN_ROUTE, { replace: true })
+        return
+      }
       setError({ key, message: messageFor(caught) })
     } finally {
       setBusy(false)

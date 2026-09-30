@@ -639,13 +639,22 @@
       "saved-screeners",
       "screener-filters-ui"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Anonymous browse of screener and chart works",
       "Protected actions require auth and redirect anonymous users",
       "Ownership is enforced server-side for every owned resource"
     ],
-    "evidence": [],
-    "notes": "Consolidates the access rules in docs/user-and-access-model.md into enforced behavior."
+    "evidence": [
+      "Audit confirmed /portal is the sole RequireAuth redirect route (loading state then Navigate to LOGIN_ROUTE with replace and no destination); /admin keeps guest/non-admin restricted states; /screener, /chart and /instruments/:ticker remain anonymous. No router, API route, controller, policy or middleware refactor was needed.",
+      "tests/Feature/AccessControlGuardTest.php: php artisan test --filter=AccessControlGuardTest -> 3 passed (21 assertions), exit 0; public screener/detail reads, all six guest owned-resource calls returning 401 with no writes, and two-user caller-only lists/foreign 404 deletes with owner rows intact.",
+      "php artisan test --filter=\"WatchlistApiTest|SavedScreenersApiTest|AdminAccessTest|AdminIngestionApiTest\" -> 52 passed (247 assertions); php artisan test -> 153 passed (977 assertions), exit 0. Existing admin suites cover every ingestion endpoint guest 401/non-admin 403, so no assertion was missing.",
+      "php artisan route:list --path=api -v -> public GET api/screener has api + throttle only and GET api/instruments/{ticker} has api only; owned routes have Authenticate:sanctum; every admin route has Authenticate:sanctum then EnsureUserIsAdmin.",
+      "npm --prefix frontend run lint -> 0 warnings/errors (37 files); npm --prefix frontend run build -> 131 modules; .\\vendor\\bin\\pint --test tests\\Feature\\AccessControlGuardTest.php -> passed; .\\init.ps1 -> exit 0 (Laravel 153/977, SPA lint/build, engine 45 tests).",
+      "Vite proxy smoke (Laravel :8000 + Vite :5173, Accept: application/json) -> public /api/screener 200, /api/instruments/NVDA 200, guest /api/watchlist 401, guest /api/screeners 401, and SPA /portal fallback 200; servers and listener children stopped, ports released.",
+      "Audit-proven UI correction: WatchlistButton now handles a 401 during its authenticated membership read or toggle as session expiry by Navigate to /login replace; Visitor continues to receive the existing in-place LOGIN_ROUTE link. Saved Screeners already had this handling. Static audit confirms RequireAuth has the no-destination replace behavior and guest links preserve anonymous screens; no browser/E2E runner is available.",
+      "Independent validator ACCEPT (role validator, access-control-guard): re-ran AccessControlGuardTest -> 3 passed (21 assertions), related owned/admin suites -> 52 passed (247 assertions), full Laravel suite -> 153 passed (977 assertions); SPA lint 0/0 and build 131 modules; focused Pint passed; .\\init.ps1 green (engine 45); route list confirmed public screener/instrument APIs, auth:sanctum owned routes, and ordered auth:sanctum then admin middleware. Independently verified public SPA fallback for /screener, /chart, /instruments/NVDA and /portal; all six owned guest calls 401/no writes; two-user Watchlist/Saved Screener isolation (caller lists only, foreign delete 404, owner persists); admin guest 401/non-admin 403; RequireAuth no-destination replace redirect for /portal; guest Screener/Chart affordances are sign-in links. WatchlistButton 401 redirect was judged correct/minimal (only post-bootstrap session expiry, guest remains link). No policy/middleware/endpoint/role/resource/schema/API/dependency redesign. Non-blocking: no browser E2E for visual redirect/focus behavior."
+    ],
+    "notes": "Narrow consolidation: adds cross-cutting regression coverage and fixes only the WatchlistButton session-expiry gap. Existing explicit user-scoped controller queries and admin middleware ordering remain unchanged. Ready for independent validation; no browser/E2E runner exists."
   }
 ]
