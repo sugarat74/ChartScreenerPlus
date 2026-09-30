@@ -1,16 +1,17 @@
 /**
- * Portal: the owned watchlist for a Registered User.
+ * Portal: the caller-owned Saved Screeners and Watchlist for a Registered User.
  *
  * The page is guarded by `RequireAuth` (a Visitor is redirected to sign-in),
  * but the API is the enforcement point — every request runs through
  * `auth:sanctum` and is scoped server-side to the session user. Only listing
- * and removal live here; adding happens from the chart page.
+ * and removal live here; adding Watchlist entries happens from the chart page.
  */
 
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import RequireAuth from '../auth/RequireAuth.tsx'
 import { useAuth } from '../auth/useAuth.ts'
+import PortalSavedScreeners from '../components/portal/PortalSavedScreeners.tsx'
 import WatchlistTable from '../components/watchlist/WatchlistTable.tsx'
 import { ApiError, watchlistApi } from '../lib/api.ts'
 import type { WatchlistEntry } from '../lib/api.ts'
@@ -209,12 +210,15 @@ export default function PortalPage() {
               Portal
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-              Tu watchlist personal. Los Screeners guardados se añadirán aquí más adelante.
+              Tus Screeners guardados y tu watchlist personal en un solo lugar.
             </p>
           </div>
         </header>
 
-        <WatchlistPanel />
+        <div className="grid gap-8 xl:grid-cols-2 xl:items-start">
+          <PortalSavedScreeners />
+          <WatchlistPanel />
+        </div>
       </section>
     </RequireAuth>
   )

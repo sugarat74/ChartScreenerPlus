@@ -612,14 +612,22 @@
       "saved-screeners",
       "app-shell-navigation"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "The portal lists the user's saved Screeners and watchlist entries",
       "Deleting a Screener removes it from the list",
       "Only the owner's data is shown"
     ],
-    "evidence": [],
-    "notes": "The mockup also shows a decorative PRO plan and P&L; those are explicitly out of scope."
+    "evidence": [
+      "php artisan test --filter=\"WatchlistApiTest|SavedScreenersApiTest\" -> 33 passed (157 assertions), exit 0; php artisan test -> 150 passed (956 assertions), exit 0",
+      "php artisan route:list --path=api -v -> existing GET/POST/DELETE api/screeners and GET/POST/DELETE api/watchlist routes retain api + Authenticate:sanctum only; no portal endpoint or backend change",
+      "npm --prefix frontend run lint -> tsc -b + oxlint: 0 warnings, 0 errors (37 files), exit 0; npm --prefix frontend run build -> 131 modules transformed, exit 0",
+      "Live stateful proxy smoke (Laravel :8000 + Vite :5173): guest /api/screeners -> 401; A and B each created owned screeners and watchlist entries; A lists 2 screeners + [AAPL], B lists 1 screener + [MSFT]; B DELETE A's screener -> 404 and A row remained; A DELETE own Momentum -> 204 then caller list reloaded with only Aplicar RSI; canonical apply query signal=golden_cross&min_rvol=1&sort=rsi_desc returned server-ranked MSFT,AAPL; Vite /portal and PortalSavedScreeners module -> 200. Servers/trees stopped, ports released, and DB restored to users=1/instruments=503/universes=1/bars=0/snapshots=0/signals=0/saved_screeners=0",
+      ".\\init.ps1 -> exit 0 (Laravel 150 tests / 956 assertions, SPA lint 0 warnings/errors on 37 files, SPA build 131 modules, engine 45 tests), starts no server; init.ps1 unchanged",
+      "Code/design checklist: /portal keeps RequireAuth; distinct semantic Saved Screeners and Watchlist sections use token surfaces, 2px outlines, hard shadows, visible yellow focus offsets, real table headers, role=alert errors and per-row busy labels; no PRO/P&L, alerts, portal API, migration, route, ownership consolidation, client-side ranking or new dependency",
+      "Independent validator ACCEPT (role validator, user-portal): re-ran php artisan test -> 150 passed (956 assertions); npm frontend lint -> 0/0 (37 files) and build -> 131 modules; route:list confirmed existing watchlist/screeners ownership routes remain auth:sanctum and no portal API route; .\\init.ps1 exit 0 (engine 45); git diff --check clean. Confirmed RequireAuth keeps portal children unmounted for guests before Navigate /login; PortalSavedScreeners uses only existing session-scoped APIs and canonical URL helpers; apply creates a fresh /screener URL preserving non-default sort while default restores through existing fetch; delete reloads only the session list after 204/404; server-side ownership isolation remains enforced. No API/schema/routes/dependency/access-control changes or PRO/P&L/alerts. Low notes: no browser E2E; unrelated full Pint line-ending failure in untouched bootstrap/app.php."
+    ],
+    "notes": "Portal-specific presentation only: uses existing savedScreenersApi/watchlistApi and canonical deserializeScreenerFilters + patchScreenerFilters URL replay. The mockup's decorative PRO plan and P&L remain explicitly out of scope. Ready for independent validation; no browser/E2E runner exists."
   },
   {
     "id": "access-control-guard",
