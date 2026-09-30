@@ -479,18 +479,29 @@
     "area": "screener",
     "title": "Rank and sort the candidate list",
     "user_visible_behavior": "A user sorts the candidate list by RVOL, confidence/signal strength, RSI or change, and the ranking updates.",
-    "depends_on": [
-      "screener-api",
-      "app-shell-navigation"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Each supported sort order reorders the visible list consistently",
-      "Sorting is reflected in the API request, not only client-side",
-      "The selected sort persists while filters change"
-    ],
-    "evidence": [],
-    "notes": "Keep sort options limited to those the screener API supports."
+      "depends_on": [
+        "screener-api",
+        "app-shell-navigation"
+      ],
+      "status": "accepted",
+      "verification": [
+        "Each supported sort order reorders the visible list consistently",
+        "Sorting is reflected in the API request, not only client-side",
+        "The selected sort persists while filters change"
+      ],
+      "evidence": [
+        "npm --prefix frontend run lint -> tsc -b + oxlint: 0 warnings, 0 errors (29 files; was 28), exit 0",
+        "npm --prefix frontend run build -> tsc -b + vite build OK, 118 modules transformed (was 117; css 19.83 kB / js 363.63 kB), exit 0; frontend/package.json and package-lock.json unchanged (no new dependency)",
+        "Pure-helper check (temporary node --experimental-strip-types script, removed after): 25/25 assertions passed (exit 0) - SCREENER_SORT_OPTIONS is exactly the six API values in the spec order with the exact Spanish labels; DEFAULT_SCREENER_SORT is rvol_desc; parseScreenerFilters maps absent/garbage/confidence_desc -> rvol_desc and all six valid values through (and keeps criteria + sort together); patchScreenerFilters deletes 'sort' for rvol_desc, sets it otherwise, preserves unrelated params and leaves an unpatched sort untouched; screenerFiltersKey differs for all six sorts and ends with the sort segment; countActiveFilters/hasActiveFilters ignore sort; an EMPTY_SCREENER_CRITERIA clear leaves sort=rsi_desc in the URL and removes the criteria",
+        "Live dev smoke (php artisan serve :8000 + Vite :5173 through the Vite proxy; temporary bars/snapshots/signals fixture on real sp500 tickers AAPL/MSFT/NVDA/AMZN/GOOGL with distinct rvol/rsi14/change_percent/signal counts), all anonymous: default (no param) and ?sort=rvol_desc -> [MSFT,GOOGL,NVDA,AMZN,AAPL]; ?sort=signal_count_desc -> [GOOGL,AAPL,NVDA,MSFT,AMZN]; ?sort=change_desc -> [GOOGL,MSFT,AMZN,AAPL,NVDA]; ?sort=change_asc -> [NVDA,AAPL,AMZN,MSFT,GOOGL]; ?sort=rsi_desc -> [GOOGL,MSFT,NVDA,AAPL,AMZN]; ?sort=rsi_asc -> [AMZN,AAPL,NVDA,MSFT,GOOGL] - every response echoes the requested sort and returns 5/5; ?sort=change_desc&min_rvol=2 -> [GOOGL,MSFT,AMZN,NVDA]; ?sort=garbage with Accept: application/json -> HTTP 422 (frozen API; the SPA never forwards it)",
+        "Live dev smoke (SPA/modules): GET /screener -> 200; transformed /src/pages/ScreenerPage.tsx (ScreenerSortControl, EMPTY_SCREENER_CRITERIA), /src/components/screener/ScreenerSortControl.tsx (SCREENER_SORT_OPTIONS, 'Ordenar por'), /src/lib/screenerFilters.ts (DEFAULT_SCREENER_SORT, parseScreenerSort) and /src/lib/api.ts (params.set(\"sort\")) all 200",
+        "Smoke teardown: Laravel + Vite process trees killed and ports 8000/5173 released (no listeners); fixture rows deleted and the DB restored to users=1/universes=1/instruments=503/bars=0/snapshots=0/signals=0; the temporary sort-smoke.php was removed",
+        ".\\.init.ps1 -> exit 0 (Laravel 13.34.0 + 117 tests (799 assertions) + SPA lint 0 warnings/0 errors + SPA build 118 modules + engine 45 tests), starts no server; init.ps1 unchanged",
+        "Scope: only frontend/src/lib/api.ts, frontend/src/lib/screenerFilters.ts, frontend/src/pages/ScreenerPage.tsx, frontend/src/components/screener/ScreenerSortControl.tsx (new), ARCHITECTURE.md, CONSTRAINTS.md, docs/specs/candidate-list-ranking.md, PROGRESS.md and feature_list.json changed; ScreenerFilterPanel.tsx, CandidateResults.tsx, CandidateTable.tsx, router.tsx/nav.ts/AppHeader.tsx, frontend/package.json/lockfile, routes/api.php + ScreenerController.php (frozen API), migrations/models, engine/ and alphapulse/ untouched (git status/diff confirms); init.ps1 unchanged",
+        "Gap (documented, per spec): no frontend test runner or E2E harness exists, so the per-sort request/table behavior and the pixel-level DESIGN fidelity (2px border, hard shadow, mono, focus offset, wrapping header) were verified at the HTTP/URL/transform level plus the pure-helper check, not in a real browser; the sort-change -> one request path is proven by screenerFiltersKey changing per sort driving the effect deps; the two unnamed throttle limiters still share a limiter key (frozen API, documented follow-up)",
+        "Independent validator ACCEPT (role validator, candidate-list-ranking): re-ran npm --prefix frontend run lint -> 0/0 (29 files); run build -> 118 modules, exit 0; .\\.init.ps1 exit 0 (117 tests/799 assertions + engine 45); package.json/lock/init.ps1/routes/api.php/ScreenerController/router/nav/AppHeader diffs empty (no new dependency, no API change). Independent harnesses against the real screenerFilters.ts (35/35) and api.ts (fetch stub, 14/14) proved: all six sort values are echoed server-side and rendered verbatim (no client comparator exists in frontend/src); screenerApi.search always emits sort (incl. rvol_desc) and never limit/universe; patchScreenerFilters preserves an unpatched sort and screenerFiltersKey is unique per sort; absent/invalid sort -> rvol_desc (SPA cannot emit 422); sort is deleted from the URL when default; hasActiveFilters/countActiveFilters ignore sort; clearing criteria preserves the selected sort; header + control render on every status. DESIGN tokens verified. Low non-blocking nit: ScreenerSortControl uses text-xs vs the filter panel's text-sm (cosmetic); candidate-list-ranking entry is over-indented in feature_list.json (cosmetic)."
+      ],
+      "notes": "Keep sort options limited to those the screener API supports. `sort` is URL-backed with the six API values (default rvol_desc, deleted from the URL when default) and is always forwarded to GET /api/screener; the SPA never re-sorts. ScreenerSortControl.tsx is a native <label> + <select> in the always-rendered results header. hasActiveFilters/countActiveFilters ignore sort and 'Limpiar filtros' (EMPTY_SCREENER_CRITERIA) preserves it. See docs/specs/candidate-list-ranking.md, ARCHITECTURE.md (Screener UI), CONSTRAINTS.md (Frontend)."
   },
   {
     "id": "chart-interactive",

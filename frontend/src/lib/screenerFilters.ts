@@ -2,13 +2,18 @@
  * Screener filter helpers. Pure functions with no React dependency so the URL
  * round-trip (parse -> patch -> canonical key) is auditable and deterministic.
  *
- * The SPA owns exactly six query keys, all named after the screener API params
- * (`signal`, `rsi_min`, `rsi_max`, `min_rvol`, `price_above_sma200`,
- * `ma_cross`); any other query param (a future `sort`, a campaign tag) is
- * preserved untouched.
+ * The SPA owns exactly seven query keys, all named after the screener API
+ * params: the six criteria (`signal`, `rsi_min`, `rsi_max`, `min_rvol`,
+ * `price_above_sma200`, `ma_cross`) plus the ranking key `sort`; any other query
+ * param (a campaign tag, a future `limit`) is preserved untouched.
  */
 
-import type { ScreenerFilters, ScreenerMaCross, ScreenerSignalType } from './api.ts'
+import type {
+  ScreenerFilters,
+  ScreenerMaCross,
+  ScreenerSignalType,
+  ScreenerSort,
+} from './api.ts'
 
 /** Canonical order used for the URL and for deterministic request keys. */
 export const SCREENER_SIGNAL_TYPES: readonly ScreenerSignalType[] = [
@@ -39,7 +44,35 @@ export const SIGNAL_LABELS: Record<ScreenerSignalType, string> = {
 /** Preset Min RVOL buttons; `+ Todos` (off) is handled by the control. */
 export const MIN_RVOL_PRESETS: readonly number[] = [1, 1.5, 2, 3]
 
+/** API default ranking; also what an absent/invalid `sort` resolves to. */
+export const DEFAULT_SCREENER_SORT: ScreenerSort = 'rvol_desc'
+
+/** The six selectable ranking orders (display order) with Spanish labels. */
+export const SCREENER_SORT_OPTIONS: readonly { value: ScreenerSort; label: string }[] = [
+  { value: 'rvol_desc', label: 'Volumen relativo (RVOL mayor)' },
+  { value: 'signal_count_desc', label: 'Confianza (más señales)' },
+  { value: 'change_desc', label: 'Variación diaria (mayor)' },
+  { value: 'change_asc', label: 'Variación diaria (menor)' },
+  { value: 'rsi_desc', label: 'RSI (mayor)' },
+  { value: 'rsi_asc', label: 'RSI (menor)' },
+]
+
 export const EMPTY_SCREENER_FILTERS: ScreenerFilters = {
+  signals: [],
+  rsiMin: null,
+  rsiMax: null,
+  minRvol: null,
+  priceAboveSma200: false,
+  maCross: null,
+  sort: DEFAULT_SCREENER_SORT,
+}
+
+/**
+ * The six criterion fields only, for "Limpiar filtros". `sort` is a ranking
+ * preference, not a filter, so clearing criteria must preserve the user's
+ * selected order.
+ */
+export const EMPTY_SCREENER_CRITERIA: Partial<ScreenerFilters> = {
   signals: [],
   rsiMin: null,
   rsiMax: null,
@@ -89,6 +122,15 @@ function parseMaCross(raw: string | null): ScreenerMaCross | null {
   return raw === 'bullish' || raw === 'bearish' ? raw : null
 }
 
+function isScreenerSort(value: string | null): value is ScreenerSort {
+  return value !== null && SCREENER_SORT_OPTIONS.some((option) => option.value === value)
+}
+
+/** Absent/unknown `sort` values fall back to the API default (never a `422`). */
+export function parseScreenerSort(value: string | null): ScreenerSort {
+  return isScreenerSort(value) ? value : DEFAULT_SCREENER_SORT
+}
+
 /**
  * Strict and lenient: unknown or invalid values are dropped, never forwarded,
  * so a hand-edited URL can never produce an API `422`.
@@ -103,6 +145,7 @@ export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
     minRvol: parseMinRvol(params.get('min_rvol')),
     priceAboveSma200: params.get('price_above_sma200') === '1' || params.get('price_above_sma200') === 'true',
     maCross: parseMaCross(params.get('ma_cross')),
+    sort: parseScreenerSort(params.get('sort')),
   }
 }
 
@@ -115,9 +158,10 @@ function setOrDelete(params: URLSearchParams, key: string, value: string | null)
 }
 
 /**
- * Patch only the six owned keys (in canonical form) and preserve every other
- * query param untouched. `undefined` means "not part of this patch"; an
- * explicit `null`/`false`/`[]` clears the key.
+ * Patch only the owned keys (in canonical form) and preserve every other query
+ * param untouched. `undefined` means "not part of this patch"; an explicit
+ * `null`/`false`/`[]` clears the key. The default sort is omitted from the URL,
+ * so an unmodified ranking keeps the URL clean.
  */
 export function patchScreenerFilters(
   prev: URLSearchParams,
@@ -143,6 +187,9 @@ export function patchScreenerFilters(
   }
   if (patch.maCross !== undefined) {
     setOrDelete(next, 'ma_cross', patch.maCross)
+  }
+  if (patch.sort !== undefined) {
+    setOrDelete(next, 'sort', patch.sort === DEFAULT_SCREENER_SORT ? null : patch.sort)
   }
 
   return next
@@ -180,6 +227,7 @@ export function screenerFiltersKey(filters: ScreenerFilters): string {
     filters.minRvol ?? '',
     filters.priceAboveSma200 ? '1' : '',
     filters.maCross ?? '',
+    filters.sort,
   ].join('|')
 }
 

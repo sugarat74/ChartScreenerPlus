@@ -212,10 +212,21 @@ export type ScreenerSignalType =
 
 export type ScreenerMaCross = 'bullish' | 'bearish'
 
+/** The six ranking orders the frozen screener API supports. */
+export type ScreenerSort =
+  | 'rvol_desc'
+  | 'signal_count_desc'
+  | 'change_desc'
+  | 'change_asc'
+  | 'rsi_desc'
+  | 'rsi_asc'
+
 /**
  * The subset of the prototype `FilterState` that the frozen screener API can
  * actually evaluate, so the SPA never invents an unsupported criterion. Every
- * criterion is AND-combined except `signals`, which the API ORs.
+ * criterion is AND-combined except `signals`, which the API ORs. `sort` is a
+ * ranking preference, not a criterion: it is always sent but never counted as
+ * an active filter.
  */
 export type ScreenerFilters = {
   signals: ScreenerSignalType[]
@@ -224,6 +235,7 @@ export type ScreenerFilters = {
   minRvol: number | null
   priceAboveSma200: boolean
   maCross: ScreenerMaCross | null
+  sort: ScreenerSort
 }
 
 export type ScreenerCandidate = {
@@ -248,9 +260,10 @@ export type ScreenerResponse = {
 }
 
 /**
- * Serialize only the active filter params, using the API's own param names so a
- * copied URL is directly usable as an API call. `sort`, `limit` and `universe`
- * are never sent — the API defaults apply (ranking stays server-side).
+ * Serialize the filter params plus `sort`, using the API's own param names so a
+ * copied URL is directly usable as an API call. `sort` is always sent (each
+ * request is self-describing and the ranking stays server-side); `limit` and
+ * `universe` are never sent — the API defaults apply.
  */
 function screenerQueryString(filters: ScreenerFilters): string {
   const params = new URLSearchParams()
@@ -272,13 +285,15 @@ function screenerQueryString(filters: ScreenerFilters): string {
   if (filters.maCross !== null) {
     params.set('ma_cross', filters.maCross)
   }
+  params.set('sort', filters.sort)
   return params.toString()
 }
 
 /**
  * Anonymous screener client. `GET /api/screener` is public (`api` +
  * `throttle:60,1` only) and carries no CSRF/session requirement
- * (`docs/user-and-access-model.md`). `signal` aborts an in-flight request.
+ * (`docs/user-and-access-model.md`). Every request carries `sort`; `signal`
+ * aborts an in-flight request.
  */
 export const screenerApi = {
   async search(filters: ScreenerFilters, signal?: AbortSignal): Promise<ScreenerResponse> {

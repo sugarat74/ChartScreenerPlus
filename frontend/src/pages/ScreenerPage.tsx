@@ -1,9 +1,11 @@
 /**
- * Screener surface: URL-backed filters + the Candidate list from `GET /api/screener`.
+ * Screener surface: URL-backed filters + ranking + the Candidate list from
+ * `GET /api/screener`.
  *
  * Anonymous by design — no `useAuth`, no redirect, no login prompt. Filtering
- * and ranking stay server-side; this page only serializes the filters, issues
- * the request and renders loading / refreshing / empty / error / result states.
+ * and ranking stay server-side; this page only serializes the filters/sort,
+ * issues the request and renders loading / refreshing / empty / error / result
+ * states.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -11,10 +13,11 @@ import { useSearchParams } from 'react-router'
 import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
 import ScreenerFilterPanel from '../components/screener/ScreenerFilterPanel.tsx'
+import ScreenerSortControl from '../components/screener/ScreenerSortControl.tsx'
 import { ApiError, screenerApi } from '../lib/api.ts'
 import type { ScreenerCandidate, ScreenerFilters } from '../lib/api.ts'
 import {
-  EMPTY_SCREENER_FILTERS,
+  EMPTY_SCREENER_CRITERIA,
   countActiveFilters,
   hasActiveFilters,
   parseScreenerFilters,
@@ -108,7 +111,10 @@ export default function ScreenerPage() {
   }
 
   function clearFilters() {
-    setSearchParams((prev) => patchScreenerFilters(prev, EMPTY_SCREENER_FILTERS), { replace: true })
+    // Only the criteria are cleared: the selected ranking must survive.
+    setSearchParams((prev) => patchScreenerFilters(prev, EMPTY_SCREENER_CRITERIA), {
+      replace: true,
+    })
   }
 
   function retry() {
@@ -144,21 +150,26 @@ export default function ScreenerPage() {
         onClear={clearFilters}
       />
 
-      {data !== null && status !== 'error' ? (
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {data !== null ? (
           <p className="font-mono text-xs text-on-surface-variant">
             Mostrando{' '}
             <strong className="font-bold text-on-surface">{data.returned}</strong> de{' '}
             <strong className="font-bold text-on-surface">{data.total}</strong> candidatos
           </p>
-          <span
-            title="Universo resuelto por el servidor"
-            className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]"
-          >
-            Universo · {data.universeName}
-          </span>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          <ScreenerSortControl value={filters.sort} onChange={(sort) => update({ sort })} />
+          {data !== null ? (
+            <span
+              title="Universo resuelto por el servidor"
+              className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]"
+            >
+              Universo · {data.universeName}
+            </span>
+          ) : null}
         </div>
-      ) : null}
+      </div>
 
       <CandidateResults
         status={status}
