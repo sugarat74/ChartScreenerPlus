@@ -124,6 +124,15 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - Admin panel tests **MUST** be offline: `Http::fake` for the engine and `Queue::fake()` (or `dispatchSync`) for the job, with `actingAs(User::factory()->admin())` and the 401/403 cases asserted for every endpoint. Reason: deterministic, worker-free tests.
 - `role` on `AuthUser` **MUST** only drive UI visibility; it **MUST NOT** be treated as authorization by the SPA. Reason: the `admin` middleware is the only enforcement point.
 
+## Public API
+
+- Browse endpoints (screener, instrument detail) **MUST** be anonymous/public: no `auth:sanctum` and no `admin` middleware, and no controller authorization branch. Reason: `docs/user-and-access-model.md` states browsing requires no session, and the data is system-owned public market data with no ownership.
+- Read endpoints **MUST** return bounded payloads with an explicit hard maximum. `GET /api/instruments/{ticker}` defaults `?limit` to **252**, clamps silently to **`1..2000`**, and falls back to the default for a non-numeric value — it **MUST NOT** return a `422` for a bad/oversized limit. Reason: a chart payload must stay responsive and a bad limit is not worth a validation round-trip.
+- Bars **MUST** be returned ordered **ascending** by `date` even though the bounded query selects the most recent N. Reason: the chart renders left-to-right and the contract must be deterministic.
+- Decimal columns **MUST** be converted to JSON numbers (`(float)`) at the API boundary while **MUST** stay `decimal` in the database and in the model cast. Reason: chart consumers need numeric values, but the storage-precision rule is unchanged. A whole-number decimal serializes as a JSON number without a fraction (e.g. `175`), which is still numeric to JSON/JS consumers.
+- An unknown resource **MUST** be an explicit JSON `404` body (e.g. `{"message":"Instrument not found."}`), never a 500 and never a generic HTML error; **MUST NOT** rely on `firstOrFail`/implicit route-model binding to shape it. Reason: the SPA consumes JSON and the error contract is part of the API.
+- Instrument detail **MUST** return only the **latest** snapshot (max `date`, `null` when none) and the current signals ordered by `type` ascending (`[]` when none); per-bar indicator series **MUST NOT** be added here. Reason: this contract is the bounded input for `chart-interactive`, and per-bar overlays are that feature's decision.
+
 ## Harness
 
 - **MUST** keep `init.ps1` a non-blocking gate: it runs the Laravel checks (`php artisan --version`, `php artisan test`), the SPA typecheck/lint/build when `frontend/` exists, and the engine tests when `engine/requirements.txt` exists. It **MUST NOT** start long-running processes such as `php artisan serve`, the Vite dev server or uvicorn.

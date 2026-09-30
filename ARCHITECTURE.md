@@ -112,6 +112,20 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - **UI.** `frontend/src/pages/AdminPage.tsx` (guard + trigger + telemetry tiles + history + polled log) with `frontend/src/components/admin/{RunStatusBadge,RunTelemetry,RunHistoryTable,RunLogStream}.tsx`; `AuthUser.role` and `NAV_ITEMS[].adminOnly` drive tab filtering. Only real ledger data is shown — the prototype's proxy/worker/cache tiles are not requirements.
 - **Panel scope.** The panel triggers the **ingestion stage / ledger**, not `ingestion:pipeline`; the daily scheduler still owns the full ingest -> indicators -> signals pipeline.
 
+## Instrument Detail API
+
+- **Route.** `GET /api/instruments/{ticker}` is a top-level public route in `routes/api.php` carrying only the `api` middleware — no `auth:sanctum`, no `admin`, no route-model binding and no `where` constraint (tickers may contain `.`/`-`, e.g. `BRK.B`). Browsing charts requires no session (`docs/user-and-access-model.md`) and the data is system-owned public market data, so there is no authorization branch.
+- **Lookup.** The path value is normalized with `trim` + `strtoupper` before an exact `instruments.ticker` lookup, so matching is case-insensitive; inactive instruments are still returned (a removed instrument keeps its history per `docs/domain-model.md`). An unknown ticker returns HTTP `404` with the explicit JSON body `{"message":"Instrument not found."}` (a controller response — never `firstOrFail`, never a 500).
+- **Bounding.** `?limit=` is optional, defaults to **252** (one trading year of sessions) and is clamped silently to **`1..2000`** (never a `422`); a non-numeric value falls back to the default. The limit selects the **most recent** bars, which the payload then presents **ascending by date** so a candle chart renders left-to-right.
+- **Payload** (`app/Http/Controllers/InstrumentController.php`, explicit arrays, no Resource classes): `{instrument, bars, snapshot, signals, meta}`.
+  - `instrument = {ticker, company, sector, exchange, active}`.
+  - `bars = [{date, open, high, low, close, volume}]` — `date` is `Y-m-d`; OHLC are JSON numbers and `volume` an integer.
+  - `snapshot` = the `indicator_snapshots` row with the greatest `date` (unique per `(instrument_id, date)`, so no tie), the full indicator key set plus the as-of `date`, or `null` when the instrument has no snapshot. Every indicator key is always present (`null` when history was insufficient, matching `indicators-compute`).
+  - `signals = [{type, date, metadata}]`, the current active set ordered by `type` ascending; `[]` when none.
+  - `meta = {limit, bar_count, latest_bar_date}` (`latest_bar_date` is `null` when the instrument has no bars).
+- **Numbers at the boundary, `decimal` in storage.** `decimal:4` cast values are converted with `(float)` when shaping the payload, so the client receives JSON numbers while the columns and the `decimal` storage rule are unchanged (`CONSTRAINTS.md`). A whole-number decimal (e.g. `175.0000`) serializes as the JSON number `175`, which JS consumers treat as a number.
+- **No per-bar indicator series.** Only the **latest** snapshot is returned; SMA/EMA/Bollinger series per bar are intentionally a `chart-interactive` concern (future hook), not part of this contract. `watchlist` can reuse this endpoint; no ownership is involved.
+
 ## Dependency Direction
 
 - The SPA talks to Laravel over HTTP (JSON API); the auth endpoints above are the first ones. There is no code sharing between `frontend/` and the Laravel app.

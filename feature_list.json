@@ -394,18 +394,28 @@
     "area": "api",
     "title": "Expose instrument detail API",
     "user_visible_behavior": "An API response provides an instrument's daily bars plus its latest snapshot and signals.",
-    "depends_on": [
-      "signals-detect",
-      "db-schema-market-data"
-    ],
-    "status": "not_started",
-    "verification": [
-      "GET of an instrument returns ordered bars, latest indicators and active signals",
-      "An unknown ticker returns a not-found response",
-      "Response shape is covered by a test"
-    ],
-    "evidence": [],
-    "notes": "Backs the chart screen. Keep payloads bounded for responsive charts."
+      "depends_on": [
+        "signals-detect",
+        "db-schema-market-data"
+      ],
+      "status": "accepted",
+      "verification": [
+        "GET of an instrument returns ordered bars, latest indicators and active signals",
+        "An unknown ticker returns a not-found response",
+        "Response shape is covered by a test"
+      ],
+      "evidence": [
+        "php artisan test --filter=InstrumentDetailApiTest -> 9 passed (84 assertions), exit 0: unknown ticker 404 JSON (assertExactJson {message:'Instrument not found.'}), bars ordered ascending (seeded out of order), latest snapshot by max date + signals ordered by type, bounded/clamped limit (2010 bars -> default 252 newest; ?limit=10 -> newest 10; ?limit=99999 -> 2000; ?limit=0/-5 -> 1; ?limit=abc -> 252; every case ascending), sparse instrument (snapshot null / signals [] / bars still returned), no-bars instrument (bars [] / meta.latest_bar_date null), case-insensitive ticker (aapl -> AAPL), numeric types (assertIsFloat OHLC incl. close 178.2, assertIsInt volume 1234567, snapshot.rsi14 float, sma200 null, the '178.2000' decimal:4 string never serialized), and the exact top-level/nested key sets",
+        "php artisan test -> 97 passed (614 assertions), exit 0 (was 88/530 baseline: +9 tests, +84 assertions; every pre-existing suite stays green)",
+        "php artisan route:list --path=api -v -> GET api/instruments/{ticker} -> InstrumentController@show with the api middleware ONLY (no auth:sanctum, no EnsureUserIsAdmin), confirming the anonymous public contract",
+        ".\\vendor\\bin\\pint --test app/Http/Controllers/InstrumentController.php routes/api.php tests/Feature/InstrumentDetailApiTest.php -> passed",
+        ".\\init.ps1 -> exit 0 (Laravel 13.34.0 + 97 tests (614 assertions) + SPA lint 0 warnings/0 errors + SPA build 113 modules + engine 45 tests); starts no server; init.ps1 unchanged",
+        "Contract: ticker normalized with trim+strtoupper; explicit controller JSON 404 (no firstOrFail); ?limit default 252 clamped silently to 1..2000 (non-numeric -> default, never 422); newest N bars returned ascending; snapshot = max-date indicator_snapshots row with all 15 keys always present (null when history was insufficient) or null; signals = current active rows ordered by type ascending, [] when none; meta = {limit, bar_count, latest_bar_date}; decimal:4 values cross the boundary as JSON numbers ((float)) and volume as int",
+        "Scope: only app/Http/Controllers/InstrumentController.php (new), routes/api.php, tests/Feature/InstrumentDetailApiTest.php (new), ARCHITECTURE.md, CONSTRAINTS.md, docs/specs/instrument-detail-api.md, PROGRESS.md and feature_list.json changed; frontend/, engine/, alphapulse/, migrations/models, admin routes and init.ps1 untouched (git status/diff confirms)",
+        "Finding (documented in the spec + CONSTRAINTS.md): PHP serializes a whole-number float as a JSON number without a fraction (175.0000 -> 175), which is still a JSON/JS number; no JSON_PRESERVE_ZERO_FRACTION was added. No frontend test runner/E2E harness exists; this read-only API contract has no browser behavior and is fully covered by feature tests",
+      "Independent validator ACCEPT (role validator, instrument-detail-api): re-ran php artisan test --filter=InstrumentDetailApiTest -> 9 passed (84 assertions) and full suite -> 97 passed (614 assertions); route:list shows GET api/instruments/{ticker} with the api middleware ONLY; pint passed; .\\.init.ps1 exit 0. Independent live smoke (temporary ZZVAL instrument, cleaned up, port released): anonymous curl 404 exact JSON {message:'Instrument not found.'} for unknown/long ticker; 200 for lowercase/spaced/dot tickers normalized to uppercase; bars ascending though inserted out of order; limit default 252 / clamp 2000 / 0 and -5 -> 1 / 10.9 -> 10 / abc and array -> 252; OHLC/volume as JSON numbers with no '...0000' strings; snapshot = max-date row with all 15 keys null-safe; signals ordered by type; snapshot null / signals [] / meta.latest_bar_date null on sparse instruments; DB restored to 503|0|0|0. Security: anonymous intentional and documented; parameterized Eloquent only; read-only, bounded payload. Low non-blocking nits: the instrument-detail-api feature_list.json entry was re-indented (cosmetic diff); GET /api/instruments/ (empty ticker) returns the framework HTML 404 rather than JSON (outside spec, SPA deep-links with a ticker); no rate limit on the public endpoint (future abuse-control alongside the screener)."
+      ],
+      "notes": "Public read-only GET /api/instruments/{ticker} backs the chart screen. Anonymous by design (only the api middleware; docs/user-and-access-model.md). Bounded payload: ?limit default 252, clamped 1..2000, selecting the most recent bars and returning them ascending. Latest snapshot by max date (15 keys always present, null for insufficient history) or null; current signals ordered by type ascending; meta {limit, bar_count, latest_bar_date}. Explicit controller JSON 404 {message:'Instrument not found.'}. decimal:4 values are converted to JSON numbers at the API boundary while storage stays decimal. See docs/specs/instrument-detail-api.md, ARCHITECTURE.md (Instrument Detail API), CONSTRAINTS.md (Public API)."
   },
   {
     "id": "screener-api",
