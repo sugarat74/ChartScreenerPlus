@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `signals-detect` (implemented, awaiting independent validation); `admin-ingestion-panel` is dependency-ready (all deps accepted)
+- Current next ready feature: `ingestion-scheduler` (implemented, awaiting independent validation); `admin-ingestion-panel`, `instrument-detail-api` and `screener-api` are dependency-ready (all deps accepted)
 - Current blocker: none
-- Last verified at: 2026-09-29 (`.\init.ps1` exit 0; Laravel 55 tests incl. `DetectSignalsCommandTest`; SPA lint 0 warnings/errors + build; engine 45 tests incl. `test_signals.py`)
+- Last verified at: 2026-09-30 (`.\init.ps1` exit 0; Laravel 71 tests incl. `MarketCalendarTest`/`IngestionPipelineCommandTest`/`IngestionScheduleTest`; `php artisan schedule:list` shows exactly one `ingestion-pipeline` event; SPA lint 0 warnings/errors + build; engine 45 tests)
 
 ## Session Log
 
@@ -193,3 +193,16 @@
 - Known risk or unresolved issue: none blocking. Two documented interactions to weigh at validation: a flat/constant series has RSI 14 = 100 (existing indicator convention) so the fixed `rsi14 >= 70` rule emits `rsi_overbought`; and `signals:detect` accepts any non-empty engine `type` string rather than whitelisting the 9 (the vocabulary is owned by the engine `RULES` registry). No persistent E2E harness exists; the CLI/engine flow is covered by feature tests plus the live smoke.
 - Status: `passing` — ready for independent validation (not `accepted`).
 - Next best step: independent validation of `signals-detect`; then `ingestion-scheduler`, `instrument-detail-api` and `screener-api` become dependency-ready. `admin-ingestion-panel` is already dependency-ready.
+
+### Session 015
+
+- Date: 2026-09-30
+- Goal: Implement `ingestion-scheduler`.
+- Goal outcome: the full EOD pipeline runs automatically after the US market close on trading days (DST-aware; weekends and committed NYSE holidays skipped) and can still be triggered manually.
+- Completed: `config/ingestion.php` (`timezone` `America/New_York`, `market_close` 16:00, `schedule_buffer_minutes` 30, `universe` sp500, `lock_ttl_seconds` 7200, committed NYSE holiday snapshot for 2026+2027) + the `INGESTION_*` block in `.env.example`; pure `App\Services\Market\MarketCalendar` (`isHoliday`, `isTradingDay`; weekends + configured holidays; half-days are trading days); `App\Console\Commands\RunIngestionPipeline` (`ingestion:pipeline {--universe=} {--force}`) which takes `Cache::lock('ingestion:pipeline', lock_ttl)` (a held lock prints "already running" and exits `0`), guards non-trading days unless `--force`, then composes `ingestion:run` → `indicators:compute` → `signals:detect` via `$this->call()` and releases the lock in `finally`; the single scheduled event in `routes/console.php` (`name('ingestion-pipeline')`, `dailyAt(16:30)`, `timezone('America/New_York')`, `weekdays()`, holiday `skip()`, `withoutOverlapping(120)`). `config/app.php` stays UTC; `bootstrap/app.php` unchanged.
+- Verification run: `php artisan test` → **71 passed (429 assertions)**, exit 0 (was 55/296; +16: `MarketCalendarTest` 6, `IngestionPipelineCommandTest` 7, `IngestionScheduleTest` 3); `php artisan schedule:list` → exactly one `ingestion:pipeline` event (default display in UTC `30 20 * * 1-5`; `--timezone=America/New_York` → `30 16 * * 1-5`; the raw `$event->expression` is `30 16 * * 1-5` with timezone `America/New_York`, asserted in tests); `php artisan list` → `ingestion:pipeline` registered and `ingestion:run`/`indicators:compute`/`signals:detect` unchanged; `.\vendor\bin\pint --test` on the changed PHP files → pass; `.\init.ps1` → exit 0 (Laravel 71 tests + SPA lint 0/build + engine 45 tests, no server or scheduler).
+- Evidence captured: recorded in `feature_list.json` under `ingestion-scheduler`; the `schedule:list` timezone-display finding and the `withoutOverlapping`-is-a-filter note in `docs/specs/ingestion-scheduler.md` (Implementation Findings).
+- Files or artifacts updated: `config/ingestion.php`, `app/Services/Market/MarketCalendar.php`, `app/Console/Commands/RunIngestionPipeline.php`, `routes/console.php`, `.env.example`, `tests/Unit/MarketCalendarTest.php`, `tests/Feature/IngestionPipelineCommandTest.php`, `tests/Feature/IngestionScheduleTest.php`, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `docs/risks-and-open-questions.md`, `docs/specs/ingestion-scheduler.md`, `PROGRESS.md`, `feature_list.json`. `bootstrap/app.php`, the three accepted commands, `engine/`, `frontend/`, `alphapulse/`, migrations/models untouched (git diff clean).
+- Known risk or unresolved issue: the NYSE holiday list is a committed snapshot that must be refreshed annually; production still needs a host cron/Task Scheduler entry (`php artisan schedule:run`) and a lock-capable cache store (`database`/`array`) — both documented in `docs/risks-and-open-questions.md`. A run at close + buffer with 0 new bars is a normal idempotent outcome. No persistent E2E harness exists; the CLI/scheduler flow is covered by offline tests (`Http::fake` + `Carbon::setTestNow`) and `schedule:list`.
+- Status: `passing` — ready for independent validation (not `accepted`).
+- Next best step: independent validation of `ingestion-scheduler`; `admin-ingestion-panel`, `instrument-detail-api` and `screener-api` are dependency-ready.

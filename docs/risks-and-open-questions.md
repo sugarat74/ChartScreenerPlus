@@ -13,7 +13,7 @@
 - How the S&P 500 constituent list is obtained and refreshed.
 - Where the Python engine boundary sits: internal HTTP API vs queue/CLI invoked by Laravel.
 - Auth method details (session vs token), registration/email verification requirements for the MVP.
-- Scheduler time relative to Market Close across DST and US market holidays.
+- **Decided by `ingestion-scheduler` (2026-09-30):** scheduler time relative to Market Close across DST and US market holidays. The daily event runs at `16:30 America/New_York` (config-driven `market_close` + `schedule_buffer_minutes`), DST-aware via the event timezone, skipping weekends and a committed NYSE holiday list in `config/ingestion.php`. See `ARCHITECTURE.md` → "Scheduling (Daily EOD Pipeline)" and `CONSTRAINTS.md` → "Operations And Scheduling".
 
 ## Later / Not MVP
 
@@ -36,6 +36,9 @@
 ## Risks
 
 - **Scraping fragility / blocking:** source markup changes, IP bans or throttling can break ingestion; mitigated by throttling, retries, run logs and re-run.
+- **Holiday-list drift:** the daily EOD schedule skips a committed NYSE holiday snapshot (`config/ingestion.php`), not a computed calendar, so it must be refreshed annually. A missing holiday causes a harmless idempotent run attempt (bars/snapshots unchanged, signals recomputed), not bad data.
+- **Production scheduler / overlap lock:** `ingestion-scheduler` only defines the schedule; production still needs a host cron / Windows Task Scheduler entry running `php artisan schedule:run` (deployment concern). Overlap protection needs a lock-capable cache store (`database`/`array`); a crashed run holds the command lock until `INGESTION_LOCK_TTL_SECONDS` (default 7200s).
+- **Source readiness at close + buffer:** at `16:30` the EOD bar may not be published yet, so a run with zero new bars is a normal, idempotent outcome rather than a bug.
 - **Stooq anti-bot block (observed 2026-09-29):** `GET https://stooq.com/q/d/l/?s=nvda.us&i=d` returns an HTML SHA-256 proof-of-work challenge from this environment, and after solving it the download path answers `200 text/plain` with `Access denied` (also via `stooq.pl`/`www.stooq.com`). The HTML quote page is reachable but has no embedded OHLCV. Consequence: the live `ingestion:scrape` smoke returns a controlled `502` and stores nothing; `engine/tests/fixtures/stooq_nvda.csv` was therefore serialized from real NVDA daily data. Follow-ups: confirm whether the block is IP/rate-based, evaluate an alternative permitted EOD source, and re-fetch the real Stooq CSV when reachable.
 - **Incorrect math presented as signals:** indicator and Signal bugs would mislead users; mitigated by fixture-based tests.
 - **Scope creep back to the mockup:** the prototype shows AI, alerts, plans and geometric patterns that are explicitly out of MVP scope.
