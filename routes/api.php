@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\IngestionRunController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\InstrumentController;
 use App\Http\Controllers\ScreenerController;
+use App\Http\Controllers\WatchlistController;
 use Illuminate\Support\Facades\Route;
 
 // First-party SPA auth (Sanctum session cookie + CSRF). No API tokens.
@@ -24,6 +25,12 @@ Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throt
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Personal watchlist: always scoped to the authenticated user, never to a
+    // client-supplied `user_id`. `auth:sanctum` rejects a guest with 401.
+    Route::get('/watchlist', [WatchlistController::class, 'index']);
+    Route::post('/watchlist', [WatchlistController::class, 'store']);
+    Route::delete('/watchlist/{ticker}', [WatchlistController::class, 'destroy']);
 });
 
 // Admin-only boundary. `auth:sanctum` runs first (guests -> 401) and `admin`

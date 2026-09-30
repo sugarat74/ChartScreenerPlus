@@ -374,3 +374,40 @@ export const instrumentApi = {
     return request<InstrumentDetailResponse>(path, { signal: options.signal })
   },
 }
+
+/** One owned watchlist entry (same field set as the instrument-detail metadata). */
+export type WatchlistEntry = {
+  ticker: string
+  company: string
+  sector: string
+  exchange: string
+  active: boolean
+}
+
+/**
+ * Authenticated watchlist client. Every call is scoped server-side to the
+ * session user (`auth:sanctum`); the SPA never sends a `user_id` and a guest
+ * gets a `401`. Mutations fetch the CSRF cookie first, like every other write.
+ */
+export const watchlistApi = {
+  async list(): Promise<WatchlistEntry[]> {
+    const payload = await request<{ items: WatchlistEntry[] }>('/api/watchlist')
+    return payload.items
+  },
+
+  /** Follow a ticker (idempotent server-side: fresh `201`, already-followed `200`). */
+  async add(ticker: string): Promise<WatchlistEntry> {
+    await ensureCsrfCookie()
+    const payload = await request<{ item: WatchlistEntry }>('/api/watchlist', {
+      method: 'POST',
+      body: JSON.stringify({ ticker }),
+    })
+    return payload.item
+  },
+
+  /** Unfollow a ticker (`204`); an absent/foreign ticker is a `404`. */
+  async remove(ticker: string): Promise<void> {
+    await ensureCsrfCookie()
+    await request<void>(`/api/watchlist/${encodeURIComponent(ticker)}`, { method: 'DELETE' })
+  },
+}

@@ -24,7 +24,7 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
   - `/chart` -> instrument chart in "no ticker selected" mode (guidance only; anonymous, no request)
   - `/instruments/:ticker` -> instrument chart for one ticker (anonymous deep link)
   - `/admin` -> Admin ingestion panel (admin-only; guest/non-admin see a restricted state)
-  - `/portal` -> Portal placeholder
+  - `/portal` -> Watchlist (the signed-in user's owned entries; a Visitor is redirected to `/login`)
   - `/login` -> sign-in screen
   - `/register` -> account-creation screen
   - `*` -> token-styled Not Found placeholder (rendered inside the shell)
@@ -159,6 +159,18 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - **No stop/target.** Stop and target are not modeled anywhere, so the chart never draws or derives them; only the pivot is drawn. `frontend/src/lib/chartData.ts` (`toCandlestickData`, `toVolumeData`, `smaLevels`, `signalLevels`, `hasChartData`, `insufficientHistory`, `CHART_COLORS`, `CHART_BAR_LIMIT`) is pure and React-free; canvas colors are the exact `frontend/src/index.css` token hexes.
 - **Lifecycle.** One `useEffect` creates the chart, sets the data/lines and returns a cleanup that always calls `chart.remove()`, so a ticker change, unmount or React StrictMode double-invocation cannot leak a canvas or duplicate the chart. `autoSize: true` plus an explicit container height makes it resize with its card.
 - **States.** `loading` (skeleton), `ready`, `not_found` (API `404 {message:"Instrument not found."}` -> "Instrumento no encontrado" + link to the Screener), `error` (`role="alert"` + manual `Reintentar`), `empty` (`bars.length === 0` -> "Sin datos EOD" and **no chart instance**) and a soft "historial insuficiente" note when `snapshot` is `null` or none of the three SMAs is available (the chart still renders). A settled result is keyed to the current ticker/retry, so a ticker change never flashes the previous instrument.
+
+## Watchlist (Owned Resource)
+
+- **Storage.** A watchlist is implicit (one per user): the `watchlist_items` pivot (`id`, `user_id`, `instrument_id`, `timestamps`, unique `(user_id, instrument_id)`) with cascade FKs to `users`/`instruments`. There is no `watchlists` table and no `WatchlistItem` model (the `instrument_universe` pivot precedent); ownership is `user_id` and removal is a hard delete (`docs/domain-model.md`: `active -> removed`, no soft delete). `User::watchlist()` is a `BelongsToMany(Instrument::class, 'watchlist_items')->withTimestamps()`; the explicit table name is required (Laravel would guess `instrument_user`).
+- **Endpoints** (`app/Http/Controllers/WatchlistController.php`), all inside the existing `auth:sanctum` group so a guest gets **401**:
+  - `GET /api/watchlist` -> `200 {items:[entry]}` ordered by `instruments.ticker` ASC.
+  - `POST /api/watchlist` body `{ticker}` -> `201 {item}` (new) / `200 {item}` (already followed) / `422 {message, errors:{ticker}}` (missing, non-string or unknown ticker).
+  - `DELETE /api/watchlist/{ticker}` -> `204` (removed) / `404 {message}` (unknown ticker or not in the caller's list).
+  - `entry = {ticker, company, sector, exchange, active}` (the instrument-detail metadata field set). No endpoint accepts a `user_id`.
+- **Ownership is the authorization model.** Every query runs through `$request->user()->watchlist()`. Another user's ticker simply does not match the scoped relation, so a cross-user read is an empty list and a cross-user delete is a `404` (no existence leak). An Admin has no special path here (`docs/user-and-access-model.md`).
+- **Add/remove semantics.** The ticker is normalized (`trim` + `strtoupper`) before a `required|string|max:20` validation and an exact `instruments.ticker` lookup; `syncWithoutDetaching` makes the add idempotent (never a duplicate row, never a unique-index error). Remove uses `detach`, which reports `0` when the row was absent or someone else's, so it is not silently idempotent.
+- **SPA.** `/portal` (`frontend/src/pages/PortalPage.tsx`, guarded by the component-level `frontend/src/auth/RequireAuth.tsx` -> `Navigate to /login replace`) lists and removes entries through `WatchlistTable`; the chart page (`/instruments/:ticker`) hosts the `WatchlistButton` "Seguir"/"Siguiendo" toggle. The chart stays anonymous and never redirects — the toggle reads auth only to offer a Visitor a sign-in **link**. `watchlistApi` in `frontend/src/lib/api.ts` (`list`/`add`/`remove`, CSRF before mutations) is the client; the API remains the enforcement point.
 
 ## Dependency Direction
 

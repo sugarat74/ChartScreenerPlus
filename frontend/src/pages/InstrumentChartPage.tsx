@@ -2,10 +2,14 @@
  * Instrument chart surface: `/instruments/:ticker` (deep link) and `/chart`
  * (no ticker selected, guidance only).
  *
- * Anonymous by design — no `useAuth`, no redirect, no login prompt. The page
- * consumes the frozen `GET /api/instruments/{ticker}?limit=252` payload and
- * owns loading / ready / insufficient-history / empty / not-found / error
- * states; the chart itself is presentational.
+ * The page itself stays anonymous — it never calls `useAuth`, never redirects
+ * and never prompts for login. The only auth-aware element is the watchlist
+ * toggle in the header, which reads the session to offer "Seguir"/"Siguiendo"
+ * or, for a Visitor, a plain sign-in link (never a redirect), so the chart
+ * remains browseable. The page consumes the frozen
+ * `GET /api/instruments/{ticker}?limit=252` payload and owns loading / ready /
+ * insufficient-history / empty / not-found / error states; the chart itself is
+ * presentational.
  */
 
 import { Suspense, lazy, useEffect, useState } from 'react'
@@ -14,6 +18,7 @@ import SignalLevelsPanel from '../components/chart/SignalLevelsPanel.tsx'
 // `lightweight-charts` is a large dependency: load the canvas chunk only when
 // the chart is actually rendered so the Screener bundle stays lean.
 const InteractiveChart = lazy(() => import('../components/chart/InteractiveChart.tsx'))
+import WatchlistButton from '../components/watchlist/WatchlistButton.tsx'
 import { ApiError, instrumentApi } from '../lib/api.ts'
 import type { InstrumentDetailResponse } from '../lib/api.ts'
 import { CHART_BAR_LIMIT, insufficientHistory, signalLevels, smaLevels } from '../lib/chartData.ts'
@@ -274,6 +279,7 @@ export default function InstrumentChartPage() {
                 Última sesión · {current.meta.latest_bar_date}
               </span>
             ) : null}
+            {current !== null ? <WatchlistButton ticker={current.instrument.ticker} /> : null}
             <ScreenerLink />
           </div>
         </div>
