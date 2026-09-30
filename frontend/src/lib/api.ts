@@ -8,10 +8,13 @@
  * same-origin.
  */
 
+export type UserRole = 'user' | 'admin'
+
 export type AuthUser = {
   id: number
   name: string
   email: string
+  role: UserRole
 }
 
 export type RegisterPayload = {
@@ -22,6 +25,42 @@ export type RegisterPayload = {
 }
 
 export type ValidationErrors = Record<string, string[]>
+
+/** Lifecycle of one ingestion run (`docs/domain-model.md`). */
+export type IngestionRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'partial'
+
+export type IngestionRunItemStatus = 'success' | 'failed'
+
+export type IngestionRunSummary = {
+  id: number
+  status: IngestionRunStatus
+  universe: { id: number; slug: string; name: string } | null
+  started_at: string | null
+  finished_at: string | null
+  total: number
+  succeeded: number
+  failed: number
+}
+
+export type IngestionRunItem = {
+  id: number
+  ticker: string | null
+  status: IngestionRunItemStatus
+  bars_stored: number
+  message: string | null
+}
+
+export type IngestionRunDetail = IngestionRunSummary & {
+  items: IngestionRunItem[]
+}
+
+/**
+ * Terminal statuses: a run that has finished and can be retried. `queued` and
+ * `running` are transient, so the panel keeps polling them.
+ */
+export function isTerminalRunStatus(status: IngestionRunStatus): boolean {
+  return status === 'completed' || status === 'failed' || status === 'partial'
+}
 
 export class ApiError extends Error {
   readonly status: number
@@ -115,5 +154,46 @@ export const authApi = {
   async logout(): Promise<void> {
     await ensureCsrfCookie()
     await request<void>('/api/logout', { method: 'POST' })
+  },
+}
+
+/**
+ * Admin ingestion panel data layer. Every call is authorized server-side by
+ * the `auth:sanctum` + `admin` middleware; the API answers 401 for a guest and
+ * 403 for a non-admin, so the SPA guard is only a UI affordance.
+ */
+export const adminIngestionApi = {
+  async listRuns(limit = 20): Promise<IngestionRunSummary[]> {
+    const payload = await request<{ runs: IngestionRunSummary[] }>(
+      `/api/admin/ingestion/runs?limit=${limit}`,
+    )
+    return payload.runs
+  },
+
+  /** Trigger a run; with the default `sync` queue it completes inline. */
+  async triggerRun(universe?: string): Promise<IngestionRunSummary> {
+    await ensureCsrfCookie()
+    const payload = await request<{ run: IngestionRunSummary }>('/api/admin/ingestion/runs', {
+      method: 'POST',
+      body: JSON.stringify(universe ? { universe } : {}),
+    })
+    return payload.run
+  },
+
+  async getRun(id: number): Promise<IngestionRunDetail> {
+    const payload = await request<{ run: IngestionRunDetail }>(
+      `/api/admin/ingestion/runs/${id}`,
+    )
+    return payload.run
+  },
+
+  /** Re-run only the instruments that failed in the given run. */
+  async retryRun(id: number): Promise<IngestionRunSummary> {
+    await ensureCsrfCookie()
+    const payload = await request<{ run: IngestionRunSummary }>(
+      `/api/admin/ingestion/runs/${id}/retry`,
+      { method: 'POST' },
+    )
+    return payload.run
   },
 }

@@ -22,7 +22,7 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
   - `/` -> redirect to `/screener`
   - `/screener` -> Screener placeholder
   - `/chart` -> Chart placeholder
-  - `/admin` -> Admin placeholder
+  - `/admin` -> Admin ingestion panel (admin-only; guest/non-admin see a restricted state)
   - `/portal` -> Portal placeholder
   - `/login` -> sign-in screen
   - `/register` -> account-creation screen
@@ -50,7 +50,7 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - The role is **not** mass-assignable (`role` is deliberately absent from `User`'s `#[Fillable]`), so it can never be set through registration or any request payload. The DB/model default keeps new accounts at `user`.
 - Admin is enforced **server-side** by `App\Http\Middleware\EnsureUserIsAdmin` (alias `admin`, registered in `bootstrap/app.php`): the authenticated user must exist and be an admin, otherwise `abort(403)`.
 - Admin-only routes live in a dedicated group in `routes/api.php`: `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')`. Ordering matches the status contract — guests fail `auth:sanctum` with **401**, authenticated non-admins fail `admin` with **403**, admins pass.
-- `GET /api/admin/ping` is the current member of that group and exists only as a guard probe (`{ok:true}`); later admin features (`admin-ingestion-panel`) extend the same group. It is not product behavior.
+- `GET /api/admin/ping` is a guard probe (`{ok:true}`), not product behavior. The admin ingestion endpoints (`admin-ingestion-panel`) extend this same group, so every admin surface shares one 401/403 boundary.
 - Admin is granted **out of band only** via `php artisan app:make-admin {email}` (promotes an existing account, fails if the email is unknown) or `UserFactory::admin()` in tests. There is no HTTP path to grant admin.
 
 ## Ingestion Path (EOD)
@@ -65,8 +65,9 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - Laravel owns the run ledger: `ingestion_runs` (one row per run: `status`, nullable `universe_id`, `started_at`/`finished_at`, `total`/`succeeded`/`failed` counters) and `ingestion_run_items` (one row per instrument: `status`, `bars_stored`, nullable `message`, unique `(ingestion_run_id, instrument_id)`). Item FKs cascade; `ingestion_runs.universe_id` is nullable with `nullOnDelete` so run history survives a universe removal.
 - `App\Enums\IngestionRunStatus` is `queued -> running -> completed`, with `failed` (nothing succeeded) and `partial` (some instruments failed) as the terminal outcomes of a finished run; `App\Enums\IngestionRunItemStatus` is `success`/`failed`. Models `IngestionRun` (belongsTo `Universe`, hasMany items) and `IngestionRunItem` (belongsTo run/instrument) cast the enums and the counters/dates.
 - Shared ingestion logic lives in `App\Services\Ingestion\InstrumentIngestor`: `ingest(Instrument): int` returns the bars stored, `ingestDetailed(Instrument)` also returns the skipped malformed-row count. Both wrap the engine fetch + idempotent `daily_bars` upsert; an empty engine payload raises `App\Exceptions\EmptyIngestionResponseException`. `ingestion:scrape` uses `ingestDetailed`, so the single-ticker behavior is unchanged.
-- `php artisan ingestion:run {--universe=sp500} {--retry=<runId>}` orchestrates a run: it creates the run row (`running`, `started_at`, `total`), processes each instrument in its own try/catch (one failure cannot abort the run), records a `success` item (with `bars_stored`) or a `failed` item (with `message`), and finalizes (`completed` when `failed=0`, `failed` when `succeeded=0`, otherwise `partial`) with `finished_at`. `--retry` creates a NEW run containing only the previously failed instruments of the referenced run and inherits its `universe_id`; succeeded instruments are never reprocessed.
-- Exit codes: `0` for `completed`/`partial`, `1` for a `failed` run or a pre-flight error (unknown universe slug or retry run id, no run row created). Scheduling (`ingestion-scheduler`) and the admin panel (`admin-ingestion-panel`) are separate features and do not exist yet.
+- Shared run orchestration lives in `App\Services\Ingestion\IngestionRunner`: `prepareUniverseRun($slug)` / `prepareRetryRun($runId)` resolve the scope and create a `queued` run row (throwing, with no row, for an unknown universe/run), `process($runId, $instrumentIds)` sets it `running` + `started_at`, processes each instrument in its own try/catch (recording a `success` item with `bars_stored` or a `failed` item with `message`), and finalizes (`completed` when `failed=0`, `failed` when `succeeded=0`, otherwise `partial`) with `finished_at`. `startUniverseRun()` / `startRetryRun()` compose prepare + process synchronously.
+- `php artisan ingestion:run {--universe=sp500} {--retry=<runId>}` is a thin wrapper over the runner: it prints the summary, one line per failed instrument, and maps the terminal status to the exit code. `--retry` creates a NEW run containing only the previously failed instruments of the referenced run and inherits its `universe_id`; succeeded instruments are never reprocessed.
+- Exit codes: `0` for `completed`/`partial`, `1` for a `failed` run or a pre-flight error (unknown universe slug or retry run id, no run row created). Scheduling (`ingestion-scheduler`) and the admin panel (`admin-ingestion-panel`) are separate surfaces over this ledger and never redefine its lifecycle.
 
 ## Indicators Path
 
@@ -96,6 +97,21 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - **Manual recovery, no catch-up.** A missed run is triggered manually with `php artisan ingestion:pipeline` (full) or the existing `php artisan ingestion:run` (ingestion only). `--force` bypasses the trading-day guard for manual recovery. There is no backfill/"run if late" logic; `schedule:run` does not backfill a missed minute.
 - **Production.** The schedule only defines when to run; production still needs a host cron / Task Scheduler entry running `php artisan schedule:run` (a deployment concern). `init.ps1` starts no scheduler or daemon.
 
+## Admin Ingestion Panel
+
+- **Server-side boundary.** All four endpoints live in the existing `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')` group in `routes/api.php`: guests get **401**, authenticated non-admins get **403**. The SPA hides the Admin tab for non-admins and guards the page, but that is a UI affordance only — the API is the enforcement point. Existence checks happen in the controller (not implicit route-model binding) so an unknown run id still returns the 401/403 contract for a non-admin and `404` only for an admin.
+- **Endpoints** (`app/Http/Controllers/Admin/IngestionRunController.php`):
+  - `GET /api/admin/ingestion/runs?limit=20` -> `200 {runs: [run]}` newest first, without items, each with `universe`.
+  - `POST /api/admin/ingestion/runs` body `{universe?: string}` (default `config('ingestion.universe')`) -> `202 {run}`; `422` for an unknown universe.
+  - `GET /api/admin/ingestion/runs/{run}` -> `200 {run}` including `items` ordered by instrument ticker; `404` unknown.
+  - `POST /api/admin/ingestion/runs/{run}/retry` -> `202 {run}` (the new run); `404` unknown; `422` when the run is not terminal or has no failed items.
+  - `run = {id, status, universe:{id,slug,name}|null, started_at, finished_at, total, succeeded, failed}`; `item = {id, ticker, status, bars_stored, message}` (explicit arrays; the repo has no API resource classes).
+- **Execution model (hybrid, worker-free by default).** The trigger resolves the scope, creates the `queued` `ingestion_runs` row and dispatches `App\Jobs\RunIngestionJob` (carrying the run id + instrument ids), then returns the run. The job calls `IngestionRunner::process()`, which moves the run `queued -> running -> completed|partial|failed`. `RunIngestionJob` has `$tries = 1`, so a failed run is never silently re-executed. **The queue connection decides sync vs async:** `.env.example` defaults `QUEUE_CONNECTION=sync`, so `dispatch()` runs the job inline in the same request and a run always completes with no worker (tests use `Queue::fake()`/`dispatchSync` and need none). Opt-in async is `QUEUE_CONNECTION=database` + `php artisan queue:work`; only then does the SPA actually observe `queued -> running` by polling. `init.ps1` starts no worker.
+- **Observation.** No SSE/WebSockets and no job-progress API: while the selected run is non-terminal the SPA polls `GET /api/admin/ingestion/runs/{id}` every ~2500 ms and renders the embedded `items` as the log. A run stuck in `queued` is treated as a normal pending state (hint + keep polling), never an error.
+- **Retry.** Reuses the `ingestion:run --retry` semantics exactly (new run, only previously failed instruments, inherited universe). The controller rejects a non-terminal run or one with no failed items with `422` before the runner is called.
+- **UI.** `frontend/src/pages/AdminPage.tsx` (guard + trigger + telemetry tiles + history + polled log) with `frontend/src/components/admin/{RunStatusBadge,RunTelemetry,RunHistoryTable,RunLogStream}.tsx`; `AuthUser.role` and `NAV_ITEMS[].adminOnly` drive tab filtering. Only real ledger data is shown — the prototype's proxy/worker/cache tiles are not requirements.
+- **Panel scope.** The panel triggers the **ingestion stage / ledger**, not `ingestion:pipeline`; the daily scheduler still owns the full ingest -> indicators -> signals pipeline.
+
 ## Dependency Direction
 
 - The SPA talks to Laravel over HTTP (JSON API); the auth endpoints above are the first ones. There is no code sharing between `frontend/` and the Laravel app.
@@ -108,4 +124,5 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - `SANCTUM_STATEFUL_DOMAINS` (`.env`/`.env.example`) controls which dev SPA origins Sanctum treats as stateful.
 - `ENGINE_URL` (`.env`/`.env.example`, default `http://127.0.0.1:8090`) is the engine base URL used by `EngineClient`; it is read through `config/engine.php`.
 - `INGESTION_*` (`.env`/`.env.example`, read through `config/ingestion.php`) configure the daily EOD schedule: `INGESTION_TIMEZONE`, `INGESTION_MARKET_CLOSE`, `INGESTION_SCHEDULE_BUFFER_MINUTES`, `INGESTION_UNIVERSE`, `INGESTION_LOCK_TTL_SECONDS`, plus the committed `holidays` list in `config/ingestion.php`.
+- `QUEUE_CONNECTION` (`.env`/`.env.example`, default **`sync`**) decides the admin panel trigger's execution: `sync` runs `RunIngestionJob` inline with no worker; `database` + `php artisan queue:work` makes runs asynchronous. `phpunit.xml` pins `sync` for tests.
 - Harness gate: `.\init.ps1` runs the Laravel checks, the SPA typecheck/lint/build, and the engine tests. It starts no server or scheduler.

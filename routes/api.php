@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\IngestionRunController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,4 +18,11 @@ Route::middleware('auth:sanctum')->group(function () {
 // group; `/api/admin/ping` is only a guard probe, not product behavior.
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/ping', fn () => response()->json(['ok' => true]));
+
+    // Admin ingestion panel: trigger a run, follow it and retry only its
+    // failures. Execution is a queued RunIngestionJob (sync by default).
+    Route::get('/ingestion/runs', [IngestionRunController::class, 'index']);
+    Route::post('/ingestion/runs', [IngestionRunController::class, 'store']);
+    Route::get('/ingestion/runs/{run}', [IngestionRunController::class, 'show']);
+    Route::post('/ingestion/runs/{run}/retry', [IngestionRunController::class, 'retry']);
 });

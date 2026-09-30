@@ -7,12 +7,14 @@
 export type NavItem = {
   readonly path: string
   readonly label: string
+  /** Admin-only surfaces are hidden from non-admin sessions (UI affordance). */
+  readonly adminOnly?: boolean
 }
 
 export const NAV_ITEMS = [
   { path: '/screener', label: 'Screener' },
   { path: '/chart', label: 'Chart' },
-  { path: '/admin', label: 'Admin' },
+  { path: '/admin', label: 'Admin', adminOnly: true },
   { path: '/portal', label: 'Portal' },
 ] satisfies readonly NavItem[]
 

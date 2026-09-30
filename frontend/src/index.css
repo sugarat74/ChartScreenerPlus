@@ -16,6 +16,10 @@
   --color-on-secondary: #ffffff;
   --color-on-secondary-container: #1a1a1a;
 
+  /* DESIGN.md documents gains green #059669 as a signal color; promote it to a
+     token so success/status UI does not invent a hue. */
+  --color-gain: #059669;
+
   --color-tertiary: #0055ff;
   --color-tertiary-container: #d6e3ff;
   --color-on-tertiary: #ffffff;

@@ -11,6 +11,11 @@ export default function AppHeader() {
   const { user, status, logout } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
 
+  // Admin-only tabs are hidden for everyone else; the API is the real gate.
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => item.adminOnly !== true || user?.role === 'admin',
+  )
+
   async function handleSignOut() {
     setSigningOut(true)
     try {
@@ -103,7 +108,7 @@ export default function AppHeader() {
         aria-label="Secciones principales"
         className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto border-t border-outline-variant px-4"
       >
-        {NAV_ITEMS.map((item) => (
+        {visibleNavItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

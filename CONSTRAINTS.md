@@ -112,6 +112,18 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - `init.ps1` **MUST NOT** start `schedule:run`, `schedule:work` or any daemon. Reason: it stays a non-blocking gate.
 - Schedule/pipeline tests **MUST** be offline (`Http::fake`) and **MUST** pin time with `Carbon::setTestNow`; they **MUST NOT** assert against the real clock or start a scheduler. Reason: the trading-day guard and DST behavior are time-dependent and a real `schedule:run` could hang or trigger real work.
 
+## Admin Panel
+
+- Admin ingestion endpoints **MUST** live under the existing `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')` group and **MUST NOT** be reachable by a guest (401) or an authenticated non-admin (403). Hiding the Admin tab / guarding the page in the SPA is a UI affordance only, never access control. Reason: the API is reachable independently of the SPA.
+- The panel **MUST** trigger the **ingestion stage / ledger**, not `ingestion:pipeline`; the daily scheduler keeps owning the full ingest -> indicators -> signals pipeline. Reason: two independent control surfaces must not duplicate the pipeline.
+- A triggered run **MUST** be a single `App\Jobs\RunIngestionJob` (run id + instrument ids) that moves the ledger `queued -> running -> terminal` through `App\Services\Ingestion\IngestionRunner::process()`. The trigger creates the `queued` row first and only then dispatches. Reason: one execution unit for both sync and async modes.
+- `QUEUE_CONNECTION` **MUST** default to `sync` in `.env.example` (and `phpunit.xml`) so a run completes inline with **no queue worker**; `database` + `php artisan queue:work` is opt-in async. `init.ps1` **MUST NOT** start a queue worker. Reason: the feature must not appear broken in dev, and the standard gate stays non-blocking.
+- The panel **MUST NOT** introduce SSE/WebSockets or a job-progress API: the SPA observes status by polling `GET /api/admin/ingestion/runs/{id}` and renders its embedded `ingestion_run_items` as the log. A `queued` run is a normal pending state, never an error. Reason: polled ledger data is enough for MVP and avoids new infrastructure.
+- Retry **MUST** reuse the `ingestion:run --retry` semantics — a NEW run with only the previously failed instruments and the inherited universe — and **MUST** reject a non-terminal run or one with no failed items with `422` (unknown run `404`, unknown universe `422`). Reason: `queued`/`running` are transient; only a finished run with failures is retryable.
+- Run/item payloads **MUST** be explicit arrays with the documented fields and **MUST NOT** leak model internals. Reason: the SPA contract is fixed and the detail can carry ~503 items.
+- Admin panel tests **MUST** be offline: `Http::fake` for the engine and `Queue::fake()` (or `dispatchSync`) for the job, with `actingAs(User::factory()->admin())` and the 401/403 cases asserted for every endpoint. Reason: deterministic, worker-free tests.
+- `role` on `AuthUser` **MUST** only drive UI visibility; it **MUST NOT** be treated as authorization by the SPA. Reason: the `admin` middleware is the only enforcement point.
+
 ## Harness
 
 - **MUST** keep `init.ps1` a non-blocking gate: it runs the Laravel checks (`php artisan --version`, `php artisan test`), the SPA typecheck/lint/build when `frontend/` exists, and the engine tests when `engine/requirements.txt` exists. It **MUST NOT** start long-running processes such as `php artisan serve`, the Vite dev server or uvicorn.
