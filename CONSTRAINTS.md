@@ -36,6 +36,10 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST** keep route paths and tab labels single-sourced in `frontend/src/nav.ts` (`NAV_ITEMS`, `DEFAULT_ROUTE`) and derive the header `NavLink`s and the router from it. Reason: duplicated strings drift and break the active-tab/route contract.
 - **MUST NOT** add a Copilot route or surface to the SPA. Reason: the AI Copilot is explicitly out of MVP scope.
 - **MUST** pin `react-router` explicitly instead of a bare `npm install react-router`. Reason: react-router v8 declares `node >=22.22.0` while the local runtime is Node v22.21.0, so npm auto-resolves the bare install to v7; the intended fix is either an explicit `react-router@^8.4.0` install (current, works with an `EBADENGINE` warning) or upgrading Node to >= 22.22.0.
+- The Screener (`/screener`) **MUST** stay anonymous: no `useAuth` gate, no redirect and no login prompt. Reason: `docs/user-and-access-model.md` states browsing requires no session, and `GET /api/screener` is public.
+- Screener filter state **MUST** be URL-backed using the API's own param names (`signal`, `rsi_min`, `rsi_max`, `min_rvol`, `price_above_sma200`, `ma_cross`) and **MUST NOT** be component-only state; a filtered URL must reproduce the same request. Reason: filter sets are shareable/deep-linkable and are the input for the later `saved-screeners` feature.
+- The SPA **MUST NOT** sort/re-rank or re-implement Screener filtering client-side; it **MUST** render the API's `candidates` order and only serialize the filters. Reason: the Screener API owns the filters and the deterministic ranking (`ARCHITECTURE.md` -> Screener API).
+- The Screener **MUST** treat a valid-but-empty `200 candidates: []` as an empty state (never an error) and **MUST NOT** auto-retry a failed request. Reason: the API distinguishes empty from error (`404` unknown universe, `422` invalid params), and the unnamed `throttle:60,1` is shared with the login limiter, so retries must stay manual.
 
 ## Auth
 

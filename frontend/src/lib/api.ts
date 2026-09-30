@@ -197,3 +197,92 @@ export const adminIngestionApi = {
     return payload.run
   },
 }
+
+/** The 9 fixed signal type strings the engine emits and the screener filters on. */
+export type ScreenerSignalType =
+  | 'golden_cross'
+  | 'death_cross'
+  | 'ma_alignment_bullish'
+  | 'ma_alignment_bearish'
+  | 'pivot_breakout_rvol'
+  | 'rsi_overbought'
+  | 'rsi_oversold'
+  | 'macd_bullish_cross'
+  | 'macd_bearish_cross'
+
+export type ScreenerMaCross = 'bullish' | 'bearish'
+
+/**
+ * The subset of the prototype `FilterState` that the frozen screener API can
+ * actually evaluate, so the SPA never invents an unsupported criterion. Every
+ * criterion is AND-combined except `signals`, which the API ORs.
+ */
+export type ScreenerFilters = {
+  signals: ScreenerSignalType[]
+  rsiMin: number | null
+  rsiMax: number | null
+  minRvol: number | null
+  priceAboveSma200: boolean
+  maCross: ScreenerMaCross | null
+}
+
+export type ScreenerCandidate = {
+  ticker: string
+  company: string
+  sector: string
+  exchange: string
+  active: boolean
+  date: string
+  close: number | null
+  change_percent: number | null
+  rvol: number | null
+  rsi14: number | null
+  signals: string[]
+}
+
+export type ScreenerResponse = {
+  universe: { slug: string; name: string }
+  sort: string
+  candidates: ScreenerCandidate[]
+  meta: { limit: number; returned: number; total: number }
+}
+
+/**
+ * Serialize only the active filter params, using the API's own param names so a
+ * copied URL is directly usable as an API call. `sort`, `limit` and `universe`
+ * are never sent — the API defaults apply (ranking stays server-side).
+ */
+function screenerQueryString(filters: ScreenerFilters): string {
+  const params = new URLSearchParams()
+  if (filters.signals.length > 0) {
+    params.set('signal', filters.signals.join(','))
+  }
+  if (filters.rsiMin !== null) {
+    params.set('rsi_min', String(filters.rsiMin))
+  }
+  if (filters.rsiMax !== null) {
+    params.set('rsi_max', String(filters.rsiMax))
+  }
+  if (filters.minRvol !== null) {
+    params.set('min_rvol', String(filters.minRvol))
+  }
+  if (filters.priceAboveSma200) {
+    params.set('price_above_sma200', '1')
+  }
+  if (filters.maCross !== null) {
+    params.set('ma_cross', filters.maCross)
+  }
+  return params.toString()
+}
+
+/**
+ * Anonymous screener client. `GET /api/screener` is public (`api` +
+ * `throttle:60,1` only) and carries no CSRF/session requirement
+ * (`docs/user-and-access-model.md`). `signal` aborts an in-flight request.
+ */
+export const screenerApi = {
+  async search(filters: ScreenerFilters, signal?: AbortSignal): Promise<ScreenerResponse> {
+    const query = screenerQueryString(filters)
+    return request<ScreenerResponse>(`/api/screener${query ? `?${query}` : ''}`, { signal })
+  },
+}

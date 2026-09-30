@@ -20,7 +20,7 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - The SPA uses **react-router** (`createBrowserRouter` + `RouterProvider`) as a client-side data router; the shell is a layout route (`frontend/src/layouts/AppLayout.tsx`) that renders `AppHeader` plus an `<Outlet />`.
 - Route list:
   - `/` -> redirect to `/screener`
-  - `/screener` -> Screener placeholder
+  - `/screener` -> Screener (filter controls + Candidate list; anonymous)
   - `/chart` -> Chart placeholder
   - `/admin` -> Admin ingestion panel (admin-only; guest/non-admin see a restricted state)
   - `/portal` -> Portal placeholder
@@ -139,6 +139,14 @@ Runtime surfaces, directory boundaries and dependency direction for ChartScreenP
 - **`change_percent`.** `((latest close - previous close) / previous close) * 100` from the two most recent stored Daily Bars by date; `null` when the instrument has fewer than two bars or the previous close is `0`. Not rounded; it stays a JSON number or `null`.
 - **Sorting (server-side, deterministic).** `rvol_desc` (default), `rsi_desc`, `rsi_asc`, `change_desc`, `change_asc`, `signal_count_desc` (count of active signal types). Every order applies **nulls last** and a **ticker ASC tie-break**, so equal keys never produce a non-deterministic ranking.
 - **Numbers at the boundary, `decimal` in storage.** `decimal:4` cast values are converted with `(float)` when shaping the payload, so the client receives JSON numbers while the columns and the `decimal` storage rule are unchanged. A whole-number decimal (e.g. `105.0000`) serializes as the JSON number `105`, which JS consumers treat as a number.
+
+## Screener UI
+
+- **Route.** `/screener` is the product's primary surface (`frontend/src/pages/ScreenerPage.tsx`); `/` redirects there and the route/tab are unchanged (`frontend/src/nav.ts`). It is **anonymous** — the page never calls `useAuth`, never redirects and never prompts for login (`docs/user-and-access-model.md`). `GET /api/screener` remains the only data source and needs no session.
+- **URL is the filter source of truth.** Filters live in the query string (`useSearchParams`) using the API's own param names, so a filtered URL is directly usable as an API call and is shareable/deep-linkable. `frontend/src/lib/screenerFilters.ts` owns the round-trip: `parseScreenerFilters` is strict and lenient (unknown/invalid values are dropped, so a hand-edited URL can never produce a `422`), `patchScreenerFilters` writes only the six owned keys (`signal`, `rsi_min`, `rsi_max`, `min_rvol`, `price_above_sma200`, `ma_cross`) and preserves unrelated params, and `screenerFiltersKey` is the deterministic key for the fetch effect. All URL writes use `replace: true` so filter changes do not flood browser history.
+- **Request.** `frontend/src/lib/api.ts` exposes `screenerApi.search(filters, signal?)`, which serializes only the active params (never `sort`/`limit`/`universe`) and calls `GET /api/screener`. The page aborts the in-flight request with an `AbortController` when filters change (ignoring `AbortError`) and suppresses an identical repeated query. The numeric RSI inputs are uncontrolled drafts committed on blur/Enter, so typing never fires a request per keystroke. There is no auto-retry.
+- **States.** `loading` (first request, skeleton), `refreshing` (previous list kept with an "Actualizando…" indicator and `aria-busy`), `ready` (table, or an empty panel split into "no match" vs "no EOD data yet"), and `error` (`role="alert"` with the API message + a manual "Reintentar"). A valid-but-empty `200 candidates: []` is never shown as an error. A results header shows a read-only Universe chip (from `response.universe.name`) and `Mostrando {returned} de {total} candidatos`.
+- **Server-side only.** Filtering and ranking belong to the Screener API; the SPA never re-sorts or re-filters client-side. Sort controls (`candidate-list-ranking`), chart navigation (`chart-interactive`), saved screeners, the watchlist and a universe selector are separate features.
 
 ## Dependency Direction
 
