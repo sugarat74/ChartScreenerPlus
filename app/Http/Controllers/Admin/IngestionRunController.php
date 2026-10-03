@@ -20,9 +20,8 @@ use Illuminate\Validation\ValidationException;
  * Every route lives inside the existing `['auth:sanctum', 'admin']` group, so
  * guests get 401 and authenticated non-admins get 403; the SPA only hides the
  * tab, it never enforces access. The trigger/retry endpoints create the
- * `queued` run row and dispatch {@see RunIngestionJob}, whose queue connection
- * decides whether the run completes inline (`sync`, the default) or in a
- * worker (`database`, opt-in).
+ * `queued` run row and dispatch {@see RunIngestionJob}. The database queue
+ * keeps the request short; a queue worker owns the execution lifecycle.
  */
 class IngestionRunController extends Controller
 {
@@ -88,7 +87,9 @@ class IngestionRunController extends Controller
 
         $payload = $this->runPayload($ingestionRun);
         $payload['items'] = $ingestionRun->items
-            ->sortBy(fn (IngestionRunItem $item): string => $item->instrument?->ticker ?? '')
+            ->sortBy(fn (IngestionRunItem $item): string => $item->status === IngestionRunItemStatus::Processing
+                ? "0:{$item->instrument?->ticker}"
+                : "1:{$item->instrument?->ticker}")
             ->values()
             ->map(fn (IngestionRunItem $item): array => $this->itemPayload($item))
             ->all();

@@ -31,7 +31,7 @@ export type ValidationErrors = Record<string, string[]>
 /** Lifecycle of one ingestion run (`docs/domain-model.md`). */
 export type IngestionRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'partial'
 
-export type IngestionRunItemStatus = 'success' | 'failed'
+export type IngestionRunItemStatus = 'processing' | 'success' | 'failed'
 
 export type IngestionRunSummary = {
   id: number
@@ -172,7 +172,7 @@ export const adminIngestionApi = {
     return payload.runs
   },
 
-  /** Trigger a run; with the default `sync` queue it completes inline. */
+  /** Trigger a run; a database queue worker performs the EOD requests. */
   async triggerRun(universe?: string): Promise<IngestionRunSummary> {
     await ensureCsrfCookie()
     const payload = await request<{ run: IngestionRunSummary }>('/api/admin/ingestion/runs', {

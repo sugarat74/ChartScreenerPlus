@@ -86,11 +86,12 @@ class IngestionRunTest extends TestCase
         $aaaItem = $run->items()->where('instrument_id', $instruments['AAA']->id)->sole();
         $this->assertSame(IngestionRunItemStatus::Success, $aaaItem->status);
         $this->assertSame(2, $aaaItem->bars_stored);
-        $this->assertNull($aaaItem->message);
+        $this->assertSame('Consulta EOD completada: 2 barras almacenadas.', $aaaItem->message);
 
         $bbbItem = $run->items()->where('instrument_id', $instruments['BBB']->id)->sole();
         $this->assertSame(IngestionRunItemStatus::Success, $bbbItem->status);
         $this->assertSame(3, $bbbItem->bars_stored);
+        $this->assertSame('Consulta EOD completada: 3 barras almacenadas.', $bbbItem->message);
 
         $this->assertDatabaseCount('daily_bars', 5);
         Http::assertSentCount(2);

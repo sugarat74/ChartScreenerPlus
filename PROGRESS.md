@@ -5,9 +5,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- Current next ready feature: `access-control-guard` is implemented (`passing`) and awaiting independent validation. `watchlist`, `saved-screeners`, and `user-portal` are accepted.
+- All 23 listed features are accepted. The Admin EOD maintenance correction and the local market-data backfill are verified.
 - Current blocker: none
-- Last verified at: 2026-09-30 (`.\init.ps1` exit 0; Laravel 153 tests / 977 assertions incl. `AccessControlGuardTest` 3 / 21; SPA lint 0 warnings/errors (37 files) + build 131 modules; engine 45 tests; focused owned/admin suites 52 / 247; route middleware audited; local DB restored to users=1/watchlist_items=0/saved_screeners=0 and ports 8000/5173 released)
+- Last full gate verified at: 2026-10-01 (`.\init.ps1` exit 0; Laravel 154 tests / 985 assertions; SPA lint 0 warnings/errors (37 files) + build 131 modules; engine 47 tests). Operational data verified 2026-10-03: 246,304 bars, 246,304 snapshots across 494 instruments, 379 current signals, and `GET /api/screener` returned 50 of 494 Candidates.
 
 ## Session Log
 
@@ -345,3 +345,36 @@
 - Files or artifacts updated: `tests/Feature/AccessControlGuardTest.php` (new), `frontend/src/components/watchlist/WatchlistButton.tsx`, `docs/specs/access-control-guard.md`, `PROGRESS.md`, `feature_list.json`. No routes, controllers, models, migrations, policies, middleware, API contract, role model, engine, dependency or durable architecture/constraint docs changed.
 - Status: `passing` — ready for independent validation (not `accepted`).
 - Next best step: independent validation of `access-control-guard`.
+
+### Session 026
+
+- Date: 2026-09-30
+- Goal: Correct the Admin EOD query panel after a synchronous request left the trigger button in its busy state.
+- Completed: `.env` and `.env.example` now default to `QUEUE_CONNECTION=database`, so the trigger returns `202` and a `php artisan queue:work` process performs the EOD requests. `IngestionRunner` records a `processing` item with `Consultando datos EOD de {TICKER}.` before each engine call, then updates that same ledger item to `success` or `failed`. The detail endpoint prioritizes the active item; the SPA exposes the `PROCESSING` filter and message, and Admin copy now uses `ejecución` and `consulta` rather than `corrida` and `ingesta`. `init.ps1` documents the required worker command without starting one.
+- Verification run: focused Admin/job tests -> **18 passed (108 assertions)**; Pint on changed PHP files -> passed; SPA lint -> **0 warnings/errors (37 files)**; SPA build -> **131 modules**; `./init.ps1` -> exit 0 (**154 Laravel tests / 984 assertions**, SPA lint/build, engine **45 passed**, one existing Starlette deprecation warning).
+- Files or artifacts updated: `.env.example`, `init.ps1`, `app/Enums/IngestionRunItemStatus.php`, `app/Services/Ingestion/IngestionRunner.php`, `app/Jobs/RunIngestionJob.php`, `app/Http/Controllers/Admin/IngestionRunController.php`, Admin SPA components/client/copy, focused feature tests, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `PROGRESS.md`, `feature_list.json`.
+- Known risk or unresolved issue: the worker is an explicit local/operations process and is not started by `init.ps1`; without it a run correctly remains `queued` and the panel explains how to start it. Stooq remains blocked from this environment, so a live query can still end as a controlled source failure.
+
+### Session 027
+
+- Date: 2026-10-01
+- Goal: Make the Admin query log show useful per-ticker output and restore live EOD data retrieval.
+- Completed: Successful `IngestionRunItem` entries now retain `Consulta EOD completada: {bars} barras almacenadas.`; the Admin telemetry shows completed queries over total with success/failure counts. The engine keeps Stooq as preferred, but falls back to Yahoo Finance chart data after a Stooq HTTP or malformed-response failure; it parses daily OHLCV strictly, skips incomplete sessions, and translates dotted class-share symbols for Yahoo.
+- Verification run: engine source tests -> **12 passed**, Ruff clean; Laravel Admin/orchestration tests -> **24 passed (175 assertions)**; SPA lint/build -> 0 warnings/errors and **131 modules**. Live engine `GET /eod/NVDA` -> **501 bars**, latest 2026-09-30; live Laravel `php artisan ingestion:scrape NVDA` -> **Stored 501 bars**, skipped 0. Final `./init.ps1` -> **154 Laravel tests / 985 assertions**, SPA lint/build and **47 engine tests**.
+- Known risk or unresolved issue: Yahoo Finance is an unofficial fallback. Its terms, redistribution rights and rate limits for the full 503-ticker universe require validation; Stooq remains anti-bot blocked here.
+
+### Session 028
+
+- Date: 2026-10-01
+- Goal: Diagnose Admin failures showing cURL error 7/28 for the engine.
+- Completed: confirmed the queue worker was active but no engine listened on port 8090, then found Stooq could consume the full 30-second Laravel request timeout before the fallback ran. Yahoo Finance is now queried first and Stooq remains the strict fallback. Restarted the engine without stopping the active worker.
+- Verification: source tests **12 passed**, Ruff clean, SPA lint clean; live `/health` OK; live `/eod/AEE` returned **501 bars in 323 ms**. Active run #9 advanced from 0 successes to 46 successes after restart (62 earlier failures remain retryable when it finishes). Final `./init.ps1` passed with **154 Laravel tests / 985 assertions**, SPA lint/build and **47 engine tests**.
+- Known risk: the active run retains failures recorded while the engine was unavailable; use its existing “Reintentar” action after it reaches a terminal state.
+
+### Session 029
+
+- Date: 2026-10-03
+- Goal: Complete the local indicator/signal backfill so the Screener can return Candidates.
+- Completed: confirmed run #9 had persisted 246,304 Daily Bars for 494 instruments but no Indicator Snapshots. An initial universe indicator attempt failed after the Python engine stopped listening on port 8090. Restarted the engine, proved `indicators:compute --ticker=NVDA` end to end, then completed `php artisan indicators:compute --universe=sp500` and `php artisan signals:detect --universe=sp500`.
+- Verification: indicator computation processed 494 instruments and wrote **246,304 snapshots**; signal detection processed 494 instruments and stored **379 current signals**. Database check returned `bars=246304 snapshots=246304 snapshot_instruments=494 signals=379`. Live `GET http://127.0.0.1:8000/api/screener` returned **50 of 494 Candidates** with `CTVA` first under the default ranking. Port 8090 remained listening after both commands.
+- Known risk or unresolved issue: the Python engine and database queue worker are local long-running processes, not Windows services; they must be started again after a terminal closes or Windows restarts. No source or test code changed in this session, so the last full `init.ps1` gate remains the 2026-10-01 run.

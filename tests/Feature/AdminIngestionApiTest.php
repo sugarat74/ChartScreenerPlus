@@ -316,6 +316,39 @@ class AdminIngestionApiTest extends TestCase
             ->assertJsonPath('run.items.1.message', null);
     }
 
+    public function test_the_run_detail_prioritizes_the_active_eod_query_in_its_log(): void
+    {
+        [$universe, $instruments] = $this->universeWith(['AAA', 'BBB']);
+
+        $run = IngestionRun::factory()->running()->create([
+            'universe_id' => $universe->id,
+            'total' => 2,
+        ]);
+
+        IngestionRunItem::factory()->create([
+            'ingestion_run_id' => $run->id,
+            'instrument_id' => $instruments['AAA']->id,
+            'status' => IngestionRunItemStatus::Success,
+            'bars_stored' => 5,
+            'message' => null,
+        ]);
+        IngestionRunItem::factory()->create([
+            'ingestion_run_id' => $run->id,
+            'instrument_id' => $instruments['BBB']->id,
+            'status' => IngestionRunItemStatus::Processing,
+            'bars_stored' => 0,
+            'message' => 'Consultando datos EOD de BBB.',
+        ]);
+
+        $this->actingAs($this->admin())
+            ->getJson("/api/admin/ingestion/runs/{$run->id}")
+            ->assertOk()
+            ->assertJsonPath('run.items.0.ticker', 'BBB')
+            ->assertJsonPath('run.items.0.status', IngestionRunItemStatus::Processing->value)
+            ->assertJsonPath('run.items.0.message', 'Consultando datos EOD de BBB.')
+            ->assertJsonPath('run.items.1.ticker', 'AAA');
+    }
+
     public function test_the_run_detail_returns_not_found_for_an_unknown_run(): void
     {
         $this->actingAs($this->admin())

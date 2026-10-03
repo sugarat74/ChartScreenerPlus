@@ -13,10 +13,8 @@ use Illuminate\Queue\SerializesModels;
  * The single execution unit of an ingestion run.
  *
  * The trigger endpoint creates the `queued` run row and dispatches this job, so
- * the queue connection decides sync vs async: on the default `sync` connection
- * it runs inline in the same request (no worker needed), while `database` +
- * `php artisan queue:work` makes it a real background run the SPA observes by
- * polling. It never retries (`$tries = 1`) so a failed run is not silently
+ * the database queue + `php artisan queue:work` make it a background run the
+ * SPA observes by polling. It never retries (`$tries = 1`) so a failed run is not silently
  * re-executed.
  */
 class RunIngestionJob implements ShouldQueue

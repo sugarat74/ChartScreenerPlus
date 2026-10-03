@@ -59,7 +59,7 @@ export default function AppHeader() {
             type="button"
             disabled
             aria-disabled="true"
-            title="La ingesta EOD todavía no está conectada"
+            title="La consulta EOD todavía no está conectada"
             className="rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-70"
           >
             Actualizar EOD

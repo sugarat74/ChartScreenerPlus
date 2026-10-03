@@ -1,0 +1,12 @@
+[Unit]
+Description=AlphaPulse Python engine
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/var/www/alphapulse/current/engine
+ExecStart=/var/www/alphapulse/shared/venv/bin/python -m app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -60,7 +60,7 @@ function EmptyPanel({ hasFilters, onClearFilters }: EmptyPanelProps) {
       <p className="mt-2 text-sm text-on-surface-variant">
         {hasFilters
           ? 'Prueba a relajar los criterios técnicos.'
-          : 'Ejecuta una ingesta EOD para poblar el Screener.'}
+          : 'Ejecuta una consulta EOD para poblar el Screener.'}
       </p>
       {hasFilters ? (
         <button

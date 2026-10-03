@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\IngestionRunItemStatus;
 use App\Enums\IngestionRunStatus;
 use App\Jobs\RunIngestionJob;
 use App\Models\IngestionRun;
@@ -88,12 +89,17 @@ class RunIngestionJobTest extends TestCase
         $runId = $run->id;
         $observedStatus = null;
         $observedStartedAt = null;
+        $observedItemStatus = null;
+        $observedItemMessage = null;
 
         Http::fake([
-            '*/eod/AAA' => function () use ($runId, &$observedStatus, &$observedStartedAt) {
+            '*/eod/AAA' => function () use ($runId, &$observedStatus, &$observedStartedAt, &$observedItemStatus, &$observedItemMessage) {
                 $current = IngestionRun::query()->findOrFail($runId);
                 $observedStatus = $current->status;
                 $observedStartedAt = $current->started_at;
+                $activeItem = $current->items()->with('instrument')->sole();
+                $observedItemStatus = $activeItem->status;
+                $observedItemMessage = $activeItem->message;
 
                 return Http::response($this->bars('AAA', 2));
             },
@@ -105,6 +111,8 @@ class RunIngestionJobTest extends TestCase
         // The engine call observed the run mid-flight.
         $this->assertSame(IngestionRunStatus::Running, $observedStatus);
         $this->assertNotNull($observedStartedAt);
+        $this->assertSame(IngestionRunItemStatus::Processing, $observedItemStatus);
+        $this->assertSame('Consultando datos EOD de AAA.', $observedItemMessage);
 
         $finished = $run->fresh();
 

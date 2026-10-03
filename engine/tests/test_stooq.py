@@ -12,7 +12,8 @@ from fastapi.testclient import TestClient
 
 from app import main as main_module
 from app.models import Bar
-from app.sources.stooq import parse_eod_csv
+from app.sources import stooq
+from app.sources.stooq import parse_eod_csv, parse_yahoo_eod_json
 
 FIXTURE = Path(__file__).parent / "fixtures" / "stooq_nvda.csv"
 HEADER = "Date,Open,High,Low,Close,Volume"
@@ -82,6 +83,44 @@ def test_parse_rejects_non_csv_payload() -> None:
 
     with pytest.raises(ValueError):
         parse_eod_csv(text)
+
+
+def test_parse_yahoo_chart_response_skips_incomplete_sessions() -> None:
+    text = """{
+      "chart": {"result": [{
+        "timestamp": [1760020200, 1760106600],
+        "indicators": {"quote": [{
+          "open": [10.0, null], "high": [11.0, null], "low": [9.0, null],
+          "close": [10.5, null], "volume": [1000, null]
+        }]}
+      }], "error": null}
+    }"""
+
+    bars = parse_yahoo_eod_json(text)
+
+    assert bars == [
+        Bar(date=date(2025, 10, 9), open=10.0, high=11.0, low=9.0, close=10.5, volume=1000)
+    ]
+
+
+def test_fetch_uses_stooq_when_yahoo_is_unusable(monkeypatch: pytest.MonkeyPatch) -> None:
+    expected = [Bar(date=date(2026, 9, 25), open=1.0, high=2.0, low=0.5, close=1.5, volume=10)]
+
+    def failed_yahoo(symbol: str) -> list[Bar]:
+        raise ValueError("unusable chart response")
+
+    observed_symbol: str | None = None
+
+    def successful_stooq(symbol: str) -> list[Bar]:
+        nonlocal observed_symbol
+        observed_symbol = symbol
+        return expected
+
+    monkeypatch.setattr(stooq, "_fetch_yahoo", failed_yahoo)
+    monkeypatch.setattr(stooq, "_fetch_stooq", successful_stooq)
+
+    assert stooq.fetch_eod("brk.b") == expected
+    assert observed_symbol == "BRK.B"
 
 
 def test_eod_endpoint_returns_parsed_bars(monkeypatch: pytest.MonkeyPatch) -> None:

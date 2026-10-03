@@ -210,7 +210,7 @@ export default function AdminPage() {
       <AdminNotice
         eyebrow="Admin"
         title="Inicia sesión"
-        message="El panel de ingesta requiere una sesión con rol de administrador."
+        message="El panel de consultas EOD requiere una sesión con rol de administrador."
       >
         <Link
           to={LOGIN_ROUTE}
@@ -227,7 +227,7 @@ export default function AdminPage() {
       <AdminNotice
         eyebrow="Admin"
         title="Acceso restringido"
-        message="Tu cuenta no tiene permisos de administrador para controlar la ingesta EOD."
+        message="Tu cuenta no tiene permisos de administrador para controlar las consultas EOD."
       />
     )
   }
@@ -243,10 +243,10 @@ export default function AdminPage() {
           </span>
           <div>
             <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-primary">
-              Panel de control: ingesta EOD
+              Panel de control: consultas EOD
             </h2>
             <p className="font-mono text-[11px] text-surface-dim">
-              Dispara y sigue corridas reales del ledger de ingesta.
+              Inicia y sigue ejecuciones reales del registro de consultas.
             </p>
           </div>
         </div>
@@ -291,7 +291,7 @@ export default function AdminPage() {
             disabled={triggering}
             className="rounded-md border-2 border-outline bg-primary-container px-5 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[3px_3px_0px_#1a1a1a] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {triggering ? 'Ejecutando…' : 'Ejecutar ingesta ahora'}
+            {triggering ? 'Iniciando…' : 'Iniciar consulta ahora'}
           </button>
         </div>
 
@@ -305,7 +305,7 @@ export default function AdminPage() {
         ) : null}
 
         <p className="mt-3 font-mono text-[11px] text-on-surface-variant">
-          Dispara la etapa de ingesta (ledger), no el pipeline completo de indicadores y señales.
+          Inicia consultas EOD y actualiza el registro; no ejecuta el pipeline completo de indicadores y señales.
         </p>
       </form>
 

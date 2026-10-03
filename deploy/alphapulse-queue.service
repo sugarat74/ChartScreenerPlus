@@ -1,0 +1,12 @@
+[Unit]
+Description=AlphaPulse Laravel queue worker
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/var/www/alphapulse/current
+ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=1 --max-time=3600
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

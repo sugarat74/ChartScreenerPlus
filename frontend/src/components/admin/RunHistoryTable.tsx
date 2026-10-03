@@ -40,10 +40,10 @@ export default function RunHistoryTable({
       <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-outline px-4 py-3">
         <div>
           <h3 className="font-headline text-sm font-black uppercase tracking-wider text-on-surface">
-            Historial de corridas
+            Historial de ejecuciones
           </h3>
           <p className="font-mono text-[11px] text-on-surface-variant">
-            Ledger real de ingestion_runs
+              Registro real de consultas EOD
           </p>
         </div>
         <button
@@ -69,7 +69,7 @@ export default function RunHistoryTable({
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-              <th scope="col" className="px-4 py-2">Corrida</th>
+              <th scope="col" className="px-4 py-2">Ejecución</th>
               <th scope="col" className="px-4 py-2">Estado</th>
               <th scope="col" className="px-4 py-2">Universo</th>
               <th scope="col" className="px-4 py-2">Inicio</th>
@@ -83,7 +83,7 @@ export default function RunHistoryTable({
             {runs.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center font-mono text-xs text-on-surface-variant">
-                  {loading ? 'Cargando corridas…' : 'Sin corridas todavía.'}
+                  {loading ? 'Cargando ejecuciones…' : 'Sin ejecuciones todavía.'}
                 </td>
               </tr>
             ) : (

@@ -7,6 +7,7 @@ namespace App\Enums;
  */
 enum IngestionRunItemStatus: string
 {
+    case Processing = 'processing';
     case Success = 'success';
     case Failed = 'failed';
 }

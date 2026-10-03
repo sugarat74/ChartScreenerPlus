@@ -19,7 +19,7 @@ use Throwable;
  * recording one item per instrument. The artisan command composes
  * prepare + process synchronously (`start*Run()`); the admin panel creates the
  * `queued` row, dispatches a job and returns immediately, and the job calls
- * `process()` — inline on the default `sync` connection.
+ * `process()` from a queue worker.
  *
  * Every instrument is processed in its own try/catch, so a single failure is
  * recorded instead of aborting the run.
@@ -112,24 +112,29 @@ class IngestionRunner
 
         try {
             foreach ($instruments as $instrument) {
+                $item = $run->items()->create([
+                    'instrument_id' => $instrument->id,
+                    'status' => IngestionRunItemStatus::Processing,
+                    'bars_stored' => 0,
+                    'message' => "Consultando datos EOD de {$instrument->ticker}.",
+                ]);
+
                 try {
                     $barsStored = $this->ingestor->ingest($instrument);
 
-                    $run->items()->create([
-                        'instrument_id' => $instrument->id,
+                    $item->forceFill([
                         'status' => IngestionRunItemStatus::Success,
                         'bars_stored' => $barsStored,
-                        'message' => null,
-                    ]);
+                        'message' => "Consulta EOD completada: {$barsStored} barras almacenadas.",
+                    ])->save();
 
                     $succeeded++;
                 } catch (Throwable $exception) {
-                    $run->items()->create([
-                        'instrument_id' => $instrument->id,
+                    $item->forceFill([
                         'status' => IngestionRunItemStatus::Failed,
                         'bars_stored' => 0,
                         'message' => $exception->getMessage(),
-                    ]);
+                    ])->save();
 
                     $failed++;
                 }

@@ -3,12 +3,17 @@ import { LOG_FILTERS } from './logFilter.ts'
 import type { LogFilter } from './logFilter.ts'
 
 const ITEM_CHIP: Record<IngestionRunItem['status'], string> = {
+  processing: 'border-primary-container bg-primary-container text-on-primary-container',
   success: 'border-gain bg-gain text-primary',
   failed: 'border-secondary bg-secondary-container text-on-secondary-container',
 }
 
 function itemLineColor(item: IngestionRunItem): string {
-  return item.status === 'failed' ? 'text-secondary-container' : 'text-surface-bright'
+  if (item.status === 'failed') {
+    return 'text-secondary-container'
+  }
+
+  return item.status === 'success' ? 'text-surface-bright' : 'text-primary-container'
 }
 
 interface RunLogStreamProps {
@@ -37,6 +42,9 @@ export default function RunLogStream({
     if (filter === 'FAILED') {
       return item.status === 'failed'
     }
+    if (filter === 'PROCESSING') {
+      return item.status === 'processing'
+    }
     return true
   })
 
@@ -45,7 +53,7 @@ export default function RunLogStream({
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-primary px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span className="font-headline text-sm font-black uppercase tracking-wider text-on-primary">
-            Log de la corrida
+            Log de la ejecución
           </span>
           {run ? (
             <span className="font-mono text-[11px] text-surface-dim">#{run.id}</span>
@@ -85,12 +93,12 @@ export default function RunLogStream({
       <div className="max-h-96 min-h-40 flex-1 overflow-y-auto px-4 py-3">
         {run === null ? (
           <p className="font-mono text-xs text-surface-dim">
-            Selecciona una corrida para ver su log.
+            Selecciona una ejecución para ver su log.
           </p>
         ) : items.length === 0 ? (
           <p className="font-mono text-xs text-surface-dim">
             {run.status === 'queued'
-              ? 'Corrida en cola; el log aparecerá al empezar a procesar.'
+              ? 'Ejecución en cola; inicia el worker para comenzar las consultas.'
               : 'Sin líneas que coincidan con el filtro.'}
           </p>
         ) : (
@@ -105,9 +113,11 @@ export default function RunLogStream({
                 <span className="shrink-0 font-bold text-on-primary">
                   {item.ticker ?? '—'}
                 </span>
-                <span className={`shrink-0 ${item.status === 'success' ? 'text-gain' : 'text-secondary-container'}`}>
-                  {item.bars_stored} barras
-                </span>
+                {item.status !== 'processing' ? (
+                  <span className={`shrink-0 ${item.status === 'success' ? 'text-gain' : 'text-secondary-container'}`}>
+                    {item.bars_stored} barras
+                  </span>
+                ) : null}
                 {item.message ? (
                   <span className={`break-words ${itemLineColor(item)}`}>{item.message}</span>
                 ) : null}

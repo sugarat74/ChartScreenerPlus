@@ -12,13 +12,18 @@ unusable response becomes a controlled upstream error rather than bad data.
 
 import csv
 import io
-from datetime import date
+import json
+from datetime import date, datetime, timezone
 
 import httpx
 
 from app.models import Bar
 
 STOOQ_URL = "https://stooq.com/q/d/l/?s={symbol}&i=d"
+YAHOO_CHART_URL = (
+    "https://query1.finance.yahoo.com/v8/finance/chart/"
+    "{symbol}?range=2y&interval=1d&events=history"
+)
 EXPECTED_COLUMNS = ("date", "open", "high", "low", "close", "volume")
 REQUEST_TIMEOUT_SECONDS = 30.0
 USER_AGENT = (
@@ -87,22 +92,68 @@ def parse_eod_csv(text: str) -> list[Bar]:
     return bars
 
 
-def fetch_eod(symbol: str) -> list[Bar]:
-    """Fetch and parse the daily EOD bars for one symbol from Stooq.
+def parse_yahoo_eod_json(text: str) -> list[Bar]:
+    """Parse a Yahoo Finance chart response into ordered daily bars.
 
-    ``symbol`` is a plain ticker (``NVDA``); the ``.us`` suffix is added when
-    missing. Network/HTTP failures propagate as ``httpx.HTTPError``; an unusable
-    payload propagates as ``ValueError``. The caller (HTTP endpoint) turns both
-    into controlled client errors.
+    Yahoo may include ``null`` OHLCV fields for an incomplete session. Those
+    entries are not usable EOD bars and are skipped; an invalid response shape
+    remains a controlled upstream error.
     """
 
-    normalized_symbol = symbol.strip().lower()
-    if not normalized_symbol:
-        raise ValueError("symbol must not be empty")
-    if not normalized_symbol.endswith(".us"):
-        normalized_symbol = f"{normalized_symbol}.us"
+    try:
+        payload = json.loads(text)
+        result = payload["chart"]["result"]
+        chart = result[0]
+        timestamps = chart["timestamp"]
+        quote = chart["indicators"]["quote"][0]
+        opens = quote["open"]
+        highs = quote["high"]
+        lows = quote["low"]
+        closes = quote["close"]
+        volumes = quote["volume"]
+    except (IndexError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError("unexpected Yahoo Finance chart response") from exc
 
-    url = STOOQ_URL.format(symbol=normalized_symbol)
+    series = (timestamps, opens, highs, lows, closes, volumes)
+    if not all(isinstance(values, list) for values in series):
+        raise ValueError("unexpected Yahoo Finance chart series")
+    if not all(len(values) == len(timestamps) for values in series):
+        raise ValueError("mismatched Yahoo Finance chart series lengths")
+
+    bars: list[Bar] = []
+    for timestamp, open_price, high_price, low_price, close_price, volume in zip(
+        timestamps, opens, highs, lows, closes, volumes
+    ):
+        if any(
+            value is None for value in (open_price, high_price, low_price, close_price, volume)
+        ):
+            continue
+        if not all(
+            isinstance(value, (int, float))
+            for value in (timestamp, open_price, high_price, low_price, close_price, volume)
+        ):
+            raise ValueError("invalid Yahoo Finance chart value")
+
+        bars.append(
+            Bar(
+                date=datetime.fromtimestamp(timestamp, tz=timezone.utc).date(),
+                open=float(open_price),
+                high=float(high_price),
+                low=float(low_price),
+                close=float(close_price),
+                volume=int(volume),
+            )
+        )
+
+    bars.sort(key=lambda bar: bar.date)
+
+    return bars
+
+
+def _fetch_stooq(normalized_symbol: str) -> list[Bar]:
+    """Fetch the preferred Stooq CSV source for a normalized ticker."""
+
+    url = STOOQ_URL.format(symbol=f"{normalized_symbol.lower()}.us")
     headers = {"User-Agent": USER_AGENT, "Accept": "text/csv,text/plain;q=0.9,*/*;q=0.8"}
 
     with httpx.Client(
@@ -111,3 +162,34 @@ def fetch_eod(symbol: str) -> list[Bar]:
         response = client.get(url)
         response.raise_for_status()
         return parse_eod_csv(response.text)
+
+
+def _fetch_yahoo(normalized_symbol: str) -> list[Bar]:
+    """Fetch the fallback chart API, translating class-share dots to hyphens."""
+
+    url = YAHOO_CHART_URL.format(symbol=normalized_symbol.replace(".", "-"))
+
+    with httpx.Client(
+        timeout=REQUEST_TIMEOUT_SECONDS, follow_redirects=True, headers={"User-Agent": USER_AGENT}
+    ) as client:
+        response = client.get(url)
+        response.raise_for_status()
+        return parse_yahoo_eod_json(response.text)
+
+
+def fetch_eod(symbol: str) -> list[Bar]:
+    """Fetch daily EOD bars from Yahoo, falling back when it is unusable.
+
+    Stooq's current anti-bot challenge can consume the complete request timeout
+    before returning unusable content. Yahoo Finance is therefore attempted
+    first, while the strict Stooq CSV parser remains the fallback.
+    """
+
+    normalized_symbol = symbol.strip().upper()
+    if not normalized_symbol:
+        raise ValueError("symbol must not be empty")
+
+    try:
+        return _fetch_yahoo(normalized_symbol)
+    except (httpx.HTTPError, ValueError):
+        return _fetch_stooq(normalized_symbol)

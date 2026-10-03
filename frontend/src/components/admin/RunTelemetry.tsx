@@ -62,9 +62,11 @@ interface RunTelemetryProps {
  * current status, scope, success/failure split and wall-clock duration.
  */
 export default function RunTelemetry({ run, runs }: RunTelemetryProps) {
+  const processed = run ? run.succeeded + run.failed : null
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Tile label="Corrida seleccionada" hint={run ? `Inicio: ${formatTimestamp(run.started_at)}` : 'Selecciona una corrida'}>
+      <Tile label="Ejecución seleccionada" hint={run ? `Inicio: ${formatTimestamp(run.started_at)}` : 'Selecciona una ejecución'}>
         {run ? (
           <>
             <span className="font-headline text-2xl font-black text-on-surface">#{run.id}</span>
@@ -75,19 +77,19 @@ export default function RunTelemetry({ run, runs }: RunTelemetryProps) {
         )}
       </Tile>
 
-      <Tile label="Símbolos en la corrida" hint={`${runs.length} corrida(s) registradas`}>
+      <Tile label="Símbolos en la ejecución" hint={`${runs.length} ejecución(es) registradas`}>
         <span className="font-headline text-2xl font-black text-on-surface">
           {run ? run.total : '—'}
         </span>
       </Tile>
 
-      <Tile label="Éxitos / Fallos" hint="Resultado por instrumento">
+      <Tile label="Progreso de consultas" hint={run ? `${run.succeeded} éxitos / ${run.failed} fallos` : 'Resultado por instrumento'}>
         <span className="font-headline text-2xl font-black text-gain">
-          {run ? run.succeeded : '—'}
+          {processed ?? '—'}
         </span>
         <span className="font-mono text-sm text-on-surface-variant">/</span>
         <span className="font-headline text-2xl font-black text-secondary">
-          {run ? run.failed : '—'}
+          {run ? run.total : '—'}
         </span>
       </Tile>
 
