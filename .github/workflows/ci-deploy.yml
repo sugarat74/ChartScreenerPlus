@@ -47,14 +47,14 @@ jobs:
     concurrency:
       group: chartiko-production
       cancel-in-progress: false
-    env:
-      SSH_DIRECTORY: ${{ runner.temp }}/chartiko-ssh
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: frontend-dist
           path: frontend/dist
+      - name: Prepare SSH directory
+        run: echo "SSH_DIRECTORY=$RUNNER_TEMP/chartiko-ssh" >> "$GITHUB_ENV"
       - name: SSH setup
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
