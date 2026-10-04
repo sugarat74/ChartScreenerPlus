@@ -32,7 +32,7 @@ export default function CandidateTable({ candidates }: { candidates: ScreenerCan
               Símbolo / Empresa
             </th>
             <th scope="col" className="px-4 py-2 text-right">
-              Cierre EOD
+              Cierre
             </th>
             <th scope="col" className="px-4 py-2 text-right">
               Var %

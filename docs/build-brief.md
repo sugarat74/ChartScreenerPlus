@@ -60,5 +60,5 @@ A vertical slice that proves the riskiest useful behavior end to end:
 ## Notes
 
 - Visual direction is defined by the existing `alphapulse/` prototype and captured in `DESIGN.md`.
-- Working product name in the mockup is `AlphaPulse`; repository is `ChartScreenPlus`.
+- Product name is **Chartiko**, published at `https://www.chartiko.com` on a VPS. The mockup retains its historical `AlphaPulse` name; repository directory is `ChartScreenPlus`. Public UI omits EOD labels outside Admin; data remains EOD-only.
 - Scraping a public source is an accepted dependency and a known risk (see `docs/risks-and-open-questions.md`).

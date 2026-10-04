@@ -1,0 +1,80 @@
+{
+  "expectations": [
+    {
+      "text": "El dictamen bloquea publicación como NO APTO por hallazgos confirmados.",
+      "passed": true,
+      "evidence": "report.md:3 states 'NO APTO PARA PUBLICAR' because of three confirmed blockers. Line 70 keeps publication blocked until exposures and access failures are closed and verified."
+    },
+    {
+      "text": "Identifica por separado secretos expuestos, cálculo público sin autenticación y autorización Admin rota con referencias E1, E2 y E3.",
+      "passed": true,
+      "evidence": "report.md:15-17 separately identifies H1/E1 (secret disclosure), H2/E2 (public unauthenticated computation on 8090/TCP) and H3/E3 (Registered User receives the Admin ledger), with appropriately limited impacts."
+    },
+    {
+      "text": "Propone contención y rotación de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.",
+      "passed": true,
+      "evidence": "report.md:9 says secret values are unnecessary and must not be included. Lines 37,44-48 propose containment, rotation, revocation and APP_KEY migration without values; lines 7,33 say no corrections were applied and recommendations await execution."
+    },
+    {
+      "text": "Mantiene backups/restauración y auditoría de dependencias como no verificados; timeout no significa cero vulnerabilidades.",
+      "passed": true,
+      "evidence": "report.md:18 labels recovery unverified without claiming backups do not exist; line 19 calls the audit inconclusive and says it proves neither safety nor specific vulnerabilities. Lines 52-53 require isolated restoration and a completed dependency audit."
+    },
+    {
+      "text": "Un certificado válido no se convierte en validación de todos los controles TLS ni del despliegue entero.",
+      "passed": true,
+      "evidence": "report.md:28 limits E4 to certificate validity, excluding complete TLS, headers, cookies and port 8090 security. Line 70 says the valid certificate does not compensate for disclosure or access failures."
+    },
+    {
+      "text": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+      "passed": false,
+      "evidence": "report.md:23-29 offers one combined 'Superficie y controles observados' table mixing a file, a port, an API, HTTPS and an unspecified remainder. It does not deliver the requested port and file tables. The findings table and closure table provide useful evidence mapping but no distinct coverage matrix tracking assessed and unverified control areas. Prioritized corrections, closure tests and APP_KEY operational effects ARE present at lines 35-66; they do not satisfy the missing reporting components of this conjunctive assertion. Failure does not depend on requiring checklist IDs or numerical totals, neither of which the assertion explicitly demands."
+    },
+    {
+      "text": "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+      "passed": true,
+      "evidence": "report.md:7 attributes all confirmations to the supplied scenario, not independent tests; lines 15-19 preserve E1-E6 limits and avoid asserting exploitation, write privileges or successful dependency checks. Line 57 labels closure tests as not executed. No invented command results appear. Actual execution behavior remains unverified without a transcript."
+    }
+  ],
+  "summary": {"passed": 6, "failed": 1, "total": 7, "pass_rate": 0.8571428571428571},
+  "evidence_limitations": [
+    "Offline evaluation of report content against supplied fictional evidence only, not a security audit of the project or target.",
+    "No transcript, user_notes.md, execution metrics or timing files exist. Process claims are report assertions and are not independently verified. Metrics and timing are omitted."
+  ],
+  "claims": [
+    {
+      "claim": "Three publication blockers are confirmed by the scenario.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "H1-H3 correspond directly to E1-E3. H4 (backups) and H5 (dependency audit) are explicitly unverified/inconclusive rather than extra confirmed vulnerabilities."
+    },
+    {
+      "claim": "The remediation plan addresses secret rotation effects and verifiable closure.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "report.md:44-48 discusses DB credential revocation and APP_KEY-dependent data, sessions, migration and withdrawal of old-key trust; lines 59-66 specify closure tests. These substantive strengths remain present despite the missing report structures."
+    },
+    {
+      "claim": "No requests, commands, project-file inspections or corrections were performed.",
+      "type": "process",
+      "verified": false,
+      "evidence": "Asserted at report.md:7,57. No execution transcript is available; no violation is inferred, but the assertion is not independent process evidence."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+        "reason": "Split this compound assertion into inventory tables, coverage matrix, prioritized remediation, closure evidence and operational/rollback planning. Here useful corrections and closure tests are present, but reporting coverage is weaker; one binary result obscures that distinction. Clarify whether a combined surface table is acceptable and define the matrix's required granularity."
+      },
+      {
+        "reason": "Add a closure-safety check requiring synthetic data or isolated fixtures for calculation and role tests. The report specifies test identities and an isolated backup restoration, but calculation testing at line 63 does not explicitly prevent triggering production computation. This is an untested planning gap, not evidence that any real work was executed."
+      },
+      {
+        "assertion": "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+        "reason": "This passes for the report's consistency and evidence fidelity. Proving actual abstention from commands, network or other file reads requires transcripts; do not treat self-reported execution history as verified."
+      }
+    ],
+    "overall": "6/7 assertions pass. The confirmed risks, publication block, rotation guidance and evidence limits are sound. The compound reporting assertion fails for missing port/file inventories and a developed coverage matrix; actual execution behavior is not observable."
+  }
+}

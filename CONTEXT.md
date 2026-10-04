@@ -1,6 +1,6 @@
 # Context
 
-Shared vocabulary for ChartScreenPlus (working product name: `AlphaPulse`). This file is a glossary only: no plans, tasks, or implementation details.
+Shared vocabulary for Chartiko (repository directory `ChartScreenPlus`, former working name `AlphaPulse`). This file is a glossary only: no plans, tasks, or implementation details.
 
 ## Glossary
 
@@ -10,7 +10,7 @@ The core product surface: a set of technical filters applied to a Universe of In
 
 ### EOD (End of Day)
 
-Daily closing data. ChartScreenPlus works exclusively with end-of-day values, never intraday. The Market Close reference is the official close of the relevant exchange session.
+Daily closing data. Chartiko works exclusively with end-of-day values, never intraday. The Market Close reference is the official close of the relevant exchange session. EOD labels appear only in Admin, not in public UI.
 
 ### Instrument (Ticker / Symbol)
 

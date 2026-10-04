@@ -1,6 +1,6 @@
 # Project Agent Instructions
 
-This repository contains **ChartScreenPlus** (working product name `AlphaPulse`): a web application that screens stocks on end-of-day (EOD) technical indicators and signals, and lets users inspect Candidates on an interactive chart.
+This repository contains **Chartiko** (repository directory `ChartScreenPlus`), published at `https://www.chartiko.com`: a web application that screens stocks on technical indicators and signals, and lets users inspect Candidates on an interactive chart. The data pipeline remains end-of-day (EOD); public UI must not display EOD/end-of-day labels outside the Admin tab. This presentation rule does not add intraday data.
 
 ## What We Are Building
 

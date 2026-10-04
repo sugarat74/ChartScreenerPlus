@@ -1,1 +1,1 @@
-"""Indicator math and snapshot building for the AlphaPulse engine."""
+"""Indicator math and snapshot building for the Chartiko engine."""

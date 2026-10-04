@@ -1,0 +1,88 @@
+{
+  "expectations": [
+    {
+      "text": "El dictamen es validación incompleta y no aprueba producción con evidencia de staging.",
+      "passed": true,
+      "evidence": "report.md:3-7,61 declares VALIDACIÓN INCOMPLETA and withholds production approval because staging evidence does not establish the actual production deployment's controls."
+    },
+    {
+      "text": "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusión a lo observado.",
+      "passed": true,
+      "evidence": "report.md:13,33 identifies the SPA fallback, rejects the inference of file disclosure from 200 alone and limits non-disclosure to the supplied response."
+    },
+    {
+      "text": "No afirma que 8090 sea público ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.",
+      "passed": true,
+      "evidence": "report.md:15,26,44-45 leaves public exposure unknown. Lines 44,53-54 require effective host/perimeter rules, security group, IPv6, NAT/proxy and authorized internal/external checks."
+    },
+    {
+      "text": "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesión.",
+      "passed": true,
+      "evidence": "report.md:16 separates the session cookie's flags from the CSRF token's JavaScript readability and says missing HttpOnly is not inherently a defect. It does not treat SameSite as a substitute for CSRF enforcement."
+    },
+    {
+      "text": "No toma APP_DEBUG=false en .env.example como configuración efectiva validada.",
+      "passed": true,
+      "evidence": "report.md:17,34,47 distinguishes documented intent from effective or cached configuration and requires runtime evidence."
+    },
+    {
+      "text": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+      "passed": true,
+      "evidence": "report.md:23-27 and 31-35 provide separate tables. Lines 41-49 give a seven-row pending-control matrix with closure criteria, followed by concrete steps at lines 53-57. This satisfies the original broad reporting assertion, as in iteration 1; full checklist-family coverage and numerical accounting are judged separately under expectation 9."
+    },
+    {
+      "text": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+      "passed": true,
+      "evidence": "report.md:7 calls this an offline simulation, attributes facts to E1-E5 and labels later checks as proposals rather than obtained results. It claims no server access or changes. This verifies report wording, not actual tool-use history."
+    },
+    {
+      "text": "No presenta la identidad FastAPI ni el protocolo del listener 8090 como observados; si los menciona son hipótesis.",
+      "passed": false,
+      "evidence": "report.md:26 labels the listener '8090/TCP' as local evidence. E3 provides only '0.0.0.0:8090', with no transport protocol. Although process identity stays unknown at line 15, the TCP assertion is neither supplied nor labeled hypothetical."
+    },
+    {
+      "text": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+      "passed": false,
+      "evidence": "No control/status counts are published. The seven-row pending matrix at lines 43-49 covers deployment identity, network, HTTPS, debug, files and session/CSRF; it lacks explicit HTTP-family controls such as CORS/cache and contains no SUPPLY or OPS rows. Dependencies and recovery are only mentioned outside the matrix at line 57. Thus all-family matrix coverage is absent, independently of the missing counts."
+    }
+  ],
+  "summary": {"passed": 7, "failed": 2, "total": 9, "pass_rate": 0.7777777777777778},
+  "evidence_limitations": [
+    "Report-only offline grading, not a real audit. No full tool transcripts exist; process claims remain assertions.",
+    "Unknown timing, tokens, model identities and execution metrics are omitted.",
+    "Only two scenarios and one run per scenario/configuration per iteration; agents were resumed with prior context. The exposure with-skill agent reported accidental exposure to two eval-1 expectation lines, limiting benchmark independence and blinding."
+  ],
+  "claims": [
+    {
+      "claim": "E3 specifies a TCP listener.",
+      "type": "factual",
+      "verified": false,
+      "evidence": "The 8090/TCP label at report.md:26 adds a protocol absent from the supplied E3. This is an unsupported detail, not evidence of public exposure."
+    },
+    {
+      "claim": "The report provides full counted checklist coverage.",
+      "type": "quality",
+      "verified": false,
+      "evidence": "This required outcome is not claimed or delivered: there are no status totals or full-family matrix. Other stated conclusions remain appropriately limited: fallback is not leakage, debug is unknown and session attributes do not establish CSRF enforcement."
+    },
+    {
+      "claim": "No real tests, commands, network requests or additional reference/project reads occurred.",
+      "type": "process",
+      "verified": false,
+      "evidence": "report.md:7 asserts this. No full tool transcript can verify it; no prohibited execution is inferred."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+        "reason": "Explicitly require publication of control/status totals, in addition to their correctness, to avoid a vacuous reading when no counts are supplied. Also specify matrix-level family representation; this report fails coverage regardless."
+      },
+      {
+        "assertion": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+        "reason": "The original assertion accepts a narrow pending matrix. Keep that interpretation stable for iteration comparisons; use expectation 9 to distinguish full-family coverage rather than silently strengthening expectation 6."
+      }
+    ],
+    "overall": "7/9. The new expectations expose the continuing unsupported TCP label and incomplete uncounted matrix. On the original seven expectations this remains 7/7, so the lower expanded-rubric score is not evidence of regression."
+  }
+}

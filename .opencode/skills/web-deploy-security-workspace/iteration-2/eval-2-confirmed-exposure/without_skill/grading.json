@@ -1,0 +1,91 @@
+{
+  "expectations": [
+    {
+      "text": "El dictamen bloquea publicación como NO APTO por hallazgos confirmados.",
+      "passed": true,
+      "evidence": "report.md:3 declares NO APTO PARA PUBLICAR based on three confirmed blockers; line 75 retains that decision pending closure evidence."
+    },
+    {
+      "text": "Identifica por separado secretos expuestos, cálculo público sin autenticación y autorización Admin rota con referencias E1, E2 y E3.",
+      "passed": true,
+      "evidence": "report.md:15-17 provides separate E1, E2 and E3 findings for secret disclosure, external unauthenticated calculation and non-Admin ledger access, with distinct risks and priorities."
+    },
+    {
+      "text": "Propone contención y rotación de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.",
+      "passed": true,
+      "evidence": "report.md:9 excludes secret values; lines 38,47-51 propose containment, rotation, revocation and APP_KEY migration without requesting values. Lines 7,62 distinguish proposed actions from execution."
+    },
+    {
+      "text": "Mantiene backups/restauración y auditoría de dependencias como no verificados; timeout no significa cero vulnerabilidades.",
+      "passed": true,
+      "evidence": "report.md:19-20 treats recovery as unproven and the dependency audit as inconclusive, not absent backups or safe dependencies. Lines 57-58 require isolated restoration and a completed audit."
+    },
+    {
+      "text": "Un certificado válido no se convierte en validación de todos los controles TLS ni del despliegue entero.",
+      "passed": true,
+      "evidence": "report.md:18,29 explicitly limits the favorable result to certificate validity, leaving full TLS, cookies and port-8090 transport unknown. It says E4 does not compensate for E1-E3."
+    },
+    {
+      "text": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+      "passed": false,
+      "evidence": "report.md:24-30 is one mixed surface table, not the requested port and file tables, and there is no developed control-coverage matrix. Prioritized corrections, closure tests and APP_KEY/DB operational effects ARE supplied at lines 34-71. As in iteration 1, those strengths do not satisfy the missing reporting components of this compound assertion; no requirement for exact checklist IDs is added here."
+    },
+    {
+      "text": "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+      "passed": true,
+      "evidence": "report.md:7 attributes facts solely to E1-E6 and disclaims independent checks. Lines 15-20,26-30 avoid inventing exploitation, mutation privileges, IPv6 coverage or full TLS validation. No fabricated command output appears; line 62 labels tests as future proposals. Actual execution remains unverified without transcripts."
+    },
+    {
+      "text": "La fuga confirmada contradice solo artefactos públicos: ese resultado falla aunque document root o causa raíz no estén verificados.",
+      "passed": true,
+      "evidence": "report.md:15 marks serving private .env contents as confirmed critical disclosure and a publication blocker; line 26 again says the private file is externally accessible. Line 38 leaves the public directory and delivery rules for later inspection without downgrading that failed outcome. This satisfies the semantic expectation without requiring the literal FILE-01 identifier or a dedicated row; structural omissions are scored separately."
+    },
+    {
+      "text": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+      "passed": false,
+      "evidence": "No numerical control/status totals or full-family coverage matrix are published. The five-row surface table at lines 26-30 mixes known assets and an unspecified remainder; the six-row closure table at lines 66-71 tracks selected findings/actions, not all eight checklist families. HTTP-family controls such as CORS/cache/security headers are not represented; full-family coverage therefore fails independently of absent counts."
+    }
+  ],
+  "summary": {"passed": 7, "failed": 2, "total": 9, "pass_rate": 0.7777777777777778},
+  "evidence_limitations": [
+    "Offline artifact grading only. No full tool transcripts exist; report process claims cannot independently prove execution compliance.",
+    "Unknown durations, tokens, models and execution metrics are omitted rather than estimated.",
+    "Only two scenarios and one run per scenario/configuration per iteration; resumed agents retain prior context. The exposure with-skill agent reported seeing two eval-1 expectation lines. The benchmark is not a rigorous blinded or independent repeated-run evaluation."
+  ],
+  "claims": [
+    {
+      "claim": "A confirmed private-file disclosure remains a failure while its exact delivery configuration is investigated.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "report.md:15,26,38 consistently treats disclosure as confirmed and asks for subsequent directory/routing review. No contradictory NO VERIFICADO classification suppresses the failed serving outcome."
+    },
+    {
+      "claim": "Coverage and control totals can be reconciled to the checklist.",
+      "type": "quality",
+      "verified": false,
+      "evidence": "The required coverage artifact and totals are absent. The report does not claim them, so this is a missing evaluated outcome rather than a false self-reported count. Its limited stated statuses otherwise match the supplied facts."
+    },
+    {
+      "claim": "No commands, connections or system corrections occurred.",
+      "type": "process",
+      "verified": false,
+      "evidence": "Self-reported at report.md:7,62. There is no full tool transcript to verify the history; no violation is inferred."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+        "reason": "Split structure, priority, closure evidence and operational effects into separate checks. This report has substantial remediation detail but lacks the requested inventory/coverage structure, as in iteration 1."
+      },
+      {
+        "assertion": "La fuga confirmada contradice solo artefactos públicos: ese resultado falla aunque document root o causa raíz no estén verificados.",
+        "reason": "The semantic requirement passes without a named FILE-01 row: the report clearly treats private-file serving as confirmed failure while planning root/routing inspection. If a specific matrix classification is required, state that explicitly rather than adding it during grading."
+      },
+      {
+        "reason": "Future closure plans should explicitly require synthetic accounts/data and isolated calculation fixtures. Lines 68-69 propose calculation and role tests without that safeguard; only backup restoration explicitly requires isolation. This planning gap remains outside the nine assertions and is not evidence of real execution."
+      }
+    ],
+    "overall": "7/9: reporting structure and counted full-family coverage fail. The semantic public-only outcome is correctly treated as failed despite unknown implementation details. Shared-original-assertion score remains 6/7; the extra semantic expectation passes and the extra coverage expectation fails."
+  }
+}

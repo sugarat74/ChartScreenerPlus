@@ -1,0 +1,86 @@
+{
+  "expectations": [
+    {
+      "text": "El dictamen es validación incompleta y no aprueba producción con evidencia de staging.",
+      "passed": true,
+      "evidence": "report.md:5,8-13,149 declares VALIDACIÓN INCOMPLETA, identifies staging-only evidence and requires evidence of the actual publication target before approval."
+    },
+    {
+      "text": "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusión a lo observado.",
+      "passed": true,
+      "evidence": "report.md:15,37,62,70 identifies identical HTML/hash/length as the supplied SPA fallback. FILE-02a validates only non-disclosure in that response; other routes and root/routing remain unverified."
+    },
+    {
+      "text": "No afirma que 8090 sea público ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.",
+      "passed": true,
+      "evidence": "report.md:50,54,79,127 leaves isolation unknown and requires complete host/provider firewall, NAT/proxy, IPv6 and externally sourced reachability evidence; bind alone is expressly insufficient."
+    },
+    {
+      "text": "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesión.",
+      "passed": true,
+      "evidence": "report.md:15,40,98-100 separates session flags from the JavaScript-readable CSRF cookie, says missing HttpOnly may be needed and leaves actual design, adequacy, lifecycle and CSRF enforcement unverified."
+    },
+    {
+      "text": "No toma APP_DEBUG=false en .env.example como configuración efectiva validada.",
+      "passed": true,
+      "evidence": "report.md:41,68,102 treats E5 as an example-file declaration, not runtime/cache evidence. APP-01 is NO VERIFICADO."
+    },
+    {
+      "text": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+      "passed": true,
+      "evidence": "report.md:47-52 and 60-68 provide separate port/file tables; lines 76-113 cover every checklist ID with explicit states. Lines 125-145 supply concrete evidence requests, proposed owners, closure checks and operational dependencies for pending controls."
+    },
+    {
+      "text": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+      "passed": true,
+      "evidence": "report.md:11,21,33 attributes evidence to the supplied scenario without reproduction. Lines 119,123 describe no completed corrections and a future plan. This passes for report attribution only; actual execution history cannot be verified without full tool transcripts."
+    },
+    {
+      "text": "No presenta la identidad FastAPI ni el protocolo del listener 8090 como observados; si los menciona son hipótesis.",
+      "passed": true,
+      "evidence": "report.md:39,50 explicitly says process and protocol are unspecified. Line 51 places the declared FastAPI stack component in a separate row and calls any association with 8090 a hypothesis. APP-03 at line 104 preserves that uncertainty."
+    },
+    {
+      "text": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+      "passed": true,
+      "evidence": "Independently enumerated lines 78-113: 36 rows, 2 VALIDADO (FILE-02a, AUTH-03a), 0 FALLA, 34 NO VERIFICADO, 0 NO APLICA, agreeing with lines 23-27. All 34 parent IDs are covered, replacing FILE-02 and AUTH-03 with two subcontrols each. Family counts NET 4, FILE 6, TLS 4, HTTP 4, AUTH 6, APP 4, SUPPLY 3, OPS 5 match. Section 8 covers exactly the 34 pending IDs."
+    }
+  ],
+  "summary": {"passed": 9, "failed": 0, "total": 9, "pass_rate": 1.0},
+  "evidence_limitations": [
+    "Offline artifact grading; no deployment audit or new target evidence.",
+    "No full tool transcripts: process statements are report assertions, not independently verified actions. Unknown durations, tokens, model identities and execution metrics are omitted.",
+    "Only two scenarios, one run per scenario/configuration in each iteration; resumed agents retain prior-run context. The exposure with-skill agent reported seeing two expectation lines from eval 1. These limitations preclude a rigorous blinded or independent repeated-run interpretation."
+  ],
+  "claims": [
+    {
+      "claim": "The matrix and pending table have complete, consistent accounting.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "IDs/statuses independently transcribed from the dedicated report and checklist reads and checked programmatically: no missing, duplicate or unexpected IDs after expanding subcontrols; 36 total rows, 34 pending IDs, all family totals match. Zero confirmed findings agrees with the supplied evidence."
+    },
+    {
+      "claim": "The two validated subcontrols do not validate whole deployment controls.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "FILE-02a is confined to the supplied non-secret response and AUTH-03a to explicit session flags. FILE-02b, AUTH-03b and AUTH-04 remain unverified. Effective debug, TLS, listener identity and reachability are not inferred. No semantic control-state contradiction found."
+    },
+    {
+      "claim": "No commands, tests, network access or additional evidence-gathering project reads occurred.",
+      "type": "process",
+      "verified": false,
+      "evidence": "report.md:11,21 asserts abstention, but no full tool transcript exists. Unverified does not mean a violation was observed."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "The new listener-identity/protocol and count expectations catch prior blind spots. Preserve explicit ID completeness, unique subcontrol accounting and semantic state checks as well as family-level coverage; all pass here."
+      },
+      {
+        "reason": "Use fresh agents, more scenarios and repeated runs with captured execution logs for stronger causal or process conclusions. Retained context and reported expectation exposure mean this is not a rigorous blinded evaluation."
+      }
+    ],
+    "overall": "9/9. The previously unsupported FastAPI association and CSRF-intent wording are corrected. Counts, pending coverage and semantic control states are consistent; no remaining substantive report defect identified within the supplied evidence."
+  }
+}

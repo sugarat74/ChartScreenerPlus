@@ -1,5 +1,5 @@
 [Unit]
-Description=AlphaPulse Python engine
+Description=Chartiko Python engine
 After=network.target
 
 [Service]

@@ -1,5 +1,5 @@
 /**
- * Lightweight Charts lifecycle for one instrument's EOD payload.
+ * Lightweight Charts lifecycle for one instrument's chart payload.
  *
  * The library is self-hosted (`lightweight-charts`, Apache-2.0) — never the
  * embedded TradingView widget — and the `attributionLogo` layout option stays
@@ -124,7 +124,7 @@ export default function InteractiveChart({
     <div
       ref={containerRef}
       role="img"
-      aria-label={`Gráfico de velas EOD de ${ticker}: ${bars.length} sesiones con volumen${
+      aria-label={`Gráfico de velas de ${ticker}: ${bars.length} sesiones con volumen${
         snapshot === null ? ' y sin snapshot de indicadores' : ''
       }.`}
       className="h-[420px] w-full"

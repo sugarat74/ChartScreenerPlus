@@ -55,12 +55,12 @@ function EmptyPanel({ hasFilters, onClearFilters }: EmptyPanelProps) {
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
         {hasFilters
           ? 'Sin candidatos con estos filtros.'
-          : 'El universo todavía no tiene candidatos EOD.'}
+          : 'El universo todavía no tiene candidatos.'}
       </p>
       <p className="mt-2 text-sm text-on-surface-variant">
         {hasFilters
           ? 'Prueba a relajar los criterios técnicos.'
-          : 'Ejecuta una consulta EOD para poblar el Screener.'}
+          : 'Los candidatos estarán disponibles cuando se actualicen los datos.'}
       </p>
       {hasFilters ? (
         <button

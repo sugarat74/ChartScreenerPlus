@@ -659,5 +659,67 @@
       "Independent validator ACCEPT (role validator, access-control-guard): re-ran AccessControlGuardTest -> 3 passed (21 assertions), related owned/admin suites -> 52 passed (247 assertions), full Laravel suite -> 153 passed (977 assertions); SPA lint 0/0 and build 131 modules; focused Pint passed; .\\init.ps1 green (engine 45); route list confirmed public screener/instrument APIs, auth:sanctum owned routes, and ordered auth:sanctum then admin middleware. Independently verified public SPA fallback for /screener, /chart, /instruments/NVDA and /portal; all six owned guest calls 401/no writes; two-user Watchlist/Saved Screener isolation (caller lists only, foreign delete 404, owner persists); admin guest 401/non-admin 403; RequireAuth no-destination replace redirect for /portal; guest Screener/Chart affordances are sign-in links. WatchlistButton 401 redirect was judged correct/minimal (only post-bootstrap session expiry, guest remains link). No policy/middleware/endpoint/role/resource/schema/API/dependency redesign. Non-blocking: no browser E2E for visual redirect/focus behavior."
     ],
     "notes": "Narrow consolidation: adds cross-cutting regression coverage and fixes only the WatchlistButton session-expiry gap. Existing explicit user-scoped controller queries and admin middleware ordering remain unchanged. Ready for independent validation; no browser/E2E runner exists."
+  },
+  {
+    "id": "web-deploy-security-skill",
+    "area": "tooling",
+    "title": "Add a web deployment security review skill",
+    "user_visible_behavior": "A deployment security review produces an evidence-based report covering ports, protected files, transport, access control, dependencies and operations, with a release verdict and prioritized remediation.",
+    "depends_on": [],
+    "status": "passing",
+    "verification": [
+      "Skill frontmatter is valid and bundled checklist, commands and report template resolve",
+      "Offline evidence scenarios distinguish unverified controls and SPA fallbacks from confirmed exposure",
+      "Confirmed secret exposure and authorization failures block release with sanitized evidence and actionable closure checks"
+    ],
+    "evidence": [
+      "2026-10-04: real repository security audit saved to docs/security/2026-10-04-103318-repositorio.md, all 34 controls covered. Verdict NO APTO for reviewed deployment scripts; production unverified. Auth/access/ownership: 70 tests / 328 assertions passed; Composer production and frontend npm audits exit 0 with no advisories. No operational fixes or independent skill acceptance.",
+      "Baseline init.ps1 passed during this session: Laravel 154 tests / 985 assertions, SPA lint 0 warnings/errors and build 131 modules, engine 47 tests (existing Starlette deprecation warning).",
+      "skill-creator quick_validate.py passed for .opencode/skills/web-deploy-security before and after revision. Bundled checklist, commands and report template were read successfully in the scenario runs.",
+      "Two offline scenarios, with and without the skill, in two iterations. Final independent output grading: with skill 18/18 assertions; without skill 14/18. Verdicts: VALIDACION INCOMPLETA for insufficient evidence and NO APTO for confirmed secret exposure, public internal API and broken Admin authorization.",
+      "Final with-skill reports cover all 34 checklist IDs; subcontrol counts independently verified. Revised guidance distinguishes failed protection outcomes from unknown root causes and prohibits inferring service identity from a port.",
+      "Evidence and generated comparison viewer: .opencode/skills/web-deploy-security-workspace/iteration-2/review.html and benchmark.json. Evaluations are synthetic, one run per case/configuration, with resumed-agent context and limited assertion visibility; no robust blinded benchmark or live deployment audit is claimed."
+    ],
+    "notes": "Explicit user-requested OpenCode tooling; does not itself audit or approve production. Self-verified passing; scenario grading is not final independent feature acceptance. Existing 23 product feature acceptances are preserved. Restart OpenCode to reload the skill; see PROGRESS.md Session 030."
+  },
+  {
+    "id": "web-marketing-seo-geo-skill",
+    "area": "tooling",
+    "title": "Prepare website marketing, SEO and GEO with a reusable skill",
+    "user_visible_behavior": "A reusable skill audits or implements launch preparation, marketing materials, SEO, GEO and agent navigation within the requested scope, and records verification and external measurement pending.",
+    "depends_on": [],
+    "status": "passing",
+    "verification": [
+      "Skill frontmatter and bundled resources validate and resolve",
+      "Audit and implementation modes preserve authorization and private resources",
+      "Guidance distinguishes local checks from indexing, citation and conversion evidence"
+    ],
+    "evidence": [
+      "2026-10-04: init.ps1 exit 0; Laravel 154 tests / 985 assertions, frontend lint/build 131 modules, engine 47 tests with existing Starlette warning.",
+      "quick_validate.py exit 0 for prepared and installed .opencode/skills/web-marketing-seo-geo. All five installed file SHA256 hashes matched prepared files; temporary copies removed after verification.",
+      "Manual review of instructions and resource links: missing-domain configuration, SPA rendering, private portal/admin exclusion, factual EOD marketing, optional experimental llms.txt, separate crawler/training policies, no implicit campaign sends/spend/deploy and explicit unverified measurement. Google primary docs consulted on 2026-10-04. No independent forward-test or live SEO/GEO measurement."
+    ],
+    "notes": "User-requested project skill only; no application SEO changes or production approval. Self-verified passing; independent acceptance pending. See PROGRESS.md Marketing / SEO / GEO Skill entry."
+  },
+  {
+    "id": "chartiko-brand",
+    "area": "frontend",
+    "title": "Rebrand product to Chartiko and keep EOD wording only in Admin",
+    "user_visible_behavior": "Chartiko appears in the header, shared chart-themed logo/favicon and browser metadata. Public screens omit EOD labels while Admin keeps its operational terminology.",
+    "depends_on": ["app-shell-navigation", "chart-interactive"],
+    "status": "passing",
+    "verification": [
+      "Chartiko wordmark and shared logo preserve the current terminal palette and hard shadows",
+      "Public labels, tooltips and chart accessibility text omit EOD; Admin retains it",
+      "Standard gate passes without changing data contracts or VPS service identifiers"
+    ],
+    "evidence": [
+      "2026-10-04: baseline and post-change init.ps1 exit 0; Laravel 154 tests / 985 assertions, frontend lint/build 131 modules, engine 47 tests with existing Starlette warning.",
+      "SVG XML parse passed; built index includes Chartiko title, description and application-name metadata. Source search locates EOD only in Admin UI and an admin-client comment; no old public brand remains. git diff --check clean.",
+      "Current docs/default APP_NAME/service descriptions and marketing skill updated; marketing skill quick_validate.py passes. Existing /var/www/alphapulse and service/health IDs preserved. docs/chartiko-brand.md records deployment/session compatibility handoff.",
+      "Visual/live validation pending: no browser available; HTTPS probe timed out with network access. GitHub CLI authentication invalid, no SSH config; no publication performed. No independent validator run.",
+      "2026-10-04 GitHub upload session: HTTPS ls-remote and fetch succeeded; main matched origin/main before commit. init.ps1 exit 0 (Laravel 154/985, frontend lint/build 131 modules, engine 47); independent acceptance and live deployment validation remain pending."
+    ],
+    "notes": "User-directed branding/presentation change only. Repository implementation is passing; independent acceptance and publication verification pending. Do not infer intraday capability or rename infrastructure via brand replacement."
   }
 ]

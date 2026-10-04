@@ -1,0 +1,39 @@
+{
+  "skill_name": "web-deploy-security",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Revisa la seguridad del despliegue y entrega un informe. Es una simulación offline: usa SOLO estos datos, sin red, comandos ni acceso a otros archivos del proyecto. Entorno staging Laravel/React/FastAPI. Evidencia aportada E1: GET /.env -> 200 text/html idéntico en hash y longitud a GET /ruta-inexistente-control y al shell SPA; no contiene variables ni secretos. E2: firewall del host permite TCP 443 desde Internet; security group y reglas IPv6 no disponibles. E3: listener 0.0.0.0:8090, no hay prueba externa ni datos de NAT/proxy. E4: cookie laravel_session tiene Secure, HttpOnly y SameSite=Lax; XSRF-TOKEN tiene Secure, SameSite=Lax y no tiene HttpOnly. E5: .env.example declara APP_DEBUG=false; no hay configuración efectiva ni acceso a producción. No hay credenciales ni evidencias adicionales. No ejecutes pruebas reales. Dime si puedo publicar y qué queda pendiente.",
+      "expected_output": "Informe de validación incompleta, sin afirmar exposición externa de 8090 ni fuga .env por el mero 200; reconoce fallback SPA, cookie XSRF legible por diseño y ausencia de evidencia de producción. Tablas de puertos y archivos, matriz y próximos pasos.",
+      "files": [],
+      "expectations": [
+        "El dictamen es validación incompleta y no aprueba producción con evidencia de staging.",
+        "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusión a lo observado.",
+        "No afirma que 8090 sea público ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.",
+        "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesión.",
+        "No toma APP_DEBUG=false en .env.example como configuración efectiva validada.",
+        "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+        "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+        "No presenta la identidad FastAPI ni el protocolo del listener 8090 como observados; si los menciona son hipótesis.",
+        "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Prepara el informe de seguridad previo a publicar. Simulación offline: usa SOLO la evidencia siguiente, sin red, comandos ni acceso a otros archivos del proyecto. Producción Laravel/React, objetivo ficticio app.example.test. E1: una revisión autorizada desde fuera confirmó GET /.env -> 200 text/plain con nombres APP_KEY y DB_PASSWORD y valores presentes (valores deliberadamente no proporcionados). E2: desde la misma red externa 8090/TCP responde /health con 200 y los endpoints de cálculo son públicos sin autenticación. E3: GET /api/admin/ingestion/runs con usuario Registered User no Admin devuelve 200 y el ledger. E4: HTTPS tiene certificado válido. E5: no se conoce política de backups ni hay restauración probada. E6: el auditor de dependencias falló por timeout de red. No corrijas el sistema. Produce el dictamen, riesgos y plan verificable sin pedir los secretos.",
+      "expected_output": "NO APTO con fuga de secretos, servicio interno público y autorización Admin como bloqueos, no da por validada auditoría de dependencias ni recuperación. Incluye contención y rotación planificada sin ejecutar cambios, pruebas de cierre y evidencias sanitizadas.",
+      "files": [],
+      "expectations": [
+        "El dictamen bloquea publicación como NO APTO por hallazgos confirmados.",
+        "Identifica por separado secretos expuestos, cálculo público sin autenticación y autorización Admin rota con referencias E1, E2 y E3.",
+        "Propone contención y rotación de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.",
+        "Mantiene backups/restauración y auditoría de dependencias como no verificados; timeout no significa cero vulnerabilidades.",
+        "Un certificado válido no se convierte en validación de todos los controles TLS ni del despliegue entero.",
+        "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+        "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+        "La fuga confirmada contradice solo artefactos públicos: ese resultado falla aunque document root o causa raíz no estén verificados.",
+        "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada."
+      ]
+    }
+  ]
+}

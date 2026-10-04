@@ -109,7 +109,7 @@ function GuidancePanel() {
         Selecciona un candidato
       </p>
       <p className="mt-2 text-sm text-on-surface-variant">
-        Abre el gráfico de un instrumento desde la tabla del Screener para ver sus velas EOD,
+        Abre el gráfico de un instrumento desde la tabla del Screener para ver sus velas,
         volumen, medias móviles y niveles de señal.
       </p>
       <div className="mt-4 flex justify-center">
@@ -152,7 +152,7 @@ function EmptyPanel({ ticker }: { ticker: string }) {
   return (
     <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-        Sin datos EOD para {ticker}
+        Sin datos para {ticker}
       </p>
       <p className="mt-2 text-sm text-on-surface-variant">
         Este instrumento todavía no tiene barras diarias almacenadas.
@@ -247,7 +247,7 @@ export default function InstrumentChartPage() {
             Superficie
           </span>
           <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-            EOD · sin sesión
+            Acceso público
           </span>
         </div>
 
@@ -263,7 +263,7 @@ export default function InstrumentChartPage() {
               </p>
             ) : (
               <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-                Gráfico interactivo EOD de un instrumento.
+                Gráfico interactivo de un instrumento.
               </p>
             )}
           </div>
@@ -271,7 +271,7 @@ export default function InstrumentChartPage() {
           <div className="flex flex-wrap items-center gap-3">
             {current !== null ? (
               <span className="rounded-[4px] border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-primary-container shadow-[1px_1px_0px_#1a1a1a]">
-                EOD
+                ANÁLISIS
               </span>
             ) : null}
             {current?.meta.latest_bar_date ? (

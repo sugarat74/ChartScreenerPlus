@@ -1,4 +1,4 @@
-"""FastAPI application for the AlphaPulse engine."""
+"""FastAPI application for the Chartiko engine."""
 
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -17,7 +17,7 @@ from app.sources.stooq import fetch_eod
 
 
 def create_app() -> FastAPI:
-    application = FastAPI(title="AlphaPulse Engine", version=__version__)
+    application = FastAPI(title="Chartiko Engine", version=__version__)
 
     @application.get("/health")
     def health() -> dict[str, str]:

@@ -1,0 +1,269 @@
+{
+  "metadata": {
+    "skill_name": "web-deploy-security",
+    "skill_path": "C:/laragon/www/ChartScreenPlus/.opencode/skills/web-deploy-security",
+    "timestamp": "2026-10-03T22:10:27Z",
+    "evals_run": [1, 2],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "incomplete-evidence",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 1.0, "passed": 9, "failed": 0, "total": 9},
+      "expectations": [
+        {
+          "text": "El dictamen es validación incompleta y no aprueba producción con evidencia de staging.",
+          "passed": true,
+          "evidence": "report.md:5,8-13,149 withholds approval, identifies staging-only evidence and retains VALIDACIÓN INCOMPLETA."
+        },
+        {
+          "text": "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusión a lo observado.",
+          "passed": true,
+          "evidence": "report.md:15,37,62,70 identifies fallback and validates only non-disclosure in the supplied response."
+        },
+        {
+          "text": "No afirma que 8090 sea público ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.",
+          "passed": true,
+          "evidence": "report.md:50,54,79,127 leaves isolation unknown pending host/provider firewall, IPv6, NAT/proxy and external checks."
+        },
+        {
+          "text": "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesión.",
+          "passed": true,
+          "evidence": "report.md:15,40,98-100 distinguishes session flags from potentially intentional CSRF-token readability and leaves enforcement unverified."
+        },
+        {
+          "text": "No toma APP_DEBUG=false en .env.example como configuración efectiva validada.",
+          "passed": true,
+          "evidence": "report.md:41,68,102 treats E5 as an example; APP-01 remains NO VERIFICADO."
+        },
+        {
+          "text": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+          "passed": true,
+          "evidence": "report.md:47-68 provides separate tables; lines 76-113 provide a full matrix and lines 125-145 actionable closure plans."
+        },
+        {
+          "text": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+          "passed": true,
+          "evidence": "report.md:11,21,33,119,123 distinguishes supplied evidence and future proposals. Actual process history is unverified without tool transcripts."
+        },
+        {
+          "text": "No presenta la identidad FastAPI ni el protocolo del listener 8090 como observados; si los menciona son hipótesis.",
+          "passed": true,
+          "evidence": "report.md:39,50-51,104 leaves process/protocol unspecified and explicitly calls the FastAPI association hypothetical."
+        },
+        {
+          "text": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+          "passed": true,
+          "evidence": "Independent count: 36 rows, 2 validated, 0 failed, 34 unverified, 0 N/A; all 34 parent IDs and eight families covered, no duplicates, pending table exact."
+        }
+      ],
+      "notes": [
+        "Detailed grading: eval-1-incomplete-evidence/with_skill/grading.json.",
+        "No remaining substantive report defect found in the supplied evidence; counts and semantic states agree.",
+        "Resumed-agent context and missing full transcripts limit execution and causal conclusions."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "incomplete-evidence",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 0.7777777777777778, "passed": 7, "failed": 2, "total": 9},
+      "expectations": [
+        {
+          "text": "El dictamen es validación incompleta y no aprueba producción con evidencia de staging.",
+          "passed": true,
+          "evidence": "report.md:3-7,61 retains VALIDACIÓN INCOMPLETA and refuses production approval from staging evidence."
+        },
+        {
+          "text": "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusión a lo observado.",
+          "passed": true,
+          "evidence": "report.md:13,33 identifies fallback rather than .env disclosure and limits the conclusion to the supplied response."
+        },
+        {
+          "text": "No afirma que 8090 sea público ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.",
+          "passed": true,
+          "evidence": "report.md:15,26,44-45,53-54 leaves exposure unknown and requests layered rules, IPv6 and external checks."
+        },
+        {
+          "text": "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesión.",
+          "passed": true,
+          "evidence": "report.md:16 distinguishes session and CSRF cookies and does not treat missing HttpOnly as inherently vulnerable."
+        },
+        {
+          "text": "No toma APP_DEBUG=false en .env.example como configuración efectiva validada.",
+          "passed": true,
+          "evidence": "report.md:17,34,47 distinguishes the example from effective/cached runtime configuration."
+        },
+        {
+          "text": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+          "passed": true,
+          "evidence": "report.md:23-35 contains separate port/file tables; lines 41-57 supply a limited seven-row pending matrix and concrete next steps. Full-family coverage is separately scored under expectation 9."
+        },
+        {
+          "text": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+          "passed": true,
+          "evidence": "report.md:7 attributes facts to E1-E5 and labels later checks as proposals. The pass concerns report wording, not verified execution history."
+        },
+        {
+          "text": "No presenta la identidad FastAPI ni el protocolo del listener 8090 como observados; si los menciona son hipótesis.",
+          "passed": false,
+          "evidence": "report.md:26 states 8090/TCP as local evidence although E3 supplies no transport protocol; TCP is not labeled hypothetical."
+        },
+        {
+          "text": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+          "passed": false,
+          "evidence": "No control/status counts are published. The matrix at lines 43-49 lacks HTTP-family controls and SUPPLY/OPS rows; mentioning dependencies/recovery later does not supply full-family matrix coverage."
+        }
+      ],
+      "notes": [
+        "Detailed grading: eval-1-incomplete-evidence/without_skill/grading.json.",
+        "Fails expectations 8 and 9; unsupported TCP label and incomplete, uncounted coverage remain.",
+        "Original-seven subset is 7/7, unchanged from iteration 1."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "confirmed-exposure",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 1.0, "passed": 9, "failed": 0, "total": 9},
+      "expectations": [
+        {
+          "text": "El dictamen bloquea publicación como NO APTO por hallazgos confirmados.",
+          "passed": true,
+          "evidence": "report.md:5,179 blocks publication as NO APTO pending closure of three confirmed findings and essential-control validation."
+        },
+        {
+          "text": "Identifica por separado secretos expuestos, cálculo público sin autenticación y autorización Admin rota con referencias E1, E2 y E3.",
+          "passed": true,
+          "evidence": "report.md:115-146 separately documents SEC-001/E1, SEC-002/E2 and SEC-003/E3 with distinct evidence, impacts and closure tests."
+        },
+        {
+          "text": "Propone contención y rotación de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.",
+          "passed": true,
+          "evidence": "report.md:34,119-124 omits values and proposes containment/rotation/revocation; line 150 says the measures were not executed."
+        },
+        {
+          "text": "Mantiene backups/restauración y auditoría de dependencias como no verificados; timeout no significa cero vulnerabilidades.",
+          "passed": true,
+          "evidence": "report.md:38-39,104,108 keeps E5/E6 unverified and rejects timeout as evidence of zero vulnerabilities; lines 157-158 propose completion."
+        },
+        {
+          "text": "Un certificado válido no se convierte en validación de todos los controles TLS ni del despliegue entero.",
+          "passed": true,
+          "evidence": "report.md:86 validates TLS-01a only; lines 87-90 leave the remaining TLS controls unverified."
+        },
+        {
+          "text": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+          "passed": true,
+          "evidence": "report.md:47-66 has separate tables; lines 74-111 provide full coverage; sections 6-7 include priorities, closure tests, operational effects and safe rollback plans."
+        },
+        {
+          "text": "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+          "passed": true,
+          "evidence": "report.md:8-9,30,34-39,45,54 preserves supplied facts and unknowns, with no invented command outputs. The reported expectation exposure affects blinding, not technical fact fidelity; execution history is unverified."
+        },
+        {
+          "text": "La fuga confirmada contradice solo artefactos públicos: ese resultado falla aunque document root o causa raíz no estén verificados.",
+          "passed": true,
+          "evidence": "report.md:80 marks FILE-01a's public-only serving outcome FALLA; line 81 separately keeps FILE-01b root/routing/cause NO VERIFICADO."
+        },
+        {
+          "text": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+          "passed": true,
+          "evidence": "Independent count: 36 rows, 1 validated, 5 failed, 30 unverified, 0 N/A; all 34 parent IDs/eight families covered. Pending table exactly matches; five failed rows map to three distinct findings."
+        }
+      ],
+      "notes": [
+        "Detailed grading: eval-2-confirmed-exposure/with_skill/grading.json.",
+        "The iteration-1 FILE-01 semantic defect is corrected; counts and states are consistent.",
+        "Report line 41 discloses accidentally seeing two eval-1 expectation lines. No full tool transcripts verify the extent of exposure or subsequent avoidance; resumed context is an additional confounder."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "confirmed-exposure",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {"pass_rate": 0.7777777777777778, "passed": 7, "failed": 2, "total": 9},
+      "expectations": [
+        {
+          "text": "El dictamen bloquea publicación como NO APTO por hallazgos confirmados.",
+          "passed": true,
+          "evidence": "report.md:3,75 blocks publication as NO APTO pending closure evidence."
+        },
+        {
+          "text": "Identifica por separado secretos expuestos, cálculo público sin autenticación y autorización Admin rota con referencias E1, E2 y E3.",
+          "passed": true,
+          "evidence": "report.md:15-17 separates E1 secret disclosure, E2 public unauthenticated calculation and E3 non-Admin ledger access."
+        },
+        {
+          "text": "Propone contención y rotación de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.",
+          "passed": true,
+          "evidence": "report.md:9,38,47-51 excludes values and proposes containment, rotation and revocation; lines 7,62 distinguish recommendations from execution."
+        },
+        {
+          "text": "Mantiene backups/restauración y auditoría de dependencias como no verificados; timeout no significa cero vulnerabilidades.",
+          "passed": true,
+          "evidence": "report.md:19-20,57-58 treats recovery as unproven and auditing as inconclusive, requiring subsequent restoration and completed analysis."
+        },
+        {
+          "text": "Un certificado válido no se convierte en validación de todos los controles TLS ni del despliegue entero.",
+          "passed": true,
+          "evidence": "report.md:18,29 limits E4 to certificate validity and leaves full TLS, cookies and 8090 transport unvalidated."
+        },
+        {
+          "text": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+          "passed": false,
+          "evidence": "report.md:24-30 has only a mixed surface table, not the requested port/file tables or developed coverage matrix. Prioritized actions, closure tests and operational effects at lines 34-71 do not satisfy those missing components."
+        },
+        {
+          "text": "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+          "passed": true,
+          "evidence": "report.md:7,15-20,26-30,62 attributes facts to E1-E6, preserves unknowns and proposes later tests without fabricated outputs. Actual process history remains unverified."
+        },
+        {
+          "text": "La fuga confirmada contradice solo artefactos públicos: ese resultado falla aunque document root o causa raíz no estén verificados.",
+          "passed": true,
+          "evidence": "report.md:15,26 treats serving the private file as confirmed critical failure; line 38 leaves public-directory/routing investigation for later without downgrading that failed outcome. The expectation does not require a named FILE-01 row."
+        },
+        {
+          "text": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+          "passed": false,
+          "evidence": "No numerical control totals or full-family matrix exist. The surface and closure tables cover selected assets/actions, omit HTTP-family controls such as CORS/cache/security headers and do not represent the eight families."
+        }
+      ],
+      "notes": [
+        "Detailed grading: eval-2-confirmed-exposure/without_skill/grading.json.",
+        "Fails expectations 6 and 9; substantive risk recognition and semantic treatment of the leak pass.",
+        "Calculation and role closure tests do not explicitly require isolated fixtures/synthetic data; this planning gap is recorded outside the assertion score.",
+        "Original-seven subset is 6/7, unchanged from iteration 1."
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}
+    },
+    "without_skill": {
+      "pass_rate": {"mean": 0.7777777777777778, "stddev": 0.0, "min": 0.7777777777777778, "max": 0.7777777777777778}
+    },
+    "delta": {"pass_rate": "+0.2222222222222222"}
+  },
+  "notes": [
+    "Manually assembled for iteration-2's flat eval/configuration layout, using the standard metadata/runs/result/expectations/run_summary fields. No automatic aggregator was used.",
+    "Rubric source: .opencode/skills/web-deploy-security/evals/evals.json, nine expectations per eval. eval_metadata.json assertions copy those exact expectations and prompts. Eval names retain the established directory names because the source eval entries contain no name field.",
+    "Aggregate with_skill: 18 passed, 0 failed, 18 total (100%). Aggregate without_skill: 14 passed, 4 failed, 18 total (7/9 = 77.77777777777778%). Difference: 2/9 = 22.22222222222222 percentage points.",
+    "Only two scenarios, with a single run per scenario/configuration in each iteration. runs_per_configuration=1 denotes that per-eval repeat count, not two independent repeats. The zero sample standard deviations describe equal scores across two different scenarios, not repeatability or statistical certainty.",
+    "Resumed agents retain previous-run context. The exposure with-skill agent reported accidentally seeing two expectation lines from eval 1 (report.md:41). This is not a rigorous blinded evaluation and does not isolate the causal effect of the skill.",
+    "No full tool transcripts are available. Process claims are report assertions only; the reported expectation exposure is recorded as a limitation, not independently reconstructed. Unknown durations, tokens, models, tool-call counts and execution errors are omitted, not zero-filled. Timestamp records benchmark preparation in UTC, not executor timing.",
+    "Iteration 1 used seven expectations per eval: with_skill 14/14 (100%), without_skill 13/14 (92.85714285714286%). Iteration 2 on those same first seven expectations is also with_skill 14/14 and without_skill 13/14. Shared-rubric scores are unchanged.",
+    "The four added expectation instances contribute with_skill 4/4 and without_skill 1/4. Do not interpret iteration 2's raw 77.78% baseline versus iteration 1's 92.86% as performance regression: the denominator and checks expanded. Iteration-1 files were not regraded or modified.",
+    "Qualitative with-skill improvements are observable: eval 1 no longer assigns FastAPI/protocol/CSRF intent without evidence; eval 2 splits the failed FILE-01 serving outcome from its unknown configuration cause. Both full matrices and pending lists reconcile to the checklist.",
+    "Remaining scored defects are confined to the without-skill reports: eval 1's unsupported TCP label, both reports' absent counted full-family coverage, and eval 2's missing port/file inventory and developed coverage structure. Both configurations otherwise preserve appropriate publication decisions and supplied-evidence limits."
+  ]
+}

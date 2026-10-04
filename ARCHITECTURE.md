@@ -1,6 +1,13 @@
 # Architecture
 
-Runtime surfaces, directory boundaries and dependency direction for ChartScreenPlus.
+Runtime surfaces, directory boundaries and dependency direction for Chartiko (repository directory ChartScreenPlus).
+
+## Product Identity And Hosting
+
+- Public product: **Chartiko**, at `https://www.chartiko.com` (VPS, reported by owner).
+- Header and favicon share `frontend/public/favicon.svg`: a C/chart mark with the existing ink/yellow palette. Public metadata and chrome use Chartiko.
+- EOD/end-of-day labels appear only within Admin. Charts retain session dates and closing prices; ingestion and data contracts remain EOD-only.
+- `/var/www/alphapulse`, `alphapulse-*` units and the health service identifier remain infrastructure compatibility names. Renaming requires a coordinated VPS migration.
 
 ## Runtime Surfaces
 

@@ -38,6 +38,8 @@ Relationship to the mockup: `alphapulse/` is a functional prototype (React + Exp
 
 ## Deployment and Operations
 
+- Public product name: Chartiko; owner-reported VPS URL: `https://www.chartiko.com` (2026-10-04). Public UI hides EOD labels outside Admin while preserving the existing data pipeline.
+
 - Single environment target for the MVP (VPS/container host). Laravel app + Python engine + database + scheduler.
 - Scheduler runs the daily Ingestion Run after Market Close (timezone/DST aware).
 - Admin panel can trigger manual runs and re-runs.

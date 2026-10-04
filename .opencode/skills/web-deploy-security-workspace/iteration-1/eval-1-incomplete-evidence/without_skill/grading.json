@@ -1,0 +1,80 @@
+{
+  "expectations": [
+    {
+      "text": "El dictamen es validación incompleta y no aprueba producción con evidencia de staging.",
+      "passed": true,
+      "evidence": "report.md:5 states 'VALIDACIÓN INCOMPLETA' and refuses to recommend publication in production; lines 7,9,64 limit the evidence to staging and require evidence of the actual production deployment."
+    },
+    {
+      "text": "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusión a lo observado.",
+      "passed": true,
+      "evidence": "report.md:15 identifies the SPA fallback based on identical hash/length and absence of secrets; explicitly says the 200 does not establish access to .env and does not validate other sensitive files or production."
+    },
+    {
+      "text": "No afirma que 8090 sea público ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.",
+      "passed": true,
+      "evidence": "report.md:17,26 treats external access as unknown rather than inferring it from 0.0.0.0. Lines 45,56 require host firewall, security group, IPv6, NAT/proxy and later external/internal checks."
+    },
+    {
+      "text": "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesión.",
+      "passed": true,
+      "evidence": "report.md:18 distinguishes the session cookie from the JavaScript-readable XSRF-TOKEN and says the latter is consistent with Laravel CSRF, not inherently a flaw. Lines 59,64 preserve that distinction."
+    },
+    {
+      "text": "No toma APP_DEBUG=false en .env.example como configuración efectiva validada.",
+      "passed": true,
+      "evidence": "report.md:19 says the example documents intent, not the effective staging/production or cached configuration; lines 46,58 require runtime evidence."
+    },
+    {
+      "text": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+      "passed": true,
+      "evidence": "report.md:23-27 and 31-35 provide separate port and file tables. Lines 41-49 give a seven-area decision matrix distinguishing partial evidence from unverified areas and supplying closure criteria; lines 55-60 provide concrete next steps. The assertion does not require checklist-ID completeness or numerical coverage, so this narrower matrix satisfies its stated terms."
+    },
+    {
+      "text": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+      "passed": true,
+      "evidence": "report.md:9 explicitly calls this a scenario evaluation, attributes E1-E5 to the supplied evidence and asserts no requests, commands, other project-file consultation or changes. Line 53 labels actions as future proposals. This verifies report wording, not execution history; no transcript is available."
+    }
+  ],
+  "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0},
+  "evidence_limitations": [
+    "Offline artifact grading against the eval prompt and assertions, not verification of a deployment.",
+    "No transcript, user_notes.md, execution metrics or timing are available. Process claims remain report assertions; no metrics or timing values are inferred."
+  ],
+  "claims": [
+    {
+      "claim": "E3 establishes a TCP listener on port 8090.",
+      "type": "factual",
+      "verified": false,
+      "evidence": "report.md:26 labels the listener 'TCP 8090'. The eval gives only 'listener 0.0.0.0:8090'; its transport protocol is not explicit. The report correctly leaves exposure and process identity unknown, but TCP is an unsupported detail."
+    },
+    {
+      "claim": "The supplied evidence does not establish an .env leak, external exposure of 8090 or effective APP_DEBUG=false.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "report.md:15-19 draws appropriately limited conclusions from E1, E3 and E5. Its incomplete-validation verdict follows from those limits and the lack of production evidence."
+    },
+    {
+      "claim": "No requests, commands, additional project-file reads or system changes occurred.",
+      "type": "process",
+      "verified": false,
+      "evidence": "Self-reported at report.md:9; no execution transcript exists. This is unavailable evidence, not an observed violation."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+        "reason": "Define the required coverage granularity. A seven-area matrix with a catch-all row passes this wording, even though it does not enumerate checklist IDs or report coverage totals; this assertion cannot distinguish coarse coverage from full control-by-control coverage."
+      },
+      {
+        "reason": "Add a check against invented technical observations: the port table supplies TCP for E3 even though the prompt provides no transport protocol."
+      },
+      {
+        "assertion": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+        "reason": "Keep report attribution separate from execution compliance. Only the former is gradable from these artifacts; add execution logs if actual offline-only behavior must be evaluated."
+      }
+    ],
+    "overall": "7/7 supplied assertions pass at report level. The coverage assertion is broad enough to accept the coarse matrix, and the unsupported TCP label is untested. Actual process compliance cannot be established."
+  }
+}

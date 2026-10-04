@@ -1,0 +1,97 @@
+{
+  "expectations": [
+    {
+      "text": "El dictamen bloquea publicación como NO APTO por hallazgos confirmados.",
+      "passed": true,
+      "evidence": "report.md:5 declares NO APTO for the three confirmed exposures/access failures; line 179 requires closure and revalidation before reconsideration."
+    },
+    {
+      "text": "Identifica por separado secretos expuestos, cálculo público sin autenticación y autorización Admin rota con referencias E1, E2 y E3.",
+      "passed": true,
+      "evidence": "report.md:115-146 separates SEC-001/E1 secret disclosure, SEC-002/E2 external unauthenticated computation and SEC-003/E3 non-Admin ledger access, with distinct facts, impacts and closure tests."
+    },
+    {
+      "text": "Propone contención y rotación de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.",
+      "passed": true,
+      "evidence": "report.md:34,119-124 omits and does not request values; proposes blocking disclosure, inventorying/rotating secrets, revocation and coordinated DB/APP_KEY recovery. Line 150 says no proposed measure was executed or closes a finding by itself."
+    },
+    {
+      "text": "Mantiene backups/restauración y auditoría de dependencias como no verificados; timeout no significa cero vulnerabilidades.",
+      "passed": true,
+      "evidence": "report.md:38-39 preserves uncertainty and explicitly says timeout is not zero vulnerabilities. SUPPLY-01 and OPS-02 remain NO VERIFICADO at lines 104,108; lines 157-158 require complete auditing and isolated restoration."
+    },
+    {
+      "text": "Un certificado válido no se convierte en validación de todos los controles TLS ni del despliegue entero.",
+      "passed": true,
+      "evidence": "report.md:86 validates only TLS-01a certificate validity; lines 87-90 leave protocols, renewal, transport, proxy trust and HSTS/mixed content unverified. The report explicitly rejects using E4 to compensate for the blockers."
+    },
+    {
+      "text": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+      "passed": true,
+      "evidence": "report.md:47-52,58-66 provides separate port/file tables; lines 74-111 contain a full control matrix. Sections 6-7 prioritize containment/remediation and specify closure tests, APP_KEY/DB effects and rollback that does not restore exposure. Calculation and authorization tests use isolated fixtures."
+    },
+    {
+      "text": "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+      "passed": true,
+      "evidence": "report.md:8-9,30,34-39 attributes facts to E1-E6, not fresh observations or command outputs. Line 45 refuses to infer implementation from port 8090. Lines 54,120,131,142 preserve unknown topology and exploitation/write-access limits. The reported expectation-reading incident at line 41 limits evaluation blinding, but does not invent deployment facts. Actual tool-use history is unverified."
+    },
+    {
+      "text": "La fuga confirmada contradice solo artefactos públicos: ese resultado falla aunque document root o causa raíz no estén verificados.",
+      "passed": true,
+      "evidence": "report.md:80 marks FILE-01a 'Solo artefactos públicos servidos' as FALLA because E1 serves private configuration. FILE-01b at line 81 separately leaves root/routing/cause NO VERIFICADO. Lines 16,118 explicitly preserve the failed outcome despite an unknown cause."
+    },
+    {
+      "text": "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada.",
+      "passed": true,
+      "evidence": "Independently enumerated lines 76-111: 36 rows, 1 VALIDADO (TLS-01a), 5 FALLA (NET-02, FILE-01a, FILE-02, AUTH-01, APP-03), 30 NO VERIFICADO, 0 NO APLICA. All 34 parent IDs are covered with FILE-01 and TLS-01 each split in two. Family counts 4/6/5/4/5/4/3/5 agree with line 26. Section 8 lists exactly the 30 pending IDs. Five failed rows map correctly to three findings: one critical and two high."
+    }
+  ],
+  "summary": {"passed": 9, "failed": 0, "total": 9, "pass_rate": 1.0},
+  "evidence_limitations": [
+    "Offline artifact evaluation only; supplied scenario evidence is not independently verified target behavior.",
+    "No full tool transcripts. Statements about reads, commands and network abstention remain report assertions. Unknown execution metrics, durations, tokens and model identities are omitted.",
+    "Only two scenarios and a single run per scenario/configuration per iteration. Resumed agents retain prior context. This report says two eval-1 expectation lines were accidentally seen; no rigorous blinded evaluation or independent repeated-run inference is warranted."
+  ],
+  "claims": [
+    {
+      "claim": "Coverage totals, pending controls and distinct findings are internally consistent.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Programmatic checks on independently transcribed IDs/statuses confirm 36 rows across all 34 checklist parents, no missing/duplicate/unexpected IDs, matching family counts and exactly 30 pending IDs. SEC-001 covers FILE-01a/FILE-02; SEC-002 covers NET-02/APP-03; SEC-003 covers AUTH-01."
+    },
+    {
+      "claim": "Unknown root cause no longer suppresses the confirmed public-only serving failure.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "FILE-01a is FALLA and FILE-01b is NO VERIFICADO. Other states remain appropriately scoped: E4 validates certificate only; E5/E6 do not establish backup failure or zero vulnerabilities; E1 does not establish DB reachability or build/repository leakage. No remaining semantic state contradiction found."
+    },
+    {
+      "claim": "The agent accidentally read two expectation lines from eval 1, then avoided eval-2 expectations and the prior report.",
+      "type": "process",
+      "verified": false,
+      "evidence": "Self-reported in report.md:41 and the user-provided evaluation history. Record the reported exposure as a limitation; without full transcripts its extent and the claimed subsequent avoidance cannot be independently verified. Retained previous context is a separate limitation even if the prior report was not re-read."
+    },
+    {
+      "claim": "No commands, network requests, tests or system changes occurred.",
+      "type": "process",
+      "verified": false,
+      "evidence": "Asserted at report.md:8,150; no full tool transcript exists. Passing the report-consistency expectation is not proof of this process history."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": ["Report line 41 discloses accidental exposure to two eval-1 expectation lines; there is no separate user_notes.md or full tool transcript."],
+    "needs_review": ["Treat this run as potentially expectation-influenced and context-contaminated, not rigorously blinded."],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "The new semantic-state expectation directly tests the iteration-1 FILE-01 defect, which is corrected here. Continue checking root-cause uncertainty separately from observed outcome failure, including derived count changes and finding deduplication."
+      },
+      {
+        "reason": "Use fresh agents and a prompt-only fixture separated from expectations for future runs. The disclosed read of two other-scenario expectation lines and retained prior context prevent a rigorous blinded interpretation; transcript capture would make process claims assessable."
+      }
+    ],
+    "overall": "9/9. The previous FILE-01 classification defect is corrected; all counts and semantic states checked are consistent. No remaining substantive report defect identified, but reported criterion exposure and retained context limit attribution of the result to the skill alone."
+  }
+}

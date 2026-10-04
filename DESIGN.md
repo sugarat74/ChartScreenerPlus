@@ -1,5 +1,5 @@
 ---
-name: AlphaPulse Terminal
+name: Chartiko Terminal
 description: Neo-brutalist trading terminal aesthetic — warm paper background, hard black borders, offset shadows and a single yellow accent.
 designAssets:
   sourceOfTruth:
@@ -66,7 +66,9 @@ components:
 
 ## Overview
 
-AlphaPulse is a professional but opinionated trading terminal: warm paper-like backgrounds, sharp black 2px borders, hard offset shadows instead of blur, and one loud yellow accent. It should feel like a printed financial newspaper crossed with a quantitative terminal — deliberately not a glossy SaaS dashboard.
+Chartiko is a professional but opinionated trading terminal: warm paper-like backgrounds, sharp black 2px borders, hard offset shadows instead of blur, and one loud yellow accent. It should feel like a printed financial newspaper crossed with a quantitative terminal — deliberately not a glossy SaaS dashboard.
+
+The Chartiko mark combines an angular C and a chart stroke, with an ink square and hard yellow offset shadow. `frontend/public/favicon.svg` is shared by the header and browser icon. Wordmark: CHARTIKO. EOD labels are restricted to Admin; public surfaces use neutral analysis/data labels and retain session dates.
 
 ## Existing Design Assets
 
@@ -88,7 +90,7 @@ None. The prototype already provides the visual language; no image generation wa
 ## Colors
 
 - **Primary / ink:** `#1a1a1a` for text, borders and outlines.
-- **Accent:** `#ffcc00` for primary actions and highlights (Update EOD, focus, selection).
+- **Accent:** `#ffcc00` for primary actions and highlights (data actions, focus, selection).
 - **Background / surface:** `#f5f0e8` page, `#eee9e0` panels, `#faf7f2` elevated cards.
 - **Signal colors:** gains green (`#059669`), losses red (`#e63b2e`).
 - **Context accents:** red (`#e63b2e`) for AI/attention, blue (`#0055ff`) for admin/pipeline.
@@ -103,7 +105,7 @@ None. The prototype already provides the visual language; no image generation wa
 
 ## Layout
 
-- Sticky top header with brand, market/EOD status, a primary action and the user pill.
+- Sticky top header with brand, analysis context, a primary action and the user pill.
 - A horizontal tab bar for the main surfaces (Screener, Chart, Admin, Portal).
 - Content constrained to a `max-w-7xl` centred column with generous vertical rhythm.
 - Screener: filters/inline criteria at the top, ranked table below.

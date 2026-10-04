@@ -29,6 +29,8 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 
 ## Frontend
 
+- Public brand **MUST** be Chartiko, with the shared header/favicon mark. Public UI, tooltips and accessible labels **MUST NOT** mention EOD/end-of-day outside Admin. Data/API/scheduling remain EOD-only; presentation does not imply real-time data.
+
 - **MUST** keep the React SPA in `frontend/` as a standalone npm project (own `package.json`, `vite.config.ts`, tsconfigs, lockfile) running on Node v22. Reason: it is a separate runtime surface from Laravel.
 - **MUST NOT** add SPA code to Laravel's root Vite pipeline (`resources/`, root `vite.config.js`, root `package.json`). Reason: two independent build pipelines must not be entangled.
 - **MUST** style the SPA with the `DESIGN.md` tokens defined in `frontend/src/index.css` (`@theme`); do not invent colors or non-token styling.

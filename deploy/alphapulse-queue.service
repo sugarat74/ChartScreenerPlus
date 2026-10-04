@@ -1,5 +1,5 @@
 [Unit]
-Description=AlphaPulse Laravel queue worker
+Description=Chartiko Laravel queue worker
 After=network.target
 
 [Service]

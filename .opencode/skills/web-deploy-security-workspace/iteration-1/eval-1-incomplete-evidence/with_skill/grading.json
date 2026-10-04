@@ -1,0 +1,92 @@
+{
+  "expectations": [
+    {
+      "text": "El dictamen es validación incompleta y no aprueba producción con evidencia de staging.",
+      "passed": true,
+      "evidence": "report.md:5-11 states 'Dictamen: VALIDACIÓN INCOMPLETA', identifies staging, and refuses production approval because essential controls lack evidence; line 143 retains that verdict."
+    },
+    {
+      "text": "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusión a lo observado.",
+      "passed": true,
+      "evidence": "report.md:13,35,57,65 identifies the identical HTML/hash/length as the observed SPA fallback, limits validation to absence of secrets in the supplied response, and explicitly disallows extrapolation to other routes, hosts or releases."
+    },
+    {
+      "text": "No afirma que 8090 sea público ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.",
+      "passed": true,
+      "evidence": "report.md:48 labels 8090 'NO VERIFICADO' and says E3 proves neither external exposure nor isolation. Lines 51,74,122 require host/provider firewall, IPv4/IPv6, NAT/proxy and externally sourced reachability evidence."
+    },
+    {
+      "text": "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesión.",
+      "passed": true,
+      "evidence": "report.md:13,38,93 distinguishes the Secure/HttpOnly/SameSite=Lax session cookie from the JavaScript-readable XSRF-TOKEN and does not classify its missing HttpOnly as a vulnerability; lines 94-95 leave session lifecycle and CSRF enforcement unverified."
+    },
+    {
+      "text": "No toma APP_DEBUG=false en .env.example como configuración efectiva validada.",
+      "passed": true,
+      "evidence": "report.md:39,63,97 identifies E5 as an example-file declaration only; APP-01 remains NO VERIFICADO pending effective runtime/cache, build and development-surface evidence."
+    },
+    {
+      "text": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+      "passed": true,
+      "evidence": "report.md:45-49 and 55-63 provide separate port and file tables. Lines 71-108 contain all 34 checklist parent IDs in 36 rows, with FILE-02 and AUTH-03 split. Independently recounted: 2 VALIDADO, 0 FALLA, 34 NO VERIFICADO, 0 NO APLICA, matching lines 21-23. Lines 120-139 give evidence requests and closure steps for pending controls."
+    },
+    {
+      "text": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+      "passed": true,
+      "evidence": "report.md:9,31 identifies supplied evidence without reproduction; lines 114,118 say no finding was corrected and all actions are future. This passes as a statement about report attribution and wording only: without a transcript, actual tool use, server access and absence of changes cannot be independently verified."
+    }
+  ],
+  "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0},
+  "evidence_limitations": [
+    "Offline artifact grading only, using eval_metadata.json, report.md and the specified checklist. No real deployment audit was performed.",
+    "No execution transcript, user_notes.md, execution metrics or timing files are available. Process claims are report assertions, not independently observed actions. Metrics and timing are deliberately omitted."
+  ],
+  "claims": [
+    {
+      "claim": "The matrix covers all 34 checklist IDs using 36 rows without double-counting parents.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Checklist category counts are NET 4, FILE 5, TLS 4, HTTP 4, AUTH 5, APP 4, SUPPLY 3, OPS 5, totaling 34. Independently enumerated report rows replace FILE-02 and AUTH-03 with two subcontrols each; no missing, unexpected or duplicate IDs. Arithmetic checked programmatically from IDs/statuses transcribed from the dedicated file reads."
+    },
+    {
+      "claim": "The status totals are 2 validated, 0 failed, 34 unverified and 0 not applicable; no confirmed vulnerability findings.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Only FILE-02a and AUTH-03a are VALIDADO; all other 34 rows are NO VERIFICADO. The zero-severity finding table agrees with section 6 and the evidence supplied in the eval."
+    },
+    {
+      "claim": "The listener in E3 is the FastAPI engine.",
+      "type": "factual",
+      "verified": false,
+      "evidence": "report.md:48 labels it 'Motor FastAPI / listener referido'. The prompt supplies a Laravel/React/FastAPI stack and an unidentified listener, but does not map that listener to a process. This should be an explicitly conditional service identity."
+    },
+    {
+      "claim": "JavaScript readability of XSRF-TOKEN is intentional in this deployment.",
+      "type": "factual",
+      "verified": false,
+      "evidence": "report.md:38,93 calls the behavior intentional. E4 supplies cookie attributes only. Compatibility with a normal Laravel SPA CSRF flow is supported; actual implementation intent and functional enforcement are not demonstrated. The report correctly keeps enforcement unverified."
+    },
+    {
+      "claim": "No commands, requests, tests, server changes or unrelated project-file reads were performed.",
+      "type": "process",
+      "verified": false,
+      "evidence": "Asserted in report.md:9,114. There is no transcript with which to verify execution history; verified=false means unverified, not that prohibited activity was observed."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+        "reason": "Add explicit checks for every checklist ID, unique parent/subcontrol accounting, status totals and pending-table coverage. These checks pass here, but the current structural assertion does not explicitly require numerical or semantic consistency."
+      },
+      {
+        "reason": "Add an evidence-fidelity assertion for unprovided technical details. The report assigns the unidentified 8090 listener to FastAPI and calls CSRF-cookie readability intentional rather than merely compatible with the expected flow; neither assumption is established by E3/E4."
+      },
+      {
+        "assertion": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+        "reason": "The report-level distinction is testable and passes. Actual offline-only execution requires a transcript/tool log; self-reported abstention cannot establish process compliance."
+      }
+    ],
+    "overall": "7/7 supplied assertions pass as artifact checks. Full checklist coverage and arithmetic are independently consistent; unsupported service-identity/intent wording and unverifiable process history remain outside those passes."
+  }
+}

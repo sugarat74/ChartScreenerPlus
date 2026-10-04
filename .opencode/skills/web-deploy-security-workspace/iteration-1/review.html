@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "web-deploy-security", "runs": [{"id": "eval-1-incomplete-evidence-with_skill", "prompt": "Revisa la seguridad del despliegue y entrega un informe. Es una simulaci\u00f3n offline: usa SOLO estos datos, sin red, comandos ni acceso a otros archivos del proyecto. Entorno staging Laravel/React/FastAPI. Evidencia aportada E1: GET /.env -> 200 text/html id\u00e9ntico en hash y longitud a GET /ruta-inexistente-control y al shell SPA; no contiene variables ni secretos. E2: firewall del host permite TCP 443 desde Internet; security group y reglas IPv6 no disponibles. E3: listener 0.0.0.0:8090, no hay prueba externa ni datos de NAT/proxy. E4: cookie laravel_session tiene Secure, HttpOnly y SameSite=Lax; XSRF-TOKEN tiene Secure, SameSite=Lax y no tiene HttpOnly. E5: .env.example declara APP_DEBUG=false; no hay configuraci\u00f3n efectiva ni acceso a producci\u00f3n. No hay credenciales ni evidencias adicionales. No ejecutes pruebas reales. Dime si puedo publicar y qu\u00e9 queda pendiente.", "eval_id": 1, "outputs": [{"name": "report.md", "type": "text", "content": "# Informe de validaci\u00f3n de seguridad web\n\n## 1. Dictamen ejecutivo\n\n- **Dictamen: VALIDACI\u00d3N INCOMPLETA.** La evidencia disponible no permite dar el visto bueno para publicar en producci\u00f3n. No hay vulnerabilidades bloqueantes confirmadas, pero siguen pendientes controles esenciales.\n- **Entorno / stack:** staging; Laravel, React y FastAPI. Proyecto, versiones, release y commit no aportados.\n- **Fecha del informe:** 2026-10-03 (fecha de la sesi\u00f3n). Hora y zona horaria no disponibles; fecha de captura de las evidencias desconocida.\n- **Alcance:** evaluaci\u00f3n offline del escenario 1, exclusivamente sobre E1\u2013E5. URL, hosts, proveedor, CDN, document root y topolog\u00eda no identificados. Producci\u00f3n sin evidencia.\n- **Modo y accesos:** evidencias aportadas sin reproducci\u00f3n; sin credenciales ni posici\u00f3n externa de prueba identificada. No se ejecutaron comandos, peticiones, pruebas ni lecturas de archivos del proyecto ajenos a los recursos de la skill y su evaluaci\u00f3n.\n- **Bloqueos confirmados:** ninguno. Impiden aprobar la publicaci\u00f3n las lagunas esenciales de red, archivos/configuraci\u00f3n efectiva, HTTPS, autorizaci\u00f3n, datos y dependencias detalladas abajo.\n- **Siguiente acci\u00f3n:** obtener evidencias sanitizadas del despliegue objetivo y completar los controles esenciales antes de reconsiderar la publicaci\u00f3n.\n\nEl `200` de `/.env` corresponde al fallback SPA observado, no a una fuga demostrada. El listener `0.0.0.0:8090` no demuestra acceso desde Internet. La ausencia de HttpOnly en `XSRF-TOKEN` es compatible con su lectura por la SPA y no constituye un fallo por s\u00ed misma. `.env.example` no acredita la configuraci\u00f3n efectiva de staging ni de producci\u00f3n.\n\nEste dictamen se limita a la evidencia aportada: no es una certificaci\u00f3n ni garantiza ausencia de vulnerabilidades.\n\n## 2. Cobertura y metodolog\u00eda\n\nSe recorren los 34 IDs del checklist; FILE-02 y AUTH-03 se desglosan para separar resultados observados de componentes pendientes. Los conteos siguientes corresponden a las **36 filas** de la matriz, sin duplicar controles padre.\n\n| Total controles/subcontroles | VALIDADO | FALLA | NO VERIFICADO | NO APLICA |\n|---:|---:|---:|---:|---:|\n| 36 | 2 | 0 | 34 | 0 |\n\n| Hallazgos CR\u00cdTICOS | ALTOS | MEDIOS | BAJOS | INFORMATIVOS |\n|---:|---:|---:|---:|---:|\n| 0 | 0 | 0 | 0 | 0 |\n\nLas carencias de evidencia son pendientes de validaci\u00f3n, no vulnerabilidades confirmadas. No se usa NO APLICA para suplir datos de arquitectura ausentes.\n\n**Registro de evidencia:** toda procede del escenario simulado de staging; sin fecha de captura, host concreto ni verificaci\u00f3n independiente. Los m\u00e9todos descritos son los aportados, no ejecuciones de esta revisi\u00f3n; no hay exit codes disponibles ni aplicables a estas lecturas narrativas.\n\n| ID | M\u00e9todo referido | Resultado aportado e interpretaci\u00f3n |\n|---|---|---|\n| E1 | Comparaci\u00f3n de respuestas GET | `/.env`: `200 text/html`, mismo hash y longitud que `/ruta-inexistente-control` y el shell SPA, sin variables ni secretos. Evidencia de fallback SPA en esa respuesta; no de protecci\u00f3n universal de archivos. |\n| E2 | Informaci\u00f3n de firewall del host | Permite TCP 443 desde Internet. Security group y reglas IPv6 no disponibles; no acredita conectividad externa, TLS ni pol\u00edtica completa. |\n| E3 | Informaci\u00f3n de listener | `0.0.0.0:8090`: enlace a todas las interfaces IPv4. Protocolo de transporte no explicitado; sin prueba externa ni datos NAT/proxy. |\n| E4 | Atributos de cookies | `laravel_session`: Secure, HttpOnly, SameSite=Lax. `XSRF-TOKEN`: Secure, SameSite=Lax, sin HttpOnly; lectura por JS intencional en el flujo SPA. No se aportan valores de cookies. |\n| E5 | Declaraci\u00f3n en archivo de ejemplo | `.env.example` declara `APP_DEBUG=false`. No hay configuraci\u00f3n efectiva ni acceso a producci\u00f3n. |\n\n## 3. Puertos y servicios\n\nMapa provisional: navegador \u2192 CDN/proxy **desconocido** \u2192 web/API Laravel/React \u2192 FastAPI \u2192 datos/almacenamiento **desconocidos**. Las conexiones y fronteras de confianza no est\u00e1n acreditadas.\n\n| Activo / servicio | Puerto / protocolo / IPv4-IPv6 | Bind / publicaci\u00f3n | Acceso esperado | Firewall host/proveedor | Prueba externa y origen | Estado / evidencia |\n|---|---|---|---|---|---|---|\n| Web / HTTPS previsto | 443/TCP; familias efectivas no determinadas | Listener y publicaci\u00f3n desconocidos | HTTPS p\u00fablico | Host permite entrada desde Internet; proveedor e IPv6 desconocidos | Ninguna aportada | NO VERIFICADO; E2 solo acredita la regla declarada |\n| Motor FastAPI / listener referido | 8090; transporte no explicitado; IPv4 | `0.0.0.0`; NAT, contenedores y proxy desconocidos | Servicio interno, accesible solo por consumidores autorizados | Reglas para 8090 desconocidas | Ninguna aportada | NO VERIFICADO; E3 no prueba exposici\u00f3n externa ni aislamiento |\n| HTTP, administraci\u00f3n, datos, cach\u00e9, desarrollo y otros servicios | Inventario TCP/UDP e IPv4/IPv6 pendiente | Desconocidos | Solo servicios justificados; administraci\u00f3n restringida y datos internos | Desconocido | Ninguna aportada | NO VERIFICADO; inventariar antes de seleccionar puertos concretos |\n\nNo se infieren listeners adicionales de los puertos habituales del stack. Falta distinguir inventario local, publicaci\u00f3n, firewall del host/proveedor y alcance externo por cada familia IP; tambi\u00e9n falta descartar rutas p\u00fablicas del proxy hacia el motor.\n\n## 4. Archivos y rutas protegidas\n\n| Archivo / ruta | Protecci\u00f3n esperada | Estado HTTP / tipo / respuesta sanitizada | ACL / document root | Estado / evidencia |\n|---|---|---|---|---|\n| `/.env` | No entregar contenido privado | `200 text/html`; id\u00e9ntico al shell SPA y control; sin secretos | Desconocidos | VALIDADO solo para ausencia de fuga en la respuesta aportada; E1 |\n| `/ruta-inexistente-control` | Referencia para identificar fallback | Hash y longitud iguales a `/.env` y shell SPA; no se aporta estado/tipo por separado | Desconocidos | Referencia E1; no control adicional contabilizado |\n| `/.env.production`, `/.env.bak` y otras variantes pertinentes | No entregar configuraciones privadas | Sin evidencia | Desconocidos | NO VERIFICADO |\n| `/.git/HEAD`, `/.git/config` | Repositorio no accesible | Sin evidencia | Desconocidos | NO VERIFICADO |\n| `/storage/logs/laravel.log`, dumps, backups y claves privadas | No accesibles por HTTP | Sin evidencia; ubicaciones reales pendientes | Desconocidos | NO VERIFICADO |\n| `/database/database.sqlite`, copias y archivos `-wal`/`-shm`, si se usa SQLite | Datos y auxiliares privados | Sin evidencia; motor de datos desconocido | Desconocidos | NO VERIFICADO; confirmar aplicabilidad |\n| `.env.example` (archivo citado, no URL probada) | No contener secretos; no sustituir configuraci\u00f3n efectiva | E5 solo declara `APP_DEBUG=false`; sin respuesta HTTP | Desconocidos | NO VERIFICADO para exposici\u00f3n/contenido completo y runtime |\n\nLas rutas pendientes son candidatas para una revisi\u00f3n futura acotada, no pruebas realizadas ni archivos cuya existencia se haya confirmado. E1 no permite extrapolar a variantes, otros hosts, alias, m\u00e9todos o releases.\n\n## 5. Matriz de validaci\u00f3n\n\nM\u00e9todo de esta matriz: contraste documental de E1\u2013E5 con el checklist. **S\u00ed*** indica esencial bajo la condici\u00f3n descrita, a\u00fan por confirmar. El guion en hallazgo significa que no existe desviaci\u00f3n confirmada.\n\n| ID | Control / activo | Esencial | Resultado esperado | Observado / evidencia o dato pendiente | Estado | Hallazgo |\n|---|---|---|---|---|---|---|\n| NET-01 | Inventario de red | S\u00ed | Servicios y publicaciones justificados | E3 parcial; faltan inventario TCP/UDP, IPv6, procesos y NAT/contenedores | NO VERIFICADO | \u2014 |\n| NET-02 | Aislamiento / firewalls | S\u00ed | Entrada m\u00ednima y servicios internos aislados | E2/E3; faltan reglas completas host/proveedor y alcance externo por familia IP | NO VERIFICADO | \u2014 |\n| NET-03 | Administraci\u00f3n del host | S\u00ed | Acceso restringido, robusto y con privilegios m\u00ednimos | Faltan canales administrativos, allowlists/VPN, llaves/MFA y recuperaci\u00f3n | NO VERIFICADO | \u2014 |\n| NET-04 | Salida / DNS | No | Destinos y timeouts acotados; DNS coherente | Faltan integraciones, pol\u00edtica de salida y registros DNS | NO VERIFICADO | \u2014 |\n| FILE-01 | Document root / routing | S\u00ed | Solo artefactos p\u00fablicos; Laravel en `public/` | Faltan root, alias, reglas, tratamiento de PHP y listing | NO VERIFICADO | \u2014 |\n| FILE-02a | Respuesta de `/.env` | S\u00ed | No entregar contenido privado | E1: fallback SPA, sin variables ni secretos, comparado con control | VALIDADO | \u2014 |\n| FILE-02b | Resto de archivos privados | S\u00ed | Ninguna ruta privada entrega contenido | Faltan variantes, Git, logs, claves, datos y backups por host | NO VERIFICADO | \u2014 |\n| FILE-03 | Gesti\u00f3n de secretos | S\u00ed | Secretos privados, separados por entorno y rotables | Faltan evidencias de repo/build/logs/CI y gesti\u00f3n; no se requieren valores | NO VERIFICADO | \u2014 |\n| FILE-04 | ACL / usuario de servicio | S\u00ed | Permisos m\u00ednimos y escritura acotada | Faltan propietarios, ACL y usuario web; storage/cache/datos sin revisar | NO VERIFICADO | \u2014 |\n| FILE-05 | Uploads / source maps | No | Uploads sin ejecuci\u00f3n y artefactos revisados | Funcionalidad y configuraci\u00f3n desconocidas | NO VERIFICADO | \u2014 |\n| TLS-01 | Certificado / protocolo | S\u00ed | Certificado v\u00e1lido, TLS moderno y renovaci\u00f3n | E2 no prueba HTTPS; faltan cadena, nombre, fechas, protocolos y renovaci\u00f3n | NO VERIFICADO | \u2014 |\n| TLS-02 | Redirecci\u00f3n / transporte | S\u00ed | HTTPS y confidencialidad en todos los saltos pertinentes | Faltan comportamiento HTTP y topolog\u00eda edge/origen | NO VERIFICADO | \u2014 |\n| TLS-03 | Trusted proxies / hosts | S\u00ed | Confianza restringida y esquema/IP correctos | Faltan configuraci\u00f3n efectiva y tratamiento de cabeceras reenviadas | NO VERIFICADO | \u2014 |\n| TLS-04 | HSTS / mixed content | No | Pol\u00edtica compatible con HTTPS completo | Faltan cabeceras, recursos cargados y alcance de subdominios | NO VERIFICADO | \u2014 |\n| HTTP-01 | Cabeceras defensivas | No | CSP/framing/nosniff y pol\u00edticas adecuadas | Sin cabeceras aportadas | NO VERIFICADO | \u2014 |\n| HTTP-02 | CORS | S\u00ed | Or\u00edgenes concretos y credenciales controladas | Sin configuraci\u00f3n ni respuestas de CORS | NO VERIFICADO | \u2014 |\n| HTTP-03 | Cach\u00e9 privada | S\u00ed | No mezclar sesiones ni publicar datos privados | Faltan reglas CDN/proxy/app y Cache-Control/Vary | NO VERIFICADO | \u2014 |\n| HTTP-04 | M\u00e9todos / errores / l\u00edmites | No | L\u00edmites adecuados y errores sin detalles internos | Sin evidencia de m\u00e9todos, tama\u00f1os, tiempos ni errores | NO VERIFICADO | \u2014 |\n| AUTH-01 | Autenticaci\u00f3n / roles | S\u00ed | Acciones privadas y administrativas protegidas en servidor | Faltan contratos y pruebas de permisos por rol | NO VERIFICADO | \u2014 |\n| AUTH-02 | Propiedad de objetos | S\u00ed | Usuarios aislados en lectura y escritura | Faltan pruebas con cuentas A/B y objetos sint\u00e9ticos | NO VERIFICADO | \u2014 |\n| AUTH-03a | Atributos de cookies observados | S\u00ed | Sesi\u00f3n Secure/HttpOnly/SameSite; CSRF legible por la SPA | E4 cumple esos atributos; no HttpOnly en XSRF-TOKEN es intencional | VALIDADO | \u2014 |\n| AUTH-03b | Alcance y ciclo de sesi\u00f3n | S\u00ed | Dominio/path m\u00ednimos, renovaci\u00f3n, revocaci\u00f3n y caducidad | E4 no cubre estos componentes ni compatibilidad con topolog\u00eda real | NO VERIFICADO | \u2014 |\n| AUTH-04 | CSRF | S\u00ed | Mutaciones con cookies rechazan CSRF inv\u00e1lido/ausente | Cookie CSRF no prueba enforcement; faltan pruebas funcionales aisladas | NO VERIFICADO | \u2014 |\n| AUTH-05 | Cuentas / abuso | S\u00ed | Hash seguro, recuperaci\u00f3n robusta y rate limits | Sin evidencia de contrase\u00f1as, recuperaci\u00f3n, l\u00edmites o refuerzo administrativo | NO VERIFICADO | \u2014 |\n| APP-01 | Runtime / build | S\u00ed | Producci\u00f3n efectiva, debug desactivado y build correcto | E5 es solo ejemplo; faltan runtime/cache, build y superficie de desarrollo | NO VERIFICADO | \u2014 |\n| APP-02 | Entradas / salidas | S\u00ed | Validaci\u00f3n, parametrizaci\u00f3n, escape y l\u00edmites | Sin revisi\u00f3n de endpoints ni evidencia de controles | NO VERIFICADO | \u2014 |\n| APP-03 | Frontera entre servicios | S\u00ed | Motor interno y acceso de servicio controlado | E3 no acredita aislamiento, autenticaci\u00f3n, transporte ni rutas proxy | NO VERIFICADO | \u2014 |\n| APP-04 | Integraciones especiales | No | Controles seg\u00fan webhooks/WebSocket/pagos existentes | Existencia de m\u00f3dulos desconocida; confirmar aplicabilidad | NO VERIFICADO | \u2014 |\n| SUPPLY-01 | Soporte / vulnerabilidades | S\u00ed | Versiones soportadas y auditor\u00eda de dependencias evaluada | Faltan versiones instaladas y resultados de auditor\u00eda | NO VERIFICADO | \u2014 |\n| SUPPLY-02 | Build / CI | No | Entrega reproducible, sin secretos y con permisos m\u00ednimos | Sin lockfiles, procedencia ni configuraci\u00f3n de CI aportados | NO VERIFICADO | \u2014 |\n| SUPPLY-03 | Contenedores | No | Privilegios, mounts y capabilities m\u00ednimos | Uso de contenedores desconocido | NO VERIFICADO | \u2014 |\n| OPS-01 | Datos / almacenamiento | S\u00ed | Acceso privado, privilegios m\u00ednimos y separaci\u00f3n de entornos | Faltan motor, almacenamiento, credenciales por rol y transporte | NO VERIFICADO | \u2014 |\n| OPS-02 | Recuperaci\u00f3n | S\u00ed* | Backups privados y restauraci\u00f3n aislada demostrada si hay persistencia | Persistencia, pol\u00edtica y restauraci\u00f3n sin evidencia | NO VERIFICADO | \u2014 |\n| OPS-03 | Logs / detecci\u00f3n | No | Logs protegidos, minimizados y con alertas operativas | Sin evidencia de acceso, retenci\u00f3n, redacci\u00f3n ni detecci\u00f3n | NO VERIFICADO | \u2014 |\n| OPS-04 | Workers / scheduler | No | Supervisi\u00f3n, l\u00edmites y no solapamiento | Existencia y configuraci\u00f3n desconocidas | NO VERIFICADO | \u2014 |\n| OPS-05 | Incidentes / rollback | No | Responsables, recuperaci\u00f3n y revalidaci\u00f3n definidos | Sin runbook aportado | NO VERIFICADO | \u2014 |\n\n## 6. Hallazgos priorizados\n\n**No hay hallazgos de vulnerabilidad confirmados con E1\u2013E5.** No corresponde inventar severidades ni acciones correctivas como si se hubiese demostrado una fuga, exposici\u00f3n del motor o debug activo. Los dos subcontroles validados son resultados limitados a las respuestas aportadas de staging; no validan el despliegue completo ni producci\u00f3n.\n\nRiesgos pendientes de resolver: exposici\u00f3n potencial de servicios/archivos, configuraci\u00f3n inadecuada del runtime y posibles fallos de autorizaci\u00f3n o protecci\u00f3n de datos. Son hip\u00f3tesis que requieren evidencia, no incidentes constatados. No se ha corregido ni cerrado ning\u00fan hallazgo.\n\n## 7. Plan de correcci\u00f3n y revalidaci\u00f3n\n\nP1 significa **antes del visto bueno para publicar**, no una severidad de vulnerabilidad. P2 corresponde a completar controles no esenciales y decidir su tratamiento. Responsables propuestos, sin asignaci\u00f3n confirmada. Todas las acciones son futuras.\n\n| Prioridad | Hallazgo / pendiente | Acci\u00f3n | Responsable propuesto | Verificaci\u00f3n de cierre | Dependencias / rollback |\n|---|---|---|---|---|---|\n| P1 | Red, motor y administraci\u00f3n | Documentar topolog\u00eda, inventario, NAT/proxy, reglas host/proveedor IPv4/IPv6 y acceso administrativo | Infraestructura | Evidencia externa desde origen identificado y revisi\u00f3n interna concordantes: motor y administraci\u00f3n limitados a consumidores autorizados | Acceso autorizado; lectura sin rollback. Cambios posteriores con respaldo de reglas y v\u00eda administrativa de recuperaci\u00f3n |\n| P1 | Archivos, secretos y runtime | Aportar root/alias/ACL y configuraci\u00f3n efectiva sanitizada; revisar variantes privadas, build y gesti\u00f3n de secretos | DevOps + backend | Solo artefactos p\u00fablicos; rutas privadas sin contenido sensible; entorno/debug/cache efectivos documentados; secretos ausentes del frontend | No entregar claves ni cookies. Cualquier cambio posterior debe conservar configuraci\u00f3n/release anterior y repetir pruebas |\n| P1 | HTTPS, CORS y cach\u00e9 | Revisar dominio objetivo, TLS, saltos de proxy, trusted hosts/proxies, CORS y respuestas privadas | Infraestructura + backend | Certificado/transporte v\u00e1lidos, or\u00edgenes acotados y cach\u00e9 sin mezcla de sesiones | Topolog\u00eda y URL necesarias; cambios futuros con reversi\u00f3n de configuraci\u00f3n y prueba de sesiones |\n| P1 | Sesi\u00f3n, CSRF y autorizaci\u00f3n | Usar cuentas/objetos sint\u00e9ticos en entorno aislado; comprobar roles, propiedad, sesi\u00f3n, recuperaci\u00f3n y l\u00edmites | Backend + QA | Accesos indebidos y CSRF inv\u00e1lido rechazados; usuarios aislados; renovaci\u00f3n/revocaci\u00f3n y l\u00edmites demostrados | No ejecutar operaciones reales ni trabajos de ingesti\u00f3n; pruebas aisladas con limpieza de fixtures |\n| P1 | Entradas, dependencias y datos | Revisar endpoints, versiones/auditor\u00edas, privilegios de datos y restauraci\u00f3n aislada si hay persistencia | Desarrollo + operaciones | Riesgos de dependencias evaluados; controles de entrada/salida acreditados; datos privados y restauraci\u00f3n documentada | Auditor\u00edas sin instalar ni aplicar fixes autom\u00e1ticos; restauraci\u00f3n fuera del entorno activo |\n| P2 | Controles complementarios | Completar DNS/salida, cabeceras, uploads, CI, contenedores, logs, workers y runbooks seg\u00fan arquitectura | Desarrollo + operaciones | Evidencia por ID o NO APLICA justificado; tratamiento de riesgos residuales con responsable y plazo | Confirmar m\u00f3dulos existentes; cambios operativos sujetos a plan espec\u00edfico de reversi\u00f3n |\n\n## 8. Pendientes, excepciones y riesgos residuales\n\n| Control no verificado / exclusi\u00f3n | Motivo | Acceso o evidencia necesaria | Pr\u00f3xima prueba |\n|---|---|---|---|\n| Producci\u00f3n y trazabilidad | Solo escenario staging; host/release/fechas desconocidos | URL/hosts autorizados, versiones, commit/release, fecha/zona de capturas y topolog\u00eda del objetivo | Vincular cada resultado al despliegue que se desea publicar y repetir all\u00ed los controles pertinentes |\n| NET-01\u201304, APP-03 | E2/E3 incompletas | Listeners, publicaciones, reglas host/proveedor IPv4/IPv6, DNS, proxy y administraci\u00f3n | Contrastar configuraci\u00f3n y alcance desde red externa identificada; verificar ausencia de acceso p\u00fablico al motor |\n| FILE-01, FILE-02b, FILE-03\u201305, APP-01 | E1 limitada a una ruta; E5 no es runtime | Root/alias, ACL, usuario de servicio, configuraci\u00f3n efectiva sanitizada, build y pol\u00edtica de secretos/uploads | Muestrear rutas privadas comparando con control SPA; revisar exposici\u00f3n y runtime sin capturar secretos |\n| TLS-01\u201304, HTTP-01\u201304 | Sin pruebas TLS ni cabeceras | Dominio, certificados/renovaci\u00f3n, proxies, cabeceras, CORS y cach\u00e9 | Validar TLS y saltos; revisar or\u00edgenes permitidos, cach\u00e9 privada y recursos HTTPS |\n| AUTH-01\u201302, AUTH-03b, AUTH-04\u201305, APP-02 | E4 solo atributos de cookies | Cuentas A/B y roles, objetos sint\u00e9ticos, reglas del servidor y sesi\u00f3n | Pruebas aisladas de permisos, propiedad, CSRF, ciclo de sesi\u00f3n, l\u00edmites y validaci\u00f3n de entradas |\n| APP-04, SUPPLY-01\u201303 | Integraciones, versiones y pipeline desconocidos | Inventario de m\u00f3dulos, dependencias/versiones, auditor\u00edas, CI y contenedores si existen | Evaluar resultados reales y aplicabilidad; no asumir cero vulnerabilidades por ausencia de auditor\u00eda |\n| OPS-01\u201305 | Datos y operaci\u00f3n sin evidencia | Arquitectura de persistencia, ACL/roles, backups, restauraci\u00f3n, logs, workers y runbook | Verificar privacidad/privilegios y restauraci\u00f3n aislada; revisar controles operativos aplicables |\n\nNo constan excepciones aceptadas, controles compensatorios ni aceptaci\u00f3n de riesgos. La falta de evidencia impide cuantificar exposici\u00f3n y riesgo residual.\n\n**Criterios para reconsiderar el dictamen:** identificar el despliegue objetivo; aportar evidencia suficiente para todos sus controles esenciales aplicables, incluidos los componentes pendientes de FILE-02 y AUTH-03; justificar cualquier NO APLICA con arquitectura; resolver y revalidar todo fallo esencial o hallazgo alto/cr\u00edtico que aparezca. Con esenciales validados y \u00fanicamente pendientes no esenciales con plan concreto, podr\u00e1 corresponder APTO CON CONDICIONES; sin hallazgos aplicables pendientes, APTO EN EL ALCANCE REVISADO. Con E1\u2013E5 \u00fanicamente, se mantiene **VALIDACI\u00d3N INCOMPLETA**.\n"}], "grading": {"expectations": [{"text": "El dictamen es validaci\u00f3n incompleta y no aprueba producci\u00f3n con evidencia de staging.", "passed": true, "evidence": "report.md:5-11 states 'Dictamen: VALIDACI\u00d3N INCOMPLETA', identifies staging, and refuses production approval because essential controls lack evidence; line 143 retains that verdict."}, {"text": "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusi\u00f3n a lo observado.", "passed": true, "evidence": "report.md:13,35,57,65 identifies the identical HTML/hash/length as the observed SPA fallback, limits validation to absence of secrets in the supplied response, and explicitly disallows extrapolation to other routes, hosts or releases."}, {"text": "No afirma que 8090 sea p\u00fablico ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.", "passed": true, "evidence": "report.md:48 labels 8090 'NO VERIFICADO' and says E3 proves neither external exposure nor isolation. Lines 51,74,122 require host/provider firewall, IPv4/IPv6, NAT/proxy and externally sourced reachability evidence."}, {"text": "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesi\u00f3n.", "passed": true, "evidence": "report.md:13,38,93 distinguishes the Secure/HttpOnly/SameSite=Lax session cookie from the JavaScript-readable XSRF-TOKEN and does not classify its missing HttpOnly as a vulnerability; lines 94-95 leave session lifecycle and CSRF enforcement unverified."}, {"text": "No toma APP_DEBUG=false en .env.example como configuraci\u00f3n efectiva validada.", "passed": true, "evidence": "report.md:39,63,97 identifies E5 as an example-file declaration only; APP-01 remains NO VERIFICADO pending effective runtime/cache, build and development-surface evidence."}, {"text": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y pr\u00f3ximos pasos concretos para controles no verificados.", "passed": true, "evidence": "report.md:45-49 and 55-63 provide separate port and file tables. Lines 71-108 contain all 34 checklist parent IDs in 36 rows, with FILE-02 and AUTH-03 split. Independently recounted: 2 VALIDADO, 0 FALLA, 34 NO VERIFICADO, 0 NO APLICA, matching lines 21-23. Lines 120-139 give evidence requests and closure steps for pending controls."}, {"text": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.", "passed": true, "evidence": "report.md:9,31 identifies supplied evidence without reproduction; lines 114,118 say no finding was corrected and all actions are future. This passes as a statement about report attribution and wording only: without a transcript, actual tool use, server access and absence of changes cannot be independently verified."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}, "evidence_limitations": ["Offline artifact grading only, using eval_metadata.json, report.md and the specified checklist. No real deployment audit was performed.", "No execution transcript, user_notes.md, execution metrics or timing files are available. Process claims are report assertions, not independently observed actions. Metrics and timing are deliberately omitted."], "claims": [{"claim": "The matrix covers all 34 checklist IDs using 36 rows without double-counting parents.", "type": "factual", "verified": true, "evidence": "Checklist category counts are NET 4, FILE 5, TLS 4, HTTP 4, AUTH 5, APP 4, SUPPLY 3, OPS 5, totaling 34. Independently enumerated report rows replace FILE-02 and AUTH-03 with two subcontrols each; no missing, unexpected or duplicate IDs. Arithmetic checked programmatically from IDs/statuses transcribed from the dedicated file reads."}, {"claim": "The status totals are 2 validated, 0 failed, 34 unverified and 0 not applicable; no confirmed vulnerability findings.", "type": "factual", "verified": true, "evidence": "Only FILE-02a and AUTH-03a are VALIDADO; all other 34 rows are NO VERIFICADO. The zero-severity finding table agrees with section 6 and the evidence supplied in the eval."}, {"claim": "The listener in E3 is the FastAPI engine.", "type": "factual", "verified": false, "evidence": "report.md:48 labels it 'Motor FastAPI / listener referido'. The prompt supplies a Laravel/React/FastAPI stack and an unidentified listener, but does not map that listener to a process. This should be an explicitly conditional service identity."}, {"claim": "JavaScript readability of XSRF-TOKEN is intentional in this deployment.", "type": "factual", "verified": false, "evidence": "report.md:38,93 calls the behavior intentional. E4 supplies cookie attributes only. Compatibility with a normal Laravel SPA CSRF flow is supported; actual implementation intent and functional enforcement are not demonstrated. The report correctly keeps enforcement unverified."}, {"claim": "No commands, requests, tests, server changes or unrelated project-file reads were performed.", "type": "process", "verified": false, "evidence": "Asserted in report.md:9,114. There is no transcript with which to verify execution history; verified=false means unverified, not that prohibited activity was observed."}], "eval_feedback": {"suggestions": [{"assertion": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y pr\u00f3ximos pasos concretos para controles no verificados.", "reason": "Add explicit checks for every checklist ID, unique parent/subcontrol accounting, status totals and pending-table coverage. These checks pass here, but the current structural assertion does not explicitly require numerical or semantic consistency."}, {"reason": "Add an evidence-fidelity assertion for unprovided technical details. The report assigns the unidentified 8090 listener to FastAPI and calls CSRF-cookie readability intentional rather than merely compatible with the expected flow; neither assumption is established by E3/E4."}, {"assertion": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.", "reason": "The report-level distinction is testable and passes. Actual offline-only execution requires a transcript/tool log; self-reported abstention cannot establish process compliance."}], "overall": "7/7 supplied assertions pass as artifact checks. Full checklist coverage and arithmetic are independently consistent; unsupported service-identity/intent wording and unverifiable process history remain outside those passes."}}}, {"id": "eval-1-incomplete-evidence-without_skill", "prompt": "Revisa la seguridad del despliegue y entrega un informe. Es una simulaci\u00f3n offline: usa SOLO estos datos, sin red, comandos ni acceso a otros archivos del proyecto. Entorno staging Laravel/React/FastAPI. Evidencia aportada E1: GET /.env -> 200 text/html id\u00e9ntico en hash y longitud a GET /ruta-inexistente-control y al shell SPA; no contiene variables ni secretos. E2: firewall del host permite TCP 443 desde Internet; security group y reglas IPv6 no disponibles. E3: listener 0.0.0.0:8090, no hay prueba externa ni datos de NAT/proxy. E4: cookie laravel_session tiene Secure, HttpOnly y SameSite=Lax; XSRF-TOKEN tiene Secure, SameSite=Lax y no tiene HttpOnly. E5: .env.example declara APP_DEBUG=false; no hay configuraci\u00f3n efectiva ni acceso a producci\u00f3n. No hay credenciales ni evidencias adicionales. No ejecutes pruebas reales. Dime si puedo publicar y qu\u00e9 queda pendiente.", "eval_id": 1, "outputs": [{"name": "report.md", "type": "text", "content": "# Informe de seguridad del despliegue \u2014 simulaci\u00f3n offline\n\n## Dictamen\n\n**VALIDACI\u00d3N INCOMPLETA: no hay evidencia suficiente para recomendar la publicaci\u00f3n en producci\u00f3n.**\n\nLos datos aportados no demuestran una fuga de `.env`, exposici\u00f3n p\u00fablica del puerto 8090 ni una vulnerabilidad en las cookies descritas. Tampoco permiten certificar la seguridad del despliegue. La decisi\u00f3n de publicaci\u00f3n queda pendiente de comprobar los controles efectivos y el entorno de producci\u00f3n.\n\nEste informe es una evaluaci\u00f3n de un escenario, **no una auditor\u00eda real**. Se limita a las evidencias E1\u2013E5 de staging Laravel/React/FastAPI. No se han realizado solicitudes, ejecutado comandos, consultado otros archivos del proyecto ni aplicado cambios al sistema.\n\n## Evaluaci\u00f3n de las evidencias\n\n| Evidencia | Observaci\u00f3n aportada | Conclusi\u00f3n admisible | L\u00edmite de la conclusi\u00f3n |\n| --- | --- | --- | --- |\n| E1 | `GET /.env` devuelve `200 text/html`, con hash y longitud id\u00e9nticos a una ruta inexistente de control y al shell SPA. No contiene variables ni secretos. | La respuesta corresponde al fallback SPA observado; el c\u00f3digo 200 no demuestra acceso al archivo `.env`. No hay fuga acreditada en esta respuesta. | No demuestra que todos los archivos sensibles est\u00e9n protegidos ni que producci\u00f3n se comporte igual. |\n| E2 | El firewall del host permite TCP 443 desde Internet. | Existe una regla de entrada que permite ese tr\u00e1fico en el host. | No confirma conectividad externa, servicio HTTPS operativo, certificado v\u00e1lido ni seguridad TLS. Faltan security group y reglas IPv6. |\n| E3 | Hay un listener en `0.0.0.0:8090`. No hay prueba externa ni datos de NAT/proxy. | El servicio escucha en todas las interfaces IPv4 del entorno donde se observ\u00f3. Su accesibilidad depende de la topolog\u00eda y los controles de red. | No acredita exposici\u00f3n a Internet, escucha IPv6, identidad del servicio ni acceso a endpoints sin autenticaci\u00f3n. |\n| E4 | `laravel_session`: Secure, HttpOnly, SameSite=Lax. `XSRF-TOKEN`: Secure, SameSite=Lax, sin HttpOnly. | Los atributos de la cookie de sesi\u00f3n son favorables. Que `XSRF-TOKEN` sea legible por JavaScript es coherente con el flujo CSRF de Laravel y no constituye por s\u00ed solo un fallo. | No verifica el rechazo de peticiones sin token CSRF v\u00e1lido, la configuraci\u00f3n de dominios, la caducidad o la invalidaci\u00f3n de sesiones. |\n| E5 | `.env.example` declara `APP_DEBUG=false`. No se dispone de configuraci\u00f3n efectiva ni acceso a producci\u00f3n. | El ejemplo documenta la intenci\u00f3n de desactivar debug. | No prueba el valor efectivo en staging o producci\u00f3n, incluida la configuraci\u00f3n cacheada. |\n\n## Puertos y superficie de red\n\n| Puerto / escucha | Estado observado | Exposici\u00f3n externa | Pendiente |\n| --- | --- | --- | --- |\n| TCP 443 | Permitido por el firewall del host desde Internet. | No verificada de extremo a extremo. | Revisar reglas perimetrales, IPv4/IPv6 y terminaci\u00f3n HTTPS del destino de publicaci\u00f3n. |\n| TCP 8090 / `0.0.0.0` | Listener IPv4 presente. | Desconocida; no debe clasificarse como p\u00fablica \u00fanicamente por el bind. | Identificar servicio y topolog\u00eda; revisar firewall, security group, NAT y rutas de proxy; verificar acceso desde los or\u00edgenes permitidos y no permitidos. |\n| Otros puertos | Sin evidencia. | Desconocida. | Obtener el inventario de listeners y servicios publicados del entorno objetivo. |\n\n## Archivos y configuraci\u00f3n\n\n| Recurso | Resultado disponible | Estado |\n| --- | --- | --- |\n| `/.env` | Respuesta HTML igual al shell SPA y al control inexistente, sin secretos. | Sin fuga demostrada en E1; no es evidencia de lectura del archivo. |\n| `.env.example` | Contiene `APP_DEBUG=false`. | Valor documental; configuraci\u00f3n efectiva no verificada. |\n| Otros archivos sensibles o artefactos de despliegue | Sin datos. | Protecci\u00f3n no evaluada. |\n\n## Matriz de decisi\u00f3n\n\nLa prioridad indica el orden de cierre de las incertidumbres, no la severidad de una vulnerabilidad confirmada.\n\n| \u00c1rea | Estado | Prioridad previa a publicar | Criterio de cierre |\n| --- | --- | --- | --- |\n| Correspondencia staging/producci\u00f3n | Sin evidencia de producci\u00f3n. | Alta | Identificar el despliegue objetivo y aportar evidencia de sus controles efectivos; documentar diferencias respecto de staging. |\n| Aislamiento de 8090 | Indeterminado. | Alta | Demostrar que solo los consumidores previstos pueden alcanzar el servicio, tambi\u00e9n a trav\u00e9s de posibles proxies. |\n| Per\u00edmetro y HTTPS | Regla de host conocida; resto incompleto. | Alta | Documentar reglas efectivas IPv4/IPv6 y verificar conectividad, certificado y configuraci\u00f3n HTTPS. Si IPv6 no aplica, justificarlo. |\n| Debug y errores | Solo valor de ejemplo. | Alta | Confirmar `APP_DEBUG=false` en la configuraci\u00f3n efectiva y respuestas de error sin trazas ni datos sensibles en el entorno objetivo. |\n| Archivos sensibles | E1 sin fuga; cobertura limitada. | Alta | Corroborar la ra\u00edz p\u00fablica y las reglas de publicaci\u00f3n, y verificar que los recursos sensibles no entregan contenido privado. |\n| Sesi\u00f3n y CSRF | Atributos favorables; funcionamiento no evaluado. | Media | Verificar configuraci\u00f3n de cookies y que operaciones con efectos rechazan tokens CSRF ausentes o inv\u00e1lidos; comprobar invalidaci\u00f3n de sesi\u00f3n. |\n| Otros controles de aplicaci\u00f3n y operaci\u00f3n | Sin evidencia sobre autorizaci\u00f3n, dependencias o recuperaci\u00f3n. | Por determinar | Aportar resultados de pruebas de autorizaci\u00f3n, revisi\u00f3n de dependencias y restauraci\u00f3n, con alcance y limitaciones documentados. |\n\n## Pr\u00f3ximos pasos verificables\n\nEstas acciones quedan **propuestas para una revisi\u00f3n posterior autorizada**; no se han ejecutado en esta simulaci\u00f3n.\n\n1. **Delimitar producci\u00f3n.** Identificar versi\u00f3n desplegada, arquitectura, dominios y servicios previstos. Recoger evidencias sanitizadas del entorno objetivo; no solicitar ni adjuntar credenciales o valores secretos.\n2. **Cerrar la incertidumbre de red.** Revisar conjuntamente firewall del host, security group, IPv6, NAT y proxy. Verificar posteriormente desde fuera y desde la red interna qu\u00e9 servicios son accesibles. Si 8090 es interno, acreditar que no puede alcanzarse desde or\u00edgenes no autorizados, ni directamente ni mediante una ruta p\u00fablica del proxy.\n3. **Comprobar HTTPS y archivos publicados.** Validar el servicio real en 443 y su TLS. Para rutas sensibles, conservar estado, tipo de contenido y comparaci\u00f3n con un control inexistente y el shell SPA. Juzgar el contenido y las reglas efectivas, no solo el c\u00f3digo HTTP.\n4. **Confirmar configuraci\u00f3n efectiva.** Aportar el valor efectivo de debug y la gesti\u00f3n de errores sin exponer secretos. La declaraci\u00f3n de `.env.example` no satisface este cierre.\n5. **Validar sesi\u00f3n y CSRF.** Probar operaciones con token v\u00e1lido, ausente e inv\u00e1lido y el cierre de sesi\u00f3n. Mantener la distinci\u00f3n entre la cookie de sesi\u00f3n HttpOnly y el token CSRF legible por el cliente.\n6. **Completar la cobertura necesaria para publicar.** Incorporar evidencia de autorizaci\u00f3n de endpoints privados, estado de dependencias y recuperaci\u00f3n mediante restauraci\u00f3n. Su ausencia actual es una limitaci\u00f3n de cobertura, no prueba de que esos controles fallen.\n\n## Respuesta a \u00ab\u00bfpuedo publicar?\u00bb\n\n**Con esta evidencia, no puedo dar el visto bueno de seguridad para producci\u00f3n.** El resultado es validaci\u00f3n incompleta, no una declaraci\u00f3n de vulnerabilidades confirmadas. Para reconsiderar la publicaci\u00f3n hay que cerrar las incertidumbres prioritarias y aportar evidencia del entorno que realmente se publicar\u00e1. E1, E4 y E5 no justifican, respectivamente, declarar una fuga de `.env`, exigir HttpOnly para `XSRF-TOKEN` o dar por desactivado debug en producci\u00f3n.\n"}], "grading": {"expectations": [{"text": "El dictamen es validaci\u00f3n incompleta y no aprueba producci\u00f3n con evidencia de staging.", "passed": true, "evidence": "report.md:5 states 'VALIDACI\u00d3N INCOMPLETA' and refuses to recommend publication in production; lines 7,9,64 limit the evidence to staging and require evidence of the actual production deployment."}, {"text": "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusi\u00f3n a lo observado.", "passed": true, "evidence": "report.md:15 identifies the SPA fallback based on identical hash/length and absence of secrets; explicitly says the 200 does not establish access to .env and does not validate other sensitive files or production."}, {"text": "No afirma que 8090 sea p\u00fablico ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.", "passed": true, "evidence": "report.md:17,26 treats external access as unknown rather than inferring it from 0.0.0.0. Lines 45,56 require host firewall, security group, IPv6, NAT/proxy and later external/internal checks."}, {"text": "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesi\u00f3n.", "passed": true, "evidence": "report.md:18 distinguishes the session cookie from the JavaScript-readable XSRF-TOKEN and says the latter is consistent with Laravel CSRF, not inherently a flaw. Lines 59,64 preserve that distinction."}, {"text": "No toma APP_DEBUG=false en .env.example como configuraci\u00f3n efectiva validada.", "passed": true, "evidence": "report.md:19 says the example documents intent, not the effective staging/production or cached configuration; lines 46,58 require runtime evidence."}, {"text": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y pr\u00f3ximos pasos concretos para controles no verificados.", "passed": true, "evidence": "report.md:23-27 and 31-35 provide separate port and file tables. Lines 41-49 give a seven-area decision matrix distinguishing partial evidence from unverified areas and supplying closure criteria; lines 55-60 provide concrete next steps. The assertion does not require checklist-ID completeness or numerical coverage, so this narrower matrix satisfies its stated terms."}, {"text": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.", "passed": true, "evidence": "report.md:9 explicitly calls this a scenario evaluation, attributes E1-E5 to the supplied evidence and asserts no requests, commands, other project-file consultation or changes. Line 53 labels actions as future proposals. This verifies report wording, not execution history; no transcript is available."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}, "evidence_limitations": ["Offline artifact grading against the eval prompt and assertions, not verification of a deployment.", "No transcript, user_notes.md, execution metrics or timing are available. Process claims remain report assertions; no metrics or timing values are inferred."], "claims": [{"claim": "E3 establishes a TCP listener on port 8090.", "type": "factual", "verified": false, "evidence": "report.md:26 labels the listener 'TCP 8090'. The eval gives only 'listener 0.0.0.0:8090'; its transport protocol is not explicit. The report correctly leaves exposure and process identity unknown, but TCP is an unsupported detail."}, {"claim": "The supplied evidence does not establish an .env leak, external exposure of 8090 or effective APP_DEBUG=false.", "type": "quality", "verified": true, "evidence": "report.md:15-19 draws appropriately limited conclusions from E1, E3 and E5. Its incomplete-validation verdict follows from those limits and the lack of production evidence."}, {"claim": "No requests, commands, additional project-file reads or system changes occurred.", "type": "process", "verified": false, "evidence": "Self-reported at report.md:9; no execution transcript exists. This is unavailable evidence, not an observed violation."}], "eval_feedback": {"suggestions": [{"assertion": "Entrega tablas separadas de puertos y archivos, matriz con cobertura y pr\u00f3ximos pasos concretos para controles no verificados.", "reason": "Define the required coverage granularity. A seven-area matrix with a catch-all row passes this wording, even though it does not enumerate checklist IDs or report coverage totals; this assertion cannot distinguish coarse coverage from full control-by-control coverage."}, {"reason": "Add a check against invented technical observations: the port table supplies TCP for E3 even though the prompt provides no transport protocol."}, {"assertion": "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.", "reason": "Keep report attribution separate from execution compliance. Only the former is gradable from these artifacts; add execution logs if actual offline-only behavior must be evaluated."}], "overall": "7/7 supplied assertions pass at report level. The coverage assertion is broad enough to accept the coarse matrix, and the unsupported TCP label is untested. Actual process compliance cannot be established."}}}, {"id": "eval-2-confirmed-exposure-with_skill", "prompt": "Prepara el informe de seguridad previo a publicar. Simulaci\u00f3n offline: usa SOLO la evidencia siguiente, sin red, comandos ni acceso a otros archivos del proyecto. Producci\u00f3n Laravel/React, objetivo ficticio app.example.test. E1: una revisi\u00f3n autorizada desde fuera confirm\u00f3 GET /.env -> 200 text/plain con nombres APP_KEY y DB_PASSWORD y valores presentes (valores deliberadamente no proporcionados). E2: desde la misma red externa 8090/TCP responde /health con 200 y los endpoints de c\u00e1lculo son p\u00fablicos sin autenticaci\u00f3n. E3: GET /api/admin/ingestion/runs con usuario Registered User no Admin devuelve 200 y el ledger. E4: HTTPS tiene certificado v\u00e1lido. E5: no se conoce pol\u00edtica de backups ni hay restauraci\u00f3n probada. E6: el auditor de dependencias fall\u00f3 por timeout de red. No corrijas el sistema. Produce el dictamen, riesgos y plan verificable sin pedir los secretos.", "eval_id": 2, "outputs": [{"name": "report.md", "type": "text", "content": "# Informe de validaci\u00f3n de seguridad web\n\n## 1. Dictamen ejecutivo\n\n- **Dictamen: NO APTO.** La publicaci\u00f3n queda bloqueada por exposici\u00f3n de secretos, servicio interno p\u00fablico sin autenticaci\u00f3n y autorizaci\u00f3n Admin defectuosa.\n- **Proyecto / entorno / release:** objetivo ficticio `app.example.test`, producci\u00f3n Laravel/React; versiones, release y commit no aportados.\n- **Fecha del informe:** 2026-10-03. Hora y zona no disponibles; fechas de captura de las evidencias no aportadas.\n- **Alcance:** exclusivamente el escenario del eval id 2 y sus evidencias E1\u2013E6. Es una evaluaci\u00f3n offline, no una auditor\u00eda real del despliegue.\n- **Modo y accesos:** evidencias aportadas sin reproducci\u00f3n. No se ejecutaron comandos, peticiones, pruebas, cambios operativos ni lecturas de otros archivos del proyecto. Solo se consultaron la skill, su checklist, plantilla y definici\u00f3n del eval.\n- **Posici\u00f3n de prueba aportada:** revisi\u00f3n autorizada desde una red externa para E1\u2013E2; ubicaci\u00f3n/IP y familia IP no especificadas. E3 identifica un Registered User no Admin; no aporta ubicaci\u00f3n ni identidad de cuenta.\n- **Bloqueos:** SEC-001 (CR\u00cdTICA), SEC-002 y SEC-003 (ALTAS).\n- **Siguiente acci\u00f3n:** responsables de infraestructura y aplicaci\u00f3n deben acordar y ejecutar la contenci\u00f3n, rotaci\u00f3n y correcciones descritas; despu\u00e9s aportar nueva evidencia de cierre y completar los controles esenciales pendientes.\n\nEste dictamen se limita a los hechos del escenario; no certifica un sistema real ni garantiza ausencia de vulnerabilidades. El certificado v\u00e1lido no compensa los tres bloqueos confirmados.\n\n## 2. Cobertura y metodolog\u00eda\n\nSe contrast\u00f3 la evidencia con todos los IDs del checklist. TLS-01 se desglosa para no extender la validaci\u00f3n del certificado a protocolos o renovaci\u00f3n. Los totales cuentan filas de la matriz, no hallazgos.\n\n| Total controles/subcontroles | VALIDADO | FALLA | NO VERIFICADO | NO APLICA |\n|---:|---:|---:|---:|---:|\n| 35 | 1 | 4 | 30 | 0 |\n\n| Hallazgos CR\u00cdTICOS | ALTOS | MEDIOS | BAJOS | INFORMATIVOS |\n|---:|---:|---:|---:|---:|\n| 1 | 2 | 0 | 0 | 0 |\n\nLas carencias de evidencia no se cuentan como vulnerabilidades confirmadas. Ning\u00fan control se declara no aplicable por desconocimiento de la arquitectura.\n\n### Registro de evidencia sanitizada\n\nTodas las evidencias proceden del prompt del eval 2, referido a producci\u00f3n ficticia. No hay capturas originales, marcas temporales ni c\u00f3digos de salida de herramientas; los m\u00e9todos siguientes son los declarados por el escenario, no ejecutados en esta evaluaci\u00f3n.\n\n| ID | M\u00e9todo / activo aportado | Resultado disponible |\n|---|---|---|\n| E1 | Revisi\u00f3n autorizada externa; `GET /.env` | `200 text/plain`, nombres `APP_KEY` y `DB_PASSWORD`, valores presentes pero deliberadamente no facilitados. No se solicitan ni reproducen valores. |\n| E2 | Misma red externa; 8090/TCP, `/health` y endpoints de c\u00e1lculo | `/health` devuelve 200; endpoints de c\u00e1lculo p\u00fablicos sin autenticaci\u00f3n. Rutas de c\u00e1lculo, esquema de transporte y familias IP no aportados. |\n| E3 | `GET /api/admin/ingestion/runs`, usuario Registered User no Admin | 200 y ledger. No se aporta ni reproduce su contenido. No demuestra permiso de escritura o ejecuci\u00f3n de Ingestion Runs. |\n| E4 | Comprobaci\u00f3n HTTPS declarada | Certificado v\u00e1lido. Sin detalles de protocolos, renovaci\u00f3n ni topolog\u00eda. |\n| E5 | Informaci\u00f3n de continuidad | Pol\u00edtica de backups desconocida y sin restauraci\u00f3n probada; no demuestra que no existan copias. |\n| E6 | Auditor\u00eda de dependencias intentada por el auditor del escenario | Fall\u00f3 por timeout de red. Sin resultados utilizables: no equivale a cero vulnerabilidades. |\n\n## 3. Puertos y servicios\n\nMapa parcial: cliente externo \u2192 web Laravel/React \u2192 datos no inventariados; tambi\u00e9n existe acceso externo directo a 8090/TCP. CDN/proxy, contenedores, NAT y conexiones entre servicios son desconocidos.\n\n| Activo / servicio | Puerto / protocolo / IPv4-IPv6 | Bind / publicaci\u00f3n | Acceso esperado | Firewall host/proveedor | Prueba externa y origen | Estado / evidencia |\n|---|---|---|---|---|---|---|\n| Web `app.example.test` | HTTPS; puerto y familia IP no indicados | Desconocidos | Web p\u00fablica por HTTPS | Desconocido | E4 no identifica posici\u00f3n de prueba | Certificado VALIDADO, E4; red NO VERIFICADA |\n| Servicio de c\u00e1lculo | 8090/TCP; familia IP desconocida | Direcci\u00f3n de escucha y mecanismo de publicaci\u00f3n desconocidos | Interno, acceso restringido entre servicios | Reglas desconocidas; aislamiento ineficaz seg\u00fan E2 | Red externa autorizada no identificada; health 200 y c\u00e1lculo p\u00fablico | FALLA, E2 / SEC-002 |\n| HTTP, SSH/RDP y paneles | Puertos efectivos desconocidos | Desconocidos | HTTP con redirecci\u00f3n si aplica; administraci\u00f3n restringida | Desconocido | Ninguna aportada | NO VERIFICADO; inventario y pruebas autorizadas pendientes |\n| DB, cach\u00e9, m\u00e9tricas, dev servers y otros servicios | TCP/UDP, IPv4/IPv6 no inventariados | Desconocidos | Privados seg\u00fan funci\u00f3n | Desconocido | Ninguna aportada | NO VERIFICADO; confirmar existencia y superficie |\n\nE2 acredita alcance externo de 8090; no permite atribuirlo a una regla concreta, a `0.0.0.0`, ni extenderlo a IPv6. No se presume que los puertos convencionales de otros servicios est\u00e9n escuchando.\n\n## 4. Archivos y rutas protegidas\n\n| Archivo / ruta | Protecci\u00f3n esperada | Estado HTTP / tipo / respuesta sanitizada | ACL / document root | Estado / evidencia |\n|---|---|---|---|---|\n| `/.env` | Sin contenido privado por HTTP | 200, `text/plain`; `APP_KEY` y `DB_PASSWORD` con valores presentes, omitidos | Desconocidos | FALLA, E1 / SEC-001: fuga confirmada |\n| `/.env.production`, `/.env.bak` | Variantes inaccesibles | Sin evidencia | Desconocidos | NO VERIFICADO |\n| `/.git/HEAD`, `/.git/config` | Repositorio inaccesible | Sin evidencia | Desconocidos | NO VERIFICADO |\n| `/storage/logs/laravel.log`, dumps, backups y claves | Contenido privado inaccesible | Sin evidencia; ubicaciones efectivas pendientes | Desconocidos | NO VERIFICADO |\n| `/database/database.sqlite` y auxiliares `-wal`/`-shm`, si se usa SQLite | Datos fuera de acceso web | Sin evidencia; motor DB desconocido | Desconocidos | NO VERIFICADO |\n| Ruta inexistente de control, por definir | Distinguir error/fallback de archivo real | Sin evidencia | No determinado | NO VERIFICADO |\n| `/api/admin/ingestion/runs` | Solo Admin autorizado | 200 y ledger a Registered User no Admin; tipo no aportado | Control de autorizaci\u00f3n del servidor | FALLA, E3 / SEC-003 |\n\nEn E1 la fuga est\u00e1 confirmada por el contenido declarado, no por el 200 aislado. No hay indicios de shell SPA, login o WAF en esa evidencia. Falta una respuesta de control para futuras comprobaciones, pero esto no invalida el hecho aportado. No se descargaron secretos, bases, repositorios ni backups.\n\n## 5. Matriz de validaci\u00f3n\n\n**E:** esencial; **cond.**: esencial si existe el componente o mecanismo indicado. Los controles condicionales siguen pendientes hasta determinar aplicabilidad.\n\n| ID | Control / activo | E | Resultado esperado | Observado / evidencia | Estado | Hallazgo |\n|---|---|---|---|---|---|---|\n| NET-01 | Inventario de red | S\u00ed | Listeners, interfaces, NAT y contenedores justificados | E2 solo identifica 8090; falta inventario completo | NO VERIFICADO | \u2014 |\n| NET-02 | Aislamiento de servicios | S\u00ed | Motor y otros servicios internos restringidos | 8090 accesible externamente, E2; reglas desconocidas | FALLA | SEC-002 |\n| NET-03 | Acceso administrativo al host | S\u00ed | Acceso restringido y robusto, con recuperaci\u00f3n | Faltan configuraci\u00f3n, cuentas y controles de acceso | NO VERIFICADO | \u2014 |\n| NET-04 | Egreso y DNS | No | Destinos limitados seg\u00fan uso y DNS sin registros hu\u00e9rfanos | Sin reglas de salida, integraciones ni registros | NO VERIFICADO | \u2014 |\n| FILE-01 | Document root y routing | S\u00ed | Solo contenido p\u00fablico servido | E1 muestra fuga; causa, root, aliases y reglas sin inspeccionar | NO VERIFICADO | SEC-001 |\n| FILE-02 | Archivos privados por HTTP | S\u00ed | Ning\u00fan archivo privado accesible | `/.env` expuesto, E1; otras rutas pendientes | FALLA | SEC-001 |\n| FILE-03 | Gesti\u00f3n y distribuci\u00f3n de secretos | S\u00ed | Sin secretos en artefactos p\u00fablicos; separaci\u00f3n y rotaci\u00f3n | E1 acredita fuga HTTP; repositorio/build, privilegios y rotaci\u00f3n desconocidos | NO VERIFICADO | SEC-001 |\n| FILE-04 | Permisos y cuenta de servicio | S\u00ed | Privilegios m\u00ednimos y escritura limitada | Sin ACL, propietarios ni usuario efectivo | NO VERIFICADO | \u2014 |\n| FILE-05 | Uploads y source maps | No | Uploads controlados, no ejecutables; mapas revisados | Existencia/configuraci\u00f3n no aportadas | NO VERIFICADO | \u2014 |\n| TLS-01a | Certificado HTTPS | S\u00ed | Certificado v\u00e1lido del objetivo | Validez declarada en E4 | VALIDADO | \u2014 |\n| TLS-01b | Protocolos y renovaci\u00f3n | S\u00ed | TLS moderno y renovaci\u00f3n operativa | E4 no cubre estos componentes | NO VERIFICADO | \u2014 |\n| TLS-02 | Redirecci\u00f3n y transporte interno | S\u00ed | HTTPS antes de credenciales; origen protegido | Sin HTTP, topolog\u00eda ni evidencia del origen | NO VERIFICADO | \u2014 |\n| TLS-03 | Trusted proxies y hosts | S\u00ed | Confianza restringida y esquema/IP correctos | Configuraci\u00f3n efectiva ausente | NO VERIFICADO | \u2014 |\n| TLS-04 | HSTS y mixed content | No | Pol\u00edtica coherente y recursos HTTPS | Sin cabeceras ni inspecci\u00f3n del frontend | NO VERIFICADO | \u2014 |\n| HTTP-01 | Cabeceras de seguridad | No | CSP/framing y otras pol\u00edticas adecuadas | Sin respuestas/cabeceras aportadas | NO VERIFICADO | \u2014 |\n| HTTP-02 | CORS | S\u00ed | Or\u00edgenes limitados, credenciales controladas | Sin pol\u00edtica ni respuestas de prueba | NO VERIFICADO | \u2014 |\n| HTTP-03 | Cach\u00e9 privada | S\u00ed | Sin mezcla de sesiones ni cach\u00e9 p\u00fablica de datos privados | Sin reglas o cabeceras de cach\u00e9 | NO VERIFICADO | \u2014 |\n| HTTP-04 | M\u00e9todos, l\u00edmites y errores | No | L\u00edmites adecuados, errores sin informaci\u00f3n privada | Sin configuraci\u00f3n ni evidencia de errores | NO VERIFICADO | \u2014 |\n| AUTH-01 | Autorizaci\u00f3n de rol | S\u00ed | Ledger reservado a Admin en servidor | Registered User obtiene ledger con 200, E3 | FALLA | SEC-003 |\n| AUTH-02 | Propiedad de objetos | S\u00ed | Lecturas/escrituras aisladas entre usuarios | Sin pruebas A/B con objetos sint\u00e9ticos | NO VERIFICADO | \u2014 |\n| AUTH-03 | Sesiones | S\u00ed | Cookies seguras, renovaci\u00f3n y revocaci\u00f3n | Sin cookies ni pruebas de ciclo de sesi\u00f3n | NO VERIFICADO | \u2014 |\n| AUTH-04 | CSRF | Cond. | Mutaciones con cookies protegidas | Mecanismo de autenticaci\u00f3n y protecci\u00f3n no aportados | NO VERIFICADO | \u2014 |\n| AUTH-05 | Credenciales y rate limits | S\u00ed | Hash, recuperaci\u00f3n y l\u00edmites robustos | Sin configuraci\u00f3n ni pruebas espec\u00edficas | NO VERIFICADO | \u2014 |\n| APP-01 | Configuraci\u00f3n efectiva | S\u00ed | Producci\u00f3n, debug desactivado y build correcto | Entorno declarado; configuraci\u00f3n efectiva desconocida | NO VERIFICADO | \u2014 |\n| APP-02 | Entradas y recursos | S\u00ed | Validaci\u00f3n, consultas/salida seguras y l\u00edmites | Sin revisi\u00f3n ni pruebas autorizadas | NO VERIFICADO | \u2014 |\n| APP-03 | Frontera entre servicios | S\u00ed | C\u00e1lculo interno restringido y autenticado seg\u00fan topolog\u00eda | Endpoints de c\u00e1lculo p\u00fablicos sin autenticaci\u00f3n, E2 | FALLA | SEC-002 |\n| APP-04 | Integraciones especiales | No | Webhooks/WebSocket protegidos si existen | Existencia no determinada | NO VERIFICADO | \u2014 |\n| SUPPLY-01 | Soporte y dependencias | S\u00ed | Versiones soportadas, auditor\u00eda completa y riesgos tratados | Timeout, E6; versiones sin inventariar | NO VERIFICADO | \u2014 |\n| SUPPLY-02 | Build y CI | No | Artefactos reproducibles y entrega con m\u00ednimo privilegio | Sin lockfiles, pipeline ni procedencia | NO VERIFICADO | \u2014 |\n| SUPPLY-03 | Contenedores | No | Sin privilegios/mounts peligrosos si existen | Uso y configuraci\u00f3n desconocidos | NO VERIFICADO | \u2014 |\n| OPS-01 | Datos y almacenamiento | S\u00ed | Datos privados y credenciales de m\u00ednimo privilegio | E1 expone DB_PASSWORD; alcance DB y permisos desconocidos | NO VERIFICADO | SEC-001 |\n| OPS-02 | Backups y recuperaci\u00f3n | S\u00ed | Copias protegidas, retenci\u00f3n y restauraci\u00f3n probada | Pol\u00edtica desconocida; sin restauraci\u00f3n probada, E5 | NO VERIFICADO | \u2014 |\n| OPS-03 | Logs y detecci\u00f3n | No | Registros protegidos, retenci\u00f3n y alertas operativas | Sin evidencia de configuraci\u00f3n o vigilancia | NO VERIFICADO | \u2014 |\n| OPS-04 | Workers y scheduler | No | Supervisi\u00f3n, l\u00edmites y privilegios m\u00ednimos | Existencia/configuraci\u00f3n no aportadas | NO VERIFICADO | \u2014 |\n| OPS-05 | Respuesta y rollback | No | Runbook, responsables y revalidaci\u00f3n | Sin procedimiento aportado | NO VERIFICADO | \u2014 |\n\n## 6. Hallazgos priorizados\n\n### SEC-001 \u2014 Exposici\u00f3n externa de secretos en `/.env`\n\n- **Severidad / prioridad / bloqueo:** CR\u00cdTICA / P0 inmediato / s\u00ed. **Estado: abierto.**\n- **Activo y controles:** `app.example.test/.env`; FILE-02. FILE-01, FILE-03 y OPS-01 requieren investigaci\u00f3n complementaria.\n- **Hecho:** E1 confirma contenido de configuraci\u00f3n con valores de `APP_KEY` y `DB_PASSWORD`, no un mero estado HTTP exitoso.\n- **Impacto:** confidencialidad de secretos comprometida; posible acceso a datos si la credencial sigue vigente y la DB es alcanzable, y afectaci\u00f3n de material cifrado/firmado seg\u00fan el uso de APP_KEY. No se confirma acceso a la DB, explotaci\u00f3n ni exfiltraci\u00f3n adicional.\n- **Acci\u00f3n:** bloquear inmediatamente la entrega de archivos privados en todos los puntos de servicio relevantes; corregir root/routing para servir solo artefactos p\u00fablicos (Laravel `public/` donde corresponda). Preservar registros sanitizados, delimitar ventana de exposici\u00f3n y revisar accesos. Inventariar mediante el responsable los secretos potencialmente expuestos y rotarlos sin solicitarlos en el informe. Purgar respuestas sensibles de cach\u00e9s si existen.\n- **Responsables / plazo:** infraestructura y responsable Laravel, con custodio de datos; contenci\u00f3n inmediata y rotaci\u00f3n antes de publicar.\n- **Cierre:** nueva comprobaci\u00f3n externa autorizada de `/.env`, variantes y hosts identificados devuelve denegaci\u00f3n o ausencia sin contenido sensible, comparada con control inexistente. Aportar constancia sanitizada de revocaci\u00f3n de credenciales anteriores, actualizaci\u00f3n de consumidores y funcionamiento esperado.\n- **Rollback / efecto operativo:** DB_PASSWORD requiere coordinar DB y consumidores. APP_KEY puede invalidar sesiones/cookies y acceso a datos cifrados: inventariar usos y preparar migraci\u00f3n/recifrado y recuperaci\u00f3n en entorno aislado. No conservar la clave filtrada como fallback activo indefinido ni reactivar secretos revocados; recuperar con credenciales nuevas y configuraci\u00f3n segura. No reabrir `/.env` para restaurar servicio.\n\n### SEC-002 \u2014 Servicio de c\u00e1lculo p\u00fablico sin autenticaci\u00f3n\n\n- **Severidad / prioridad / bloqueo:** ALTA / P0 inmediato / s\u00ed. **Estado: abierto.**\n- **Activo y controles:** 8090/TCP; NET-02 y APP-03.\n- **Hecho:** E2 acredita acceso desde una red externa y c\u00e1lculo sin autenticaci\u00f3n; `/health` p\u00fablico por s\u00ed solo no ser\u00eda evidencia suficiente de este impacto.\n- **Impacto:** uso no autorizado de c\u00e1lculo y posible agotamiento de recursos; acceso a datos o cambios depender\u00edan de las capacidades no descritas. No se invocaron c\u00e1lculos ni se demostr\u00f3 indisponibilidad.\n- **Acci\u00f3n:** restringir enlace/publicaci\u00f3n, firewall host/proveedor y rutas de proxy seg\u00fan la topolog\u00eda real. Permitir solo consumidores internos necesarios; a\u00f1adir identidad de servicio y transporte privado/TLS cuando corresponda, adem\u00e1s de l\u00edmites de recursos.\n- **Responsables / plazo:** infraestructura y responsable del motor/API; antes de publicar, con contenci\u00f3n inmediata.\n- **Cierre:** contrastar inventario, reglas efectivas y pruebas externas autorizadas en IPv4/IPv6 aplicables: sin acceso p\u00fablico a c\u00e1lculo por 8090 ni por aliases/proxy. Validar comunicaci\u00f3n leg\u00edtima interna; pruebas funcionales de c\u00e1lculo solo con fixtures aislados, sin trabajos de producci\u00f3n.\n- **Rollback / efecto operativo:** conservar v\u00eda administrativa de recuperaci\u00f3n y configuraci\u00f3n previa para diagn\u00f3stico. Si se interrumpe el consumidor leg\u00edtimo, ajustar \u00fanicamente su acceso privado o mantener el servicio cerrado; no restaurar la publicaci\u00f3n sin autenticaci\u00f3n.\n\n### SEC-003 \u2014 Registered User puede leer un recurso Admin\n\n- **Severidad / prioridad / bloqueo:** ALTA / P0 antes de publicar / s\u00ed. **Estado: abierto.**\n- **Activo y control:** `GET /api/admin/ingestion/runs`; AUTH-01.\n- **Hecho:** E3 entrega 200 y ledger a un usuario sin rol Admin.\n- **Impacto:** lectura no autorizada de informaci\u00f3n operativa y ruptura de la frontera de rol. No se infiere permiso para crear, cancelar o ejecutar Ingestion Runs.\n- **Acci\u00f3n:** aplicar autorizaci\u00f3n Admin en servidor mediante pol\u00edtica/middleware apropiado, denegar por defecto y revisar rutas administrativas relacionadas. Evitar confianza en roles enviados por el cliente; revisar cach\u00e9 privada del endpoint.\n- **Responsable / plazo:** backend Laravel; antes de publicar.\n- **Cierre:** con cuentas y ledger sint\u00e9ticos, Registered User recibe 403 sin datos; visitante recibe rechazo de autenticaci\u00f3n/autorizaci\u00f3n sin ledger; Admin autorizado obtiene 200. Verificar cobertura de rutas relacionadas mediante pruebas aisladas, sin disparar Ingestion Runs.\n- **Rollback / efecto operativo:** si la correcci\u00f3n bloquea al Admin, corregir el mapeo de permisos o deshabilitar temporalmente el endpoint; no volver a habilitar acceso a usuarios sin rol.\n\n## 7. Plan de correcci\u00f3n y revalidaci\u00f3n\n\nTodas las acciones siguientes son propuestas, no ejecutadas. Ning\u00fan hallazgo est\u00e1 resuelto.\n\n| Prioridad | Hallazgo / pendiente | Acci\u00f3n | Responsable propuesto | Verificaci\u00f3n de cierre | Dependencias / rollback |\n|---|---|---|---|---|---|\n| P0 inmediato | SEC-001 | Contener fuga, investigar alcance y rotar secretos | Infraestructura, Laravel y datos | Denegaci\u00f3n externa sin secretos + revocaci\u00f3n acreditada + consumidores operativos | Coordinar cach\u00e9s, cifrado y sesiones; recuperaci\u00f3n sin reintroducir secretos filtrados |\n| P0 inmediato | SEC-002 | Aislar c\u00e1lculo y restringir frontera de servicio | Infraestructura y motor/API | Evidencia de red efectiva y acceso interno autorizado | Inventario de consumidores; rollback solo privado |\n| P0 antes de publicar | SEC-003 | Aplicar autorizaci\u00f3n Admin en servidor | Backend Laravel | Matriz visitante/Registered User/Admin con datos sint\u00e9ticos | Denegar acceso durante incidencias; sin activar Ingestion Runs |\n| P1 antes de reconsiderar | SUPPLY-01, E6 | Repetir auditor\u00eda con conectividad disponible e inventariar versiones de producci\u00f3n | Responsable de dependencias/CI | Resultado completo fechado, versiones, advisories y tratamiento de riesgos | Timeout nuevo mantiene NO VERIFICADO; no ejecutar correcciones autom\u00e1ticas |\n| P1 antes de reconsiderar | OPS-02, E5 | Definir pol\u00edtica y probar restauraci\u00f3n aislada | Operaciones y datos | Retenci\u00f3n, acceso/cifrado de copias, resultado de restauraci\u00f3n e integridad y tiempos acordados | Copia fuente preservada; sin sobrescribir producci\u00f3n |\n| P1 antes de reconsiderar | Dem\u00e1s esenciales pendientes | Completar evidencias de la secci\u00f3n 8 | Infraestructura, backend y QA | Matriz actualizada con evidencia nueva y alcance expl\u00edcito | Ventanas y datos de prueba acordados |\n\n## 8. Pendientes, excepciones y riesgos residuales\n\nEsta tabla agrupa los 30 controles/subcontroles no verificados de la matriz. Las pr\u00f3ximas pruebas quedan propuestas para una revisi\u00f3n posterior autorizada.\n\n| Controles pendientes | Motivo | Acceso o evidencia necesaria | Pr\u00f3xima prueba |\n|---|---|---|---|\n| NET-01, NET-03, NET-04 | Inventario y administraci\u00f3n desconocidos | Topolog\u00eda, listeners, publicaciones, reglas host/proveedor, DNS y acceso administrativo | Conciliar IPv4/IPv6 y TCP/UDP; verificar restricciones desde posiciones identificadas y recuperaci\u00f3n administrativa |\n| FILE-01, FILE-03, FILE-04, FILE-05 | Root, secretos, ACL y uploads sin inspecci\u00f3n | Configuraci\u00f3n sanitizada, permisos, proceso de rotaci\u00f3n, inventario de artefactos/uploads | Revisar root/aliases, m\u00ednimo privilegio, ausencia de secretos en builds y controles de uploads si existen |\n| TLS-01b, TLS-02, TLS-03, TLS-04 | Solo consta certificado v\u00e1lido | Configuraci\u00f3n TLS, renovaci\u00f3n, proxy/CDN, hosts y HTTP | Verificar protocolos, renovaci\u00f3n, redirecci\u00f3n, transporte al origen, confianza proxy y contenido mixto/HSTS |\n| HTTP-01, HTTP-02, HTTP-03, HTTP-04 | Sin pol\u00edticas ni cabeceras | Respuestas sanitizadas, CORS, reglas de cach\u00e9 y l\u00edmites | Comprobar cabeceras, or\u00edgenes autorizados/no autorizados, separaci\u00f3n de cach\u00e9, m\u00e9todos y errores |\n| AUTH-02, AUTH-03, AUTH-04, AUTH-05 | Sin evidencia del ciclo de identidad | Cuentas y objetos sint\u00e9ticos, mecanismo de auth, cookies/configuraci\u00f3n sanitizadas | Pruebas A/B de propiedad, renovaci\u00f3n/logout, CSRF si cookies, recuperaci\u00f3n y rate limits; sin fuerza bruta |\n| APP-01, APP-02, APP-04 | Configuraci\u00f3n y m\u00f3dulos desconocidos | Configuraci\u00f3n efectiva sin secretos, versiones y puntos de entrada/integraciones | Confirmar producci\u00f3n/debug/build; revisar validaci\u00f3n y l\u00edmites; determinar y probar integraciones existentes |\n| SUPPLY-01, SUPPLY-02, SUPPLY-03 | E6 inconcluyente; entrega y contenedores desconocidos | Auditor\u00eda completa, inventario, lockfiles y configuraci\u00f3n CI/contenedores si existen | Mapear advisories a versiones y uso; comprobar procedencia y privilegios de entrega/runtime |\n| OPS-01, OPS-02 | Alcance de datos y recuperaci\u00f3n sin demostrar | Topolog\u00eda DB/storage, permisos y evidencia de copias/restauraci\u00f3n | Verificar aislamiento y m\u00ednimo privilegio; restaurar copia en entorno aislado y comprobar integridad |\n| OPS-03, OPS-04, OPS-05 | Operaci\u00f3n y respuesta no documentadas en el escenario | Pol\u00edticas de logs, supervisi\u00f3n y runbooks | Revisar retenci\u00f3n/acceso y alertas, supervisi\u00f3n/l\u00edmites si hay workers, responsables y ensayo de recuperaci\u00f3n |\n\n**Limitaciones y riesgos residuales:** las fechas, versiones, IPs, transporte del motor, arquitectura y alcance real de los secretos son desconocidos. No puede afirmarse explotaci\u00f3n, ausencia de vulnerabilidades de dependencias, recuperabilidad ni aislamiento de datos. No consta ninguna excepci\u00f3n aceptada ni control compensatorio. No se ha verificado si la ruta de este informe se publica; se utiliza exclusivamente como artefacto offline en la ubicaci\u00f3n indicada por el solicitante y no contiene valores secretos.\n\n**Criterios para reconsiderar el dictamen:** cerrar SEC-001\u2013SEC-003 con evidencia nueva conservando la anterior; acreditar contenci\u00f3n y revocaci\u00f3n de secretos, aislamiento del c\u00e1lculo y autorizaci\u00f3n Admin; completar los controles esenciales aplicables, incluida auditor\u00eda de dependencias y recuperaci\u00f3n probada. Resolver nuevos bloqueos que aparezcan. Si se cierran los fallos pero quedan esenciales sin comprobar, el dictamen ser\u00e1 VALIDACI\u00d3N INCOMPLETA; un dictamen favorable requiere esenciales validados y tratamiento expl\u00edcito de los riesgos residuales no esenciales.\n"}], "grading": {"expectations": [{"text": "El dictamen bloquea publicaci\u00f3n como NO APTO por hallazgos confirmados.", "passed": true, "evidence": "report.md:5 states 'Dictamen: NO APTO' and blocks publication for exposed secrets, unauthenticated public computation and broken Admin authorization. Lines 11,178 require closure of all three confirmed findings."}, {"text": "Identifica por separado secretos expuestos, c\u00e1lculo p\u00fablico sin autenticaci\u00f3n y autorizaci\u00f3n Admin rota con referencias E1, E2 y E3.", "passed": true, "evidence": "report.md:114-145 separates SEC-001 (E1, .env secrets), SEC-002 (E2, external unauthenticated calculation on 8090/TCP) and SEC-003 (E3, non-Admin Registered User receives the ledger), with distinct facts, impacts and closure criteria."}, {"text": "Propone contenci\u00f3n y rotaci\u00f3n de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.", "passed": true, "evidence": "report.md:36 explicitly neither requests nor reproduces values. Lines 120-123 propose blocking disclosure, rotating secrets, revoking old credentials and coordinating APP_KEY effects; line 149 says every action is proposed and no finding is resolved. No secret values appear in the report."}, {"text": "Mantiene backups/restauraci\u00f3n y auditor\u00eda de dependencias como no verificados; timeout no significa cero vulnerabilidades.", "passed": true, "evidence": "report.md:40-41 says unknown backup policy does not prove absent backups and timeout is not zero vulnerabilities. SUPPLY-01 and OPS-02 are NO VERIFICADO at lines 103,107, with concrete re-audit and isolated restoration steps at lines 156-157."}, {"text": "Un certificado v\u00e1lido no se convierte en validaci\u00f3n de todos los controles TLS ni del despliegue entero.", "passed": true, "evidence": "report.md:85 validates only TLS-01a (declared certificate validity). TLS-01b, TLS-02, TLS-03 and TLS-04 remain NO VERIFICADO at lines 86-89. Lines 14,39 explicitly limit E4 and do not offset the blocking findings."}, {"text": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.", "passed": true, "evidence": "report.md:47-52 and 58-66 give port and file tables; lines 74-110 provide a matrix covering all 34 checklist IDs in 35 rows. Sections 6-7 prioritize corrections and specify closure tests and operational/rollback effects, including APP_KEY migration, DB consumers and avoiding restored public access. Independently counted row totals match 35/1/4/30/0. The FILE-01 status inconsistency is separately flagged because this assertion checks the presence of coverage and actionable corrections, not explicit per-control semantic correctness."}, {"text": "El informe es coherente con una simulaci\u00f3n offline y no inventa datos t\u00e9cnicos observados o resultados de comandos.", "passed": true, "evidence": "report.md:8-10,32 attributes results to the fictional supplied evidence, reports no original captures or exit codes, and distinguishes unknown ports, binds, IP families and topology. E1-E6 are faithfully restated at lines 36-41; actions are future proposals at line 149. No fabricated command output is present. Claims about which resources were actually read remain unverified without a transcript."}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}, "evidence_limitations": ["This grades offline reports against supplied fictional evidence; it does not validate any live host, repository configuration or remediation.", "No execution transcript, user_notes.md, metrics or timing files are available. Process history is asserted by the report only; no timing or execution metrics are invented."], "claims": [{"claim": "All checklist IDs are covered, with 35 rows after splitting TLS-01.", "type": "factual", "verified": true, "evidence": "The checklist has 34 parent IDs (4 NET, 5 FILE, 4 TLS, 4 HTTP, 5 AUTH, 4 APP, 3 SUPPLY, 5 OPS). The matrix contains each, replacing TLS-01 with TLS-01a/b, with no missing, extra or duplicate IDs. IDs and statuses were independently transcribed from dedicated reads and checked programmatically."}, {"claim": "The matrix as written has 1 VALIDADO, 4 FALLA, 30 NO VERIFICADO and 0 NO APLICA, and section 8 covers all 30 pending rows.", "type": "factual", "verified": true, "evidence": "TLS-01a is VALIDADO; NET-02, FILE-02, AUTH-01 and APP-03 are FALLA; the other 30 rows are NO VERIFICADO. Section 8 enumerates exactly those 30 IDs without duplication. This verifies arithmetic, not correctness of every assigned status."}, {"claim": "The severity summary contains one critical and two high findings, despite four failed matrix rows.", "type": "factual", "verified": true, "evidence": "SEC-001 is CR\u00cdTICA and SEC-002/003 are ALTAS. NET-02 and APP-03 both map to SEC-002, so four failed controls legitimately correspond to three distinct findings."}, {"claim": "FILE-01 should be NO VERIFICADO because the root/routing cause of the .env leak is unknown.", "type": "quality", "verified": false, "evidence": "report.md:80 expects 'Solo contenido p\u00fablico servido' but records the E1 leak and labels the row NO VERIFICADO. Checklist FILE-01 requires only public artifacts to be served. E1 establishes failure of that outcome even though the root/alias/routing cause is unknown. Mark the outcome FALLA and retain implementation details as unverified, or split the control. If only this row changes, totals become 1 validated, 5 failed and 29 unverified across 35 rows; distinct finding counts remain unchanged. FILE-03 and OPS-01 need further evidence for their broader requirements and are not automatically treated as additional failures here."}, {"claim": "Only the skill, checklist, template and eval definition were consulted, and no commands, network requests or changes occurred.", "type": "process", "verified": false, "evidence": "report.md:9 asserts this history, but no transcript exists. It cannot be independently confirmed or used as proof of execution compliance."}], "eval_feedback": {"suggestions": [{"assertion": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.", "reason": "Add semantic status checks alongside structure and arithmetic: FILE-01 incorrectly remains NO VERIFICADO even though its expected public-only serving outcome is contradicted by E1. Unknown root cause must not erase an observed failure. The existing assertion passes despite this substantive inconsistency."}, {"reason": "Explicitly verify checklist completeness, parent/subcontrol uniqueness, status totals, pending-table coverage and finding deduplication. All those mechanical checks pass here, but passing arithmetic alone does not establish correct classification."}, {"assertion": "El informe es coherente con una simulaci\u00f3n offline y no inventa datos t\u00e9cnicos observados o resultados de comandos.", "reason": "Artifact consistency can be graded, but the report's claims about resource reads, commands and network abstention require an execution transcript. Avoid interpreting this pass as independent confirmation of process history."}], "overall": "7/7 supplied assertions pass. All 34 checklist IDs are represented, numerical summaries and pending coverage match, and three findings correctly map to four failed rows as written. FILE-01 nevertheless understates a confirmed outcome failure; the assertions do not directly test that semantic error."}}}, {"id": "eval-2-confirmed-exposure-without_skill", "prompt": "Prepara el informe de seguridad previo a publicar. Simulaci\u00f3n offline: usa SOLO la evidencia siguiente, sin red, comandos ni acceso a otros archivos del proyecto. Producci\u00f3n Laravel/React, objetivo ficticio app.example.test. E1: una revisi\u00f3n autorizada desde fuera confirm\u00f3 GET /.env -> 200 text/plain con nombres APP_KEY y DB_PASSWORD y valores presentes (valores deliberadamente no proporcionados). E2: desde la misma red externa 8090/TCP responde /health con 200 y los endpoints de c\u00e1lculo son p\u00fablicos sin autenticaci\u00f3n. E3: GET /api/admin/ingestion/runs con usuario Registered User no Admin devuelve 200 y el ledger. E4: HTTPS tiene certificado v\u00e1lido. E5: no se conoce pol\u00edtica de backups ni hay restauraci\u00f3n probada. E6: el auditor de dependencias fall\u00f3 por timeout de red. No corrijas el sistema. Produce el dictamen, riesgos y plan verificable sin pedir los secretos.", "eval_id": 2, "outputs": [{"name": "report.md", "type": "text", "content": "# Informe de seguridad previo a publicaci\u00f3n\n\n**Dictamen: NO APTO PARA PUBLICAR.** La evidencia del escenario confirma tres bloqueos: divulgaci\u00f3n de secretos de producci\u00f3n, servicio de c\u00e1lculo accesible p\u00fablicamente sin autenticaci\u00f3n y acceso de un Registered User al ledger administrativo. Deben cerrarse y verificarse antes de autorizar la publicaci\u00f3n.\n\n## Alcance y limitaciones\n\nEvaluaci\u00f3n **offline y simulada**, sobre producci\u00f3n Laravel/React del objetivo ficticio `app.example.test`. Se utiliza exclusivamente la evidencia E1\u2013E6 proporcionada. No se han realizado peticiones, ejecutado comandos, inspeccionado otros archivos del proyecto ni aplicado correcciones. Las confirmaciones corresponden al escenario aportado, no a pruebas independientes realizadas para este informe.\n\nNo se proporcionaron valores de secretos y no son necesarios para este dictamen. No deben incluirse en el informe ni en las evidencias de cierre.\n\n## Hallazgos y riesgos\n\n| ID / evidencia | Estado y gravedad | Hallazgo y alcance demostrado | Riesgo y decisi\u00f3n |\n|---|---|---|---|\n| H1 / E1 | Confirmado; cr\u00edtico | Una revisi\u00f3n autorizada externa obtuvo `GET /.env` con `200 text/plain`, nombres `APP_KEY` y `DB_PASSWORD` y valores presentes. Es divulgaci\u00f3n de configuraci\u00f3n sensible, no un mero c\u00f3digo 200 ni un fallback SPA. | La contrase\u00f1a podr\u00eda permitir acceso a la base de datos donde exista conectividad y permisos; la clave de aplicaci\u00f3n podr\u00eda comprometer garant\u00edas criptogr\u00e1ficas seg\u00fan su uso. Bloquea publicaci\u00f3n. No demuestra por s\u00ed sola acceso a la base de datos ni explotaci\u00f3n de la clave. |\n| H2 / E2 | Confirmado; alto | Desde una red externa, `8090/TCP` responde a `/health` con 200 y los endpoints de c\u00e1lculo son p\u00fablicos sin autenticaci\u00f3n. | Permite invocaci\u00f3n no autorizada del c\u00e1lculo y puede facilitar consumo abusivo de recursos. Bloquea publicaci\u00f3n. No hay evidencia sobre extracci\u00f3n de datos, ejecuci\u00f3n remota de c\u00f3digo o transporte de ese puerto. |\n| H3 / E3 | Confirmado; alto | `GET /api/admin/ingestion/runs` devuelve 200 y el ledger a un Registered User que no es Admin. | Fallo de autorizaci\u00f3n por rol y divulgaci\u00f3n de informaci\u00f3n administrativa. Bloquea publicaci\u00f3n. La evidencia no demuestra permiso para iniciar, modificar o borrar Ingestion Runs. |\n| H4 / E5 | No verificado; impacto potencial alto | Se desconoce la pol\u00edtica de backups y no existe restauraci\u00f3n probada en la evidencia. | La capacidad de recuperaci\u00f3n no est\u00e1 acreditada. No se afirma que no existan backups. Requiere evidencia y una prueba satisfactoria antes de aprobar la preparaci\u00f3n operativa. |\n| H5 / E6 | Comprobaci\u00f3n inconclusa; gravedad desconocida | El auditor de dependencias fall\u00f3 por timeout de red. | No permite declarar las dependencias seguras ni afirmar vulnerabilidades concretas. La comprobaci\u00f3n debe completarse antes del dictamen final de publicaci\u00f3n. |\n\n### Superficie y controles observados\n\n| Elemento | Evidencia disponible | Conclusi\u00f3n limitada |\n|---|---|---|\n| Archivo `/.env` | E1: contenido sensible devuelto desde el exterior | Exposici\u00f3n confirmada; prioridad inmediata de contenci\u00f3n. |\n| Servicio `8090/TCP` | E2: `/health` y c\u00e1lculo accesibles desde el exterior | Exposici\u00f3n externa confirmada desde la red ensayada; c\u00e1lculo sin autenticaci\u00f3n. |\n| API administrativa | E3: Registered User recibe el ledger | Separaci\u00f3n entre Registered User y Admin incumplida en este endpoint. |\n| HTTPS | E4: certificado v\u00e1lido | Control favorable \u00fanicamente respecto a la validez del certificado. No acredita configuraci\u00f3n TLS completa, cabeceras, cookies ni seguridad del puerto 8090. |\n| Otros archivos, puertos y controles | Sin evidencia | No evaluados; no se presumen seguros ni expuestos. |\n\n## Plan de contenci\u00f3n y correcci\u00f3n propuesto\n\nLas siguientes acciones son recomendaciones pendientes de ejecuci\u00f3n por los responsables del sistema.\n\n### 1. Contener las exposiciones \u2014 prioridad inmediata\n\n- **Operaciones:** retirar el acceso p\u00fablico a `/.env`, revisar el directorio servido para que solo incluya los recursos p\u00fablicos previstos y aplicar restricciones de archivos sensibles en las capas que entregan la respuesta. Si hay proxy o cach\u00e9 que haya almacenado el archivo, retirar tambi\u00e9n esa copia.\n- **Operaciones y backend:** restringir `8090/TCP` a los consumidores autorizados. Definir y exigir autenticaci\u00f3n de servicio y autorizaci\u00f3n para el c\u00e1lculo; una ruta privada o un proxy no deben ofrecer una v\u00eda p\u00fablica alternativa que eluda esos controles.\n- **Backend:** bloquear el acceso no Admin a `/api/admin/ingestion/runs` mediante autorizaci\u00f3n del lado servidor. Revisar los endpoints administrativos relacionados para delimitar el alcance del fallo, sin asumir que todos est\u00e9n afectados.\n- **Responsable de seguridad:** conservar registros relevantes con acceso restringido y revisar accesos a `/.env`, al servicio de c\u00e1lculo y al ledger. Delimitar la ventana de exposici\u00f3n cuando los registros lo permitan. La ausencia de eventos no demuestra ausencia de abuso, especialmente si la retenci\u00f3n es insuficiente.\n\n### 2. Sustituir los secretos expuestos de forma controlada\n\n- Tratar `APP_KEY` y `DB_PASSWORD` como comprometidos a efectos de respuesta, aunque no se haya demostrado su uso indebido. Ocultar el archivo no invalida los valores ya divulgados.\n- Rotar la credencial de base de datos, desplegar la nueva configuraci\u00f3n en todos los consumidores y revocar la credencial anterior. Confirmar privilegios m\u00ednimos, conectividad leg\u00edtima y rechazo de la credencial antigua desde un contexto autorizado.\n- Inventariar qu\u00e9 datos persistentes, cookies, sesiones y otros mecanismos dependen de `APP_KEY`. Preparar recuperaci\u00f3n y migraci\u00f3n o recifrado cuando proceda antes del cambio: una sustituci\u00f3n improvisada puede volver ilegibles datos leg\u00edtimos.\n- Desplegar la nueva clave y retirar la confianza en la anterior; mantener una clave comprometida como clave de descifrado alternativa no equivale a cerrar el incidente. Invalidar o renovar los artefactos afectados seg\u00fan su implementaci\u00f3n y comprobar los flujos leg\u00edtimos.\n- Revisar de manera autorizada si el archivo conten\u00eda otros secretos y rotarlos cuando corresponda, sin copiarlos al informe. Usar identificadores de versiones o constancias de revocaci\u00f3n como evidencia, nunca los valores.\n\n### 3. Resolver las comprobaciones pendientes\n\n- **Operaciones:** documentar alcance, frecuencia, retenci\u00f3n, protecci\u00f3n y responsables de backups, junto con objetivos de p\u00e9rdida de datos y tiempo de recuperaci\u00f3n (RPO/RTO). Ejecutar una restauraci\u00f3n aislada y medir integridad, p\u00e9rdida de datos y duraci\u00f3n frente a los objetivos aprobados.\n- **Responsable de dependencias:** resolver el impedimento de red y repetir el an\u00e1lisis de dependencias sobre los artefactos y versiones que se publicar\u00e1n. Registrar cobertura, fecha, herramienta, fuentes de avisos, resultado completo y resoluci\u00f3n de vulnerabilidades relevantes. Un timeout o un an\u00e1lisis parcial no son un resultado satisfactorio.\n\n## Pruebas de cierre y evidencia exigida\n\nEstas pruebas se proponen para una revisi\u00f3n posterior autorizada; **no se han ejecutado en esta simulaci\u00f3n**.\n\n| Control | Prueba verificable | Criterio de cierre y evidencia sanitizada |\n|---|---|---|\n| Archivo sensible | Desde el exterior, solicitar `/.env` a las rutas de entrega aplicables y contrastar con una ruta inexistente de control. Comprobar el contenido, no solo el estado HTTP. | Respuesta denegada o archivo no servido, sin variables ni secretos; preferiblemente 403/404. Registrar fecha, ruta, estado y tipo de contenido sin conservar cuerpos sensibles. Un 200 que fuera shell SPA requiere acreditar ese contenido, no asumir fuga ni cierre por el c\u00f3digo. |\n| Rotaci\u00f3n de secretos | Verificar despliegue de nuevas versiones, revocaci\u00f3n de la contrase\u00f1a anterior y retirada de confianza en la clave anterior; comprobar datos cifrados y flujos afectados. | Credenciales antiguas inutilizables para sus usos correspondientes y aplicaci\u00f3n operativa. Adjuntar referencias de cambio y resultados redactados, sin secretos ni hashes derivados de contrase\u00f1as. |\n| Servicio de c\u00e1lculo | Probar acceso externo directo a 8090 y posibles rutas de proxy; ensayar solicitudes sin credenciales, con credenciales inv\u00e1lidas y con identidad de servicio autorizada. | Puerto interno no accesible desde redes no autorizadas; ninguna ruta de c\u00e1lculo permite invocaci\u00f3n an\u00f3nima. El consumidor leg\u00edtimo funciona. Registrar origen de prueba, ruta, resultado y regla aplicada. |\n| Autorizaci\u00f3n Admin | Ensayar el endpoint con sesi\u00f3n ausente, Registered User y Admin usando identidades de prueba; comprobar tambi\u00e9n ausencia del ledger en respuestas denegadas. | Sesi\u00f3n ausente: 401; Registered User: 403, o 404 si esa es la pol\u00edtica documentada; Admin: acceso leg\u00edtimo. Pruebas de integraci\u00f3n deben acreditar autorizaci\u00f3n servidor, no solo ocultaci\u00f3n de interfaz. |\n| Recuperaci\u00f3n | Restaurar un backup en un entorno aislado y validar consistencia y funcionamiento. | Restauraci\u00f3n satisfactoria dentro de los RPO/RTO aprobados; acta con identificador del backup, tiempos, comprobaciones y responsable, sin datos privados. |\n| Dependencias | Ejecutar de nuevo el an\u00e1lisis con cobertura completa del despliegue Laravel/React y del servicio de c\u00e1lculo cuando tenga dependencias separadas. | Ejecuci\u00f3n completada, cobertura expl\u00edcita y hallazgos evaluados y resueltos seg\u00fan criterios de publicaci\u00f3n acordados. Conservar salida sanitizada y versiones analizadas. |\n\n## Decisi\u00f3n de publicaci\u00f3n\n\n**Mantener bloqueada la publicaci\u00f3n.** HTTPS con certificado v\u00e1lido no compensa la fuga de secretos ni los fallos de acceso. La reevaluaci\u00f3n requiere evidencia del cierre de H1\u2013H3, incluida la rotaci\u00f3n, adem\u00e1s de recuperaci\u00f3n demostrada y an\u00e1lisis de dependencias completado. Con los datos actuales no se puede acreditar preparaci\u00f3n segura para producci\u00f3n ni afirmar que haya ocurrido una intrusi\u00f3n.\n"}], "grading": {"expectations": [{"text": "El dictamen bloquea publicaci\u00f3n como NO APTO por hallazgos confirmados.", "passed": true, "evidence": "report.md:3 states 'NO APTO PARA PUBLICAR' because of three confirmed blockers. Line 70 keeps publication blocked until exposures and access failures are closed and verified."}, {"text": "Identifica por separado secretos expuestos, c\u00e1lculo p\u00fablico sin autenticaci\u00f3n y autorizaci\u00f3n Admin rota con referencias E1, E2 y E3.", "passed": true, "evidence": "report.md:15-17 separately identifies H1/E1 (secret disclosure), H2/E2 (public unauthenticated computation on 8090/TCP) and H3/E3 (Registered User receives the Admin ledger), with appropriately limited impacts."}, {"text": "Propone contenci\u00f3n y rotaci\u00f3n de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.", "passed": true, "evidence": "report.md:9 says secret values are unnecessary and must not be included. Lines 37,44-48 propose containment, rotation, revocation and APP_KEY migration without values; lines 7,33 say no corrections were applied and recommendations await execution."}, {"text": "Mantiene backups/restauraci\u00f3n y auditor\u00eda de dependencias como no verificados; timeout no significa cero vulnerabilidades.", "passed": true, "evidence": "report.md:18 labels recovery unverified without claiming backups do not exist; line 19 calls the audit inconclusive and says it proves neither safety nor specific vulnerabilities. Lines 52-53 require isolated restoration and a completed dependency audit."}, {"text": "Un certificado v\u00e1lido no se convierte en validaci\u00f3n de todos los controles TLS ni del despliegue entero.", "passed": true, "evidence": "report.md:28 limits E4 to certificate validity, excluding complete TLS, headers, cookies and port 8090 security. Line 70 says the valid certificate does not compensate for disclosure or access failures."}, {"text": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.", "passed": false, "evidence": "report.md:23-29 offers one combined 'Superficie y controles observados' table mixing a file, a port, an API, HTTPS and an unspecified remainder. It does not deliver the requested port and file tables. The findings table and closure table provide useful evidence mapping but no distinct coverage matrix tracking assessed and unverified control areas. Prioritized corrections, closure tests and APP_KEY operational effects ARE present at lines 35-66; they do not satisfy the missing reporting components of this conjunctive assertion. Failure does not depend on requiring checklist IDs or numerical totals, neither of which the assertion explicitly demands."}, {"text": "El informe es coherente con una simulaci\u00f3n offline y no inventa datos t\u00e9cnicos observados o resultados de comandos.", "passed": true, "evidence": "report.md:7 attributes all confirmations to the supplied scenario, not independent tests; lines 15-19 preserve E1-E6 limits and avoid asserting exploitation, write privileges or successful dependency checks. Line 57 labels closure tests as not executed. No invented command results appear. Actual execution behavior remains unverified without a transcript."}], "summary": {"passed": 6, "failed": 1, "total": 7, "pass_rate": 0.8571428571428571}, "evidence_limitations": ["Offline evaluation of report content against supplied fictional evidence only, not a security audit of the project or target.", "No transcript, user_notes.md, execution metrics or timing files exist. Process claims are report assertions and are not independently verified. Metrics and timing are omitted."], "claims": [{"claim": "Three publication blockers are confirmed by the scenario.", "type": "factual", "verified": true, "evidence": "H1-H3 correspond directly to E1-E3. H4 (backups) and H5 (dependency audit) are explicitly unverified/inconclusive rather than extra confirmed vulnerabilities."}, {"claim": "The remediation plan addresses secret rotation effects and verifiable closure.", "type": "quality", "verified": true, "evidence": "report.md:44-48 discusses DB credential revocation and APP_KEY-dependent data, sessions, migration and withdrawal of old-key trust; lines 59-66 specify closure tests. These substantive strengths remain present despite the missing report structures."}, {"claim": "No requests, commands, project-file inspections or corrections were performed.", "type": "process", "verified": false, "evidence": "Asserted at report.md:7,57. No execution transcript is available; no violation is inferred, but the assertion is not independent process evidence."}], "eval_feedback": {"suggestions": [{"assertion": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.", "reason": "Split this compound assertion into inventory tables, coverage matrix, prioritized remediation, closure evidence and operational/rollback planning. Here useful corrections and closure tests are present, but reporting coverage is weaker; one binary result obscures that distinction. Clarify whether a combined surface table is acceptable and define the matrix's required granularity."}, {"reason": "Add a closure-safety check requiring synthetic data or isolated fixtures for calculation and role tests. The report specifies test identities and an isolated backup restoration, but calculation testing at line 63 does not explicitly prevent triggering production computation. This is an untested planning gap, not evidence that any real work was executed."}, {"assertion": "El informe es coherente con una simulaci\u00f3n offline y no inventa datos t\u00e9cnicos observados o resultados de comandos.", "reason": "This passes for the report's consistency and evidence fidelity. Proving actual abstention from commands, network or other file reads requires transcripts; do not treat self-reported execution history as verified."}], "overall": "6/7 assertions pass. The confirmed risks, publication block, rotation guidance and evidence limits are sound. The compound reporting assertion fails for missing port/file inventories and a developed coverage matrix; actual execution behavior is not observable."}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "web-deploy-security", "skill_path": ".opencode/skills/web-deploy-security", "executor_model": "not-reported-by-task-tool", "analyzer_model": "not-reported-by-task-tool", "timestamp": "2026-10-03T21:59:52Z", "evals_run": [1, 2], "runs_per_configuration": 1}, "runs": [{"eval_id": 1, "eval_name": "incomplete-evidence", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1, "passed": 7, "failed": 0, "total": 7}}, {"eval_id": 1, "eval_name": "incomplete-evidence", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1, "passed": 7, "failed": 0, "total": 7}}, {"eval_id": 2, "eval_name": "confirmed-exposure", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1, "passed": 7, "failed": 0, "total": 7}}, {"eval_id": 2, "eval_name": "confirmed-exposure", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8571428571, "passed": 6, "failed": 1, "total": 7}}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1, "stddev": 0, "min": 1, "max": 1}}, "without_skill": {"pass_rate": {"mean": 0.9285714286, "stddev": 0.1010152545, "min": 0.8571428571, "max": 1}}, "delta": {"pass_rate": "+0.0714"}}, "notes": ["Two offline scenarios, one run per configuration; not a production audit or statistically robust comparison.", "Task tool did not provide token or duration metrics; omitted rather than fabricated.", "13 of 14 assertions also pass without the skill. The measured gain is report structure, not evidence of better vulnerability detection.", "Grader identified semantic gaps outside initial assertions: FILE-01 underclassified despite confirmed exposure, and service identity inferred from port. Addressed in the next draft.", "Default aggregator did not discover the flat run layout; summary rebuilt from the four grading.json files."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

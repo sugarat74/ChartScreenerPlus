@@ -3,7 +3,7 @@
 ## Blocking Next Phase
 
 - **Data source and legality:** Yahoo Finance chart data is the primary source for `ingestion-scraper-eod`; Stooq daily EOD CSV is the fallback because its anti-bot response can exhaust the request timeout. Both are unofficial integrations whose terms of use and redistribution rights need review. Reliable live ingestion at scale still needs rate-limit and terms validation.
-- **Hosting target:** concrete deployment target and how the Laravel app, Python engine, database and scheduler are co-located.
+- **Hosting verification:** the owner reports Chartiko is deployed on a VPS at `https://www.chartiko.com` (2026-10-04). Effective Laravel/engine/database/scheduler topology and the deployment security findings still require server evidence; this report of hosting does not validate those controls.
 
 ## Implementation-Time Questions
 

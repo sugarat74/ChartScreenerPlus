@@ -1,13 +1,37 @@
 # Progress Log
 
+## Chartiko Brand — 2026-10-04
+
+- Renamed public product to Chartiko; owner reports production is hosted on a VPS at https://www.chartiko.com. Header/logo/favicon/browser metadata, application-name defaults, current product/design/hosting docs and marketing skill updated.
+- Shared SVG logo uses an angular C/chart stroke, ink and yellow, hard shadow; header links to Screener. Existing typography/layout/tokens preserved. Public EOD badges, status, tooltip, chart accessible label, empty messages and table heading removed; Admin wording remains. Pipeline stays EOD-only, with date/closing-price semantics unchanged.
+- Existing VPS directories/service/health identifiers and historical prototype/spec/session references preserved for compatibility. Deployment docs explain APP_NAME and preserving SESSION_COOKIE when adjusting a live environment.
+- Verification: init.ps1 baseline and post-change exit 0; Laravel 154 tests / 985 assertions, frontend lint/build 131 modules, engine 47 tests (existing Starlette warning). SVG parses as XML; built index has Chartiko title/application metadata. Source search finds EOD only in Admin UI and an admin API comment. Marketing skill quick_validate.py passes; git diff --check clean.
+- Limitations: no browser available for visual QA. Public HTTPS lookup failed through web tool and timed out through curl with network permission; this does not prove the owner's site is unavailable elsewhere. GitHub CLI reports invalid authentication and no SSH config is present; no commit/push/VPS writes performed, so this build is not verified as published.
+- Feature chartiko-brand is passing (implemented/self-verified locally), independent acceptance and publication pending. Next: use authorized CI/VPS access to publish, then verify brand/favicon/public copy and retained Admin EOD on the deployed release.
+
+## Marketing / SEO / GEO Skill — 2026-10-04
+
+- Created project skill `.opencode/skills/web-marketing-seo-geo/`: SKILL.md, UI metadata, 20-control checklist, primary-source references and launch report template. Covers launch copy/CTAs/materials, SEO/rendering/canonicals/sitemaps, grounded GEO content, crawler policy, agent navigation and measurement.
+- Scope: skill creation only; no product SEO changes, campaigns, external messages or deployment. Implementation mode acts when requested; audit mode stays read-only. Optional llms.txt is experimental, no ranking/citation promises, private resources remain protected, AlphaPulse claims limited to implemented EOD functionality.
+- Baseline init.ps1 exit 0: Laravel 154 tests / 985 assertions, frontend lint/build (131 modules), engine 47 tests with existing Starlette warning. Skill quick_validate.py exit 0 before and after installation; all five installed file hashes matched the prepared version. Temporary source copies removed after successful installation.
+- Manual instruction review covers missing domain, JS-only SPA, private routes, absent analytics, training policy and known deployment blockers; no agent forward-test or SEO effectiveness measurement performed. Independent feature acceptance remains pending.
+- Tooling feature `web-marketing-seo-geo-skill` is passing. Existing accepted product features unchanged. Next: invoke the skill to prepare/implement site improvements; skill creation does not itself resolve the security findings or approve production.
+
+## Security Review — 2026-10-04
+
+- Requested review using `web-deploy-security`: report at `docs/security/2026-10-04-103318-repositorio.md`.
+- Verdict: NO APTO for publishing through the reviewed deployment scripts; production itself was not inspected. Two high findings: runtime group can replace the release activation link through its writable parent; CI trusts unverified ssh-keyscan output. Three medium and one low findings are detailed with closure checks.
+- Verification: isolated authorization/auth/ownership suites passed, 70 tests / 328 assertions. Composer production audit and frontend npm audit (including build dependencies) completed with exit 0 and no advisories. Python audit unavailable; listeners/firewall inspection denied; no deployment URL or VPS access provided.
+- Application, services, permissions and accepted feature states unchanged. No full init.ps1 rerun for this read-only audit; last full gate below remains applicable. Next: correct documented deployment issues, then verify effective VPS/TLS/CSRF/cookies/backups using the report's pending checks.
+
 ## Current Verified State
 
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- All 23 listed features are accepted. The Admin EOD maintenance correction and the local market-data backfill are verified.
+- The original 23 product features remain accepted. `chartiko-brand` and the two tooling skills are passing (self-verified; independent feature acceptance pending). Branding publication is not verified.
 - Current blocker: none
-- Last full gate verified at: 2026-10-01 (`.\init.ps1` exit 0; Laravel 154 tests / 985 assertions; SPA lint 0 warnings/errors (37 files) + build 131 modules; engine 47 tests). Operational data verified 2026-10-03: 246,304 bars, 246,304 snapshots across 494 instruments, 379 current signals, and `GET /api/screener` returned 50 of 494 Candidates.
+- Last full gate: rerun successfully during Session 030 (`.\init.ps1` exit 0; Laravel 154 tests / 985 assertions; SPA lint 0 warnings/errors (37 files) + build 131 modules; engine 47 tests). Operational data last verified 2026-10-03: 246,304 bars, 246,304 snapshots across 494 instruments, 379 current signals, and `GET /api/screener` returned 50 of 494 Candidates.
 
 ## Session Log
 
@@ -378,3 +402,22 @@
 - Completed: confirmed run #9 had persisted 246,304 Daily Bars for 494 instruments but no Indicator Snapshots. An initial universe indicator attempt failed after the Python engine stopped listening on port 8090. Restarted the engine, proved `indicators:compute --ticker=NVDA` end to end, then completed `php artisan indicators:compute --universe=sp500` and `php artisan signals:detect --universe=sp500`.
 - Verification: indicator computation processed 494 instruments and wrote **246,304 snapshots**; signal detection processed 494 instruments and stored **379 current signals**. Database check returned `bars=246304 snapshots=246304 snapshot_instruments=494 signals=379`. Live `GET http://127.0.0.1:8000/api/screener` returned **50 of 494 Candidates** with `CTVA` first under the default ranking. Port 8090 remained listening after both commands.
 - Known risk or unresolved issue: the Python engine and database queue worker are local long-running processes, not Windows services; they must be started again after a terminal closes or Windows restarts. No source or test code changed in this session, so the last full `init.ps1` gate remains the 2026-10-01 run.
+
+### Session 030
+
+- Completed: 2026-10-04
+- Goal: Create the requested reusable web deployment security review skill with a final validation report.
+- Delivered: `.opencode/skills/web-deploy-security/SKILL.md`, a 34-control checklist, Windows PowerShell 5.1/Linux/HTTP command guidance, report template and two offline evaluation scenarios. Covers ports/firewalls/IPv6, document root and protected files, secrets/ACLs, TLS/proxies, headers/CORS/cache, sessions/CSRF/ownership/Admin, production configuration, dependencies/containers, data/backups and operations.
+- Report contract: sanitized evidence, port/service and protected-file tables, complete control matrix, prioritized findings, corrective actions and closure checks, explicit unknowns and one of four verdicts. Static code inspection cannot approve a live deployment. Audit is read-only apart from its report; operational fixes require a scoped change and revalidation.
+- Verification: startup `init.ps1` passed (154 Laravel tests / 985 assertions, SPA lint/build, 47 engine tests); skill-creator `quick_validate.py` passed before/after revision. Two comparative offline iterations were graded independently. Final with-skill results: 18/18 assertions; without skill: 14/18. Checklist coverage and counts independently checked. Revisions corrected ambiguity about unknown root causes versus failed protection and inference of service identity from ports.
+- Review artifacts: `.opencode/skills/web-deploy-security-workspace/iteration-2/review.html` provides report comparison and benchmark; iteration 1 retained for history. Results are synthetic, not a deployment audit or formal security certification. Small sample, one run/configuration, resumed-agent context and limited accidental assertion visibility are documented; timings/tokens were not provided and were not fabricated.
+- State: `web-deploy-security-skill` is `passing`; scenario grading is not final independent feature acceptance. The 23 existing product entries remain accepted. No application behavior, production host or security policy was changed.
+- Next step: restart OpenCode to load the skill; invoke `Usa web-deploy-security para revisar el despliegue de <URL> y entregar el informe`. With only the repository available, the skill issues a partial report and requests the evidence/access needed for live validation.
+
+### GitHub synchronization — 2026-10-04
+
+- User requested connection verification and upload of all pending project changes.
+- GitHub HTTPS connection and fetch succeeded; local main and origin/main matched before the commit (201cb93).
+- Re-ran init.ps1: exit 0, Laravel 154 tests / 985 assertions, frontend lint/build (131 modules), engine 47 tests with the existing Starlette warning. git diff --check passed.
+- Prepared Chartiko branding, security report and reusable security/marketing skills with evaluation artifacts for upload. Machine-local Claude permissions are excluded.
+- Existing feature acceptance states are preserved. The main push triggers the configured CI/deploy workflow; live deployment and independent feature validation are not verified by this local gate. Security findings remain tracked in docs/security/2026-10-04-103318-repositorio.md.

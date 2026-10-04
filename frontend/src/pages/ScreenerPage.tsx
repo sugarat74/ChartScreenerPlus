@@ -139,7 +139,7 @@ export default function ScreenerPage() {
             Superficie
           </span>
           <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-            EOD · sin sesión
+            Acceso público
           </span>
         </div>
         <h1 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">

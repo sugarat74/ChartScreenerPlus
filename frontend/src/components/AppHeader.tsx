@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
-import { LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
+import { DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
 
 /**
- * Sticky product chrome: brand block, EOD status, inert primary action, user
+ * Sticky product chrome: Chartiko brand, analysis context, inert primary action, user
  * pill and the route-backed tab bar. Styling follows DESIGN.md tokens only.
  */
 export default function AppHeader() {
@@ -30,39 +30,41 @@ export default function AppHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b-2 border-outline bg-surface">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-2.5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md border-2 border-outline bg-primary font-headline text-xl font-black text-on-primary shadow-[2px_2px_0px_#ffcc00]">
-            αP
-          </div>
+        <Link
+          to={DEFAULT_ROUTE}
+          aria-label="Chartiko · inicio"
+          className="flex items-center gap-3 rounded-md focus:outline-2 focus:outline-offset-4 focus:outline-outline"
+        >
+          <img src="/favicon.svg" alt="" width={40} height={40} className="h-10 w-10 shrink-0" />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-headline text-xl font-black tracking-tight text-on-surface">
-                ALPHAPULSE
+                CHARTIKO
               </span>
               <span className="rounded-[4px] border border-outline bg-primary-container px-1.5 py-0.5 font-mono text-[10px] font-bold text-on-primary-container shadow-[1px_1px_0px_#1a1a1a]">
-                EOD
+                SCREENER
               </span>
             </div>
             <p className="hidden font-mono text-xs text-on-surface-variant sm:block">
-              Screener cuantitativo EOD
+              Screener de análisis técnico
             </p>
           </div>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-3">
           <div className="hidden items-center gap-2 rounded border border-outline bg-surface-container px-2.5 py-1 font-mono text-xs md:flex">
             <span className="h-2 w-2 rounded-full border border-outline bg-surface-dim" />
-            <span className="text-on-surface">Mercado Cerrado (EOD)</span>
+            <span className="text-on-surface">Análisis técnico</span>
           </div>
 
           <button
             type="button"
             disabled
             aria-disabled="true"
-            title="La consulta EOD todavía no está conectada"
+            title="La actualización de datos se gestiona desde Admin"
             className="rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Actualizar EOD
+            Actualizar datos
           </button>
 
           {status === 'loading' ? (

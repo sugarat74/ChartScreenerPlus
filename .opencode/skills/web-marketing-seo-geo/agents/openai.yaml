@@ -1,0 +1,4 @@
+interface:
+  display_name: "Marketing web, SEO y GEO"
+  short_description: "Prepara promoción, SEO y visibilidad para agentes"
+  default_prompt: "Usa $web-marketing-seo-geo para preparar este sitio para promoción, implementar mejoras SEO/GEO y verificar el resultado."

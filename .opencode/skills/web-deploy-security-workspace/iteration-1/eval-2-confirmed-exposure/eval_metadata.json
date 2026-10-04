@@ -1,0 +1,14 @@
+{
+  "eval_id": 2,
+  "eval_name": "confirmed-exposure",
+  "prompt": "Prepara el informe de seguridad previo a publicar. Simulación offline: usa SOLO la evidencia siguiente, sin red, comandos ni acceso a otros archivos del proyecto. Producción Laravel/React, objetivo ficticio app.example.test. E1: una revisión autorizada desde fuera confirmó GET /.env -> 200 text/plain con nombres APP_KEY y DB_PASSWORD y valores presentes (valores deliberadamente no proporcionados). E2: desde la misma red externa 8090/TCP responde /health con 200 y los endpoints de cálculo son públicos sin autenticación. E3: GET /api/admin/ingestion/runs con usuario Registered User no Admin devuelve 200 y el ledger. E4: HTTPS tiene certificado válido. E5: no se conoce política de backups ni hay restauración probada. E6: el auditor de dependencias falló por timeout de red. No corrijas el sistema. Produce el dictamen, riesgos y plan verificable sin pedir los secretos.",
+  "assertions": [
+    "El dictamen bloquea publicación como NO APTO por hallazgos confirmados.",
+    "Identifica por separado secretos expuestos, cálculo público sin autenticación y autorización Admin rota con referencias E1, E2 y E3.",
+    "Propone contención y rotación de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.",
+    "Mantiene backups/restauración y auditoría de dependencias como no verificados; timeout no significa cero vulnerabilidades.",
+    "Un certificado válido no se convierte en validación de todos los controles TLS ni del despliegue entero.",
+    "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+    "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos."
+  ]
+}

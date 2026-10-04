@@ -1,0 +1,92 @@
+{
+  "expectations": [
+    {
+      "text": "El dictamen bloquea publicación como NO APTO por hallazgos confirmados.",
+      "passed": true,
+      "evidence": "report.md:5 states 'Dictamen: NO APTO' and blocks publication for exposed secrets, unauthenticated public computation and broken Admin authorization. Lines 11,178 require closure of all three confirmed findings."
+    },
+    {
+      "text": "Identifica por separado secretos expuestos, cálculo público sin autenticación y autorización Admin rota con referencias E1, E2 y E3.",
+      "passed": true,
+      "evidence": "report.md:114-145 separates SEC-001 (E1, .env secrets), SEC-002 (E2, external unauthenticated calculation on 8090/TCP) and SEC-003 (E3, non-Admin Registered User receives the ledger), with distinct facts, impacts and closure criteria."
+    },
+    {
+      "text": "Propone contención y rotación de credenciales expuestas sin solicitar ni reproducir sus valores ni afirmar cambios ejecutados.",
+      "passed": true,
+      "evidence": "report.md:36 explicitly neither requests nor reproduces values. Lines 120-123 propose blocking disclosure, rotating secrets, revoking old credentials and coordinating APP_KEY effects; line 149 says every action is proposed and no finding is resolved. No secret values appear in the report."
+    },
+    {
+      "text": "Mantiene backups/restauración y auditoría de dependencias como no verificados; timeout no significa cero vulnerabilidades.",
+      "passed": true,
+      "evidence": "report.md:40-41 says unknown backup policy does not prove absent backups and timeout is not zero vulnerabilities. SUPPLY-01 and OPS-02 are NO VERIFICADO at lines 103,107, with concrete re-audit and isolated restoration steps at lines 156-157."
+    },
+    {
+      "text": "Un certificado válido no se convierte en validación de todos los controles TLS ni del despliegue entero.",
+      "passed": true,
+      "evidence": "report.md:85 validates only TLS-01a (declared certificate validity). TLS-01b, TLS-02, TLS-03 and TLS-04 remain NO VERIFICADO at lines 86-89. Lines 14,39 explicitly limit E4 and do not offset the blocking findings."
+    },
+    {
+      "text": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+      "passed": true,
+      "evidence": "report.md:47-52 and 58-66 give port and file tables; lines 74-110 provide a matrix covering all 34 checklist IDs in 35 rows. Sections 6-7 prioritize corrections and specify closure tests and operational/rollback effects, including APP_KEY migration, DB consumers and avoiding restored public access. Independently counted row totals match 35/1/4/30/0. The FILE-01 status inconsistency is separately flagged because this assertion checks the presence of coverage and actionable corrections, not explicit per-control semantic correctness."
+    },
+    {
+      "text": "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+      "passed": true,
+      "evidence": "report.md:8-10,32 attributes results to the fictional supplied evidence, reports no original captures or exit codes, and distinguishes unknown ports, binds, IP families and topology. E1-E6 are faithfully restated at lines 36-41; actions are future proposals at line 149. No fabricated command output is present. Claims about which resources were actually read remain unverified without a transcript."
+    }
+  ],
+  "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0},
+  "evidence_limitations": [
+    "This grades offline reports against supplied fictional evidence; it does not validate any live host, repository configuration or remediation.",
+    "No execution transcript, user_notes.md, metrics or timing files are available. Process history is asserted by the report only; no timing or execution metrics are invented."
+  ],
+  "claims": [
+    {
+      "claim": "All checklist IDs are covered, with 35 rows after splitting TLS-01.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The checklist has 34 parent IDs (4 NET, 5 FILE, 4 TLS, 4 HTTP, 5 AUTH, 4 APP, 3 SUPPLY, 5 OPS). The matrix contains each, replacing TLS-01 with TLS-01a/b, with no missing, extra or duplicate IDs. IDs and statuses were independently transcribed from dedicated reads and checked programmatically."
+    },
+    {
+      "claim": "The matrix as written has 1 VALIDADO, 4 FALLA, 30 NO VERIFICADO and 0 NO APLICA, and section 8 covers all 30 pending rows.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "TLS-01a is VALIDADO; NET-02, FILE-02, AUTH-01 and APP-03 are FALLA; the other 30 rows are NO VERIFICADO. Section 8 enumerates exactly those 30 IDs without duplication. This verifies arithmetic, not correctness of every assigned status."
+    },
+    {
+      "claim": "The severity summary contains one critical and two high findings, despite four failed matrix rows.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "SEC-001 is CRÍTICA and SEC-002/003 are ALTAS. NET-02 and APP-03 both map to SEC-002, so four failed controls legitimately correspond to three distinct findings."
+    },
+    {
+      "claim": "FILE-01 should be NO VERIFICADO because the root/routing cause of the .env leak is unknown.",
+      "type": "quality",
+      "verified": false,
+      "evidence": "report.md:80 expects 'Solo contenido público servido' but records the E1 leak and labels the row NO VERIFICADO. Checklist FILE-01 requires only public artifacts to be served. E1 establishes failure of that outcome even though the root/alias/routing cause is unknown. Mark the outcome FALLA and retain implementation details as unverified, or split the control. If only this row changes, totals become 1 validated, 5 failed and 29 unverified across 35 rows; distinct finding counts remain unchanged. FILE-03 and OPS-01 need further evidence for their broader requirements and are not automatically treated as additional failures here."
+    },
+    {
+      "claim": "Only the skill, checklist, template and eval definition were consulted, and no commands, network requests or changes occurred.",
+      "type": "process",
+      "verified": false,
+      "evidence": "report.md:9 asserts this history, but no transcript exists. It cannot be independently confirmed or used as proof of execution compliance."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Incluye tablas de puertos y archivos, matriz de cobertura y correcciones priorizadas con pruebas de cierre y efectos operativos o rollback.",
+        "reason": "Add semantic status checks alongside structure and arithmetic: FILE-01 incorrectly remains NO VERIFICADO even though its expected public-only serving outcome is contradicted by E1. Unknown root cause must not erase an observed failure. The existing assertion passes despite this substantive inconsistency."
+      },
+      {
+        "reason": "Explicitly verify checklist completeness, parent/subcontrol uniqueness, status totals, pending-table coverage and finding deduplication. All those mechanical checks pass here, but passing arithmetic alone does not establish correct classification."
+      },
+      {
+        "assertion": "El informe es coherente con una simulación offline y no inventa datos técnicos observados o resultados de comandos.",
+        "reason": "Artifact consistency can be graded, but the report's claims about resource reads, commands and network abstention require an execution transcript. Avoid interpreting this pass as independent confirmation of process history."
+      }
+    ],
+    "overall": "7/7 supplied assertions pass. All 34 checklist IDs are represented, numerical summaries and pending coverage match, and three findings correctly map to four failed rows as written. FILE-01 nevertheless understates a confirmed outcome failure; the assertions do not directly test that semantic error."
+  }
+}

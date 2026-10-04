@@ -1,1 +1,1 @@
-"""Deterministic signal detection for the AlphaPulse engine."""
+"""Deterministic signal detection for the Chartiko engine."""

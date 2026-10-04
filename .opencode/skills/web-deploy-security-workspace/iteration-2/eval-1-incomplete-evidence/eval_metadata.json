@@ -1,0 +1,16 @@
+{
+  "eval_id": 1,
+  "eval_name": "incomplete-evidence",
+  "prompt": "Revisa la seguridad del despliegue y entrega un informe. Es una simulación offline: usa SOLO estos datos, sin red, comandos ni acceso a otros archivos del proyecto. Entorno staging Laravel/React/FastAPI. Evidencia aportada E1: GET /.env -> 200 text/html idéntico en hash y longitud a GET /ruta-inexistente-control y al shell SPA; no contiene variables ni secretos. E2: firewall del host permite TCP 443 desde Internet; security group y reglas IPv6 no disponibles. E3: listener 0.0.0.0:8090, no hay prueba externa ni datos de NAT/proxy. E4: cookie laravel_session tiene Secure, HttpOnly y SameSite=Lax; XSRF-TOKEN tiene Secure, SameSite=Lax y no tiene HttpOnly. E5: .env.example declara APP_DEBUG=false; no hay configuración efectiva ni acceso a producción. No hay credenciales ni evidencias adicionales. No ejecutes pruebas reales. Dime si puedo publicar y qué queda pendiente.",
+  "assertions": [
+    "El dictamen es validación incompleta y no aprueba producción con evidencia de staging.",
+    "No declara fuga de .env por el 200: identifica el fallback SPA y limita la conclusión a lo observado.",
+    "No afirma que 8090 sea público ni aislado solo por el bind; explicita firewall/proveedor/IPv6 y prueba externa pendientes.",
+    "No considera vulnerabilidad la ausencia de HttpOnly en XSRF-TOKEN y distingue la cookie de sesión.",
+    "No toma APP_DEBUG=false en .env.example como configuración efectiva validada.",
+    "Entrega tablas separadas de puertos y archivos, matriz con cobertura y próximos pasos concretos para controles no verificados.",
+    "Distingue evidencia aportada de pruebas ejecutadas y no afirma haber accedido al servidor ni realizado cambios.",
+    "No presenta la identidad FastAPI ni el protocolo del listener 8090 como observados; si los menciona son hipótesis.",
+    "Los conteos publicados coinciden con la matriz, incluidos subcontroles, y cada familia del checklist está representada."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "skill_name": "web-deploy-security",
+    "skill_path": ".opencode/skills/web-deploy-security",
+    "executor_model": "not-reported-by-task-tool",
+    "analyzer_model": "not-reported-by-task-tool",
+    "timestamp": "2026-10-03T21:59:52Z",
+    "evals_run": [1, 2],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {"eval_id": 1, "eval_name": "incomplete-evidence", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1, "passed": 7, "failed": 0, "total": 7}},
+    {"eval_id": 1, "eval_name": "incomplete-evidence", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1, "passed": 7, "failed": 0, "total": 7}},
+    {"eval_id": 2, "eval_name": "confirmed-exposure", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1, "passed": 7, "failed": 0, "total": 7}},
+    {"eval_id": 2, "eval_name": "confirmed-exposure", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8571428571, "passed": 6, "failed": 1, "total": 7}}
+  ],
+  "run_summary": {
+    "with_skill": {"pass_rate": {"mean": 1, "stddev": 0, "min": 1, "max": 1}},
+    "without_skill": {"pass_rate": {"mean": 0.9285714286, "stddev": 0.1010152545, "min": 0.8571428571, "max": 1}},
+    "delta": {"pass_rate": "+0.0714"}
+  },
+  "notes": [
+    "Two offline scenarios, one run per configuration; not a production audit or statistically robust comparison.",
+    "Task tool did not provide token or duration metrics; omitted rather than fabricated.",
+    "13 of 14 assertions also pass without the skill. The measured gain is report structure, not evidence of better vulnerability detection.",
+    "Grader identified semantic gaps outside initial assertions: FILE-01 underclassified despite confirmed exposure, and service identity inferred from port. Addressed in the next draft.",
+    "Default aggregator did not discover the flat run layout; summary rebuilt from the four grading.json files."
+  ]
+}
