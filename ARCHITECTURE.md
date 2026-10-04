@@ -26,7 +26,7 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
 
 - The SPA uses **react-router** (`createBrowserRouter` + `RouterProvider`) as a client-side data router; the shell is a layout route (`frontend/src/layouts/AppLayout.tsx`) that renders `AppHeader` plus an `<Outlet />`.
 - Route list:
-  - `/` -> redirect to `/screener`
+  - `/` -> public Chartiko landing page with Screener CTA and search metadata
   - `/screener` -> Screener (filter controls + Candidate list; anonymous)
   - `/chart` -> instrument chart in "no ticker selected" mode (guidance only; anonymous, no request)
   - `/instruments/:ticker` -> instrument chart for one ticker (anonymous deep link)

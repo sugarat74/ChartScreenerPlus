@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1900" viewBox="0 0 1440 1900" role="img" aria-labelledby="title desc">
+  <title id="title">Chartiko: arquitectura, procesos y software</title>
+  <desc id="desc">El navegador ejecuta React. Nginx sirve la SPA y envía API y Sanctum a PHP-FPM y Laravel. Laravel controla SQLite y llama por HTTP privado al motor Python FastAPI. Un worker procesa consultas de Admin y cron activa el pipeline diario de datos, indicadores y señales.</desc>
+  <defs>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#1a1a1a}
+      .h1{font-size:54px;font-weight:800;letter-spacing:-2px}
+      .h2{font-size:27px;font-weight:800}
+      .h3{font-size:23px;font-weight:700}
+      .body{font-size:20px}
+      .small{font-size:17px;fill:#4a4a4a}
+      .mono{font-family:Consolas,monospace;font-size:17px}
+      .card{fill:#faf7f2;stroke:#1a1a1a;stroke-width:2}
+      .shadow{fill:#1a1a1a}
+      .flow{fill:none;stroke:#1a1a1a;stroke-width:3;marker-end:url(#arrow)}
+      .blue{fill:#0055ff}
+      .white{fill:white}
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 Z" fill="#1a1a1a"/></marker>
+  </defs>
+  <rect width="1440" height="1900" fill="#f5f0e8"/>
+  <rect x="48" y="42" width="1344" height="132" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="72" y="102" class="h1">CHARTIKO / ARQUITECTURA</text>
+  <text x="74" y="143" class="body">De las cotizaciones a una lista de Candidates y su gráfico interactivo.</text>
+  <text x="48" y="210" class="small">Mapa técnico del repositorio · 04 octubre 2026 · Producción documentada y desarrollo local</text>
+
+  <text x="48" y="262" class="h2">01 / COMPONENTES Y CONEXIONES</text>
+  <rect x="54" y="294" width="410" height="206" class="shadow"/>
+  <rect x="48" y="288" width="410" height="206" class="card"/>
+  <text x="70" y="325" class="h3">NAVEGADOR / FRONTEND</text>
+  <text x="70" y="359" class="body">React 19 + TypeScript + Tailwind 4</text>
+  <text x="70" y="393" class="body">Screener · Candidates · Chart</text>
+  <text x="70" y="424" class="body">Portal · autenticación · Admin</text>
+  <text x="70" y="461" class="mono">frontend/ · Lightweight Charts</text>
+
+  <rect x="514" y="294" width="410" height="206" class="shadow"/>
+  <rect x="508" y="288" width="410" height="206" class="card"/>
+  <text x="530" y="325" class="h3">NGINX / ENTRADA WEB</text>
+  <text x="530" y="359" class="body">HTTPS · dominio público</text>
+  <text x="530" y="393" class="body">Sirve frontend/dist y fallback SPA</text>
+  <text x="530" y="424" class="body">/api y /sanctum → PHP-FPM</text>
+  <text x="530" y="461" class="mono">www.chartiko.com · 443</text>
+
+  <rect x="974" y="294" width="418" height="206" class="shadow"/>
+  <rect x="968" y="288" width="418" height="206" class="card"/>
+  <text x="990" y="325" class="h3">PHP-FPM / LARAVEL 13</text>
+  <text x="990" y="359" class="body">API · validación · permisos</text>
+  <text x="990" y="393" class="body">Sanctum: sesión + cookie + CSRF</text>
+  <text x="990" y="424" class="body">Screener y ranking en servidor</text>
+  <text x="990" y="461" class="mono">app/ · routes/ · public/index.php</text>
+  <path d="M458 382 H504" class="flow"/>
+  <path d="M918 382 H964" class="flow"/>
+
+  <rect x="54" y="558" width="410" height="212" class="shadow"/>
+  <rect x="48" y="552" width="410" height="212" class="card"/>
+  <text x="70" y="589" class="h3">FUENTES DE MERCADO</text>
+  <text x="70" y="625" class="body">Yahoo Finance: fuente principal</text>
+  <text x="70" y="657" class="body">Stooq: alternativa</text>
+  <text x="70" y="692" class="body">OHLCV diario · Universe S&amp;P 500</text>
+  <text x="70" y="732" class="small">Disponibilidad y límites externos</text>
+
+  <rect x="514" y="558" width="410" height="212" class="shadow"/>
+  <rect x="508" y="552" width="410" height="212" class="card"/>
+  <text x="530" y="589" class="h3">PYTHON / ENGINE</text>
+  <text x="530" y="625" class="body">FastAPI + Uvicorn + httpx</text>
+  <text x="530" y="657" class="body">Obtiene y valida cotizaciones</text>
+  <text x="530" y="692" class="body">Calcula indicadores y Signals</text>
+  <text x="530" y="732" class="mono">engine/ · 127.0.0.1:8090</text>
+
+  <rect x="974" y="558" width="418" height="212" class="shadow"/>
+  <rect x="968" y="552" width="418" height="212" class="card"/>
+  <text x="990" y="589" class="h3">SQLITE / PERSISTENCIA</text>
+  <text x="990" y="625" class="body">Daily Bars · Indicator Snapshots</text>
+  <text x="990" y="657" class="body">Signals · Universe · Instruments</text>
+  <text x="990" y="692" class="body">Users · Screeners · Watchlist</text>
+  <text x="990" y="732" class="body">Runs · jobs · sesiones · caché</text>
+  <path d="M508 662 H462" class="flow"/>
+  <text x="468" y="642" class="small">GET</text>
+  <path d="M1180 494 V548" class="flow"/>
+  <text x="1200" y="525" class="small">Laravel lee / escribe</text>
+  <path d="M1040 494 V523 H712 V548" class="flow"/>
+  <text x="555" y="517" class="small">HTTP / JSON privado · petición y respuesta</text>
+  <rect x="48" y="793" width="1338" height="53" fill="#eee9e0" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="70" y="827" class="body">Laravel posee la base de datos. Python recibe series y devuelve resultados; no accede a SQLite.</text>
+
+  <text x="48" y="902" class="h2">02 / PROCESOS QUE MUEVEN LA APLICACIÓN</text>
+  <rect x="48" y="924" width="1338" height="117" class="card"/>
+  <rect x="48" y="924" width="62" height="117" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="68" y="976" class="h3">A</text>
+  <text x="130" y="959" class="h3">CONSULTA DEL USUARIO</text>
+  <text x="130" y="991" class="body">Filtros → API Laravel → lectura y ranking → Candidates → gráfico del Instrument.</text>
+  <text x="130" y="1020" class="small">Visitor: Screener y Chart. Registered User: Saved Screeners y Watchlist propios. Admin: control de consultas.</text>
+
+  <rect x="48" y="1057" width="1338" height="132" class="card"/>
+  <rect x="48" y="1057" width="62" height="132" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="68" y="1110" class="h3">B</text>
+  <text x="130" y="1093" class="h3">CONSULTA MANUAL DESDE ADMIN</text>
+  <text x="130" y="1125" class="body">Admin → API (202) → job en SQLite → queue:work → Engine → Laravel guarda Daily Bars.</text>
+  <text x="130" y="1153" class="small">La SPA consulta el progreso: queued → running → completed / partial / failed. Reintento de los fallidos.</text>
+  <text x="130" y="1177" class="small">Este job ejecuta la adquisición de datos; los cálculos posteriores se ejecutan mediante el pipeline o comandos.</text>
+
+  <rect x="48" y="1205" width="1338" height="145" class="card"/>
+  <rect x="48" y="1205" width="62" height="145" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="68" y="1258" class="h3">C</text>
+  <text x="130" y="1242" class="h3">PIPELINE DIARIO COMPLETO</text>
+  <text x="130" y="1274" class="body">Cron cada minuto → schedule:run → ingestion:pipeline → datos → indicadores → señales.</text>
+  <text x="130" y="1303" class="small">16:30 America/New_York por defecto; excluye fines de semana y festivos configurados. Bloqueo de solapamiento.</text>
+  <text x="130" y="1328" class="small">SMA / EMA · RSI · MACD · ADX · Bollinger · RVOL → cruces, alineación, sobrecompra/venta y Pivot Breakout.</text>
+
+  <text x="48" y="1406" class="h2">03 / SOFTWARE NECESARIO Y FUNCIÓN</text>
+  <rect x="48" y="1428" width="1338" height="252" class="card"/>
+  <rect x="48" y="1428" width="1338" height="42" fill="#1a1a1a"/>
+  <text x="70" y="1456" class="body white">CAPA</text><text x="295" y="1456" class="body white">SOFTWARE</text><text x="850" y="1456" class="body white">PARA QUÉ</text>
+  <path d="M48 1512 H1386 M48 1554 H1386 M48 1596 H1386 M48 1638 H1386" stroke="#d0cbc3"/>
+  <text x="70" y="1498" class="body">Servidor web</text><text x="295" y="1498" class="body">Ubuntu · Nginx · Certbot</text><text x="850" y="1498" class="body">VPS, HTTP/HTTPS y certificados</text>
+  <text x="70" y="1540" class="body">Backend</text><text x="295" y="1540" class="body">PHP CLI + FPM · Composer · Laravel 13</text><text x="850" y="1540" class="body">API, dependencias y comandos</text>
+  <text x="70" y="1582" class="body">Datos</text><text x="295" y="1582" class="body">SQLite · extensión PHP pdo_sqlite</text><text x="850" y="1582" class="body">Almacén compartido por Laravel</text>
+  <text x="70" y="1624" class="body">Motor</text><text x="295" y="1624" class="body">Python · venv / pip · FastAPI / Uvicorn / httpx</text><text x="850" y="1624" class="body">Servicio interno de análisis</text>
+  <text x="70" y="1666" class="body">Construcción / ops</text><text x="295" y="1666" class="body">Node.js / npm / Vite · Git · systemd · cron</text><text x="850" y="1666" class="body">Build SPA, servicios y programación</text>
+
+  <rect x="48" y="1704" width="650" height="104" fill="#eee9e0" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="70" y="1736" class="h3">DESARROLLO / WINDOWS + LARAGON</text>
+  <text x="70" y="1767" class="small">PHP 8.4.8 · Python 3.10 · Node 22 · Composer 2.10.3</text>
+  <text x="70" y="1793" class="small">Vite :5173 → Laravel :8000 → Engine :8090; worker aparte.</text>
+  <rect x="720" y="1704" width="666" height="104" fill="#eee9e0" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="742" y="1736" class="h3">PRODUCCIÓN / VPS</text>
+  <text x="742" y="1767" class="small">Informe 04/10: Ubuntu 26.04 · Nginx 1.28.3 · PHP-FPM 8.5.</text>
+  <text x="742" y="1793" class="small">SPA compilada; Node no sirve peticiones. Engine y worker: systemd.</text>
+  <text x="48" y="1847" class="small">Datos diarios de cierre (EOD) · Etiquetas EOD solo en Admin dentro de la aplicación · Copilot fuera del MVP</text>
+  <text x="48" y="1877" class="small">Fuentes: ARCHITECTURE.md · código Laravel / frontend / engine · deploy/ · informe de producción 04/10/2026</text>
+</svg>

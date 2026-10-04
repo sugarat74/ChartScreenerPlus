@@ -4,11 +4,16 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Deployment security regression checks
+        run: bash deploy/verify-security.sh
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
@@ -38,24 +43,34 @@ jobs:
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: chartiko-production
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: frontend-dist
           path: frontend/dist
+      - name: Prepare SSH directory
+        run: echo "SSH_DIRECTORY=$RUNNER_TEMP/chartiko-ssh" >> "$GITHUB_ENV"
       - name: SSH setup
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
         run: |
-          install -m 700 -d ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          bash deploy/configure-ssh.sh "$SSH_DIRECTORY"
       - name: Upload release
         run: |
           REL=${GITHUB_SHA::10}
-          ssh deploy@${{ secrets.VPS_HOST }} "mkdir -p /var/www/alphapulse/releases/$REL"
-          rsync -az --delete --exclude='.git' --exclude='.github' --exclude='node_modules' \
+          ssh -F "$SSH_DIRECTORY/config" chartiko-vps "umask 027; mkdir -p /var/www/alphapulse/releases/$REL"
+          rsync -az --delete --chmod=D750,F640 -e "ssh -F '$SSH_DIRECTORY/config'" --exclude='.git' --exclude='.github' --exclude='node_modules' \
             --exclude='vendor' --exclude='alphapulse' --exclude='.env' --exclude='*.zip' \
-            ./ deploy@${{ secrets.VPS_HOST }}:/var/www/alphapulse/releases/$REL/
+            ./ chartiko-vps:/var/www/alphapulse/releases/$REL/
       - name: Activate release
-        run: ssh deploy@${{ secrets.VPS_HOST }} "bash /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/deploy.sh ${GITHUB_SHA::10}"
+        run: ssh -F "$SSH_DIRECTORY/config" chartiko-vps "bash /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/deploy.sh ${GITHUB_SHA::10}"
+      - name: Remove SSH credentials
+        if: always()
+        run: rm -rf -- "$SSH_DIRECTORY"

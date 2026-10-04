@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink } from 'react-router'
+import { Link, NavLink, useLocation } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
 import { DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
 
@@ -9,6 +9,7 @@ import { DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
  */
 export default function AppHeader() {
   const { user, status, logout } = useAuth()
+  const { pathname } = useLocation()
   const [signingOut, setSigningOut] = useState(false)
 
   // Admin-only tabs are hidden for everyone else; the API is the real gate.
@@ -57,15 +58,17 @@ export default function AppHeader() {
             <span className="text-on-surface">Análisis técnico</span>
           </div>
 
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="La actualización de datos se gestiona desde Admin"
-            className="rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            Actualizar datos
-          </button>
+          {pathname !== '/' && (
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              title="La actualización de datos se gestiona desde Admin"
+              className="rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              Actualizar datos
+            </button>
+          )}
 
           {status === 'loading' ? (
             <div className="flex items-center gap-2 rounded-full border-2 border-outline bg-surface-bright py-1 pr-2.5 pl-1 shadow-[2px_2px_0px_#1a1a1a]">
