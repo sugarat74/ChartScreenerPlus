@@ -1,5 +1,14 @@
 # Progress Log
 
+## Production publication verified — 2026-10-04 18:20 Europe/Madrid
+
+- Root Nginx helper applied; live noindex confirmed. Owner supplied provider-console SSH fingerprint matching the expected ED25519 key; production VPS_SSH_KNOWN_HOSTS updated. Live expected-pin acceptance and substituted-pin rejection both pass.
+- PR #1 merged; CI/deploy run 37215973285 succeeded. Product release 65ec3b16ff verified live with four services active, restricted permissions and SQLite quick_check ok. Public home contains Chartiko/canonical/JSON-LD/CTA; robots is actual text/plain and sitemap is actual XML with only the root URL. Screener/NVDA APIs 200; guest watchlist/screeners/admin APIs 401; .env/.git probes 403; HTTP redirects 301 to HTTPS. Session attributes Secure/HttpOnly/SameSite=Lax verified with values redacted.
+- APP_URL effective is canonical HTTPS; production/debug=false/key present verified without secrets. Fixed temporary config-cache readability regression from the private backup script's umask (600 -> 660) and reloaded PHP before publication; APIs recovered. The normal release also creates cache mode 660.
+- Revalidation report: docs/security/2026-10-04-revalidacion-despliegue.md. SEC-001/002 and URL/limited-sudo findings closed in observed scope. Global verdict VALIDACION INCOMPLETA: provider firewall, complete dependency audit, authenticated production CSRF/cache and automated backup retention remain unverified. Previous NO APTO report retained as historical evidence.
+- Production data differs from local: 68,136 Daily Bars, zero Indicator Snapshots and zero Signals. No ingestion/backfill was triggered during deployment/security checks; a populated Candidate list requires the existing indicator/signal pipeline. Local 2026-10-03 backfill evidence remains local only.
+- Existing feature status/acceptance lifecycle preserved: branding/marketing/documentation are passing, publication verified, independent acceptance still pending. Main is synchronized; final evidence is recorded in repository artifacts.
+
 ## Remediation verified — 2026-10-04 17:46 Europe/Madrid
 
 - User confirmed the root-console remediation ran. Live SSH revalidation: app/releases/shared/current/venv mode 750; .env and source files 640; private database directory 2770 and SQLite 660. SQLite quick_check is ok; jobs=0. Limited sudo now grants only the exact engine/queue restart and PHP-FPM/Nginx reload commands; the previous wildcard is gone.
@@ -69,9 +78,9 @@
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
-- The original 23 product features remain accepted. `chartiko-brand` and the two tooling skills are passing (self-verified; independent feature acceptance pending). Branding publication is not verified.
-- Current blocker: production security review is NO APTO (SEC-001/002); limited deployment sudo restoration is also pending before the next CI release.
-- Last full gate: rerun successfully during Session 030 (`.\init.ps1` exit 0; Laravel 154 tests / 985 assertions; SPA lint 0 warnings/errors (37 files) + build 131 modules; engine 47 tests). Operational data last verified 2026-10-03: 246,304 bars, 246,304 snapshots across 494 instruments, 379 current signals, and `GET /api/screener` returned 50 of 494 Candidates.
+- The original 23 product features remain accepted. Recent brand/marketing/tooling/documentation entries remain passing, pending independent acceptance. Branding and public metadata publication verified on 2026-10-04.
+- SEC-001/002, canonical URL and limited sudo remediated and revalidated; CI/deploy succeeded. Global security validation remains incomplete for controls listed in docs/security/2026-10-04-revalidacion-despliegue.md. Production has bars but no computed Indicator Snapshots/Signals; backfill remains an operational follow-up.
+- Last full local gate: init.ps1 exit 0 (Laravel 154 tests/985 assertions, SPA lint/build 133 modules, engine 47 tests). CI/deploy 37215973285 succeeded. Local 2026-10-03 data: 246,304 bars/snapshots, 494 instruments, 379 signals. Production 2026-10-04 data: 68,136 bars, zero snapshots/signals. Do not conflate the two databases.
 
 ## Session Log
 

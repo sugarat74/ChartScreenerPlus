@@ -719,9 +719,10 @@
       "SVG XML parse passed; built index includes Chartiko title, description and application-name metadata. Source search locates EOD only in Admin UI and an admin-client comment; no old public brand remains. git diff --check clean.",
       "Current docs/default APP_NAME/service descriptions and marketing skill updated; marketing skill quick_validate.py passes. Existing /var/www/alphapulse and service/health IDs preserved. docs/chartiko-brand.md records deployment/session compatibility handoff.",
       "Visual/live validation pending: no browser available; HTTPS probe timed out with network access. GitHub CLI authentication invalid, no SSH config; no publication performed. No independent validator run.",
-      "2026-10-04 GitHub upload session: HTTPS ls-remote and fetch succeeded; main matched origin/main before commit. init.ps1 exit 0 (Laravel 154/985, frontend lint/build 131 modules, engine 47); independent acceptance and live deployment validation remain pending."
+      "2026-10-04 GitHub upload session: HTTPS ls-remote and fetch succeeded; main matched origin/main before commit. init.ps1 exit 0 (Laravel 154/985, frontend lint/build 131 modules, engine 47); independent acceptance and live deployment validation remain pending.",
+      "2026-10-04 publication: PR #1 merged and CI/deploy 37215973285 succeeded. Live release 65ec3b16ff serves Chartiko home with canonical/JSON-LD/CTA, services healthy and public APIs 200. Production publication verified; independent feature acceptance remains pending."
     ],
-    "notes": "User-directed branding/presentation change only. Repository implementation is passing; independent acceptance and publication verification pending. Do not infer intraday capability or rename infrastructure via brand replacement."
+    "notes": "User-directed branding/presentation change only. Repository implementation is passing and publication verified on 2026-10-04; independent acceptance pending. Do not infer intraday capability or rename infrastructure via brand replacement."
   },
   {
     "id": "public-marketing-seo-geo",
@@ -737,6 +738,7 @@
       "Production deployment and public indexing/citation checks are recorded separately"
     ],
     "evidence": [
+      "2026-10-04 publication: CI/deploy 37215973285 success, release 65ec3b16ff live. Home 200 with substantive Chartiko HTML/canonical/JSON-LD/CTA, robots 200 text/plain, sitemap 200 XML with only home URL, Screener X-Robots-Tag noindex/follow. Root remediation and independently verified SSH pin closed the confirmed release blockers. Remaining full-audit exclusions and production data gap recorded in docs/security/2026-10-04-revalidacion-despliegue.md; no indexing/citation or independent feature acceptance claim.",
       "2026-10-04 continuation: init.ps1 re-ran successfully (Laravel 154/985, frontend lint/build 133 modules, engine 47). Deployment SSH regression checks passed; reviewed remediation script uploaded and hash verified. Root SSH/sudo access blocked actual remediation, so release remains unpublished; see docs/security/2026-10-04-remediacion-pendiente.md.",
       "2026-10-04: .\\init.ps1 passed: Laravel 154 tests / 985 assertions; frontend lint/build 133 modules; engine 47 tests (one existing Starlette/httpx deprecation warning).",
       "Vite preview: home 200 with substantive Spanish HTML, canonical/JSON-LD and Screener CTA; robots 200 text/plain; sitemap 200 XML with only https://www.chartiko.com/; app and unknown routes return SPA fallback 200.",
@@ -744,7 +746,7 @@
       "Live HTTPS check: /robots.txt and /sitemap.xml return old 702-byte text/html SPA fallback; homepage and unknown routes return 200. New metadata is not published.",
       "Report: docs/marketing/2026-10-04-seo-geo.md. Production deployment is blocked by the NO APTO findings in docs/security/2026-10-04-141702-produccion.md."
     ],
-    "notes": "Local marketing/SEO/GEO preparation only; no campaign publication, external analytics setup, or deployment. SSR/prerender for deep routes, real server 404 behavior, Search Console and citation measurement remain open."
+    "notes": "Marketing/SEO/GEO preparation deployed and HTTP-verified on 2026-10-04; no campaign sends or external analytics setup. Independent acceptance, SSR/prerender for deep routes, real server 404 behavior, Search Console and citation measurement remain open."
   },
   {
     "id": "architecture-infographic",
