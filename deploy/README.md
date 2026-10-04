@@ -52,3 +52,9 @@ Verificación local (Git Bash requerido): `.\scripts\verify-deploy-security.ps1`
 Prueba claves ausentes/incorrectas y el modo SSH estricto. Admite `-HostName`,
 `-IdentityPath` y `-KnownHostsLine` para comprobar el pin contra un VPS autorizado;
 no modifica la aplicación ni dispara consultas.
+
+En un sitio existente administrado por Certbot, `update-nginx-metadata.sh` añade
+el encabezado noindex de las rutas de aplicación sin sustituir TLS ni rutas.
+Se ejecuta como root, conserva copia privada del archivo, comprueba `nginx -t`
+y restaura la configuración anterior si falla la validación o recarga. La plantilla
+usa `$request_uri` para mantener el encabezado tras el fallback interno de la SPA.

@@ -1,5 +1,13 @@
 # Progress Log
 
+## Remediation verified — 2026-10-04 17:46 Europe/Madrid
+
+- User confirmed the root-console remediation ran. Live SSH revalidation: app/releases/shared/current/venv mode 750; .env and source files 640; private database directory 2770 and SQLite 660. SQLite quick_check is ok; jobs=0. Limited sudo now grants only the exact engine/queue restart and PHP-FPM/Nginx reload commands; the previous wildcard is gone.
+- PHP-FPM, queue, engine and Nginx active; engine health ok and TCP 8090 bound only to loopback. Engine/worker run as www-data with Restart=always. Application cron exists and invokes schedule:run each minute as www-data. No market jobs were triggered.
+- Created private /home/deploy/chartiko-pre-release-20261004T154604Z backup. SQLite backup was opened as an isolated copy, passed integrity_check and matched six business-table counts. Set APP_URL=https://www.chartiko.com, explicitly preserved the effective session-cookie name, and rebuilt current configuration cache.
+- PR #1: https://github.com/sugarat74/ChartScreenerPlus/pull/1. CI test job passed in run 37213736379; production job correctly skipped. Fixed an invalid runner context at job env after first GitHub run failed before jobs; SSH directory is now set through GITHUB_ENV on the runner. SSH live regression accepts expected pin and rejects a substituted pin before authentication.
+- Nginx noindex now uses original request_uri through a map, retaining the header after SPA internal fallback. Root-only helper uploaded, parsed and SHA256 verified (3ceabddb0bd218a7c3332e6dd862cdf8d3581652616bc5f9d80de926d1b69d21); user root execution and independent SSH fingerprint comparison are pending. Production publication is still pending, not implied by CI success.
+
 ## Deployment continuation — 2026-10-04 17:28 Europe/Madrid
 
 - User authorized completing remediation, verification and publication. GitHub authentication works; repository secrets VPS_HOST/VPS_SSH_KEY and production environment secret VPS_SSH_KNOWN_HOSTS exist. Secret values were not read or printed.

@@ -2,6 +2,14 @@
 
 Este documento complementa el informe de producción de las 14:17; no sustituye su matriz ni constituye una nueva aprobación de seguridad. El usuario ha autorizado ejecutar las correcciones y publicar las mejoras.
 
+## Actualización posterior — 17:46 Europe/Madrid
+
+La remediación root fue confirmada por el usuario y revalidada por SSH: padres/código/venv 750/640, .env 640, directorio privado SQLite 2770 y fichero 660. quick_check ok; cola vacía. sudo ya limita NOPASSWD a reinicios/recargas exactos, sin wildcard. Cuatro servicios activos; engine en loopback con health ok. Worker/engine son www-data con Restart=always; cron de aplicación cada minuto confirmado.
+
+Copia privada adicional /home/deploy/chartiko-pre-release-20261004T154604Z: SQLite abierto en copia aislada, integrity_check correcto y recuentos de seis tablas coincidentes. APP_URL HTTPS actualizado y caché regenerada conservando el nombre efectivo de SESSION_COOKIE. CI de PR #1 pasa; test SSH acepta pin esperado y rechaza otro antes de autenticar. La procedencia independiente del pin requiere todavía salida de consola proveedor.
+
+Pendiente: aplicar helper root update-nginx-metadata.sh, contrastar huella pública y activar/verificar producción. El encabezado usa map sobre request_uri para persistir a través de try_files. La nueva copia no establece una política automatizada de backup/retención. El informe original conserva su historial; esta actualización acredita cierre de los permisos observados, no una certificación global.
+
 ## Ejecutado
 
 - GitHub autenticado; secretos VPS_HOST/VPS_SSH_KEY presentes en el repositorio y VPS_SSH_KNOWN_HOSTS presente en environment production. Su contenido no se leyó.
