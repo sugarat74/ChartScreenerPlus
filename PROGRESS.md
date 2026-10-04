@@ -1,5 +1,29 @@
 # Progress Log
 
+## Deployment continuation — 2026-10-04 17:28 Europe/Madrid
+
+- User authorized completing remediation, verification and publication. GitHub authentication works; repository secrets VPS_HOST/VPS_SSH_KEY and production environment secret VPS_SSH_KNOWN_HOSTS exist. Secret values were not read or printed.
+- Both available SSH identities were rejected for root. deploy SSH works, but effective sudo denies noninteractive sha256sum/stat on the root script; listing a NOPASSWD wildcard did not prove permission to execute these commands. No privileged remediation has run in this continuation.
+- Production still resolves current to 26fc5946af; PHP-FPM, queue, engine and Nginx are active; activation/shared/release parents remain mode 775 deploy:www-data. SQLite jobs count is zero; run #1 is marked running since 2026-10-03 17:34:44, with no active scheduler/data command observed.
+- Uploaded a reviewed LF script to /home/deploy/chartiko-remediate-reviewed.sh, mode 0600. Remote SHA256 matches local 65f1de03a9e73add1635e676fd24a559ceb69b209b698b5c20af4320f49be238; remote bash -n passes. Root-console copy/check/run command supplied to user; --allow-stale-ledger is limited by script checks to an old ledger, empty queue and no active data command, without changing business records.
+- init.ps1 exit 0: Laravel 154 tests / 985 assertions, frontend lint/build 133 modules, engine 47 tests with existing Starlette warning. Deployment regression script passes all six checks outside sandbox; first sandbox attempt failed only on Windows temporary private-key ACLs.
+- Publication remains blocked on root remediation and live closure checks. Changes are prepared on a separate branch to avoid triggering an unsafe main deployment. Existing acceptance states are unchanged. See docs/security/2026-10-04-remediacion-pendiente.md.
+
+## Architecture Infographic — 2026-10-04
+
+- Created the user-requested Spanish infographic `docs/arquitectura-infografia.svg` (1440 × 1900, standalone vector) and companion `docs/arquitectura-infografia.md` with operational details and repository references.
+- Covers React SPA, Nginx/HTTPS, PHP-FPM/Laravel/Sanctum, private Python FastAPI engine, Laravel-owned SQLite, public browsing/owned resources, Admin database queue and full scheduled pipeline. Lists runtime/build dependencies and separates documented local versions from the existing production report.
+- Checked the diagram against ARCHITECTURE.md, manifests, engine runner, Nginx config, RunIngestionJob and deployment scripts. XML parsing succeeded; no external visual assets/fonts required. No raster render or browser visual review performed. Product tests and init.ps1 not rerun for documentation-only changes; existing baseline evidence remains above/below.
+- Production cron installation remains unverified in the existing audit; Admin acquisition does not automatically calculate indicators/signals. No product behavior or deployment configuration changed. Documentation feature is passing; no independent acceptance claimed.
+
+## Public Marketing / SEO / GEO — 2026-10-04
+
+- Applied `.opencode/skills/web-marketing-seo-geo/` to the live Chartiko domain and local SPA. Report: `docs/marketing/2026-10-04-seo-geo.md`.
+- Implemented a Spanish public home at `/` with factual workflow, market scope and limits, FAQs, visible CTA to `/screener`, semantic initial HTML fallback, WebSite JSON-LD, canonical, OG/Twitter metadata, robots and one-URL sitemap. Added route-specific titles/descriptions and client `noindex` for app/private/unknown routes; Nginx config adds `X-Robots-Tag: noindex, follow` to app routes. No analytics, `llms.txt`, campaign sends or deployment.
+- `.\init.ps1` passed after removing one unused import found by the first lint run: Laravel 154 tests / 985 assertions; frontend lint/build (133 modules); engine 47 tests (existing Starlette/httpx deprecation warning). Local Vite preview confirms home 200, robots 200 text/plain, sitemap 200 XML, and 200 SPA fallback for app/unknown routes.
+- Live HTTPS checks show the current deployment still returns the old 702-byte SPA HTML for `/robots.txt`, `/sitemap.xml`, home and unknown routes; routes are HTTP 200. No new metadata is published. Lighthouse/browser visual QA/Search Console/Bing/citation measurements were unavailable/not run.
+- Release remains blocked by production security verdict NO APTO (SEC-001/002 and limited deploy sudo restoration pending; see `docs/security/2026-10-04-141702-produccion.md`). Feature `public-marketing-seo-geo` is passing locally; independent acceptance and publication validation pending.
+
 ## Chartiko Brand — 2026-10-04
 
 - Renamed public product to Chartiko; owner reports production is hosted on a VPS at https://www.chartiko.com. Header/logo/favicon/browser metadata, application-name defaults, current product/design/hosting docs and marketing skill updated.
@@ -24,13 +48,21 @@
 - Verification: isolated authorization/auth/ownership suites passed, 70 tests / 328 assertions. Composer production audit and frontend npm audit (including build dependencies) completed with exit 0 and no advisories. Python audit unavailable; listeners/firewall inspection denied; no deployment URL or VPS access provided.
 - Application, services, permissions and accepted feature states unchanged. No full init.ps1 rerun for this read-only audit; last full gate below remains applicable. Next: correct documented deployment issues, then verify effective VPS/TLS/CSRF/cookies/backups using the report's pending checks.
 
+## Production Security Review — 2026-10-04
+
+- Applied `web-deploy-security` to the live Chartiko VPS and current repository. Report: `docs/security/2026-10-04-141702-produccion.md`; 34 checklist controls covered. Verdict: **NO APTO** because release/shared directories are group-writable by `www-data` and CI trusts an unverified `ssh-keyscan` result.
+- Live HTTPS is active for `chartiko.com` and `www.chartiko.com`; HTTP redirects with 301, TLS 1.2/1.3 negotiate, and Certbot's renewal timer is enabled. Renewal dry-run output was inconclusive. `.env` and `.git` probes are denied; private-file paths return the same 702-byte SPA fallback as a missing path. API guest guards returned 401.
+- Production reports `APP_ENV=production`, `APP_DEBUG=false`, but effective `APP_URL` remains `http://51.222.158.148`. Composer/npm audits report no advisories; Python dependency audit, firewall/provider rules, backups, and authenticated production CSRF/cache behavior remain unverified. Authorization suites passed: 70 tests / 328 assertions using SQLite `:memory:`.
+- Operational follow-up: removing temporary `NOPASSWD: ALL` also left `/etc/sudoers.d/deploy` absent; `sudo -n -l` now requires authentication. The limited `systemctl` NOPASSWD entries defined in `deploy/setup-server.sh` need restoration before the next automated deploy. The user was given the exact root-console command and has not yet confirmed it.
+- No product feature status changed. Current security blocker: close SEC-001/002, restore only limited deploy sudo, and revalidate the controls listed in the report.
+
 ## Current Verified State
 
 - Repository root: `C:\laragon\www\ChartScreenPlus`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `.\init.ps1` — runs Laravel (`php artisan --version`, `php artisan test`), the SPA lint/build when `frontend/` exists, and the engine tests when `engine/` exists (Laravel 13.34.0 on PHP 8.4.8; React 19 + Vite 8 + Tailwind 4 on Node 22; FastAPI on Python 3.10)
 - The original 23 product features remain accepted. `chartiko-brand` and the two tooling skills are passing (self-verified; independent feature acceptance pending). Branding publication is not verified.
-- Current blocker: none
+- Current blocker: production security review is NO APTO (SEC-001/002); limited deployment sudo restoration is also pending before the next CI release.
 - Last full gate: rerun successfully during Session 030 (`.\init.ps1` exit 0; Laravel 154 tests / 985 assertions; SPA lint 0 warnings/errors (37 files) + build 131 modules; engine 47 tests). Operational data last verified 2026-10-03: 246,304 bars, 246,304 snapshots across 494 instruments, 379 current signals, and `GET /api/screener` returned 50 of 494 Candidates.
 
 ## Session Log

@@ -2,13 +2,20 @@
 # Runs on the VPS as user "deploy". Usage: deploy.sh <release-id>
 set -euo pipefail
 APP=/var/www/alphapulse
+[[ "${1:-}" =~ ^[a-f0-9]{10,40}$ ]] || { echo 'Invalid release id' >&2; exit 1; }
 REL=$APP/releases/$1
+[[ -d "$REL" && ! -L "$REL" && "$(realpath "$REL")" == "$REL" ]] || exit 1
+[[ -f "$APP/shared/database/database.sqlite" ]] || {
+  echo 'Run remediate-permissions.sh before deploying: private SQLite directory is missing.' >&2
+  exit 1
+}
+umask 027
 cd "$REL"
 
 ln -sfn $APP/shared/.env .env
 rm -rf storage
 ln -sfn $APP/shared/storage storage
-ln -sfn $APP/shared/database.sqlite database/database.sqlite
+ln -sfn $APP/shared/database/database.sqlite database/database.sqlite
 
 composer install --no-dev --optimize-autoloader --no-interaction
 $APP/shared/venv/bin/pip install -q -r engine/requirements.txt
@@ -16,6 +23,7 @@ php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+bash "$REL/deploy/release-permissions.sh" "$REL"
 
 PREV=$(readlink -f $APP/current || true)
 ln -sfn "$REL" $APP/current.new

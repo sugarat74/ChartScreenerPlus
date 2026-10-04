@@ -4,12 +4,52 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Chartiko: filtra acciones con indicadores técnicos, descubre candidatos y explora sus gráficos interactivos." />
+    <meta name="description" content="Filtra acciones del S&amp;P 500 con criterios técnicos, revisa Candidates ordenados y explora sus gráficos e indicadores." />
     <meta name="application-name" content="Chartiko" />
-    <title>Chartiko — Screener de análisis técnico</title>
+    <link rel="canonical" href="https://www.chartiko.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Chartiko" />
+    <meta property="og:title" content="Chartiko | Screener de análisis técnico de acciones" />
+    <meta property="og:description" content="Filtra acciones del S&amp;P 500 con criterios técnicos, revisa Candidates ordenados y explora sus gráficos e indicadores." />
+    <meta property="og:url" content="https://www.chartiko.com/" />
+    <meta property="og:image" content="https://www.chartiko.com/favicon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Chartiko | Screener de análisis técnico de acciones" />
+    <meta name="twitter:description" content="Filtra acciones del S&amp;P 500 con criterios técnicos, revisa Candidates ordenados y explora sus gráficos e indicadores." />
+    <meta name="twitter:image" content="https://www.chartiko.com/favicon.svg" />
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"WebSite","name":"Chartiko","url":"https://www.chartiko.com/","inLanguage":"es","description":"Screener de acciones del S&P 500 con filtros técnicos, Candidates ordenados y gráficos interactivos."}
+    </script>
+    <title>Chartiko | Screener de análisis técnico de acciones</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main>
+        <header>
+          <p>Análisis técnico de acciones</p>
+          <h1>Encuentra Candidates entre cientos de acciones.</h1>
+          <p>Chartiko aplica filtros técnicos al universo del S&amp;P 500, ordena los resultados y te permite revisar cada Candidate en un gráfico interactivo.</p>
+          <p><a href="/screener">Abrir el Screener</a></p>
+        </header>
+        <section aria-labelledby="workflow-heading">
+          <h2 id="workflow-heading">Cómo funciona Chartiko</h2>
+          <article><h3>Define criterios técnicos</h3><p>Combina señales e indicadores como medias móviles, RSI, MACD y volumen para acotar la lista de acciones.</p></article>
+          <article><h3>Revisa los Candidates</h3><p>Consulta qué instrumentos cumplen los filtros y cambia el criterio de ordenación para priorizar la revisión.</p></article>
+          <article><h3>Inspecciona el gráfico</h3><p>Abre un instrumento para ver su historial de precios, volumen, medias móviles e información de Signals.</p></article>
+        </section>
+        <section>
+          <h2>Señales basadas en reglas claras</h2>
+          <p>Chartiko calcula resultados a partir de datos diarios y reglas técnicas deterministas. Una Signal describe una condición detectada, por ejemplo un cruce de medias, RSI o un breakout de Pivot; no es una recomendación ni una predicción de rentabilidad. Los datos y los indicadores disponibles dependen del historial registrado para cada instrumento.</p>
+        </section>
+        <section>
+          <h2>Preguntas frecuentes</h2>
+          <h3>¿Qué mercado cubre?</h3><p>El Screener parte del universo de acciones del S&amp;P 500.</p>
+          <h3>¿Qué significa una Signal?</h3><p>Es una condición técnica calculada mediante reglas reproducibles sobre indicadores; por sí sola no determina una decisión de inversión.</p>
+          <h3>¿Chartiko ofrece datos en tiempo real?</h3><p>No. Chartiko analiza datos diarios y no ofrece cotizaciones intradía.</p>
+        </section>
+        <p>Chartiko es una herramienta de análisis técnico. La información presentada tiene fines informativos y no constituye asesoramiento financiero.</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
