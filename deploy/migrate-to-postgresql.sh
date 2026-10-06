@@ -234,7 +234,7 @@ smoke /api/screener 200
 smoke /api/instruments/NVDA 200
 smoke /api/watchlist 401
 smoke /api/admin/ping 401
-artisan schedule:list | grep -q ingestion-pipeline || { echo 'ingestion-pipeline is not scheduled.' >&2; exit 1; }
+artisan schedule:list | grep -q 'ingestion:pipeline' || { echo 'ingestion:pipeline (ingestion-pipeline) is not scheduled.' >&2; exit 1; }
 SWITCHED=0
 if [[ $CRON_PAUSED == 1 ]]; then cp -a "$BACKUP/cron.before" /etc/cron.d/alphapulse; CRON_PAUSED=0; fi
 runuser -u postgres -- psql -X -h /var/run/postgresql -p 6432 -d pgbouncer -c 'SHOW POOLS;'
