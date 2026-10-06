@@ -20,6 +20,7 @@ done
 
 restore() {
   echo "PgBouncer did not start with the new configuration; restoring $BACKUP" >&2
+  tail -n 20 /var/log/postgresql/pgbouncer.log >&2 2>/dev/null || true
   for file in pgbouncer.ini pg_hba.conf databases.ini userlist.txt; do
     if [[ -e "$BACKUP/$file" ]]; then cp -a "$BACKUP/$file" "$ETC/$file"; fi
   done
@@ -34,6 +35,12 @@ if [[ ! -s "$ETC/databases.ini" ]]; then
 fi
 if [[ ! -e "$ETC/userlist.txt" ]]; then
   : > "$ETC/userlist.txt"
+fi
+# PgBouncer refuses peer login for users missing from auth_file ("mock" users).
+# The admin user gets an unusable md5 placeholder (hash of random bytes, no
+# known password); TCP logins as postgres are rejected in pg_hba.conf anyway.
+if ! grep -q '^"postgres" ' "$ETC/userlist.txt"; then
+  printf '"postgres" "md5%s"\n' "$(head -c 32 /dev/urandom | md5sum | cut -c 1-32)" >> "$ETC/userlist.txt"
 fi
 chown postgres:postgres "$ETC/databases.ini" "$ETC/userlist.txt"
 chmod 0640 "$ETC/databases.ini" "$ETC/userlist.txt"
