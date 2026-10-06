@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cumplimiento legal web UE"
+  short_description: "Audita y prepara aviso legal, privacidad, cookies y avisos UE/España"
+  default_prompt: "Usa $web-legal-compliance-eu para auditar este sitio frente a LSSI-CE, RGPD/LOPDGDD y cookies, y entregar el informe con los borradores de textos legales."
