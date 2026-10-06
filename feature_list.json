@@ -764,5 +764,27 @@
       "Source review: ARCHITECTURE.md, domain docs, frontend/package.json, composer.json, engine/requirements.txt and app/__main__.py, deploy scripts/config and RunIngestionJob. Differentiates Admin acquisition from the full indicator/signal pipeline and documented production versions from local runtimes."
     ],
     "notes": "Documentation only; no product or operational changes. No browser/raster visual review or independent acceptance. Existing production scheduler verification and audit risks remain pending."
+  },
+  {
+    "id": "db-postgresql-migration",
+    "area": "operations",
+    "title": "Move production persistence from SQLite to PostgreSQL",
+    "user_visible_behavior": "No functional change for users: Chartiko keeps the same screens and APIs, but production data, sessions, cache and queue live in a loopback-only PostgreSQL database with its own least-privilege role, so ingestion writes no longer block readers and the VPS can host further projects with one database per project. Users log in again once after cut-over.",
+    "depends_on": [
+      "db-schema-market-data"
+    ],
+    "status": "in_progress",
+    "verification": [
+      "CI runs php artisan test against both SQLite and a PostgreSQL service; deploy requires both jobs",
+      ".\\init.ps1 still exits 0 with local in-memory SQLite and no PostgreSQL installed",
+      "db:copy-sqlite-to-pgsql copies all business tables in one transaction, matches per-table row counts, resets sequences, and aborts naming table/key/column on invalid source data (--dry-run reports without writing)",
+      "Production cut-over: public/API smoke (screener and NVDA 200, guest-protected 401), Admin login, queue job processed, ingestion-pipeline scheduled, row counts equal pre-cut-over SQLite counts",
+      "PostgreSQL listens on loopback only; chartiko role is not superuser and PUBLIC has no connect/create rights",
+      "Daily private pg_dump runs and a restore into a scratch database matches production counts",
+      "Runtime connections go through loopback-only PgBouncer (transaction mode, SCRAM auth, emulated prepares); CI runs the suite through PgBouncer; migrations, copy and backups connect directly to PostgreSQL; SHOW POOLS and pg_stat_activity confirm pooling in production",
+      "Rollback to the backed-up SQLite .env is documented and exercised before the production window"
+    ],
+    "evidence": [],
+    "notes": "Spec: docs/specs/db-postgresql-migration.md. Requested 2026-10-06 after evaluating PostgreSQL vs MariaDB for multi-project hosting (docs/technical-discovery.md already prefers PostgreSQL). Laravel is the only DB owner; engine/frontend untouched. Local dev/tests keep SQLite per CONSTRAINTS.md. PgBouncer is in scope (2026-10-06 user request) as the shared pooling layer for future projects; dedicated DB host, replication and Postgres-only optimizations are explicit follow-ups. Cut-over requires operator root console and a maintenance window."
   }
 ]

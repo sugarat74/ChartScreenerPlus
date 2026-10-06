@@ -5,24 +5,43 @@ APP=/var/www/alphapulse
 [[ "${1:-}" =~ ^[a-f0-9]{10,40}$ ]] || { echo 'Invalid release id' >&2; exit 1; }
 REL=$APP/releases/$1
 [[ -d "$REL" && ! -L "$REL" && "$(realpath "$REL")" == "$REL" ]] || exit 1
-[[ -f "$APP/shared/database/database.sqlite" ]] || {
-  echo 'Run remediate-permissions.sh before deploying: private SQLite directory is missing.' >&2
-  exit 1
-}
+# Driver from the shared .env (last assignment wins, like dotenv); no value is printed.
+DB_DRIVER=$(sed -n 's/^[[:space:]]*DB_CONNECTION[[:space:]]*=[[:space:]]*["'\'']\{0,1\}\([a-z]*\).*/\1/p' "$APP/shared/.env" | tail -n 1)
+case "$DB_DRIVER" in
+  sqlite)
+    [[ -f "$APP/shared/database/database.sqlite" ]] || {
+      echo 'Run remediate-permissions.sh before deploying: private SQLite directory is missing.' >&2
+      exit 1
+    }
+    ;;
+  pgsql) ;;
+  *) echo "Unsupported DB_CONNECTION in shared/.env: '${DB_DRIVER}'" >&2; exit 1 ;;
+esac
 umask 027
 cd "$REL"
 
 ln -sfn $APP/shared/.env .env
 rm -rf storage
 ln -sfn $APP/shared/storage storage
-ln -sfn $APP/shared/database/database.sqlite database/database.sqlite
+if [[ "$DB_DRIVER" == sqlite ]]; then
+  ln -sfn $APP/shared/database/database.sqlite database/database.sqlite
+fi
 
 composer install --no-dev --optimize-autoloader --no-interaction
 $APP/shared/venv/bin/pip install -q -r engine/requirements.txt
+# On pgsql with DB_DIRECT_PORT, Laravel runs migrations on the direct
+# PostgreSQL endpoint (5432); the cached runtime config uses PgBouncer (6432).
 php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+if [[ "$DB_DRIVER" == pgsql ]]; then
+  # Before activation: the runtime (pooled) path must answer with the app role.
+  # db:monitor queries the default connection itself (db:show would go direct).
+  php artisan db:monitor --databases=pgsql --max=100000 > /dev/null || {
+    echo 'Database unreachable through PgBouncer; release not activated.' >&2; exit 1;
+  }
+fi
 bash "$REL/deploy/release-permissions.sh" "$REL"
 
 PREV=$(readlink -f $APP/current || true)

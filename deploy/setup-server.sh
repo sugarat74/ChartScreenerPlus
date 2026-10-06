@@ -11,9 +11,11 @@ fi
 
 apt-get update
 apt-get install -y ca-certificates curl unzip git rsync ufw nginx \
-  python3 python3-venv python3-pip python3-dev build-essential sqlite3 certbot python3-certbot-nginx
-# Distro PHP (Ubuntu 26.04 ships a recent PHP; no PPA needed)
-apt-get install -y php-fpm php-cli php-sqlite3 php-mbstring php-xml php-curl php-zip php-bcmath php-intl
+  python3 python3-venv python3-pip python3-dev build-essential sqlite3 certbot python3-certbot-nginx \
+  postgresql pgbouncer
+# Distro PHP (Ubuntu 26.04 ships a recent PHP; no PPA needed). php-sqlite3 stays
+# for local tooling and the SQLite rollback source; production uses php-pgsql.
+apt-get install -y php-fpm php-cli php-sqlite3 php-pgsql php-mbstring php-xml php-curl php-zip php-bcmath php-intl
 PHPV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 echo "PHP $PHPV installed (Laravel 13 needs >= 8.3)"
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -59,7 +61,17 @@ systemctl daemon-reload
 systemctl enable alphapulse-engine alphapulse-queue
 echo "* * * * * www-data cd $APP/current && php artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/alphapulse
 
+# PostgreSQL (loopback only, distro default listen_addresses=localhost) behind
+# the shared PgBouncer on 127.0.0.1:6432. Projects: postgresql-add-project.sh.
+systemctl enable --now postgresql
+bash "$HERE/install-pgbouncer.sh"
+install -o root -g root -m 0700 "$HERE/backup-postgresql.sh" /usr/local/sbin/chartiko-backup-postgresql
+echo '30 3 * * * root /usr/local/sbin/chartiko-backup-postgresql chartiko >> /var/log/chartiko-postgresql-backup.log 2>&1' \
+  > /etc/cron.d/chartiko-postgresql-backup
+chmod 0644 /etc/cron.d/chartiko-postgresql-backup
+
 ufw allow OpenSSH
 ufw allow 'Nginx Full'
 ufw --force enable
-echo "OK. Next: create $APP/shared/.env (see deploy/README.md), then push to main."
+echo "OK. Next: openssl rand -hex 32 | tee /dev/tty | bash $HERE/postgresql-add-project.sh chartiko"
+echo "then create $APP/shared/.env with the pgsql block (see deploy/README.md), then push to main."

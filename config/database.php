@@ -44,6 +44,15 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
+        // Read-only source for `db:copy-sqlite-to-pgsql` (the legacy SQLite file).
+        'sqlite_source' => [
+            'driver' => 'sqlite',
+            'url' => null,
+            'database' => env('DB_SOURCE_DATABASE', database_path('database.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
@@ -97,6 +106,13 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // With DB_DIRECT_PORT set, DB_PORT is the PgBouncer (transaction mode)
+            // endpoint: Laravel marks the connection pooled, emulates prepares and
+            // sends migrations/DDL to this direct PostgreSQL endpoint instead.
+            'direct' => env('DB_DIRECT_PORT') ? [
+                'host' => env('DB_DIRECT_HOST', env('DB_HOST', '127.0.0.1')),
+                'port' => env('DB_DIRECT_PORT'),
+            ] : [],
         ],
 
         'sqlsrv' => [
