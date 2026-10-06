@@ -200,6 +200,7 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
 ## Configuration
 
 - Local dev/test database is SQLite (`database/database.sqlite`, git-ignored).
+- Production database is PostgreSQL on the same VPS (loopback only) behind a shared PgBouncer (`127.0.0.1:6432`, transaction mode, SCRAM). The `pgsql` connection in `config/database.php` gets a `direct` endpoint when `DB_DIRECT_PORT` is set: Laravel 13 then treats it as pooled (emulated prepares, `true`/`false` boolean bindings) and runs `migrate`/`db:wipe`/`db:show` on the direct port, while web, queue and scheduler use PgBouncer. Sessions, cache and queue (`database` drivers) live there too. `php artisan db:copy-sqlite-to-pgsql` (`app/Console/Commands/CopySqliteToPgsql.php`, validator `app/Services/Database/PostgresValueNormalizer.php`) is the one-off cut-over copy from the legacy SQLite file through the `sqlite_source` connection. Operations scripts: `deploy/install-pgbouncer.sh`, `deploy/postgresql-add-project.sh` (+ `postgresql-project.sql`), `deploy/migrate-to-postgresql.sh`, `deploy/backup-postgresql.sh`; runbook in `deploy/README.md`.
 - Dev servers: Laravel on 8000 (default), SPA on 5173 (Vite default, proxying `/api` + `/sanctum` to `127.0.0.1:8000`), engine on 8090 (`python -m app`).
 - `SANCTUM_STATEFUL_DOMAINS` (`.env`/`.env.example`) controls which dev SPA origins Sanctum treats as stateful.
 - `ENGINE_URL` (`.env`/`.env.example`, default `http://127.0.0.1:8090`) is the engine base URL used by `EngineClient`; it is read through `config/engine.php`.

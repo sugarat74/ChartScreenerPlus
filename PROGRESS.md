@@ -7,6 +7,13 @@
 - Dependencies: accepted app shell and authentication, plus `public-marketing-seo-geo` (currently passing; independent acceptance pending). Existing feature order/status/evidence preserved. No spec, product code, database or deployment changes.
 - Verification: backlog JSON parses, feature ID is unique, dependencies resolve and all prior entries remain structurally identical. `init.ps1` was not rerun for this backlog-only change; product behavior remains unverified for this feature.
 
+## PostgreSQL migration implemented (repo side) — 2026-10-06
+
+- Implemented `db-postgresql-migration` repository work on branch `worktree-db-postgresql-migration`, draft PR #2 (https://github.com/sugarat74/ChartScreenerPlus/pull/2). Production still runs SQLite; nothing changes on merge except tooling (`deploy.sh` reads the driver from `shared/.env`).
+- Uses Laravel 13 native pooled connections: `DB_DIRECT_PORT` adds a `direct` endpoint, so runtime goes through PgBouncer 6432 with emulated prepares and migrations/DDL go to 5432 (spec "Implementation Notes"). New `db:copy-sqlite-to-pgsql` (transactional, counts, sequences, fail-loud validator, `--dry-run`). New root scripts: `install-pgbouncer.sh`, `postgresql-add-project.sh` + `postgresql-project.sql`, `migrate-to-postgresql.sh`, `backup-postgresql.sh`; runbook in `deploy/README.md`.
+- Verified: local `init.ps1` exit 0 (Laravel 176 passed / 6 PostgreSQL-only skipped, frontend lint+build, engine 47). CI run 37447938238: `test` and `test-pgsql` green; 182 tests through PgBouncer, 0 skipped; pooling, loopback-only, wrong-password and least-privilege checks pass. First CI attempt exposed a PgBouncer peer/auth_file requirement; fixed.
+- Not verified (operator, root console): VPS PostgreSQL version vs CI `postgres:18`, cut-over dry-run and window, production SHOW POOLS/pg_stat_activity, backup + restore test, rollback rehearsal. Feature stays `in_progress`. Unrelated `app-multilanguage` backlog entry in the main checkout was left out of this branch.
+
 ## PostgreSQL migration planned — 2026-10-06
 
 - User asked to host further Chartiko-like projects on the VPS and evaluated PostgreSQL vs MariaDB; PostgreSQL chosen (analytical/time-series reads, matches `docs/technical-discovery.md`). Coolify on this VPS was advised against (port 80/443 conflict with Nginx/Certbot, would replace the verified deploy path).

@@ -39,8 +39,79 @@ jobs:
           name: frontend-dist
           path: frontend/dist
 
+  # Same suite on PostgreSQL through PgBouncer (transaction mode), provisioned by
+  # the production scripts. Keep the image major version aligned with the VPS.
+  test-pgsql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: ci-superuser-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ci-superuser-only-password
+      CHARTIKO_CI_DB_PASSWORD: ci0chartiko0only0password0not0secret
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PgBouncer with the production configuration
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pgbouncer
+          sudo bash deploy/install-pgbouncer.sh
+      - name: Provision the chartiko role/database and PgBouncer pool (production script)
+        run: |
+          printf '%s\n' "$CHARTIKO_CI_DB_PASSWORD" \
+            | sudo --preserve-env=PGHOST,PGPORT,PGUSER,PGPASSWORD bash deploy/postgresql-add-project.sh chartiko
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, pdo_sqlite
+          tools: composer
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env && php artisan key:generate
+      - name: Test suite through PgBouncer (6432), migrations direct (5432)
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: '6432'
+          DB_DIRECT_PORT: '5432'
+          DB_DATABASE: chartiko
+          DB_USERNAME: chartiko
+          DB_PASSWORD: ${{ env.CHARTIKO_CI_DB_PASSWORD }}
+        run: |
+          php artisan test
+          php artisan db:monitor --databases=pgsql --max=100000
+      - name: Pooling, exposure and least privilege
+        run: |
+          set -euo pipefail
+          sudo -u postgres psql -X -At -h /var/run/postgresql -p 6432 -d pgbouncer -c 'SHOW POOLS;' | tee pools.txt
+          grep -q '^chartiko|chartiko|' pools.txt
+          sudo -u postgres psql -X -At -h /var/run/postgresql -p 6432 -d pgbouncer -c 'SHOW CONFIG;' \
+            | grep -E '^(pool_mode|listen_addr|auth_type)\|' | tee config.txt
+          grep -qx 'pool_mode|transaction|.*' config.txt
+          ss -Hltn 'sport = :6432' | awk '{print $4}' | tee listeners.txt
+          if [ ! -s listeners.txt ] || grep -qv '^127\.0\.0\.1:6432$' listeners.txt; then
+            echo 'PgBouncer must listen on 127.0.0.1:6432 only' >&2; exit 1
+          fi
+          if PGPASSWORD=wrong-password psql -X -h 127.0.0.1 -p 6432 -U chartiko -d chartiko -c 'select 1'; then
+            echo 'PgBouncer accepted a wrong password' >&2; exit 1
+          fi
+          psql -X -At -c "select rolsuper or rolcreatedb or rolcreaterole or rolreplication or rolbypassrls from pg_roles where rolname = 'chartiko'" | grep -qx f
+          if PGPASSWORD="$CHARTIKO_CI_DB_PASSWORD" psql -X -U chartiko -d postgres -c 'select 1'; then
+            echo 'chartiko can connect to another database' >&2; exit 1
+          fi
+          psql -X -At -d chartiko -c "select has_database_privilege('public', 'chartiko', 'CONNECT')" | grep -qx f
+
   deploy:
-    needs: test
+    needs: [test, test-pgsql]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production
