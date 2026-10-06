@@ -1,5 +1,13 @@
 # Progress Log
 
+## Production cut-over to PostgreSQL — 2026-10-06 18:44 UTC
+
+- User authorized the cut-over (data loss acceptable) and keeping the temporary root key during initial development. Dry-run passed after acknowledging the stale `ingestion_runs` id 1 (`running` since 2026-10-03, queue empty, no data process active) with `--allow-stale-ledger`.
+- First real run (`/root/chartiko-pgsql-cutover-20261006T183353Z`) copied every table and passed the HTTP smoke checks, then rolled back automatically to SQLite because the script grepped `schedule:list` for the event name `ingestion-pipeline`, which Laravel never prints. Fixed in `827d11f` (match `ingestion:pipeline`), deployed by CI run 37513348482 (test, test-pgsql, deploy green). This exercised the automatic post-switch rollback in production.
+- With user authorization, dropped and recreated the `chartiko` database (new password in `/root/chartiko-db-password.txt`, 0600) and reran: cut-over complete (`/root/chartiko-pgsql-cutover-20261006T184407Z`). Row counts equal on all 12 business tables (users 1, instruments 503, daily_bars 250,588, indicator_snapshots 250,588, signals 369, ingestion_runs 2, ingestion_run_items 640). Smoke via script and externally: `/` 200, `/api/screener` 200, `/api/instruments/NVDA` 200, `/api/watchlist` 401, `/api/admin/ping` 401. `shared/.env` now `DB_CONNECTION=pgsql`, `DB_PORT=6432`, `DB_DIRECT_PORT=5432`; SHOW POOLS shows chartiko in transaction mode; `db:monitor` OK; pg_stat_activity 2 chartiko connections; cron, queue, engine, PostgreSQL and PgBouncer active; `ingestion:pipeline` scheduled. `/root/chartiko-pgsql.env` deleted. SQLite file kept as rollback source for >= 30 days.
+- Backup: a dump (18.6 MB) was taken. The restore test reported a mismatch only on the volatile `cache` table (4 vs 2) while every other table matched; `backup-postgresql.sh` now excludes cache/cache_locks/sessions/jobs from the comparison (pending deploy to `/usr/local/sbin`).
+- Still pending for `db-postgresql-migration`: Admin login and a processed queue job on PostgreSQL, a clean restore test with the fixed script, and a manual rollback rehearsal. Users must log in again (sessions not copied).
+
 ## PostgreSQL + PgBouncer installed on production VPS — 2026-10-06 18:11 UTC
 
 - Installed via a temporary user-authorized root key: `postgresql` 18.6, `pgbouncer` 1.25.1, `php8.5-pgsql` (php8.5-fpm reloaded). Ran `deploy/install-pgbouncer.sh` and `deploy/postgresql-add-project.sh chartiko` from release `c9b9481`; password generated into `/root/chartiko-db-password.txt` (0600, never printed). Daily backup installed at `/usr/local/sbin/chartiko-backup-postgresql` with `/etc/cron.d/chartiko-postgresql-backup` (03:30).

@@ -22,10 +22,14 @@ as_postgres() { runuser -u postgres -- "$@"; }
 
 counts() {
   # Exact row count of every table in the public schema, sorted by name.
+  # Cache, locks, sessions and queued jobs change while the site runs, so they
+  # are excluded: comparing them against a live database fails spuriously.
   local database=$1
   as_postgres psql -X -At -d "$database" -v ON_ERROR_STOP=1 <<'SQL'
 SELECT format('SELECT %L || ''|'' || count(*) FROM %I.%I', tablename, schemaname, tablename)
-FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename \gexec
+FROM pg_tables WHERE schemaname = 'public'
+  AND tablename NOT IN ('cache', 'cache_locks', 'sessions', 'jobs')
+ORDER BY tablename \gexec
 SQL
 }
 
