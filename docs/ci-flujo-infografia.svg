@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="2074" viewBox="0 0 1440 2074" role="img" aria-labelledby="title desc">
+  <title id="title">Chartiko: flujo de integración continua con GitHub</title>
+  <desc id="desc">Un push a main o una pull request lanza GitHub Actions. El job test ejecuta comprobaciones de seguridad, pruebas de Laravel y del motor Python, y compila el frontend. Solo un push a main en verde activa el job deploy, que sube una release por SSH al VPS, la activa con deploy.sh, comprueba el motor y revierte si falla.</desc>
+  <defs><style>
+    text{font-family:Arial,Helvetica,sans-serif;fill:#1a1a1a}
+    .h1{font-size:54px;font-weight:800;letter-spacing:-2px}
+    .h2{font-size:27px;font-weight:800}
+    .h3{font-size:23px;font-weight:700}
+    .body{font-size:20px}
+    .small{font-size:17px;fill:#4a4a4a}
+    .mono{font-family:Consolas,monospace;font-size:17px}
+    .shadow{fill:#1a1a1a}
+    .flow{fill:none;stroke:#1a1a1a;stroke-width:3;marker-end:url(#arrow)}
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 Z" fill="#1a1a1a"/></marker></defs>
+  <rect width="1440" height="2074" fill="#f5f0e8"/>
+  <rect x="48" y="42" width="1344" height="132" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="72" y="102" class="h1">CHARTIKO / INTEGRACIÓN CONTINUA</text>
+  <text x="74" y="143" class="body">Del commit a producción con GitHub Actions: probar primero, desplegar solo si todo está en verde.</text>
+  <text x="48" y="210" class="small">Workflow «CI &amp; Deploy» · .github/workflows/ci-deploy.yml · 05 octubre 2026</text>
+<text x="48" y="262" class="h2">01 / QUÉ DISPARA EL FLUJO</text>
+<rect x="54" y="294" width="410" height="150" class="shadow"/>
+<rect x="48" y="288" width="410" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="324" class="h3">PUSH A MAIN</text>
+<text x="70" y="358" class="body">Merge de una PR o commit directo</text>
+<text x="70" y="389" class="body">Ejecuta test y después deploy</text>
+<text x="70" y="420" class="mono">on: push · branches: [main]</text>
+<rect x="514" y="294" width="410" height="150" class="shadow"/>
+<rect x="508" y="288" width="410" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="530" y="324" class="h3">PULL REQUEST</text>
+<text x="530" y="358" class="body">PR abierta o actualizada</text>
+<text x="530" y="389" class="body">Solo valida: nunca despliega</text>
+<text x="530" y="420" class="mono">on: pull_request</text>
+<rect x="974" y="294" width="418" height="150" class="shadow"/>
+<rect x="968" y="288" width="418" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="990" y="324" class="h3">GITHUB ACTIONS</text>
+<text x="990" y="358" class="body">Un runner ubuntu-latest por job</text>
+<text x="990" y="389" class="body">Permisos mínimos: contents: read</text>
+<text x="990" y="420" class="mono">.github/workflows/ci-deploy.yml</text>
+<rect x="48" y="462" width="1338" height="53" fill="#eee9e0" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="495.5" class="body">Ambos eventos arrancan el mismo workflow; el job deploy solo corre en push a main.</text>
+<text x="48" y="570" class="h2">02 / JOB TEST · SE EJECUTA EN PUSH Y EN PULL REQUEST</text>
+<rect x="54" y="602" width="312" height="152" class="shadow"/>
+<rect x="48" y="596" width="312" height="152" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="632" class="h3">1 · CHECKOUT</text>
+<text x="70" y="666" class="body">Descarga el código del</text>
+<text x="70" y="697" class="body">commit o de la PR</text>
+<text x="70" y="730" class="mono">actions/checkout@v4</text>
+<rect x="396" y="602" width="312" height="152" class="shadow"/>
+<rect x="390" y="596" width="312" height="152" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="412" y="632" class="h3">2 · SEGURIDAD DEPLOY</text>
+<text x="412" y="666" class="body">Pruebas offline de SSH:</text>
+<text x="412" y="697" class="body">pin de host e inyección</text>
+<text x="412" y="730" class="mono">deploy/verify-security.sh</text>
+<rect x="738" y="602" width="312" height="152" class="shadow"/>
+<rect x="732" y="596" width="312" height="152" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="754" y="632" class="h3">3 · BACKEND LARAVEL</text>
+<text x="754" y="666" class="body">PHP 8.5 + Composer install</text>
+<text x="754" y="697" class="body">Copia .env y genera clave</text>
+<text x="754" y="730" class="mono">php artisan test</text>
+<rect x="1080" y="602" width="312" height="152" class="shadow"/>
+<rect x="1074" y="596" width="312" height="152" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="1096" y="632" class="h3">4 · ENGINE PYTHON</text>
+<text x="1096" y="666" class="body">Python 3.14 + dependencias</text>
+<text x="1096" y="697" class="body">Tests del motor de datos</text>
+<text x="1096" y="730" class="mono">pytest · engine/</text>
+<rect x="54" y="798" width="312" height="152" class="shadow"/>
+<rect x="48" y="792" width="312" height="152" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="828" class="h3">5 · FRONTEND</text>
+<text x="70" y="862" class="body">Node 22 con caché de npm</text>
+<text x="70" y="893" class="body">ci, typecheck y build</text>
+<text x="70" y="926" class="mono">frontend/ · npm ci</text>
+<rect x="396" y="798" width="312" height="152" class="shadow"/>
+<rect x="390" y="792" width="312" height="152" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="412" y="828" class="h3">6 · ARTEFACTO</text>
+<text x="412" y="862" class="body">Guarda frontend/dist para</text>
+<text x="412" y="893" class="body">reutilizarlo en el deploy</text>
+<text x="412" y="926" class="mono">upload-artifact@v4</text>
+<path d="M362 672 H386" class="flow"/>
+<path d="M704 672 H728" class="flow"/>
+<path d="M1046 672 H1070" class="flow"/>
+<path d="M1230 750 V771 H204 V788" class="flow"/>
+<path d="M362 868 H386" class="flow"/>
+<rect x="738" y="798" width="654" height="152" class="shadow"/>
+<rect x="732" y="792" width="654" height="152" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
+<text x="754" y="828" class="h3">RESULTADO DEL JOB TEST</text>
+<text x="754" y="856" class="small">Rojo en cualquier paso: el job se detiene y no hay deploy.</text>
+<text x="754" y="880" class="small">Verde en PR: validación terminada. Verde en push: sigue a deploy.</text>
+<text x="48" y="1000" class="h2">03 / JOB DEPLOY · SOLO PUSH A MAIN CON TEST EN VERDE</text>
+<rect x="54" y="1032" width="312" height="96" class="shadow"/>
+<rect x="48" y="1026" width="312" height="96" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="1062" class="h3">NEEDS: TEST</text>
+<text x="70" y="1090" class="small">Espera al job test</text>
+<text x="70" y="1114" class="small">completado con éxito</text>
+<rect x="396" y="1032" width="312" height="96" class="shadow"/>
+<rect x="390" y="1026" width="312" height="96" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="412" y="1062" class="h3">SOLO PUSH A MAIN</text>
+<text x="412" y="1090" class="small">if: ref = refs/heads/main</text>
+<text x="412" y="1114" class="small">y evento = push</text>
+<rect x="738" y="1032" width="312" height="96" class="shadow"/>
+<rect x="732" y="1026" width="312" height="96" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="754" y="1062" class="h3">ENTORNO PRODUCTION</text>
+<text x="754" y="1090" class="small">Secrets VPS_HOST, VPS_SSH_KEY</text>
+<text x="754" y="1114" class="small">y VPS_SSH_KNOWN_HOSTS</text>
+<rect x="1080" y="1032" width="312" height="96" class="shadow"/>
+<rect x="1074" y="1026" width="312" height="96" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="1096" y="1062" class="h3">UN DEPLOY A LA VEZ</text>
+<text x="1096" y="1090" class="small">concurrency: chartiko-production</text>
+<text x="1096" y="1114" class="small">cancel-in-progress: false</text>
+<rect x="54" y="1168" width="426" height="140" class="shadow"/>
+<rect x="48" y="1162" width="426" height="140" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="1198" class="h3">1 · DESCARGA</text>
+<text x="70" y="1232" class="body">Checkout + download-artifact</text>
+<text x="70" y="1263" class="body">Recupera el frontend ya compilado</text>
+<text x="70" y="1284" class="mono">frontend-dist → frontend/dist</text>
+<rect x="510" y="1168" width="426" height="140" class="shadow"/>
+<rect x="504" y="1162" width="426" height="140" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="526" y="1198" class="h3">2 · SSH SEGURO</text>
+<text x="526" y="1232" class="body">Clave y known_hosts desde secrets</text>
+<text x="526" y="1263" class="body">Host fijado, comprobación estricta</text>
+<text x="526" y="1284" class="mono">deploy/configure-ssh.sh</text>
+<rect x="966" y="1168" width="426" height="140" class="shadow"/>
+<rect x="960" y="1162" width="426" height="140" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="982" y="1198" class="h3">3 · SUBE LA RELEASE</text>
+<text x="982" y="1232" class="body">rsync a una carpeta por commit</text>
+<text x="982" y="1263" class="body">Excluye .git, .env, vendor, node_modules</text>
+<text x="982" y="1284" class="mono">releases/&lt;sha10&gt;/</text>
+<rect x="54" y="1348" width="426" height="140" class="shadow"/>
+<rect x="48" y="1342" width="426" height="140" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="1378" class="h3">4 · ACTIVA</text>
+<text x="70" y="1412" class="body">Ejecuta deploy.sh en el VPS</text>
+<text x="70" y="1443" class="body">con el id corto del commit</text>
+<text x="70" y="1464" class="mono">deploy/deploy.sh &lt;sha10&gt;</text>
+<rect x="510" y="1348" width="426" height="140" class="shadow"/>
+<rect x="504" y="1342" width="426" height="140" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="526" y="1378" class="h3">5 · LIMPIA</text>
+<text x="526" y="1412" class="body">Borra las credenciales SSH</text>
+<text x="526" y="1443" class="body">Siempre, aunque falle: if: always()</text>
+<text x="526" y="1464" class="mono">rm -rf $SSH_DIRECTORY</text>
+<path d="M476 1232 H500" class="flow"/>
+<path d="M932 1232 H956" class="flow"/>
+<path d="M1173 1304 V1323 H261 V1338" class="flow"/>
+<path d="M476 1412 H500" class="flow"/>
+<rect x="966" y="1348" width="426" height="140" class="shadow"/>
+<rect x="960" y="1342" width="426" height="140" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
+<text x="982" y="1378" class="h3">RESULTADO</text>
+<text x="982" y="1412" class="body">Release publicada en chartiko.com</text>
+<text x="982" y="1443" class="body">o rollback automático (sección 04)</text>
+<text x="48" y="1538" class="h2">04 / DEPLOY.SH EN EL VPS · ACTIVACIÓN Y ROLLBACK</text>
+<rect x="54" y="1570" width="312" height="150" class="shadow"/>
+<rect x="48" y="1564" width="312" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="1600" class="h3">1 · ENLACES</text>
+<text x="70" y="1634" class="body">Valida el id de la release</text>
+<text x="70" y="1665" class="body">Enlaza .env, storage y SQLite</text>
+<text x="70" y="1696" class="mono">/var/www/alphapulse/shared</text>
+<rect x="396" y="1570" width="312" height="150" class="shadow"/>
+<rect x="390" y="1564" width="312" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="412" y="1600" class="h3">2 · DEPENDENCIAS</text>
+<text x="412" y="1634" class="body">composer install --no-dev</text>
+<text x="412" y="1665" class="body">pip install del engine</text>
+<text x="412" y="1696" class="mono">shared/venv</text>
+<rect x="738" y="1570" width="312" height="150" class="shadow"/>
+<rect x="732" y="1564" width="312" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="754" y="1600" class="h3">3 · BASE Y CACHÉS</text>
+<text x="754" y="1634" class="body">migrate --force</text>
+<text x="754" y="1665" class="body">Caché: config, rutas, vistas</text>
+<text x="754" y="1696" class="mono">php artisan</text>
+<rect x="1080" y="1570" width="312" height="150" class="shadow"/>
+<rect x="1074" y="1564" width="312" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="1096" y="1600" class="h3">4 · PERMISOS</text>
+<text x="1096" y="1634" class="body">Aplica permisos mínimos</text>
+<text x="1096" y="1665" class="body">a los archivos de la release</text>
+<text x="1096" y="1696" class="mono">release-permissions.sh</text>
+<rect x="54" y="1764" width="312" height="150" class="shadow"/>
+<rect x="48" y="1758" width="312" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="1794" class="h3">5 · CAMBIO ATÓMICO</text>
+<text x="70" y="1828" class="body">current apunta a la nueva</text>
+<text x="70" y="1859" class="body">Guarda la anterior (PREV)</text>
+<text x="70" y="1890" class="mono">ln -sfn + mv -Tf</text>
+<rect x="396" y="1764" width="312" height="150" class="shadow"/>
+<rect x="390" y="1758" width="312" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="412" y="1794" class="h3">6 · REINICIO</text>
+<text x="412" y="1828" class="body">Reinicia Engine y worker</text>
+<text x="412" y="1859" class="body">Recarga PHP-FPM</text>
+<text x="412" y="1890" class="mono">systemctl restart / reload</text>
+<rect x="738" y="1764" width="312" height="150" class="shadow"/>
+<rect x="732" y="1758" width="312" height="150" fill="#faf7f2" stroke="#1a1a1a" stroke-width="2"/>
+<text x="754" y="1794" class="h3">7 · HEALTH CHECK</text>
+<text x="754" y="1828" class="body">Consulta el Engine: hasta</text>
+<text x="754" y="1859" class="body">15 intentos, cada 2 s</text>
+<text x="754" y="1890" class="mono">127.0.0.1:8090/docs</text>
+<path d="M362 1639 H386" class="flow"/>
+<path d="M704 1639 H728" class="flow"/>
+<path d="M1046 1639 H1070" class="flow"/>
+<path d="M1230 1716 V1737 H204 V1754" class="flow"/>
+<path d="M362 1833 H386" class="flow"/>
+<path d="M704 1833 H728" class="flow"/>
+<path d="M1046 1833 H1070" class="flow"/>
+<rect x="1080" y="1764" width="312" height="150" class="shadow"/>
+<rect x="1074" y="1758" width="312" height="150" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
+<text x="1096" y="1794" class="h3">RESULTADO</text>
+<text x="1096" y="1828" class="body">OK → conserva 5 releases</text>
+<text x="1096" y="1859" class="body">FALLA → vuelve a PREV</text>
+<text x="1096" y="1890" class="mono">exit 1 si revierte</text>
+<rect x="48" y="1934" width="1338" height="48" fill="#eee9e0" stroke="#1a1a1a" stroke-width="2"/>
+<text x="70" y="1965.0" class="body">Límite: el health check solo comprueba el Engine; no valida la SPA ni Laravel.</text>
+<text x="48" y="2024" class="small">Fuentes: .github/workflows/ci-deploy.yml · deploy/deploy.sh · deploy/verify-security.sh · deploy/configure-ssh.sh</text>
+<text x="48" y="2052" class="small">Describe el workflow versionado en el repositorio; no certifica ejecuciones concretas en GitHub ni el estado del VPS.</text>
+</svg>

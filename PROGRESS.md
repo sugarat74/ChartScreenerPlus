@@ -1,5 +1,18 @@
 # Progress Log
 
+## Multi-language support added to backlog — 2026-10-06
+
+- User confirmed this request applies to Chartiko. Added `app-multilanguage` as `not_started`: initial Spanish/English catalogs, accessible selector, persistent device preference, supported-browser-language detection with Spanish fallback, localized frontend/API messages and locale-aware formatting across public, account, Portal, chart and Admin surfaces. Initial language pair is a planning assumption, adjustable before implementation.
+- Acceptance criteria preserve session/filter/chart state, stable API and Signal identifiers, USD/market-session semantics, authorization, DESIGN.md and the rule that EOD labels appear only in Admin in either language. Catalogs must be extensible to future languages.
+- Dependencies: accepted app shell and authentication, plus `public-marketing-seo-geo` (currently passing; independent acceptance pending). Existing feature order/status/evidence preserved. No spec, product code, database or deployment changes.
+- Verification: backlog JSON parses, feature ID is unique, dependencies resolve and all prior entries remain structurally identical. `init.ps1` was not rerun for this backlog-only change; product behavior remains unverified for this feature.
+
+## PostgreSQL migration planned — 2026-10-06
+
+- User asked to host further Chartiko-like projects on the VPS and evaluated PostgreSQL vs MariaDB; PostgreSQL chosen (analytical/time-series reads, matches `docs/technical-discovery.md`). Coolify on this VPS was advised against (port 80/443 conflict with Nginx/Certbot, would replace the verified deploy path).
+- Added feature `db-postgresql-migration` (`not_started`, depends on accepted `db-schema-market-data`) and spec `docs/specs/db-postgresql-migration.md`: CI on both SQLite and PostgreSQL, transactional `db:copy-sqlite-to-pgsql`, driver-aware deploy, root cut-over with rollback, loopback-only least-privilege role, daily private `pg_dump` with restore test. PgBouncer added to scope at user request: loopback 6432, transaction mode, SCRAM, emulated PDO prepares, one `[databases]` entry per project; migrations/copy/backups go direct to 5432; CI runs the suite through PgBouncer.
+- Planning only: no code, CI, VPS or data changed; `init.ps1` not rerun. Repo research confirmed Laravel is the sole DB owner, the only raw SQL is portable, and sessions/cache/queue also use the database driver (they move too).
+
 ## Production publication verified — 2026-10-04 18:20 Europe/Madrid
 
 - Root Nginx helper applied; live noindex confirmed. Owner supplied provider-console SSH fingerprint matching the expected ED25519 key; production VPS_SSH_KNOWN_HOSTS updated. Live expected-pin acceptance and substituted-pin rejection both pass.
