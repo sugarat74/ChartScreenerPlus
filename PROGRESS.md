@@ -1,5 +1,12 @@
 # Progress Log
 
+## db-postgresql-migration passing — 2026-10-06 19:38 UTC
+
+- Remaining verification completed with explicit user authorization. Queue: `queue:flush` removed the earlier test failure; a closure job (deploy-owned temp file in /tmp, deleted afterwards) was dispatched to PostgreSQL `jobs`, processed by `alphapulse-queue` (`jobs=0`, `failed_jobs=0`) and logged `pg-queue-check processed`.
+- Rollback rehearsal without touching traffic: config cached from the cut-over `env.before` into a temp `APP_CONFIG_CACHE` resolves `default=sqlite` on `shared/database/database.sqlite` and reads 250,588 Daily Bars and 1 user; live `shared/.env` stayed `pgsql`/6432, `/api/screener` 200, temp cache removed. The automatic post-switch rollback had already run for real in the first cut-over attempt.
+- With the Admin login (pgsql admin session), restore test, smoke checks, pooling and least-privilege checks recorded above, every verification item holds: `db-postgresql-migration` -> `passing` (implemented and self-verified). Not `accepted`: needs an independent validator. Deviation: the manual rollback was rehearsed after, not before, the production window (user accepted possible data loss).
+- Operational notes: the temporary root key `claude-temp-root-chartiko` stays authorized during initial development at user request; keep `shared/database/database.sqlite` for >= 30 days; off-VPS backup copy still not configured. Next: independent validation of `db-postgresql-migration`; `app-multilanguage` still waits on `public-marketing-seo-geo` acceptance.
+
 ## Production login fixed (Sanctum stateful domains) — 2026-10-06 19:34 UTC
 
 - Admin login on https://www.chartiko.com failed with `A stateful session is required.` (HTTP 400). Cause predates the PostgreSQL cut-over (same value in its `env.before`): production `shared/.env` still had `SANCTUM_STATEFUL_DOMAINS=51.222.158.148` from the IP era, so Sanctum never attached a session to SPA requests from the domain; `SESSION_SECURE_COOKIE` was also unset. `deploy/README.md` already documented the correct values.
