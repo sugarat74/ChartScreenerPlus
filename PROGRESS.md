@@ -20,6 +20,13 @@
 - Added feature `db-postgresql-migration` (`not_started`, depends on accepted `db-schema-market-data`) and spec `docs/specs/db-postgresql-migration.md`: CI on both SQLite and PostgreSQL, transactional `db:copy-sqlite-to-pgsql`, driver-aware deploy, root cut-over with rollback, loopback-only least-privilege role, daily private `pg_dump` with restore test. PgBouncer added to scope at user request: loopback 6432, transaction mode, SCRAM, emulated PDO prepares, one `[databases]` entry per project; migrations/copy/backups go direct to 5432; CI runs the suite through PgBouncer.
 - Planning only: no code, CI, VPS or data changed; `init.ps1` not rerun. Repo research confirmed Laravel is the sole DB owner, the only raw SQL is portable, and sessions/cache/queue also use the database driver (they move too).
 
+## EU legal compliance skill — 2026-10-06
+
+- User confirmed the proposed plan (skill first, then a Chartiko feature) for European legal compliance. Created `.opencode/skills/web-legal-compliance-eu/`: SKILL.md, UI metadata, 34-control checklist (LSSI-CE, RGPD/LOPDGDD, cookies, third parties, sector, consumer, DSA, accessibility, operations), primary-source references, report template and legal-text skeletons (aviso legal, privacy, form first layer, cookie policy, financial no-advice notice).
+- Modes: audit (read-only), draft, implement. Never invents owner data or placeholders in published text; banner decision follows a real terminal-storage and third-party inventory and current AEPD criteria; no deploy or external contact without authorization; lists lawyer-review points.
+- Verification: both skill-creator `quick_validate.py` copies exit 0; resource links resolve. Facts checked 2026-10-06: Ley 11/2023 (EAA) obligations from 2025-06-28, EU ODR platform closed 2025-07-20, AEPD reject-at-same-level rule from 2024-01-11. `frontend/src` has no localStorage/sessionStorage use. No eval iterations; `init.ps1` not rerun (no product code changed).
+- Tooling feature `web-legal-compliance-eu-skill` is passing. Next: run the skill in audit mode on Chartiko, then add feature `legal-compliance-eu` with its spec; it needs the owner's name/company, NIF, address and contact email.
+
 ## Production publication verified — 2026-10-04 18:20 Europe/Madrid
 
 - Root Nginx helper applied; live noindex confirmed. Owner supplied provider-console SSH fingerprint matching the expected ED25519 key; production VPS_SSH_KNOWN_HOSTS updated. Live expected-pin acceptance and substituted-pin rejection both pass.

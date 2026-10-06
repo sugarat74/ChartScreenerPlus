@@ -814,5 +814,25 @@
     ],
     "evidence": [],
     "notes": "Added to the backlog on 2026-10-06 at user request for Chartiko. Initial scope assumes Spanish and English, with Spanish fallback, centralized catalogs and an extensible locale registry. Language preference is device-local; account synchronization and additional languages are follow-ups. Translation applies to presentation and user-facing API messages, not market data, Instrument/company names, ticker symbols, technical acronyms, user-entered Saved Screener names or internal operational logs. No automatic translation service, translated URL scheme or new SEO indexing strategy in this feature. public-marketing-seo-geo is currently passing and requires independent acceptance before this dependency is ready. No implementation spec or product code added."
+  },
+  {
+    "id": "web-legal-compliance-eu-skill",
+    "area": "tooling",
+    "title": "Audit and prepare EU/Spain website legal compliance with a reusable skill",
+    "user_visible_behavior": "A reusable skill audits a site against LSSI-CE, GDPR/LOPDGDD, cookie consent (AEPD guide), third-party resources, sector disclaimers, consumer law and accessibility (EAA), drafts legal texts from the real processing inventory and, when asked, implements pages, form notices and consent; it never invents owner data and flags points needing legal review.",
+    "depends_on": [],
+    "status": "passing",
+    "verification": [
+      "Skill frontmatter and bundled resources validate and resolve",
+      "Audit, drafting and implementation modes are separated; no deploy, external contact or invented owner data",
+      "Cookie/banner decision is evidence-based (inventory of terminal storage and third-party loads) and follows the current AEPD criteria",
+      "Report distinguishes verified, requires change, unverified and not applicable, and lists legal-review points"
+    ],
+    "evidence": [
+      "2026-10-06: quick_validate.py (Codex and Claude skill-creator copies) exit 0 for .opencode/skills/web-legal-compliance-eu; all four SKILL.md resource links resolve.",
+      "Primary-source facts checked 2026-10-06: Ley 11/2023 transposes EAA with obligations from 2025-06-28; EU ODR platform closed 2025-07-20 (Reg. 2024/3228); AEPD cookie guide update July 2023 requires reject at the same level as accept from 2024-01-11.",
+      "Repository check: frontend/src has no localStorage/sessionStorage use; Chartiko notes record only Laravel session and XSRF-TOKEN cookies, still to be confirmed against the served site by the feature audit."
+    ],
+    "notes": "User-requested project skill only (2026-10-06), first half of the skill + feature plan; the Chartiko feature legal-compliance-eu is not yet in the backlog and needs owner identity data (name, NIF, address, email). No application, legal page or deployment changes. No comparative eval iterations or independent forward-test. init.ps1 not rerun: no product code changed. Not legal advice; final texts need lawyer review."
   }
 ]
