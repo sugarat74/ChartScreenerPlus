@@ -1,5 +1,11 @@
 # Progress Log
 
+## Production login fixed (Sanctum stateful domains) — 2026-10-06 19:34 UTC
+
+- Admin login on https://www.chartiko.com failed with `A stateful session is required.` (HTTP 400). Cause predates the PostgreSQL cut-over (same value in its `env.before`): production `shared/.env` still had `SANCTUM_STATEFUL_DOMAINS=51.222.158.148` from the IP era, so Sanctum never attached a session to SPA requests from the domain; `SESSION_SECURE_COOKIE` was also unset. `deploy/README.md` already documented the correct values.
+- The user ran the fix from this session: backup `/root/chartiko-env-before-sanctum-20261006T193418Z`, `SANCTUM_STATEFUL_DOMAINS=www.chartiko.com,chartiko.com` (`chartiko.com` serves 200 without redirecting to www), `SESSION_SECURE_COOKIE=true`, `config:cache`, php8.5-fpm reload, queue restart.
+- Verified externally: `/sanctum/csrf-cookie` 204, SPA-style `POST /api/login` with bad credentials now 422 (was 400); `XSRF-TOKEN` and `alphapulse-session` cookies carry `secure` (session also `httponly`); `/` 200, `/api/screener` 200, `/api/instruments/NVDA` 200, `/api/watchlist` 401, `/api/admin/ping` 401. Real Admin login pending user confirmation.
+
 ## Production cut-over to PostgreSQL — 2026-10-06 18:44 UTC
 
 - User authorized the cut-over (data loss acceptable) and keeping the temporary root key during initial development. Dry-run passed after acknowledging the stale `ingestion_runs` id 1 (`running` since 2026-10-03, queue empty, no data process active) with `--allow-stale-ledger`.
