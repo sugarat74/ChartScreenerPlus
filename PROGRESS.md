@@ -1,5 +1,11 @@
 # Progress Log
 
+## Merged to main and deployed — 2026-10-06
+
+- At user request, committed the pending backlog (`app-multilanguage`) and CI infographic (`docs/ci-flujo-infografia.*`), merged `worktree-db-postgresql-migration` (PR #2, now merged) and `worktree-web-legal-compliance-eu-skill` into `main`, and pushed `6b478e2`. Conflicts were append-only in PROGRESS.md/feature_list.json; all entries kept.
+- Verified: local `init.ps1` exit 0 on the merged tree. CI run 37507082672: `test`, `test-pgsql` and `deploy` succeeded. Live smoke on https://www.chartiko.com: `/` 200, `/api/screener` 200, `/api/instruments/NVDA` 200, `/api/watchlist` 401, `/api/admin/ping` 401.
+- Production still runs SQLite: this deploy only ships the PostgreSQL/PgBouncer tooling. `db-postgresql-migration` stays `in_progress` until the operator runs the root-console steps in `deploy/README.md` (install, dry-run, cut-over window, backup restore test, rollback rehearsal).
+
 ## Multi-language support added to backlog — 2026-10-06
 
 - User confirmed this request applies to Chartiko. Added `app-multilanguage` as `not_started`: initial Spanish/English catalogs, accessible selector, persistent device preference, supported-browser-language detection with Spanish fallback, localized frontend/API messages and locale-aware formatting across public, account, Portal, chart and Admin surfaces. Initial language pair is a planning assumption, adjustable before implementation.
