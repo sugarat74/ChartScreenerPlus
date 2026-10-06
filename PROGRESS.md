@@ -1,5 +1,11 @@
 # Progress Log
 
+## PostgreSQL + PgBouncer installed on production VPS — 2026-10-06 18:11 UTC
+
+- Installed via a temporary user-authorized root key: `postgresql` 18.6, `pgbouncer` 1.25.1, `php8.5-pgsql` (php8.5-fpm reloaded). Ran `deploy/install-pgbouncer.sh` and `deploy/postgresql-add-project.sh chartiko` from release `c9b9481`; password generated into `/root/chartiko-db-password.txt` (0600, never printed). Daily backup installed at `/usr/local/sbin/chartiko-backup-postgresql` with `/etc/cron.d/chartiko-postgresql-backup` (03:30).
+- Verified: only listeners 127.0.0.1:5432 and 127.0.0.1:6432; role chartiko not superuser/createdb/createrole/replication/bypassrls; PUBLIC has no CONNECT on chartiko and chartiko has no CONNECT on postgres; password login through PgBouncer succeeds and a wrong password fails SASL; SHOW POOLS lists chartiko/chartiko; manual backup produced a 0600 dump in a 0700 directory.
+- Not done: production still runs `DB_CONNECTION=sqlite` (`/api/screener` 200). Cut-over (`deploy/migrate-to-postgresql.sh`), restore test and rollback rehearsal remain pending; the temporary root key must be removed from `/root/.ssh/authorized_keys` after use.
+
 ## Merged to main and deployed — 2026-10-06
 
 - At user request, committed the pending backlog (`app-multilanguage`) and CI infographic (`docs/ci-flujo-infografia.*`), merged `worktree-db-postgresql-migration` (PR #2, now merged) and `worktree-web-legal-compliance-eu-skill` into `main`, and pushed `6b478e2`. Conflicts were append-only in PROGRESS.md/feature_list.json; all entries kept.
