@@ -4,7 +4,7 @@
 
 - Admin login on https://www.chartiko.com failed with `A stateful session is required.` (HTTP 400). Cause predates the PostgreSQL cut-over (same value in its `env.before`): production `shared/.env` still had `SANCTUM_STATEFUL_DOMAINS=51.222.158.148` from the IP era, so Sanctum never attached a session to SPA requests from the domain; `SESSION_SECURE_COOKIE` was also unset. `deploy/README.md` already documented the correct values.
 - The user ran the fix from this session: backup `/root/chartiko-env-before-sanctum-20261006T193418Z`, `SANCTUM_STATEFUL_DOMAINS=www.chartiko.com,chartiko.com` (`chartiko.com` serves 200 without redirecting to www), `SESSION_SECURE_COOKIE=true`, `config:cache`, php8.5-fpm reload, queue restart.
-- Verified externally: `/sanctum/csrf-cookie` 204, SPA-style `POST /api/login` with bad credentials now 422 (was 400); `XSRF-TOKEN` and `alphapulse-session` cookies carry `secure` (session also `httponly`); `/` 200, `/api/screener` 200, `/api/instruments/NVDA` 200, `/api/watchlist` 401, `/api/admin/ping` 401. Real Admin login pending user confirmation.
+- Verified externally: `/sanctum/csrf-cookie` 204, SPA-style `POST /api/login` with bad credentials now 422 (was 400); `XSRF-TOKEN` and `alphapulse-session` cookies carry `secure` (session also `httponly`); `/` 200, `/api/screener` 200, `/api/instruments/NVDA` 200, `/api/watchlist` 401, `/api/admin/ping` 401. The user then logged in as Admin; PostgreSQL `sessions` holds an admin-role session (last activity 19:35:34 UTC), so the Admin login item of `db-postgresql-migration` is verified.
 
 ## Production cut-over to PostgreSQL — 2026-10-06 18:44 UTC
 
