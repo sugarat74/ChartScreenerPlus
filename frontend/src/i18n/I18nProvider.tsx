@@ -48,6 +48,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       formatMultiple: (v, digits) => format.formatMultiple(locale, v, digits),
       formatNumber: (v, digits) => format.formatNumber(locale, v, digits),
       formatInteger: (v) => format.formatInteger(locale, v),
+      formatDecimal: (v) => format.formatDecimal(locale, v),
       formatCompact: (v) => format.formatCompact(locale, v),
       formatDateTime: (iso) => format.formatDateTime(locale, iso),
       formatMarketDate: (iso) => format.formatMarketDate(locale, iso),

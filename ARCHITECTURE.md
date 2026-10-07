@@ -36,7 +36,7 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
   - `/register` -> account-creation screen
   - `*` -> token-styled Not Found placeholder (rendered inside the shell)
 - Tab paths and label catalog keys are single-sourced in `frontend/src/nav.ts` (`NAV_ITEMS`, `DEFAULT_ROUTE`); auth paths are exported there too (`LOGIN_ROUTE`, `REGISTER_ROUTE`) and the router derives child segments from them with `routeSegment`.
-- The header (brand, EOD status, inert primary action, user pill) lives in `frontend/src/components/AppHeader.tsx`; it is auth-aware and shows the signed-in user plus a sign-out control, or an "Iniciar sesión" link for a Visitor.
+- The header (brand, "technical analysis" context chip, inert data-refresh action, `ES | EN` language selector, user pill) lives in `frontend/src/components/AppHeader.tsx`; it is auth-aware and shows the signed-in user plus a sign-out control, or a translated sign-in link for a Visitor.
 - History routing needs a server-side SPA fallback when the SPA is deployed behind Laravel or another host; the Vite dev server already provides it. Configuration is deferred to deployment work.
 
 ## Localization (Spanish / English)

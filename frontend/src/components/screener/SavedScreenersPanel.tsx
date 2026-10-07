@@ -55,7 +55,7 @@ export default function SavedScreenersPanel({
   reloadToken = 0,
 }: SavedScreenersPanelProps) {
   const { user, status: authStatus } = useAuth()
-  const { t } = useI18n()
+  const { t, formatDecimal } = useI18n()
   const tRef = useTranslateRef()
   const navigate = useNavigate()
 
@@ -67,7 +67,9 @@ export default function SavedScreenersPanel({
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  // Only the name is kept; the confirmation is translated at render time so it
+  // follows a language switch.
+  const [savedName, setSavedName] = useState<string | null>(null)
 
   const [removingId, setRemovingId] = useState<number | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
@@ -121,18 +123,18 @@ export default function SavedScreenersPanel({
     const trimmed = name.trim()
     if (trimmed === '') {
       setSaveError(t('saved.nameRequired'))
-      setSavedMessage(null)
+      setSavedName(null)
       return
     }
 
     setSaving(true)
     setSaveError(null)
-    setSavedMessage(null)
+    setSavedName(null)
 
     try {
       await savedScreenersApi.create(trimmed, serializeScreenerFilters(filters))
       setName('')
-      setSavedMessage(t('saved.savedMessage', { name: trimmed }))
+      setSavedName(trimmed)
       reload()
     } catch (caught) {
       if (caught instanceof ApiError && caught.status === 401) {
@@ -244,12 +246,12 @@ export default function SavedScreenersPanel({
         </p>
       ) : null}
 
-      {savedMessage !== null ? (
+      {savedName !== null ? (
         <p
           role="status"
           className="mt-3 rounded-[4px] border-2 border-outline bg-surface-container px-3 py-2 font-mono text-xs text-on-surface"
         >
-          {savedMessage}
+          {t('saved.savedMessage', { name: savedName })}
         </p>
       ) : null}
 
@@ -312,7 +314,7 @@ export default function SavedScreenersPanel({
                     {screener.name}
                   </p>
                   <p className="mt-0.5 max-w-2xl text-xs text-on-surface-variant">
-                    {describeSavedFilters(screener.filters, t)}
+                    {describeSavedFilters(screener.filters, t, formatDecimal)}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

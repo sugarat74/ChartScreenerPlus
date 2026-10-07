@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import type { SavedScreenerFilters } from '../lib/api.ts'
+import { describeSavedFilters } from '../lib/screenerFilters.ts'
+import { formatDecimal } from './format.ts'
 import { SUPPORTED_LOCALES } from './locales.ts'
 import { MESSAGES } from './messages/index.ts'
 import type { Messages } from './messages/es.ts'
 import { translate } from './translate.ts'
-import type { MessageKey } from './translate.ts'
+import type { MessageKey, MessageParams } from './translate.ts'
 
 function flatten(node: unknown, prefix = ''): Record<string, string> {
   const result: Record<string, string> = {}
@@ -47,6 +50,30 @@ describe('catalog completeness', () => {
         expect(text, `${locale}: ${key}`).not.toMatch(/\bEOD\b|end[- ]of[- ]day|fin de d[ií]a/i)
       }
     }
+  })
+})
+
+describe('describeSavedFilters', () => {
+  const definition: SavedScreenerFilters = {
+    signal: ['golden_cross'],
+    rsi_min: 30,
+    rsi_max: null,
+    min_rvol: 1.5,
+    price_above_sma200: true,
+    ma_cross: 'bullish',
+    sort: 'rsi_desc',
+  }
+
+  it('describes a stored definition in each language with locale numbers', () => {
+    const es = (key: MessageKey, params?: MessageParams) => translate(MESSAGES.es, key, params)
+    const en = (key: MessageKey, params?: MessageParams) => translate(MESSAGES.en, key, params)
+
+    expect(describeSavedFilters(definition, es, (value) => formatDecimal('es', value))).toBe(
+      'Cruce dorado · RSI ≥ 30 · RVOL ≥ 1,5 · Precio > SMA200 · Cruce alcista · Orden: RSI (mayor)',
+    )
+    expect(describeSavedFilters(definition, en, (value) => formatDecimal('en', value))).toBe(
+      'Golden cross · RSI ≥ 30 · RVOL ≥ 1.5 · Price > SMA200 · Bullish cross · Sort: RSI (highest)',
+    )
   })
 })
 

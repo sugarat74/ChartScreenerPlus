@@ -26,7 +26,7 @@ const SECONDARY_BUTTON_CLASS =
 
 export default function PortalSavedScreeners() {
   const { user } = useAuth()
-  const { t } = useI18n()
+  const { t, formatDecimal } = useI18n()
   const tRef = useTranslateRef()
   const navigate = useNavigate()
   const [items, setItems] = useState<SavedScreener[]>([])
@@ -165,7 +165,7 @@ export default function PortalSavedScreeners() {
                   <tr key={screener.id} className="border-b border-outline-variant align-top">
                     <th scope="row" className="px-4 py-3 text-left font-normal">
                       <p className="font-mono text-sm font-bold text-on-surface">{screener.name}</p>
-                      <p className="mt-0.5 max-w-2xl text-xs text-on-surface-variant">{describeSavedFilters(screener.filters, t)}</p>
+                      <p className="mt-0.5 max-w-2xl text-xs text-on-surface-variant">{describeSavedFilters(screener.filters, t, formatDecimal)}</p>
                     </th>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-wrap justify-end gap-2">

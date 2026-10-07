@@ -55,6 +55,12 @@ follows the selected language. The choice persists on the same device.
 - `config/locales.php` lists supported locales. `lang/{es,en}/{validation,auth,passwords,pagination,
   messages}.php` hold the strings; controllers and `EnsureUserIsAdmin` use `__('messages.*')`
   instead of hardcoded text. Status codes, JSON shapes, `errors` keys and Signal codes are unchanged.
+- `App\Http\LocalizedFrameworkMessages` (registered with `withExceptions()->respond()` in
+  `bootstrap/app.php`) translates the framework's generic API error messages (401
+  `Unauthenticated.`, 403, route-miss 404, 405, 419 CSRF, 429 throttle, 500, 503) into
+  `messages.http.*`. It replaces a message only when it is the framework default for that status,
+  keeps status and headers (`Retry-After`), resolves the locale itself (a route miss never runs the
+  `api` group) and leaves non-`api/*` responses alone.
 
 ## Decisions
 
@@ -62,6 +68,9 @@ follows the selected language. The choice persists on the same device.
   to contain no EOD/end-of-day wording.
 - Laravel's test client sends `Accept-Language: en-us` by default, so existing English assertions
   still hold; `LocalizationTest` sends explicit headers (empty header → Spanish).
+- Confirmations held in component state store their data (e.g. the saved name) and are translated
+  at render time, so they follow a language switch. Server error text already shown stays in the
+  language of the request that produced it until the next request.
 - Number formatting is display-only: filter inputs, URL params and stored definitions keep raw
   numbers. Prices stay plain two-decimal numbers (no currency symbol), as before.
 

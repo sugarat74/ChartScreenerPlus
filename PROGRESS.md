@@ -1,10 +1,16 @@
 # Progress Log
 
+## app-multilanguage revised after independent validation — 2026-10-07
+
+- Independent validator returned `revise`: D1 (Medium) framework-generated API errors (401 `Unauthenticated.`, 429 `Too Many Attempts.`, 419 CSRF, route-miss 404, 500) reached the Spanish UI in English; D2 (Low) the saved-screener confirmation stayed in the old language after a switch; D3 (Low) saved-screener summaries used raw numbers (`1.5` in Spanish); D4 (Low) ARCHITECTURE.md header description was stale; D5 (info) catalogs bundled eagerly.
+- Fixes: `App\Http\LocalizedFrameworkMessages` via `withExceptions()->respond()` translates only framework-default messages into `messages.http.*` (status and `Retry-After` kept, locale resolved even on a route miss, non-API untouched); the confirmation stores the name and translates at render; new `formatDecimal` formatter used by `describeSavedFilters`; ARCHITECTURE.md header line updated. D5 left as a documented follow-up.
+- Verified: LocalizationTest 20 tests (401 es/en, route-miss 404 es/en, login throttle 429 with Retry-After, default-only replacement for 419/500/own messages/422/non-API); Vitest 39 tests; lint 0 warnings; `.\init.ps1` result recorded in feature_list evidence. Status stays `passing`; needs re-validation.
+
 ## app-multilanguage passing — 2026-10-07
 
 - Implemented Spanish/English across Chartiko on branch `worktree-app-multilanguage`. SPA: `frontend/src/i18n` (registry, typed catalogs, provider, formatters) plus an `ES | EN` selector in the header; every surface (home, auth, Screener, Saved Screeners, Portal, Watchlist, chart, Admin, 404, page titles) reads from the catalogs. Resolution: saved device choice > supported browser language > Spanish; switching keeps URL filters, the selected Candidate and the session. API: `SetLocale` reads `Accept-Language` (sent by the SPA on every request), messages in `lang/{es,en}`, statuses/shapes/`errors` keys/Signal codes unchanged.
 - Verified: `.\init.ps1` exit 0 (Laravel 192 passed / 6 skipped, SPA lint 0 warnings, Vitest 37 tests incl. jsdom component tests, build, engine 47). New Vitest step wired into `init.ps1`; new dev dependencies vitest, jsdom, @testing-library/react, @testing-library/dom.
-- Not verified: real-browser visual/keyboard review of the selector and both languages (no browser in this session; component tests cover behaviour). Static `index.html` stays Spanish by design (no translated URLs/hreflang). Main bundle grows from 406 KB to 431 KB (124 KB gzip) because both catalogs ship eagerly; lazy-loading catalogs is a possible follow-up. Ingestion log lines stored by the backend and Laravel's built-in `Unauthenticated.`/`Too Many Attempts.` texts are not translated.
+- Not verified: real-browser visual/keyboard review of the selector and both languages (no browser in this session; component tests cover behaviour). Static `index.html` stays Spanish by design (no translated URLs/hreflang). Main bundle grows from 406 KB to 431 KB (124 KB gzip) because both catalogs ship eagerly; lazy-loading catalogs is a possible follow-up. Ingestion log lines stored by the backend are not translated (operational data).
 - Status `passing`; needs independent validation before `accepted`. Not merged or deployed.
 
 ## public-marketing-seo-geo accepted — 2026-10-07

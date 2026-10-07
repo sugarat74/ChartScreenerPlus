@@ -26,6 +26,14 @@ export function formatNumber(
   }).format(value)
 }
 
+/** A threshold or parameter value: up to two decimals, no padding (`1.5`, `30`). */
+export function formatDecimal(locale: Locale, value: number | null): string {
+  if (value === null || !Number.isFinite(value)) {
+    return EMPTY
+  }
+  return new Intl.NumberFormat(intlTag(locale), { maximumFractionDigits: 2 }).format(value)
+}
+
 /** Prices are USD values shown as plain two-decimal numbers. */
 export function formatPrice(locale: Locale, value: number | null): string {
   return formatNumber(locale, value, 2)

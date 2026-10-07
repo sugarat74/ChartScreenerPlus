@@ -3,6 +3,7 @@ import {
   formatChangePercent,
   formatCompact,
   formatDateTime,
+  formatDecimal,
   formatMarketDate,
   formatMultiple,
   formatPrice,
@@ -19,6 +20,13 @@ describe('locale-aware number formatting', () => {
     expect(formatChangePercent('en', 1.234)).toBe('+1.23%')
     expect(formatChangePercent('es', -1.234)).toBe('-1,23%')
     expect(formatChangePercent('es', 0)).toBe('0,00%')
+  })
+
+  it('formats thresholds without padding', () => {
+    expect(formatDecimal('es', 1.5)).toBe('1,5')
+    expect(formatDecimal('en', 1.5)).toBe('1.5')
+    expect(formatDecimal('es', 30)).toBe('30')
+    expect(formatDecimal('en', null)).toBe('—')
   })
 
   it('formats multiples and compact volumes', () => {

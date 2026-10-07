@@ -12,6 +12,7 @@ export interface I18nContextValue {
   formatMultiple: (value: number | null, fractionDigits?: number) => string
   formatNumber: (value: number | null, fractionDigits: number) => string
   formatInteger: (value: number | null) => string
+  formatDecimal: (value: number | null) => string
   formatCompact: (value: number | null) => string
   formatDateTime: (iso: string | null) => string
   formatMarketDate: (isoDate: string | null) => string

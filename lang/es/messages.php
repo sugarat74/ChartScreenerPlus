@@ -21,6 +21,18 @@ return [
     'admin_required' => 'Se requiere acceso de administrador.',
     'stateful_session_required' => 'Se requiere una sesión con estado.',
 
+    // Errores de API generados por el framework (App\Http\LocalizedFrameworkMessages).
+    'http' => [
+        'unauthenticated' => 'No has iniciado sesión.',
+        'forbidden' => 'No tienes permiso para realizar esta acción.',
+        'not_found' => 'No se encontró el recurso solicitado.',
+        'method_not_allowed' => 'Este método no está permitido para el recurso solicitado.',
+        'session_expired' => 'Tu sesión ha caducado. Recarga la página e inténtalo de nuevo.',
+        'too_many_attempts' => 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
+        'server_error' => 'Error del servidor.',
+        'service_unavailable' => 'Servicio no disponible temporalmente. Inténtalo más tarde.',
+    ],
+
     'ingestion' => [
         'universe_unknown' => 'No se encontró el universo [:slug].',
         'run_not_finished' => 'Solo se puede reintentar una ejecución terminada.',

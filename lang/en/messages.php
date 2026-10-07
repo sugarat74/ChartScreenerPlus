@@ -20,6 +20,18 @@ return [
     'admin_required' => 'Admin access required.',
     'stateful_session_required' => 'A stateful session is required.',
 
+    // Framework-generated API errors (App\Http\LocalizedFrameworkMessages).
+    'http' => [
+        'unauthenticated' => 'Unauthenticated.',
+        'forbidden' => 'This action is unauthorized.',
+        'not_found' => 'The requested resource was not found.',
+        'method_not_allowed' => 'This method is not allowed for the requested resource.',
+        'session_expired' => 'Your session has expired. Reload the page and try again.',
+        'too_many_attempts' => 'Too Many Attempts.',
+        'server_error' => 'Server Error',
+        'service_unavailable' => 'Service temporarily unavailable. Please try again later.',
+    ],
+
     'ingestion' => [
         'universe_unknown' => 'No universe found for [:slug].',
         'run_not_finished' => 'Only a finished run can be retried.',

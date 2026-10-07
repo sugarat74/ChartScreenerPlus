@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Http\LocalizedFrameworkMessages;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -142,6 +145,82 @@ class LocalizationTest extends TestCase
             ->getJson('/api/admin/ping')
             ->assertStatus(403)
             ->assertJsonPath('message', 'Admin access required.');
+    }
+
+    public function test_framework_unauthenticated_message_is_translated(): void
+    {
+        $this->withHeader('Accept-Language', 'es')
+            ->getJson('/api/watchlist')
+            ->assertStatus(401)
+            ->assertHeader('Content-Language', 'es')
+            ->assertExactJson(['message' => 'No has iniciado sesión.']);
+
+        $this->withHeader('Accept-Language', 'en')
+            ->getJson('/api/watchlist')
+            ->assertStatus(401)
+            ->assertExactJson(['message' => 'Unauthenticated.']);
+    }
+
+    public function test_route_miss_is_translated_even_without_the_api_middleware_group(): void
+    {
+        $this->withHeader('Accept-Language', 'es')
+            ->getJson('/api/does-not-exist')
+            ->assertStatus(404)
+            ->assertHeader('Content-Language', 'es')
+            ->assertJsonPath('message', 'No se encontró el recurso solicitado.');
+
+        $this->withHeader('Accept-Language', 'en')
+            ->getJson('/api/does-not-exist')
+            ->assertStatus(404)
+            ->assertJsonPath('message', 'The requested resource was not found.');
+    }
+
+    public function test_login_throttle_message_is_translated_and_keeps_retry_after(): void
+    {
+        $this->withHeaders(['Origin' => 'http://localhost:5173', 'Accept-Language' => 'es']);
+        $credentials = ['email' => 'nobody@example.com', 'password' => 'wrong-password'];
+
+        for ($attempt = 1; $attempt <= 6; $attempt++) {
+            $this->postJson('/api/login', $credentials)->assertStatus(422);
+        }
+
+        $this->postJson('/api/login', $credentials)
+            ->assertStatus(429)
+            ->assertHeader('Retry-After')
+            ->assertJsonPath('message', 'Demasiados intentos. Espera un momento e inténtalo de nuevo.');
+    }
+
+    public function test_only_framework_default_messages_are_replaced(): void
+    {
+        $spanish = Request::create('/api/screeners', 'POST', server: ['HTTP_ACCEPT_LANGUAGE' => 'es']);
+
+        $csrf = LocalizedFrameworkMessages::localize(new JsonResponse(['message' => 'CSRF token mismatch.'], 419), $spanish);
+        $this->assertSame(419, $csrf->getStatusCode());
+        $this->assertSame(
+            ['message' => 'Tu sesión ha caducado. Recarga la página e inténtalo de nuevo.'],
+            $csrf->getData(true),
+        );
+
+        $server = LocalizedFrameworkMessages::localize(new JsonResponse(['message' => 'Server Error'], 500), $spanish);
+        $this->assertSame('Error del servidor.', $server->getData(true)['message']);
+
+        $own = LocalizedFrameworkMessages::localize(
+            new JsonResponse(['message' => 'Instrumento no encontrado.'], 404),
+            $spanish,
+        );
+        $this->assertSame('Instrumento no encontrado.', $own->getData(true)['message']);
+
+        $validation = LocalizedFrameworkMessages::localize(
+            new JsonResponse(['message' => 'x', 'errors' => ['email' => ['x']]], 422),
+            $spanish,
+        );
+        $this->assertSame(['message' => 'x', 'errors' => ['email' => ['x']]], $validation->getData(true));
+
+        $web = LocalizedFrameworkMessages::localize(
+            new JsonResponse(['message' => 'Server Error'], 500),
+            Request::create('/up', 'GET', server: ['HTTP_ACCEPT_LANGUAGE' => 'es']),
+        );
+        $this->assertSame('Server Error', $web->getData(true)['message']);
     }
 
     public function test_every_supported_locale_has_the_same_catalog_keys_and_placeholders(): void

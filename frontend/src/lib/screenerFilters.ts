@@ -271,22 +271,27 @@ export function deserializeScreenerFilters(
 
 /**
  * Compact, human-readable summary of a stored definition in the active
- * language. Lenient: a malformed stored payload is described, never thrown on.
+ * language; `formatValue` renders thresholds with the locale's separators.
+ * Lenient: a malformed stored payload is described, never thrown on.
  */
-export function describeSavedFilters(filters: SavedScreenerFilters, t: Translate): string {
+export function describeSavedFilters(
+  filters: SavedScreenerFilters,
+  t: Translate,
+  formatValue: (value: number) => string,
+): string {
   const parts: string[] = []
 
   if (Array.isArray(filters.signal) && filters.signal.length > 0) {
     parts.push(filters.signal.map((type) => signalLabel(type, t)).join(', '))
   }
   if (typeof filters.rsi_min === 'number') {
-    parts.push(t('saved.describeRsiMin', { value: filters.rsi_min }))
+    parts.push(t('saved.describeRsiMin', { value: formatValue(filters.rsi_min) }))
   }
   if (typeof filters.rsi_max === 'number') {
-    parts.push(t('saved.describeRsiMax', { value: filters.rsi_max }))
+    parts.push(t('saved.describeRsiMax', { value: formatValue(filters.rsi_max) }))
   }
   if (typeof filters.min_rvol === 'number') {
-    parts.push(t('saved.describeMinRvol', { value: filters.min_rvol }))
+    parts.push(t('saved.describeMinRvol', { value: formatValue(filters.min_rvol) }))
   }
   if (filters.price_above_sma200 === true) {
     parts.push(t('saved.describePriceAboveSma200'))
