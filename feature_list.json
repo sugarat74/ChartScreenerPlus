@@ -810,7 +810,7 @@
       "auth-registration-login",
       "public-marketing-seo-geo"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Complete Spanish (es) and English (en) translation catalogs cover all user-facing surfaces, including loading, empty, validation, authorization and error states, tooltips and accessibility labels; technical symbols, API identifiers and user-authored names remain unchanged",
       "An accessible language selector switches language without losing active filters, the selected Candidate, current route or session; choice persists after reload and navigation on the same device",
@@ -821,6 +821,7 @@
       "Catalog completeness, locale resolution/persistence and bilingual representative public/authenticated/Admin flows are verified; init.ps1 passes and implementation documents describe how to add another language"
     ],
     "evidence": [
+      "independent validator accept (2026-10-07, second round on 1f66100): re-ran .\\init.ps1 (Baseline OK), php artisan test 196 passed/6 skipped (1871 assertions), LocalizationTest 20 passed, Vitest 39 passed, lint clean. D1 verified: framework-default 401/403/404/405/419/429/500/503 API messages translated via LocalizedFrameworkMessages with status, Retry-After and other keys preserved; no app-specific localized message matches the anchored default patterns; 422 untouched; debug-mode 500 text untouched. D2-D4 verified; D5 (eager catalogs) accepted as documented follow-up. Earlier criteria 1-7 still pass; no regressions. Not checked: real-browser rendering/screen reader and live-server 401/429 (covered by feature tests).",
       "2026-10-07 revise round: independent validator found D1 (Medium, untranslated framework API errors) and D2-D4 (Low). Fixed with App\\Http\\LocalizedFrameworkMessages (withExceptions respond; framework-default messages only; status/Retry-After kept; locale resolved on route miss), render-time saved confirmation, formatDecimal in describeSavedFilters, ARCHITECTURE header line. LocalizationTest 20 tests (adds 401, route-miss 404, throttle 429, default-only replacement incl. 419/500); Vitest 39 tests; lint 0 warnings.",
       "2026-10-07 .\\init.ps1 exit 0 (Baseline OK): Laravel 192 passed / 6 skipped (1812 assertions; was 176/1043), SPA tsc+oxlint 0 warnings, Vitest 4 files / 37 tests (new npm run test step in init.ps1), SPA build, engine 47 passed (existing Starlette warning).",
       "SPA: frontend/src/i18n (locale registry, typed es/en catalogs where en is typed Messages so missing/extra keys fail tsc, translate with {param} interpolation and Spanish fallback, Intl formatters, I18nProvider above AuthProvider/router, useI18n/useTranslateRef, Interpolate) and LanguageSelector (ES|EN segmented group, aria-pressed, native names with lang) in AppHeader. Every page/component string moved to catalogs: public home, auth, 404, Screener (filters, sort, results, table), Saved Screeners, Portal, Watchlist, chart (legend, panels, canvas aria-label, Lightweight Charts localization.locale, PIVOT line), Admin, RouteMetadata titles/descriptions. Duplicated messageFor/describeFilters helpers consolidated (apiErrorMessage, describeSavedFilters).",

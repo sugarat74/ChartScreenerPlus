@@ -1,5 +1,10 @@
 # Progress Log
 
+## app-multilanguage accepted — 2026-10-07
+
+- Independent validator re-ran the gate on `1f66100` and returned `accept`: D1 (framework API errors) and D2-D4 fixed, no regressions; D5 (both catalogs bundled eagerly) kept as a follow-up. Evidence in `feature_list.json`.
+- `app-multilanguage` -> `accepted` on branch `worktree-app-multilanguage` (draft PR #3). Not merged or deployed. Remaining manual check: real-browser visual/keyboard review of both languages.
+
 ## app-multilanguage revised after independent validation — 2026-10-07
 
 - Independent validator returned `revise`: D1 (Medium) framework-generated API errors (401 `Unauthenticated.`, 429 `Too Many Attempts.`, 419 CSRF, route-miss 404, 500) reached the Spanish UI in English; D2 (Low) the saved-screener confirmation stayed in the old language after a switch; D3 (Low) saved-screener summaries used raw numbers (`1.5` in Spanish); D4 (Low) ARCHITECTURE.md header description was stale; D5 (info) catalogs bundled eagerly.
