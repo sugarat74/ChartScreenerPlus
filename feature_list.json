@@ -731,7 +731,7 @@
     "title": "Prepare Chartiko public marketing and search metadata",
     "user_visible_behavior": "The public home page explains Chartiko's implemented screening workflow and limits, links to the Screener, and exposes accurate crawl metadata while private app routes remain out of the sitemap.",
     "depends_on": ["chartiko-brand", "app-shell-navigation"],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Home page content and CTA are present in the initial HTML and SPA view",
       "Only the public home URL is canonical and included in the sitemap",
@@ -739,6 +739,7 @@
       "Production deployment and public indexing/citation checks are recorded separately"
     ],
     "evidence": [
+      "independent validator accept (2026-10-07): .\\init.ps1 exit 0 (Laravel 176 passed/6 skipped/1043 assertions, frontend tsc+oxlint+build 133 modules, engine 47); live home 200 with hero, workflow, Signals/limits, FAQ (daily data, no intraday), disclaimer and /screener CTA in initial HTML, matching LandingPage (router.tsx:18, LandingPage.tsx:20/90); no public EOD wording; robots.txt 200 text/plain with sitemap line; sitemap.xml 200 lists only https://www.chartiko.com/; home canonical www; RouteMetadata.tsx sets index only on / and noindex,follow elsewhere; live X-Robots-Tag noindex,follow on /screener, /admin, /login, /register, /portal, /chart, /instruments/NVDA and none on home (deploy/nginx.conf:11); JSON-LD parses as schema.org WebSite; publication recorded, Search Console and citation measurement left open. Low findings: chartiko.com serves 200 instead of 301 to www (canonical mitigates); unknown URLs return 200 without X-Robots-Tag (known soft-404); docs/marketing/2026-10-04-seo-geo.md still says launch blocked; deep routes share home og:url/og:image before JS. Not checked: browser render, Lighthouse, Rich Results, Search Console, mobile/visual QA.",
       "2026-10-04 publication: CI/deploy 37215973285 success, release 65ec3b16ff live. Home 200 with substantive Chartiko HTML/canonical/JSON-LD/CTA, robots 200 text/plain, sitemap 200 XML with only home URL, Screener X-Robots-Tag noindex/follow. Root remediation and independently verified SSH pin closed the confirmed release blockers. Remaining full-audit exclusions and production data gap recorded in docs/security/2026-10-04-revalidacion-despliegue.md; no indexing/citation or independent feature acceptance claim.",
       "2026-10-04 continuation: init.ps1 re-ran successfully (Laravel 154/985, frontend lint/build 133 modules, engine 47). Deployment SSH regression checks passed; reviewed remediation script uploaded and hash verified. Root SSH/sudo access blocked actual remediation, so release remains unpublished; see docs/security/2026-10-04-remediacion-pendiente.md.",
       "2026-10-04: .\\init.ps1 passed: Laravel 154 tests / 985 assertions; frontend lint/build 133 modules; engine 47 tests (one existing Starlette/httpx deprecation warning).",

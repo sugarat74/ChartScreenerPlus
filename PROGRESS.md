@@ -1,5 +1,11 @@
 # Progress Log
 
+## public-marketing-seo-geo accepted — 2026-10-07
+
+- Independent validator (subagent, read-only, public GETs only) returned `accept` on all four criteria: home content and `/screener` CTA in initial HTML and SPA; only the home URL is canonical and in the sitemap; app/account/Admin routes noindex via `RouteMetadata.tsx` and live `X-Robots-Tag`; publication recorded with Search Console/citation measurement left open. `.\init.ps1` exit 0 (Laravel 176 passed/6 skipped, frontend build, engine 47).
+- Low follow-ups (not blocking): `chartiko.com` serves 200 instead of a 301 to www; unknown URLs return 200 without `X-Robots-Tag` (known soft-404); `docs/marketing/2026-10-04-seo-geo.md` still describes the launch as blocked; deep routes share the home `og:url`/`og:image` before JS.
+- `public-marketing-seo-geo` -> `accepted`. All dependencies of `app-multilanguage` are now accepted, so it is the next ready feature.
+
 ## chartiko-brand accepted — 2026-10-07
 
 - Independent validator (subagent, read-only) returned `accept`: palette/hard-shadow wordmark, logo and favicon match DESIGN.md; every EOD/end-of-day string in frontend source and in the live bundle is Admin-only; `.\init.ps1` exit 0 (Laravel 176 passed/6 skipped, frontend build, engine 47); rebrand changed no API contracts, Signal codes or VPS service identifiers; live site serves Chartiko metadata and a byte-identical favicon. Rendered visuals were not checked in a browser.
