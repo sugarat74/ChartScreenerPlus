@@ -70,7 +70,7 @@ class ScreenerController extends Controller
         $universe = $this->resolveUniverse($request);
 
         if ($universe === null) {
-            return response()->json(['message' => 'Universe not found.'], 404);
+            return response()->json(['message' => __('messages.universe_not_found')], 404);
         }
 
         $filters = $this->resolveFilters($request);
@@ -180,7 +180,7 @@ class ScreenerController extends Controller
         foreach ($values as $value) {
             if (! is_string($value)) {
                 throw ValidationException::withMessages([
-                    'signal' => ['The signal parameter must contain only known signal types.'],
+                    'signal' => [__('messages.screener.signal_unknown_types')],
                 ]);
             }
 
@@ -192,7 +192,7 @@ class ScreenerController extends Controller
 
             if (! in_array($type, self::SIGNAL_TYPES, true)) {
                 throw ValidationException::withMessages([
-                    'signal' => ['The selected signal type is invalid.'],
+                    'signal' => [__('messages.screener.signal_invalid')],
                 ]);
             }
 
@@ -218,7 +218,7 @@ class ScreenerController extends Controller
 
         if (! is_numeric($value)) {
             throw ValidationException::withMessages([
-                $key => ["The {$key} parameter must be a number."],
+                $key => [__('messages.screener.parameter_number', ['parameter' => $key])],
             ]);
         }
 
@@ -242,7 +242,7 @@ class ScreenerController extends Controller
 
         if ($flag === null) {
             throw ValidationException::withMessages([
-                $key => ["The {$key} parameter must be a boolean (1/true/on/yes or 0/false/off/no)."],
+                $key => [__('messages.screener.parameter_boolean', ['parameter' => $key])],
             ]);
         }
 
@@ -262,7 +262,7 @@ class ScreenerController extends Controller
 
         if (! is_string($value) || ! in_array($value, ['bullish', 'bearish'], true)) {
             throw ValidationException::withMessages([
-                'ma_cross' => ['The ma_cross parameter must be one of: bullish, bearish.'],
+                'ma_cross' => [__('messages.screener.ma_cross_invalid')],
             ]);
         }
 
@@ -282,7 +282,7 @@ class ScreenerController extends Controller
 
         if (! is_string($value) || ! in_array($value, self::SORTS, true)) {
             throw ValidationException::withMessages([
-                'sort' => ['The sort parameter must be one of: '.implode(', ', self::SORTS).'.'],
+                'sort' => [__('messages.screener.sort_invalid', ['values' => implode(', ', self::SORTS)])],
             ]);
         }
 

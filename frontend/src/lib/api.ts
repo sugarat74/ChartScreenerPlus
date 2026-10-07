@@ -6,8 +6,14 @@
  * fetch `/sanctum/csrf-cookie` and echo it back in `X-XSRF-TOKEN`. In dev the
  * Vite server proxies `/api` and `/sanctum` to Laravel, keeping the browser
  * same-origin.
+ *
+ * Every request carries the SPA's selected locale as `Accept-Language`, so
+ * Laravel localizes validation/auth/application messages. Status codes,
+ * response shapes and stable identifiers (Signal types, errors keys) never
+ * depend on it.
  */
 
+import { getActiveLocale } from '../i18n/locales.ts'
 import { CHART_BAR_LIMIT } from './chartData.ts'
 
 export type UserRole = 'user' | 'admin'
@@ -76,6 +82,20 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * User-facing text for a failed call: the first server validation message,
+ * else the server message (both already localized via `Accept-Language`),
+ * else `networkFallback` for a transport failure.
+ */
+export function apiErrorMessage(error: unknown, networkFallback: string): string {
+  if (error instanceof ApiError) {
+    const firstValidation = Object.values(error.errors)[0]?.[0]
+    return firstValidation ?? error.message
+  }
+
+  return networkFallback
+}
+
 function readCookie(name: string): string | null {
   const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`))
   return match ? decodeURIComponent(match[1]) : null
@@ -84,6 +104,7 @@ function readCookie(name: string): string | null {
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json')
+  headers.set('Accept-Language', getActiveLocale())
   if (init.body !== undefined) {
     headers.set('Content-Type', 'application/json')
   }
@@ -117,7 +138,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 async function ensureCsrfCookie(): Promise<void> {
   await fetch('/sanctum/csrf-cookie', {
     credentials: 'include',
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/json', 'Accept-Language': getActiveLocale() },
   })
 }
 

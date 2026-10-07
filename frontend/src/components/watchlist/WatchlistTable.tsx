@@ -5,6 +5,7 @@
  */
 
 import { Link } from 'react-router'
+import { useI18n } from '../../i18n/useI18n.ts'
 import type { WatchlistEntry } from '../../lib/api.ts'
 
 interface WatchlistTableProps {
@@ -15,22 +16,24 @@ interface WatchlistTableProps {
 }
 
 export default function WatchlistTable({ items, removingTicker, onRemove }: WatchlistTableProps) {
+  const { t } = useI18n()
+
   return (
     <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
             <th scope="col" className="px-4 py-2">
-              Símbolo
+              {t('watchlist.colSymbol')}
             </th>
             <th scope="col" className="px-4 py-2">
-              Empresa
+              {t('watchlist.colCompany')}
             </th>
             <th scope="col" className="px-4 py-2">
-              Sector
+              {t('watchlist.colSector')}
             </th>
             <th scope="col" className="px-4 py-2 text-right">
-              Acciones
+              {t('watchlist.colActions')}
             </th>
           </tr>
         </thead>
@@ -61,10 +64,10 @@ export default function WatchlistTable({ items, removingTicker, onRemove }: Watc
                     type="button"
                     onClick={() => onRemove(item.ticker)}
                     disabled={removing}
-                    aria-label={`Quitar ${item.ticker} de la watchlist`}
+                    aria-label={t('watchlist.removeAria', { ticker: item.ticker })}
                     className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {removing ? 'Quitando…' : 'Quitar'}
+                    {removing ? t('watchlist.removing') : t('watchlist.remove')}
                   </button>
                 </td>
               </tr>

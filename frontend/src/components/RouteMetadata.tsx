@@ -1,53 +1,40 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router'
+import { useI18n } from '../i18n/useI18n.ts'
+import type { MessageKey } from '../i18n/translate.ts'
 
-const INDEXABLE_TITLE = 'Chartiko | Screener de análisis técnico de acciones'
-const INDEXABLE_DESCRIPTION =
-  'Filtra acciones del S&P 500 con criterios técnicos, revisa Candidates ordenados y explora sus gráficos e indicadores.'
-
-const ROUTE_METADATA: Record<string, { title: string; description: string }> = {
-  '/screener': {
-    title: 'Screener de acciones | Chartiko',
-    description: 'Aplica filtros técnicos al universo de acciones y consulta Candidates ordenados en Chartiko.',
-  },
-  '/chart': {
-    title: 'Gráficos de acciones | Chartiko',
-    description: 'Explora precios, volumen, indicadores y Signals de los instrumentos en Chartiko.',
-  },
-  '/portal': {
-    title: 'Mi Portal | Chartiko',
-    description: 'Consulta tus Screeners guardados y tu Watchlist de Chartiko.',
-  },
-  '/admin': {
-    title: 'Administración | Chartiko',
-    description: 'Panel privado de administración de Chartiko.',
-  },
-  '/login': {
-    title: 'Iniciar sesión | Chartiko',
-    description: 'Inicia sesión en Chartiko.',
-  },
-  '/register': {
-    title: 'Crear cuenta | Chartiko',
-    description: 'Regístrate en Chartiko para guardar Screeners y mantener una Watchlist.',
-  },
+const ROUTE_METADATA: Record<string, { title: MessageKey; description: MessageKey }> = {
+  '/screener': { title: 'meta.screenerTitle', description: 'meta.screenerDescription' },
+  '/chart': { title: 'meta.chartTitle', description: 'meta.chartDescription' },
+  '/portal': { title: 'meta.portalTitle', description: 'meta.portalDescription' },
+  '/admin': { title: 'meta.adminTitle', description: 'meta.adminDescription' },
+  '/login': { title: 'meta.loginTitle', description: 'meta.loginDescription' },
+  '/register': { title: 'meta.registerTitle', description: 'meta.registerDescription' },
 }
 
-/** Keep app-only routes out of search while leaving the public home crawlable. */
+/**
+ * Keep app-only routes out of search while leaving the public home crawlable.
+ * Title and description follow the selected language; the indexing rules and
+ * the canonical URL do not depend on it.
+ */
 export default function RouteMetadata() {
   const { pathname, search } = useLocation()
+  const { t } = useI18n()
 
   useEffect(() => {
     const isHome = pathname === '/' && search === ''
     const tickerMatch = pathname.match(/^\/instruments\/([a-z0-9.-]+)$/i)
-    const routeMetadata =
-      ROUTE_METADATA[pathname] ??
-      (tickerMatch
+    const ticker = tickerMatch ? tickerMatch[1].toUpperCase() : null
+    const keys = ROUTE_METADATA[pathname]
+    const routeMetadata = keys
+      ? { title: t(keys.title), description: t(keys.description) }
+      : ticker !== null
         ? {
-            title: `Gráfico de ${tickerMatch[1].toUpperCase()} | Chartiko`,
-            description: `Consulta el gráfico, los indicadores y las Signals disponibles para ${tickerMatch[1].toUpperCase()} en Chartiko.`,
+            title: t('meta.instrumentTitle', { ticker }),
+            description: t('meta.instrumentDescription', { ticker }),
           }
-        : undefined)
-    document.title = isHome ? INDEXABLE_TITLE : routeMetadata?.title ?? 'Página no encontrada | Chartiko'
+        : undefined
+    document.title = isHome ? t('meta.homeTitle') : routeMetadata?.title ?? t('meta.notFoundTitle')
 
     let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
     if (!robots) {
@@ -64,8 +51,8 @@ export default function RouteMetadata() {
       document.head.append(description)
     }
     description.content = isHome
-      ? INDEXABLE_DESCRIPTION
-      : routeMetadata?.description ?? 'No se encontró esta página de Chartiko.'
+      ? t('meta.homeDescription')
+      : routeMetadata?.description ?? t('meta.notFoundDescription')
 
     let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
     if (isHome) {
@@ -78,7 +65,7 @@ export default function RouteMetadata() {
     } else {
       canonical?.remove()
     }
-  }, [pathname, search])
+  }, [pathname, search, t])
 
   return null
 }

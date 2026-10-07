@@ -14,58 +14,16 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../../auth/useAuth.ts'
-import { ApiError, savedScreenersApi } from '../../lib/api.ts'
-import type { SavedScreener, SavedScreenerFilters, ScreenerFilters } from '../../lib/api.ts'
+import { useI18n, useTranslateRef } from '../../i18n/useI18n.ts'
+import { ApiError, apiErrorMessage, savedScreenersApi } from '../../lib/api.ts'
+import type { SavedScreener, ScreenerFilters } from '../../lib/api.ts'
 import {
-  SCREENER_SORT_OPTIONS,
+  describeSavedFilters,
   deserializeScreenerFilters,
   serializeScreenerFilters,
-  signalLabel,
 } from '../../lib/screenerFilters.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
 
-function messageFor(error: unknown): string {
-  if (error instanceof ApiError) {
-    const firstValidation = Object.values(error.errors)[0]?.[0]
-    return firstValidation ?? error.message
-  }
-
-  return 'No se pudo contactar con el servidor. Inténtalo de nuevo.'
-}
-
-/** A compact, human-readable summary of a stored definition (mono row text). */
-function describeFilters(filters: SavedScreenerFilters): string {
-  const parts: string[] = []
-
-  if (Array.isArray(filters.signal) && filters.signal.length > 0) {
-    parts.push(filters.signal.map(signalLabel).join(', '))
-  }
-  if (typeof filters.rsi_min === 'number') {
-    parts.push(`RSI ≥ ${filters.rsi_min}`)
-  }
-  if (typeof filters.rsi_max === 'number') {
-    parts.push(`RSI ≤ ${filters.rsi_max}`)
-  }
-  if (typeof filters.min_rvol === 'number') {
-    parts.push(`RVOL ≥ ${filters.min_rvol}`)
-  }
-  if (filters.price_above_sma200 === true) {
-    parts.push('Precio > SMA200')
-  }
-  if (filters.ma_cross === 'bullish') {
-    parts.push('Cruce alcista')
-  }
-  if (filters.ma_cross === 'bearish') {
-    parts.push('Cruce bajista')
-  }
-
-  const sort = SCREENER_SORT_OPTIONS.find((option) => option.value === filters.sort)
-  if (sort !== undefined) {
-    parts.push(`Orden: ${sort.label}`)
-  }
-
-  return parts.length > 0 ? parts.join(' · ') : 'Sin criterios · ranking por defecto'
-}
 
 const CARD_CLASS =
   'rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]'
@@ -97,6 +55,8 @@ export default function SavedScreenersPanel({
   reloadToken = 0,
 }: SavedScreenersPanelProps) {
   const { user, status: authStatus } = useAuth()
+  const { t } = useI18n()
+  const tRef = useTranslateRef()
   const navigate = useNavigate()
 
   const [items, setItems] = useState<SavedScreener[]>([])
@@ -139,7 +99,7 @@ export default function SavedScreenersPanel({
           navigate(LOGIN_ROUTE, { replace: true })
           return
         }
-        setError(messageFor(caught))
+        setError(apiErrorMessage(caught, tRef.current('common.networkError')))
         setLoading(false)
       }
     })()
@@ -147,7 +107,7 @@ export default function SavedScreenersPanel({
     return () => {
       active = false
     }
-  }, [user, reloadToken, localToken, navigate])
+  }, [user, reloadToken, localToken, navigate, tRef])
 
   function reload() {
     setLoading(true)
@@ -160,7 +120,7 @@ export default function SavedScreenersPanel({
 
     const trimmed = name.trim()
     if (trimmed === '') {
-      setSaveError('Escribe un nombre para el screener.')
+      setSaveError(t('saved.nameRequired'))
       setSavedMessage(null)
       return
     }
@@ -172,14 +132,14 @@ export default function SavedScreenersPanel({
     try {
       await savedScreenersApi.create(trimmed, serializeScreenerFilters(filters))
       setName('')
-      setSavedMessage(`«${trimmed}» guardado.`)
+      setSavedMessage(t('saved.savedMessage', { name: trimmed }))
       reload()
     } catch (caught) {
       if (caught instanceof ApiError && caught.status === 401) {
         navigate(LOGIN_ROUTE, { replace: true })
         return
       }
-      setSaveError(messageFor(caught))
+      setSaveError(apiErrorMessage(caught, t('common.networkError')))
     } finally {
       setSaving(false)
     }
@@ -199,7 +159,7 @@ export default function SavedScreenersPanel({
       } else if (caught instanceof ApiError && caught.status === 401) {
         navigate(LOGIN_ROUTE, { replace: true })
       } else {
-        setRemoveError(messageFor(caught))
+        setRemoveError(apiErrorMessage(caught, t('common.networkError')))
       }
     } finally {
       setRemovingId(null)
@@ -210,7 +170,7 @@ export default function SavedScreenersPanel({
     return (
       <section role="status" aria-busy="true" className={CARD_CLASS}>
         <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
-          Comprobando sesión…
+          {t('saved.checkingSession')}
         </p>
       </section>
     )
@@ -220,14 +180,14 @@ export default function SavedScreenersPanel({
     return (
       <section className={CARD_CLASS}>
         <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-          Screeners guardados
+          {t('saved.title')}
         </h2>
         <p className="mt-1 text-sm text-on-surface-variant">
-          Guarda este filtro con un nombre y vuelve a aplicarlo más tarde. Necesitas una cuenta.
+          {t('saved.guestIntro')}
         </p>
         <div className="mt-4">
           <Link to={LOGIN_ROUTE} className={PRIMARY_BUTTON_CLASS}>
-            Inicia sesión para guardar
+            {t('saved.signInToSave')}
           </Link>
         </div>
       </section>
@@ -239,14 +199,16 @@ export default function SavedScreenersPanel({
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-            Screeners guardados
+            {t('saved.title')}
           </h2>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Guarda el filtro actual y reutilízalo cuando quieras.
+            {t('saved.intro')}
           </p>
         </div>
         <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-          {items.length} {items.length === 1 ? 'screener' : 'screeners'}
+          {items.length === 1
+            ? t('saved.countOne', { count: items.length })
+            : t('saved.countOther', { count: items.length })}
         </span>
       </header>
 
@@ -256,7 +218,7 @@ export default function SavedScreenersPanel({
       >
         <div className="flex flex-col gap-1">
           <label htmlFor="saved-screener-name" className={LABEL_CLASS}>
-            Nombre
+            {t('saved.nameLabel')}
           </label>
           <input
             id="saved-screener-name"
@@ -264,12 +226,12 @@ export default function SavedScreenersPanel({
             maxLength={60}
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Cruce dorado RVOL"
+            placeholder={t('saved.namePlaceholder')}
             className={NAME_INPUT_CLASS}
           />
         </div>
         <button type="submit" disabled={saving} className={PRIMARY_BUTTON_CLASS}>
-          {saving ? 'Guardando…' : 'Guardar screener'}
+          {saving ? t('saved.saving') : t('saved.save')}
         </button>
       </form>
 
@@ -295,7 +257,7 @@ export default function SavedScreenersPanel({
         {loading ? (
           <div role="status" aria-busy="true" className="flex flex-col gap-2">
             <span className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
-              Cargando screeners…
+              {t('saved.loading')}
             </span>
             <div className="h-9 rounded-[2px] bg-surface-container" aria-hidden="true" />
             <div className="h-9 rounded-[2px] bg-surface-container" aria-hidden="true" />
@@ -309,12 +271,12 @@ export default function SavedScreenersPanel({
           >
             <div>
               <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">
-                No se pudieron cargar tus screeners
+                {t('saved.loadError')}
               </p>
               <p className="mt-1 font-mono text-xs text-on-secondary-container">{error}</p>
             </div>
             <button type="button" onClick={reload} className={PRIMARY_BUTTON_CLASS}>
-              Reintentar
+              {t('common.retry')}
             </button>
           </div>
         ) : null}
@@ -330,15 +292,15 @@ export default function SavedScreenersPanel({
 
         {!loading && error === null && items.length === 0 ? (
           <p className="rounded-[4px] border-2 border-dashed border-outline-variant bg-surface-container px-3 py-4 text-center font-mono text-xs text-on-surface-variant">
-            No tienes screeners guardados.
+            {t('saved.empty')}
           </p>
         ) : null}
 
         {!loading && error === null && items.length > 0 ? (
           <ul className="flex flex-col">
             <li className="flex items-center justify-between gap-3 border-b-2 border-outline py-2 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-              <span>Nombre / criterios</span>
-              <span>Acciones</span>
+              <span>{t('saved.colNameCriteria')}</span>
+              <span>{t('saved.colActions')}</span>
             </li>
             {items.map((screener) => (
               <li
@@ -350,7 +312,7 @@ export default function SavedScreenersPanel({
                     {screener.name}
                   </p>
                   <p className="mt-0.5 max-w-2xl text-xs text-on-surface-variant">
-                    {describeFilters(screener.filters)}
+                    {describeSavedFilters(screener.filters, t)}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -359,7 +321,7 @@ export default function SavedScreenersPanel({
                     onClick={() => onApply(deserializeScreenerFilters(screener.filters))}
                     className={PRIMARY_BUTTON_CLASS}
                   >
-                    Aplicar
+                    {t('saved.apply')}
                   </button>
                   <button
                     type="button"
@@ -367,7 +329,7 @@ export default function SavedScreenersPanel({
                     disabled={removingId === screener.id}
                     className={SECONDARY_BUTTON_CLASS}
                   >
-                    {removingId === screener.id ? 'Eliminando…' : 'Eliminar'}
+                    {removingId === screener.id ? t('saved.removing') : t('saved.remove')}
                   </button>
                 </div>
               </li>

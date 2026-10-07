@@ -10,23 +10,17 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../../auth/useAuth.ts'
-import { ApiError, watchlistApi } from '../../lib/api.ts'
+import { useI18n, useTranslateRef } from '../../i18n/useI18n.ts'
+import { ApiError, apiErrorMessage, watchlistApi } from '../../lib/api.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
-
-function messageFor(error: unknown): string {
-  if (error instanceof ApiError) {
-    const firstValidation = Object.values(error.errors)[0]?.[0]
-    return firstValidation ?? error.message
-  }
-
-  return 'No se pudo contactar con el servidor. Inténtalo de nuevo.'
-}
 
 const BASE_BUTTON_CLASS =
   'rounded-md border-2 border-outline px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-70'
 
 export default function WatchlistButton({ ticker }: { ticker: string }) {
   const { user, status: authStatus } = useAuth()
+  const { t } = useI18n()
+  const tRef = useTranslateRef()
   const navigate = useNavigate()
 
   // Membership is keyed to `user.id|ticker` so a session or ticker change never
@@ -62,7 +56,7 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
             navigate(LOGIN_ROUTE, { replace: true })
             return
           }
-          setError({ key, message: messageFor(caught) })
+          setError({ key, message: apiErrorMessage(caught, tRef.current('common.networkError')) })
         }
       }
     })()
@@ -70,7 +64,7 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
     return () => {
       active = false
     }
-  }, [user, ticker, navigate])
+  }, [user, ticker, navigate, tRef])
 
   async function toggle() {
     if (user === null || following === null) {
@@ -101,7 +95,7 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
         navigate(LOGIN_ROUTE, { replace: true })
         return
       }
-      setError({ key, message: messageFor(caught) })
+      setError({ key, message: apiErrorMessage(caught, t('common.networkError')) })
     } finally {
       setBusy(false)
     }
@@ -110,7 +104,7 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
   if (authStatus === 'loading') {
     return (
       <button type="button" disabled className={BASE_BUTTON_CLASS}>
-        Comprobando…
+        {t('watchlist.checking')}
       </button>
     )
   }
@@ -121,13 +115,17 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
         to={LOGIN_ROUTE}
         className={`${BASE_BUTTON_CLASS} bg-primary-container text-on-primary-container`}
       >
-        Inicia sesión para seguir
+        {t('watchlist.signInToFollow')}
       </Link>
     )
   }
 
   const isFollowing = following === true
-  const label = checking ? 'Comprobando…' : isFollowing ? 'Siguiendo' : 'Seguir'
+  const label = checking
+    ? t('watchlist.checking')
+    : isFollowing
+      ? t('watchlist.following')
+      : t('watchlist.follow')
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -143,7 +141,7 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
             : 'bg-primary-container text-on-primary-container',
         ].join(' ')}
       >
-        {busy ? 'Guardando…' : label}
+        {busy ? t('watchlist.saving') : label}
       </button>
 
       {visibleError ? (

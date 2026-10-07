@@ -128,7 +128,7 @@ class SavedScreenerController extends Controller
             ->first();
 
         if ($saved === null) {
-            return response()->json(['message' => 'Screener not found.'], 404);
+            return response()->json(['message' => __('messages.screener_not_found')], 404);
         }
 
         $saved->delete();

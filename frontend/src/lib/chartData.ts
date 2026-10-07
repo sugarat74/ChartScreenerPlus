@@ -120,9 +120,10 @@ export function smaLevels(snapshot: ChartSnapshot | null): ChartLevel[] {
  * Exactly one reference line for the active `pivot_breakout_rvol` signal
  * (its engine-computed `metadata.pivot`). Stop and target are **not** modeled
  * anywhere, so they are never drawn or derived here. Any other signal type,
- * a missing signal and a non-numeric pivot all yield no line.
+ * a missing signal and a non-numeric pivot all yield no line. `pivotTitle` is
+ * the already-translated line label.
  */
-export function signalLevels(signals: readonly ChartSignal[]): ChartLevel[] {
+export function signalLevels(signals: readonly ChartSignal[], pivotTitle: string): ChartLevel[] {
   const levels: ChartLevel[] = []
 
   for (const signal of signals) {
@@ -132,7 +133,7 @@ export function signalLevels(signals: readonly ChartSignal[]): ChartLevel[] {
 
     const pivot = signal.metadata?.pivot
     if (typeof pivot === 'number' && Number.isFinite(pivot)) {
-      levels.push({ price: pivot, title: 'PIVOTE', color: CHART_COLORS.accent })
+      levels.push({ price: pivot, title: pivotTitle, color: CHART_COLORS.accent })
     }
   }
 

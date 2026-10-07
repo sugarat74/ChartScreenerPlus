@@ -35,9 +35,16 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
   - `/login` -> sign-in screen
   - `/register` -> account-creation screen
   - `*` -> token-styled Not Found placeholder (rendered inside the shell)
-- Tab labels and paths are single-sourced in `frontend/src/nav.ts` (`NAV_ITEMS`, `DEFAULT_ROUTE`); auth paths are exported there too (`LOGIN_ROUTE`, `REGISTER_ROUTE`) and the router derives child segments from them with `routeSegment`.
+- Tab paths and label catalog keys are single-sourced in `frontend/src/nav.ts` (`NAV_ITEMS`, `DEFAULT_ROUTE`); auth paths are exported there too (`LOGIN_ROUTE`, `REGISTER_ROUTE`) and the router derives child segments from them with `routeSegment`.
 - The header (brand, EOD status, inert primary action, user pill) lives in `frontend/src/components/AppHeader.tsx`; it is auth-aware and shows the signed-in user plus a sign-out control, or an "Iniciar sesión" link for a Visitor.
 - History routing needs a server-side SPA fallback when the SPA is deployed behind Laravel or another host; the Vite dev server already provides it. Configuration is deferred to deployment work.
+
+## Localization (Spanish / English)
+
+- SPA: `frontend/src/i18n/` owns the locale registry (`locales.ts`), typed catalogs (`messages/es.ts` defines the shape, `messages/en.ts` must match it), `translate.ts`, `Intl` formatters (`format.ts`) and `I18nProvider` (above `AuthProvider` and the router). `useI18n()` returns `t` and locale-bound formatters; `LanguageSelector` in the header switches language in place without navigation.
+- Resolution: saved device choice (`localStorage` `chartiko.locale`) -> first supported browser language by primary subtag -> Spanish. The provider sets `<html lang>`; `RouteMetadata` translates titles/descriptions while robots/canonical rules stay language-independent. The static `index.html` remains Spanish (no translated URLs or hreflang).
+- API: `lib/api.ts` sends `Accept-Language` with the selected locale; `App\Http\Middleware\SetLocale` (prepended to the `api` group, configured by `config/locales.php`) sets the app locale (fallback `es`) and `Content-Language`. Messages live in `lang/{es,en}/` (`validation`, `auth`, `passwords`, `pagination`, `messages`). Status codes, JSON shapes, `errors` keys and Signal codes never depend on the language.
+- Adding a language: `docs/specs/app-multilanguage.md` -> "Adding A Language".
 
 ## Authentication (First-Party SPA)
 

@@ -34,6 +34,9 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 ## Frontend
 
 - Public brand **MUST** be Chartiko, with the shared header/favicon mark. Public UI, tooltips and accessible labels **MUST NOT** mention EOD/end-of-day outside Admin. Data/API/scheduling remain EOD-only; presentation does not imply real-time data.
+- User-facing SPA text **MUST** come from the `frontend/src/i18n/messages` catalogs via `useI18n().t` (no hardcoded copy in components), and every catalog **MUST** have the Spanish keys and placeholders (`tsc` + Vitest enforce it). Data **MUST NOT** be translated: ticker symbols, company/sector names, technical acronyms, user-authored names, Signal codes and stored ingestion log lines. Reason: one language switch must cover every surface without altering data or contracts.
+- Numbers and dates **MUST** be formatted for display through the `useI18n` formatters (market-session `YYYY-MM-DD` dates in UTC); URL params, filter inputs, stored definitions and API payloads keep raw values. Reason: locale-aware display must not change parsing, calculations or shared links.
+- A language switch **MUST NOT** navigate, refetch or reset state; async effect callbacks read the translator through `useTranslateRef()`. Reason: filters, the selected Candidate and the session must survive the switch.
 
 - **MUST** keep the React SPA in `frontend/` as a standalone npm project (own `package.json`, `vite.config.ts`, tsconfigs, lockfile) running on Node v22. Reason: it is a separate runtime surface from Laravel.
 - **MUST NOT** add SPA code to Laravel's root Vite pipeline (`resources/`, root `vite.config.js`, root `package.json`). Reason: two independent build pipelines must not be entangled.
@@ -171,6 +174,7 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 
 ## Public API
 
+- API message text **MUST** come from `lang/<locale>/` via `__()` (no hardcoded user-facing strings in controllers/middleware), with the locale chosen by `SetLocale` from `Accept-Language` (fallback `es`). Every locale in `config/locales.php` **MUST** have the same keys and placeholders as `lang/en` (`LocalizationTest`). Status codes, JSON shapes, `errors` keys and Signal codes **MUST NOT** depend on the locale; the example messages below are the English (`Accept-Language: en`) text. Reason: clients branch on status/keys, never on wording.
 - Browse endpoints (screener, instrument detail) **MUST** be anonymous/public: no `auth:sanctum` and no `admin` middleware, and no controller authorization branch. Reason: `docs/user-and-access-model.md` states browsing requires no session, and the data is system-owned public market data with no ownership.
 - Read endpoints **MUST** return bounded payloads with an explicit hard maximum. `GET /api/instruments/{ticker}` defaults `?limit` to **252**, clamps silently to **`1..2000`**, and falls back to the default for a non-numeric value — it **MUST NOT** return a `422` for a bad/oversized limit. Reason: a chart payload must stay responsive and a bad limit is not worth a validation round-trip.
 - Bars **MUST** be returned ordered **ascending** by `date` even though the bounded query selects the most recent N. Reason: the chart renders left-to-right and the contract must be deterministic.

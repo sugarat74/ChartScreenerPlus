@@ -7,21 +7,13 @@ import RunLogStream from '../components/admin/RunLogStream.tsx'
 import RunStatusBadge from '../components/admin/RunStatusBadge.tsx'
 import RunTelemetry from '../components/admin/RunTelemetry.tsx'
 import type { LogFilter } from '../components/admin/logFilter.ts'
-import { ApiError, adminIngestionApi, isTerminalRunStatus } from '../lib/api.ts'
+import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
+import { adminIngestionApi, apiErrorMessage, isTerminalRunStatus } from '../lib/api.ts'
 import type { IngestionRunDetail, IngestionRunSummary } from '../lib/api.ts'
 import { LOGIN_ROUTE } from '../nav.ts'
 
 /** Poll cadence for a non-terminal run (queued/running). */
 const POLL_INTERVAL_MS = 2500
-
-function messageFor(error: unknown): string {
-  if (error instanceof ApiError) {
-    const firstValidation = Object.values(error.errors)[0]?.[0]
-    return firstValidation ?? error.message
-  }
-
-  return 'No se pudo contactar con el servidor. Inténtalo de nuevo.'
-}
 
 interface AdminNoticeProps {
   eyebrow: string
@@ -59,7 +51,10 @@ function AdminNotice({ eyebrow, title, message, children }: AdminNoticeProps) {
  */
 export default function AdminPage() {
   const { user, status: authStatus } = useAuth()
+  const { t } = useI18n()
+  const tRef = useTranslateRef()
   const isAdmin = user?.role === 'admin'
+  const messageFor = (error: unknown) => apiErrorMessage(error, tRef.current('common.networkError'))
 
   const [runs, setRuns] = useState<IngestionRunSummary[]>([])
   const [runsLoading, setRunsLoading] = useState(true)
@@ -95,7 +90,7 @@ export default function AdminPage() {
         }
       } catch (error) {
         if (active) {
-          setRunsError(messageFor(error))
+          setRunsError(apiErrorMessage(error, tRef.current('common.networkError')))
           setRunsLoading(false)
         }
       }
@@ -104,7 +99,7 @@ export default function AdminPage() {
     return () => {
       active = false
     }
-  }, [isAdmin, reloadToken])
+  }, [isAdmin, reloadToken, tRef])
 
   // Fetch the selected run's detail (also re-runs on each poll tick).
   useEffect(() => {
@@ -123,7 +118,7 @@ export default function AdminPage() {
         }
       } catch (error) {
         if (active) {
-          setDetailError(messageFor(error))
+          setDetailError(apiErrorMessage(error, tRef.current('common.networkError')))
         }
       }
     })()
@@ -131,7 +126,7 @@ export default function AdminPage() {
     return () => {
       active = false
     }
-  }, [isAdmin, selectedRunId, detailToken])
+  }, [isAdmin, selectedRunId, detailToken, tRef])
 
   const selectedStatus = selectedRun?.status ?? null
 
@@ -198,9 +193,9 @@ export default function AdminPage() {
   if (authStatus === 'loading') {
     return (
       <AdminNotice
-        eyebrow="Admin"
-        title="Comprobando sesión"
-        message="Verificando tus permisos de administrador."
+        eyebrow={t('admin.eyebrow')}
+        title={t('admin.checkingTitle')}
+        message={t('admin.checkingBody')}
       />
     )
   }
@@ -208,15 +203,15 @@ export default function AdminPage() {
   if (user === null) {
     return (
       <AdminNotice
-        eyebrow="Admin"
-        title="Inicia sesión"
-        message="El panel de consultas EOD requiere una sesión con rol de administrador."
+        eyebrow={t('admin.eyebrow')}
+        title={t('admin.signInTitle')}
+        message={t('admin.signInBody')}
       >
         <Link
           to={LOGIN_ROUTE}
           className="inline-block rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px"
         >
-          Iniciar sesión
+          {t('admin.signIn')}
         </Link>
       </AdminNotice>
     )
@@ -225,9 +220,9 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <AdminNotice
-        eyebrow="Admin"
-        title="Acceso restringido"
-        message="Tu cuenta no tiene permisos de administrador para controlar las consultas EOD."
+        eyebrow={t('admin.eyebrow')}
+        title={t('admin.restrictedTitle')}
+        message={t('admin.restrictedBody')}
       />
     )
   }
@@ -243,10 +238,10 @@ export default function AdminPage() {
           </span>
           <div>
             <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-primary">
-              Panel de control: consultas EOD
+              {t('admin.bannerTitle')}
             </h2>
             <p className="font-mono text-[11px] text-surface-dim">
-              Inicia y sigue ejecuciones reales del registro de consultas.
+              {t('admin.bannerBody')}
             </p>
           </div>
         </div>
@@ -258,7 +253,7 @@ export default function AdminPage() {
               <RunStatusBadge status={bannerRun.status} />
             </>
           ) : (
-            <span className="font-mono text-[11px] text-surface-dim">Sin actividad</span>
+            <span className="font-mono text-[11px] text-surface-dim">{t('admin.noActivity')}</span>
           )}
         </div>
       </div>
@@ -275,7 +270,7 @@ export default function AdminPage() {
               htmlFor="ingestion-universe"
               className="font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface-variant"
             >
-              Universo objetivo
+              {t('admin.universeLabel')}
             </label>
             <input
               id="ingestion-universe"
@@ -291,7 +286,7 @@ export default function AdminPage() {
             disabled={triggering}
             className="rounded-md border-2 border-outline bg-primary-container px-5 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[3px_3px_0px_#1a1a1a] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {triggering ? 'Iniciando…' : 'Iniciar consulta ahora'}
+            {triggering ? t('admin.triggering') : t('admin.trigger')}
           </button>
         </div>
 
@@ -305,7 +300,7 @@ export default function AdminPage() {
         ) : null}
 
         <p className="mt-3 font-mono text-[11px] text-on-surface-variant">
-          Inicia consultas EOD y actualiza el registro; no ejecuta el pipeline completo de indicadores y señales.
+          {t('admin.triggerHint')}
         </p>
       </form>
 

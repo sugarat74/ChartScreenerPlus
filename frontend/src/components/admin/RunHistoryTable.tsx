@@ -1,14 +1,6 @@
+import { useI18n } from '../../i18n/useI18n.ts'
 import type { IngestionRunSummary } from '../../lib/api.ts'
 import RunStatusBadge from './RunStatusBadge.tsx'
-
-function formatTimestamp(iso: string | null): string {
-  if (!iso) {
-    return '—'
-  }
-
-  const date = new Date(iso)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('es-ES')
-}
 
 interface RunHistoryTableProps {
   runs: IngestionRunSummary[]
@@ -35,15 +27,17 @@ export default function RunHistoryTable({
   onRetry,
   onRefresh,
 }: RunHistoryTableProps) {
+  const { t, formatDateTime } = useI18n()
+
   return (
     <section className="flex min-h-0 flex-col rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-outline px-4 py-3">
         <div>
           <h3 className="font-headline text-sm font-black uppercase tracking-wider text-on-surface">
-            Historial de ejecuciones
+            {t('admin.historyTitle')}
           </h3>
           <p className="font-mono text-[11px] text-on-surface-variant">
-              Registro real de consultas EOD
+            {t('admin.historySubtitle')}
           </p>
         </div>
         <button
@@ -52,7 +46,7 @@ export default function RunHistoryTable({
           disabled={loading}
           className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {loading ? 'Actualizando…' : 'Actualizar'}
+          {loading ? t('admin.refreshing') : t('admin.refresh')}
         </button>
       </header>
 
@@ -69,21 +63,21 @@ export default function RunHistoryTable({
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-              <th scope="col" className="px-4 py-2">Ejecución</th>
-              <th scope="col" className="px-4 py-2">Estado</th>
-              <th scope="col" className="px-4 py-2">Universo</th>
-              <th scope="col" className="px-4 py-2">Inicio</th>
-              <th scope="col" className="px-4 py-2 text-right">Total</th>
-              <th scope="col" className="px-4 py-2 text-right">Éxitos</th>
-              <th scope="col" className="px-4 py-2 text-right">Fallos</th>
-              <th scope="col" className="px-4 py-2 text-right">Acciones</th>
+              <th scope="col" className="px-4 py-2">{t('admin.colRun')}</th>
+              <th scope="col" className="px-4 py-2">{t('admin.colStatus')}</th>
+              <th scope="col" className="px-4 py-2">{t('admin.colUniverse')}</th>
+              <th scope="col" className="px-4 py-2">{t('admin.colStarted')}</th>
+              <th scope="col" className="px-4 py-2 text-right">{t('admin.colTotal')}</th>
+              <th scope="col" className="px-4 py-2 text-right">{t('admin.colSucceeded')}</th>
+              <th scope="col" className="px-4 py-2 text-right">{t('admin.colFailed')}</th>
+              <th scope="col" className="px-4 py-2 text-right">{t('admin.colActions')}</th>
             </tr>
           </thead>
           <tbody>
             {runs.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center font-mono text-xs text-on-surface-variant">
-                  {loading ? 'Cargando ejecuciones…' : 'Sin ejecuciones todavía.'}
+                  {loading ? t('admin.loadingRuns') : t('admin.noRuns')}
                 </td>
               </tr>
             ) : (
@@ -105,7 +99,7 @@ export default function RunHistoryTable({
                       {run.universe?.slug ?? '—'}
                     </td>
                     <td className="px-4 py-2 text-on-surface-variant">
-                      {formatTimestamp(run.started_at)}
+                      {formatDateTime(run.started_at)}
                     </td>
                     <td className="px-4 py-2 text-right text-on-surface">{run.total}</td>
                     <td className="px-4 py-2 text-right text-gain">{run.succeeded}</td>
@@ -117,7 +111,7 @@ export default function RunHistoryTable({
                           onClick={() => onSelect(run.id)}
                           className="rounded-[4px] border-2 border-outline bg-surface-bright px-2 py-1 font-headline text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a] transition-transform hover:-translate-y-px"
                         >
-                          Ver
+                          {t('admin.view')}
                         </button>
                         {retryable ? (
                           <button
@@ -126,7 +120,7 @@ export default function RunHistoryTable({
                             disabled={retryingId === run.id}
                             className="rounded-[4px] border-2 border-outline bg-primary-container px-2 py-1 font-headline text-[10px] font-bold uppercase tracking-wider text-on-primary-container shadow-[1px_1px_0px_#1a1a1a] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
                           >
-                            {retryingId === run.id ? 'Reintentando…' : 'Reintentar'}
+                            {retryingId === run.id ? t('admin.retrying') : t('admin.retry')}
                           </button>
                         ) : null}
                       </div>

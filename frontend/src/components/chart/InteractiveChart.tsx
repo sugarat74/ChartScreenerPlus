@@ -19,6 +19,8 @@ import {
   LineStyle,
   createChart,
 } from 'lightweight-charts'
+import { LOCALE_DEFINITIONS } from '../../i18n/locales.ts'
+import { useI18n } from '../../i18n/useI18n.ts'
 import type { InstrumentBar, InstrumentSignal, InstrumentSnapshot } from '../../lib/api.ts'
 import {
   CHART_COLORS,
@@ -45,7 +47,9 @@ export default function InteractiveChart({
   snapshot,
   signals,
 }: InteractiveChartProps) {
+  const { locale, t } = useI18n()
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const pivotTitle = t('chart.pivot')
 
   useEffect(() => {
     const container = containerRef.current
@@ -68,6 +72,8 @@ export default function InteractiveChart({
       rightPriceScale: { borderColor: CHART_COLORS.ink },
       timeScale: { borderColor: CHART_COLORS.ink },
       crosshair: { mode: CrosshairMode.Normal },
+      // Axis prices and dates follow the selected language.
+      localization: { locale: LOCALE_DEFINITIONS[locale].intl },
     })
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -101,7 +107,7 @@ export default function InteractiveChart({
     }
 
     // Only the pivot of an active `pivot_breakout_rvol` signal is modeled.
-    for (const level of signalLevels(signals)) {
+    for (const level of signalLevels(signals, pivotTitle)) {
       candleSeries.createPriceLine({
         price: level.price,
         color: level.color,
@@ -118,15 +124,16 @@ export default function InteractiveChart({
       // Removes the series, price lines and observers from the container.
       chart.remove()
     }
-  }, [ticker, bars, snapshot, signals])
+  }, [ticker, bars, snapshot, signals, locale, pivotTitle])
 
   return (
     <div
       ref={containerRef}
       role="img"
-      aria-label={`Gráfico de velas de ${ticker}: ${bars.length} sesiones con volumen${
-        snapshot === null ? ' y sin snapshot de indicadores' : ''
-      }.`}
+      aria-label={t(snapshot === null ? 'chart.chartAriaNoSnapshot' : 'chart.chartAria', {
+        ticker,
+        count: bars.length,
+      })}
       className="h-[420px] w-full"
     />
   )

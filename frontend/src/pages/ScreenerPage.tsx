@@ -15,6 +15,9 @@ import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx
 import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
 import ScreenerFilterPanel from '../components/screener/ScreenerFilterPanel.tsx'
 import ScreenerSortControl from '../components/screener/ScreenerSortControl.tsx'
+import Interpolate from '../i18n/Interpolate.tsx'
+import type { Translate } from '../i18n/translate.ts'
+import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { ApiError, screenerApi } from '../lib/api.ts'
 import type { ScreenerCandidate, ScreenerFilters } from '../lib/api.ts'
 import {
@@ -33,13 +36,13 @@ interface ScreenerData {
   universeName: string
 }
 
-function messageFor(error: unknown): string {
+function messageFor(error: unknown, t: Translate): string {
   if (error instanceof ApiError) {
     const firstValidation = Object.values(error.errors)[0]?.[0]
     return firstValidation ?? error.message
   }
 
-  return 'No se pudo contactar con el servidor. Inténtalo de nuevo.'
+  return t('common.networkError')
 }
 
 function isAbortError(error: unknown): boolean {
@@ -48,6 +51,8 @@ function isAbortError(error: unknown): boolean {
 
 export default function ScreenerPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { t } = useI18n()
+  const tRef = useTranslateRef()
 
   // The URL is the single source of truth for the filter state.
   const filters = useMemo(() => parseScreenerFilters(searchParams), [searchParams])
@@ -96,7 +101,7 @@ export default function ScreenerPage() {
         if (isAbortError(caught)) {
           return
         }
-        setError(messageFor(caught))
+        setError(messageFor(caught, tRef.current))
         setStatus('error')
       })
 
@@ -105,7 +110,7 @@ export default function ScreenerPage() {
       // A remount/re-run for the same key (StrictMode) must be able to refetch.
       lastKeyRef.current = null
     }
-  }, [filtersKey, retryToken])
+  }, [filtersKey, retryToken, tRef])
 
   function update(patch: Partial<ScreenerFilters>) {
     setSearchParams((prev) => patchScreenerFilters(prev, patch), { replace: true })
@@ -136,17 +141,17 @@ export default function ScreenerPage() {
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
           <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-            Superficie
+            {t('screener.badge')}
           </span>
           <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-            Acceso público
+            {t('screener.access')}
           </span>
         </div>
         <h1 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">
-          Screener
+          {t('screener.title')}
         </h1>
         <p className="max-w-2xl text-sm text-on-surface-variant">
-          Filtros técnicos sobre el universo. El filtrado y el ranking se calculan en el servidor.
+          {t('screener.intro')}
         </p>
       </header>
 
@@ -162,19 +167,23 @@ export default function ScreenerPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         {data !== null ? (
           <p className="font-mono text-xs text-on-surface-variant">
-            Mostrando{' '}
-            <strong className="font-bold text-on-surface">{data.returned}</strong> de{' '}
-            <strong className="font-bold text-on-surface">{data.total}</strong> candidatos
+            <Interpolate
+              template={t('screener.showing')}
+              values={{
+                returned: <strong className="font-bold text-on-surface">{data.returned}</strong>,
+                total: <strong className="font-bold text-on-surface">{data.total}</strong>,
+              }}
+            />
           </p>
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
           <ScreenerSortControl value={filters.sort} onChange={(sort) => update({ sort })} />
           {data !== null ? (
             <span
-              title="Universo resuelto por el servidor"
+              title={t('screener.universeTitle')}
               className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]"
             >
-              Universo · {data.universeName}
+              {t('screener.universe', { name: data.universeName })}
             </span>
           ) : null}
         </div>

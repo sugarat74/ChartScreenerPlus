@@ -7,57 +7,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useAuth } from '../../auth/useAuth.ts'
-import { ApiError, savedScreenersApi } from '../../lib/api.ts'
-import type { SavedScreener, SavedScreenerFilters } from '../../lib/api.ts'
+import { useI18n, useTranslateRef } from '../../i18n/useI18n.ts'
+import { ApiError, apiErrorMessage, savedScreenersApi } from '../../lib/api.ts'
+import type { SavedScreener } from '../../lib/api.ts'
 import {
-  SCREENER_SORT_OPTIONS,
+  describeSavedFilters,
   deserializeScreenerFilters,
   patchScreenerFilters,
-  signalLabel,
 } from '../../lib/screenerFilters.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
 
-function messageFor(error: unknown): string {
-  if (error instanceof ApiError) {
-    const firstValidation = Object.values(error.errors)[0]?.[0]
-    return firstValidation ?? error.message
-  }
-
-  return 'No se pudo contactar con el servidor. Inténtalo de nuevo.'
-}
-
-function describeFilters(filters: SavedScreenerFilters): string {
-  const parts: string[] = []
-
-  if (filters.signal.length > 0) {
-    parts.push(filters.signal.map(signalLabel).join(', '))
-  }
-  if (filters.rsi_min !== null) {
-    parts.push(`RSI ≥ ${filters.rsi_min}`)
-  }
-  if (filters.rsi_max !== null) {
-    parts.push(`RSI ≤ ${filters.rsi_max}`)
-  }
-  if (filters.min_rvol !== null) {
-    parts.push(`RVOL ≥ ${filters.min_rvol}`)
-  }
-  if (filters.price_above_sma200) {
-    parts.push('Precio > SMA200')
-  }
-  if (filters.ma_cross === 'bullish') {
-    parts.push('Cruce alcista')
-  }
-  if (filters.ma_cross === 'bearish') {
-    parts.push('Cruce bajista')
-  }
-
-  const sort = SCREENER_SORT_OPTIONS.find((option) => option.value === filters.sort)
-  if (sort !== undefined) {
-    parts.push(`Orden: ${sort.label}`)
-  }
-
-  return parts.length > 0 ? parts.join(' · ') : 'Sin criterios · ranking por defecto'
-}
 
 const PRIMARY_BUTTON_CLASS =
   'rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
@@ -67,6 +26,8 @@ const SECONDARY_BUTTON_CLASS =
 
 export default function PortalSavedScreeners() {
   const { user } = useAuth()
+  const { t } = useI18n()
+  const tRef = useTranslateRef()
   const navigate = useNavigate()
   const [items, setItems] = useState<SavedScreener[]>([])
   const [loading, setLoading] = useState(true)
@@ -98,7 +59,7 @@ export default function PortalSavedScreeners() {
           navigate(LOGIN_ROUTE, { replace: true })
           return
         }
-        setError(messageFor(caught))
+        setError(apiErrorMessage(caught, tRef.current('common.networkError')))
         setLoading(false)
       }
     })()
@@ -106,7 +67,7 @@ export default function PortalSavedScreeners() {
     return () => {
       active = false
     }
-  }, [user, reloadToken, navigate])
+  }, [user, reloadToken, navigate, tRef])
 
   function reload() {
     setLoading(true)
@@ -136,7 +97,7 @@ export default function PortalSavedScreeners() {
       } else if (caught instanceof ApiError && caught.status === 401) {
         navigate(LOGIN_ROUTE, { replace: true })
       } else {
-        setRemoveError(messageFor(caught))
+        setRemoveError(apiErrorMessage(caught, t('common.networkError')))
       }
     } finally {
       setRemovingId(null)
@@ -148,20 +109,22 @@ export default function PortalSavedScreeners() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="portal-screeners-heading" className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-            Screeners guardados
+            {t('saved.title')}
           </h2>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Repite una definición guardada o elimina las que ya no necesitas.
+            {t('saved.portalIntro')}
           </p>
         </div>
         <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-          {items.length} {items.length === 1 ? 'screener' : 'screeners'}
+          {items.length === 1
+            ? t('saved.countOne', { count: items.length })
+            : t('saved.countOther', { count: items.length })}
         </span>
       </header>
 
       {loading ? (
         <div role="status" aria-busy="true" className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
-          <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">Cargando screeners…</p>
+          <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">{t('saved.loading')}</p>
           <div className="mt-4 flex flex-col gap-2" aria-hidden="true">
             <div className="h-9 rounded-[2px] bg-surface-container" />
             <div className="h-9 rounded-[2px] bg-surface-container" />
@@ -172,17 +135,17 @@ export default function PortalSavedScreeners() {
       {!loading && error !== null ? (
         <div role="alert" className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_#1a1a1a]">
           <div>
-            <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">No se pudieron cargar tus screeners</p>
+            <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">{t('saved.loadError')}</p>
             <p className="mt-1 font-mono text-xs text-on-secondary-container">{error}</p>
           </div>
-          <button type="button" onClick={reload} className={PRIMARY_BUTTON_CLASS}>Reintentar</button>
+          <button type="button" onClick={reload} className={PRIMARY_BUTTON_CLASS}>{t('common.retry')}</button>
         </div>
       ) : null}
 
       {!loading && error === null && items.length === 0 ? (
         <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
-          <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">No tienes screeners guardados</p>
-          <p className="mt-2 text-sm text-on-surface-variant">Guarda una definición desde el Screener para volver a aplicarla aquí.</p>
+          <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">{t('saved.portalEmptyTitle')}</p>
+          <p className="mt-2 text-sm text-on-surface-variant">{t('saved.portalEmptyBody')}</p>
         </div>
       ) : null}
 
@@ -193,8 +156,8 @@ export default function PortalSavedScreeners() {
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-                  <th scope="col" className="px-4 py-2">Nombre / criterios</th>
-                  <th scope="col" className="px-4 py-2 text-right">Acciones</th>
+                  <th scope="col" className="px-4 py-2">{t('saved.colNameCriteria')}</th>
+                  <th scope="col" className="px-4 py-2 text-right">{t('saved.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -202,13 +165,13 @@ export default function PortalSavedScreeners() {
                   <tr key={screener.id} className="border-b border-outline-variant align-top">
                     <th scope="row" className="px-4 py-3 text-left font-normal">
                       <p className="font-mono text-sm font-bold text-on-surface">{screener.name}</p>
-                      <p className="mt-0.5 max-w-2xl text-xs text-on-surface-variant">{describeFilters(screener.filters)}</p>
+                      <p className="mt-0.5 max-w-2xl text-xs text-on-surface-variant">{describeSavedFilters(screener.filters, t)}</p>
                     </th>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-wrap justify-end gap-2">
-                        <button type="button" onClick={() => apply(screener)} className={PRIMARY_BUTTON_CLASS}>Aplicar</button>
+                        <button type="button" onClick={() => apply(screener)} className={PRIMARY_BUTTON_CLASS}>{t('saved.apply')}</button>
                         <button type="button" onClick={() => void remove(screener.id)} disabled={removingId === screener.id} className={SECONDARY_BUTTON_CLASS}>
-                          {removingId === screener.id ? 'Eliminando…' : 'Eliminar'}
+                          {removingId === screener.id ? t('saved.removing') : t('saved.remove')}
                         </button>
                       </div>
                     </td>

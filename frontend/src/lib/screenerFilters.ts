@@ -15,6 +15,7 @@ import type {
   ScreenerSignalType,
   ScreenerSort,
 } from './api.ts'
+import type { MessageKey, Translate } from '../i18n/translate.ts'
 
 /** Canonical order used for the URL and for deterministic request keys. */
 export const SCREENER_SIGNAL_TYPES: readonly ScreenerSignalType[] = [
@@ -29,33 +30,20 @@ export const SCREENER_SIGNAL_TYPES: readonly ScreenerSignalType[] = [
   'macd_bearish_cross',
 ]
 
-/** Spanish labels; the raw type string is always what goes over the wire. */
-export const SIGNAL_LABELS: Record<ScreenerSignalType, string> = {
-  golden_cross: 'Cruce dorado',
-  death_cross: 'Cruce de la muerte',
-  ma_alignment_bullish: 'Alineación alcista',
-  ma_alignment_bearish: 'Alineación bajista',
-  pivot_breakout_rvol: 'Ruptura pivote + RVOL',
-  rsi_overbought: 'RSI sobrecompra',
-  rsi_oversold: 'RSI sobreventa',
-  macd_bullish_cross: 'MACD alcista',
-  macd_bearish_cross: 'MACD bajista',
-}
-
 /** Preset Min RVOL buttons; `+ Todos` (off) is handled by the control. */
 export const MIN_RVOL_PRESETS: readonly number[] = [1, 1.5, 2, 3]
 
 /** API default ranking; also what an absent/invalid `sort` resolves to. */
 export const DEFAULT_SCREENER_SORT: ScreenerSort = 'rvol_desc'
 
-/** The six selectable ranking orders (display order) with Spanish labels. */
-export const SCREENER_SORT_OPTIONS: readonly { value: ScreenerSort; label: string }[] = [
-  { value: 'rvol_desc', label: 'Volumen relativo (RVOL mayor)' },
-  { value: 'signal_count_desc', label: 'Confianza (más señales)' },
-  { value: 'change_desc', label: 'Variación diaria (mayor)' },
-  { value: 'change_asc', label: 'Variación diaria (menor)' },
-  { value: 'rsi_desc', label: 'RSI (mayor)' },
-  { value: 'rsi_asc', label: 'RSI (menor)' },
+/** The six selectable ranking orders (display order); labels live in the catalogs. */
+export const SCREENER_SORT_OPTIONS: readonly { value: ScreenerSort; labelKey: MessageKey }[] = [
+  { value: 'rvol_desc', labelKey: 'sorts.rvol_desc' },
+  { value: 'signal_count_desc', labelKey: 'sorts.signal_count_desc' },
+  { value: 'change_desc', labelKey: 'sorts.change_desc' },
+  { value: 'change_asc', labelKey: 'sorts.change_asc' },
+  { value: 'rsi_desc', labelKey: 'sorts.rsi_desc' },
+  { value: 'rsi_asc', labelKey: 'sorts.rsi_asc' },
 ]
 
 export const EMPTY_SCREENER_FILTERS: ScreenerFilters = {
@@ -281,28 +269,47 @@ export function deserializeScreenerFilters(
   }
 }
 
-export function formatPrice(value: number | null): string {
-  return value === null ? '—' : value.toFixed(2)
-}
+/**
+ * Compact, human-readable summary of a stored definition in the active
+ * language. Lenient: a malformed stored payload is described, never thrown on.
+ */
+export function describeSavedFilters(filters: SavedScreenerFilters, t: Translate): string {
+  const parts: string[] = []
 
-/** Explicit sign so gain/loss never depends on color alone. */
-export function formatChangePercent(value: number | null): string {
-  if (value === null) {
-    return '—'
+  if (Array.isArray(filters.signal) && filters.signal.length > 0) {
+    parts.push(filters.signal.map((type) => signalLabel(type, t)).join(', '))
   }
-  const sign = value > 0 ? '+' : value < 0 ? '-' : ''
-  return `${sign}${Math.abs(value).toFixed(2)}%`
+  if (typeof filters.rsi_min === 'number') {
+    parts.push(t('saved.describeRsiMin', { value: filters.rsi_min }))
+  }
+  if (typeof filters.rsi_max === 'number') {
+    parts.push(t('saved.describeRsiMax', { value: filters.rsi_max }))
+  }
+  if (typeof filters.min_rvol === 'number') {
+    parts.push(t('saved.describeMinRvol', { value: filters.min_rvol }))
+  }
+  if (filters.price_above_sma200 === true) {
+    parts.push(t('saved.describePriceAboveSma200'))
+  }
+  if (filters.ma_cross === 'bullish') {
+    parts.push(t('saved.describeMaBullish'))
+  }
+  if (filters.ma_cross === 'bearish') {
+    parts.push(t('saved.describeMaBearish'))
+  }
+
+  const sort = SCREENER_SORT_OPTIONS.find((option) => option.value === filters.sort)
+  if (sort !== undefined) {
+    parts.push(t('saved.describeSort', { label: t(sort.labelKey) }))
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : t('saved.describeNone')
 }
 
-export function formatRvol(value: number | null): string {
-  return value === null ? '—' : `${value.toFixed(1)}x`
-}
-
-export function formatRsi(value: number | null): string {
-  return value === null ? '—' : value.toFixed(1)
-}
-
-/** Falls back to the raw type for a signal string the SPA does not know. */
-export function signalLabel(type: string): string {
-  return (SIGNAL_LABELS as Record<string, string | undefined>)[type] ?? type
+/**
+ * Display label for a Signal type in the active language. The raw type string
+ * is always what goes over the wire; an unknown type falls back to itself.
+ */
+export function signalLabel(type: string, t: Translate): string {
+  return isKnownSignalType(type) ? t(`signals.${type}` as const) : type
 }

@@ -58,7 +58,7 @@ class IngestionRunController extends Controller
 
         if (! Universe::query()->where('slug', $slug)->exists()) {
             throw ValidationException::withMessages([
-                'universe' => ["No universe found for [{$slug}]."],
+                'universe' => [__('messages.ingestion.universe_unknown', ['slug' => $slug])],
             ]);
         }
 
@@ -110,7 +110,7 @@ class IngestionRunController extends Controller
 
         if (! in_array($ingestionRun->status, $this->terminalStatuses(), true)) {
             throw ValidationException::withMessages([
-                'run' => ['Only a finished run can be retried.'],
+                'run' => [__('messages.ingestion.run_not_finished')],
             ]);
         }
 
@@ -120,7 +120,7 @@ class IngestionRunController extends Controller
 
         if (! $hasFailedItems) {
             throw ValidationException::withMessages([
-                'run' => ['This run has no failed instruments to retry.'],
+                'run' => [__('messages.ingestion.run_without_failures')],
             ]);
         }
 

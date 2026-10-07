@@ -1,0 +1,17 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Líneas de idioma de restablecimiento de contraseña
+    |--------------------------------------------------------------------------
+    */
+
+    'reset' => 'Tu contraseña se ha restablecido.',
+    'sent' => 'Te hemos enviado por correo el enlace para restablecer la contraseña.',
+    'throttled' => 'Espera antes de volver a intentarlo.',
+    'token' => 'Este token de restablecimiento de contraseña no es válido.',
+    'user' => 'No encontramos ningún usuario con esa dirección de correo.',
+
+];

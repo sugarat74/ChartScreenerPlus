@@ -5,6 +5,8 @@
  */
 
 import type { KeyboardEvent } from 'react'
+import type { MessageKey } from '../../i18n/translate.ts'
+import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerFilters, ScreenerMaCross, ScreenerSignalType } from '../../lib/api.ts'
 import {
   MIN_RVOL_PRESETS,
@@ -28,10 +30,10 @@ const LEGEND_CLASS =
 const NUMBER_INPUT_CLASS =
   'w-24 rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
-const MA_CROSS_OPTIONS: ReadonlyArray<{ value: ScreenerMaCross | null; label: string }> = [
-  { value: null, label: 'Cualquiera' },
-  { value: 'bullish', label: 'Alcista' },
-  { value: 'bearish', label: 'Bajista' },
+const MA_CROSS_OPTIONS: ReadonlyArray<{ value: ScreenerMaCross | null; labelKey: MessageKey }> = [
+  { value: null, labelKey: 'screener.maCrossAny' },
+  { value: 'bullish', labelKey: 'screener.maCrossBullish' },
+  { value: 'bearish', labelKey: 'screener.maCrossBearish' },
 ]
 
 function toDraft(value: number | null): string {
@@ -51,6 +53,8 @@ export default function ScreenerFilterPanel({
   onChange,
   onClear,
 }: ScreenerFilterPanelProps) {
+  const { t, formatMultiple } = useI18n()
+
   // The RSI inputs are uncontrolled drafts: the DOM holds the keystrokes and
   // only blur/Enter commits them, so typing never writes the URL. The `key`
   // re-mounts an input when the committed value changes from outside (clear,
@@ -73,21 +77,25 @@ export default function ScreenerFilterPanel({
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-            Criterios técnicos
+            {t('screener.filtersTitle')}
           </h2>
           <p className="font-mono text-[11px] text-on-surface-variant">
-            Los filtros se combinan con Y; las señales seleccionadas con O.
+            {t('screener.filtersHint')}
           </p>
         </div>
         <p className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-          {activeCount > 0 ? `${activeCount} filtro(s) activo(s)` : 'Sin filtros activos'}
+          {activeCount > 0
+            ? t('screener.activeFilters', { count: activeCount })
+            : t('screener.noActiveFilters')}
         </p>
       </header>
 
       <div className="mt-4 flex flex-wrap gap-x-8 gap-y-5">
         <fieldset className="flex min-w-60 flex-col gap-2">
           <legend className={LEGEND_CLASS}>
-            Señales técnicas{filters.signals.length > 0 ? ` (${filters.signals.length})` : ''}
+            {filters.signals.length > 0
+              ? t('screener.signalsLegendCount', { count: filters.signals.length })
+              : t('screener.signalsLegend')}
           </legend>
           <div className="flex flex-wrap gap-2">
             {SCREENER_SIGNAL_TYPES.map((type) => {
@@ -100,7 +108,7 @@ export default function ScreenerFilterPanel({
                   onClick={() => toggleSignal(type)}
                   className={chipClass(selected)}
                 >
-                  {signalLabel(type)}
+                  {signalLabel(type, t)}
                 </button>
               )
             })}
@@ -112,7 +120,7 @@ export default function ScreenerFilterPanel({
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
               <label htmlFor="screener-rsi-min" className={LEGEND_CLASS}>
-                Mín
+                {t('screener.rsiMin')}
               </label>
               <input
                 id="screener-rsi-min"
@@ -130,7 +138,7 @@ export default function ScreenerFilterPanel({
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="screener-rsi-max" className={LEGEND_CLASS}>
-                Máx
+                {t('screener.rsiMax')}
               </label>
               <input
                 id="screener-rsi-max"
@@ -147,11 +155,11 @@ export default function ScreenerFilterPanel({
               />
             </div>
           </div>
-          <p className="font-mono text-[10px] text-on-surface-variant">Vacío = sin límite</p>
+          <p className="font-mono text-[10px] text-on-surface-variant">{t('screener.rsiEmptyHint')}</p>
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className={LEGEND_CLASS}>RVOL mínimo</legend>
+          <legend className={LEGEND_CLASS}>{t('screener.minRvolLegend')}</legend>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -159,7 +167,7 @@ export default function ScreenerFilterPanel({
               onClick={() => onChange({ minRvol: null })}
               className={chipClass(filters.minRvol === null)}
             >
-              Todos
+              {t('screener.minRvolAll')}
             </button>
             {MIN_RVOL_PRESETS.map((preset) => {
               const selected = filters.minRvol === preset
@@ -171,7 +179,7 @@ export default function ScreenerFilterPanel({
                   onClick={() => onChange({ minRvol: selected ? null : preset })}
                   className={chipClass(selected)}
                 >
-                  {preset.toFixed(1)}x
+                  {formatMultiple(preset)}
                 </button>
               )
             })}
@@ -179,29 +187,29 @@ export default function ScreenerFilterPanel({
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className={LEGEND_CLASS}>Precio</legend>
+          <legend className={LEGEND_CLASS}>{t('screener.priceLegend')}</legend>
           <button
             type="button"
             aria-pressed={filters.priceAboveSma200}
             onClick={() => onChange({ priceAboveSma200: !filters.priceAboveSma200 })}
             className={`w-fit ${chipClass(filters.priceAboveSma200)}`}
           >
-            Precio &gt; SMA 200
+            {t('screener.priceAboveSma200')}
           </button>
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className={LEGEND_CLASS}>Cruce de medias</legend>
+          <legend className={LEGEND_CLASS}>{t('screener.maCrossLegend')}</legend>
           <div
             role="group"
-            aria-label="Cruce de medias (SMA 50 / SMA 200)"
+            aria-label={t('screener.maCrossAria')}
             className="inline-flex w-fit overflow-hidden rounded-[4px] border-2 border-outline"
           >
             {MA_CROSS_OPTIONS.map((option, index) => {
               const selected = filters.maCross === option.value
               return (
                 <button
-                  key={option.label}
+                  key={option.labelKey}
                   type="button"
                   aria-pressed={selected}
                   onClick={() => onChange({ maCross: option.value })}
@@ -213,7 +221,7 @@ export default function ScreenerFilterPanel({
                       : 'bg-surface-bright text-on-surface-variant hover:bg-surface-container',
                   ].join(' ')}
                 >
-                  {option.label}
+                  {t(option.labelKey)}
                 </button>
               )
             })}
@@ -224,8 +232,8 @@ export default function ScreenerFilterPanel({
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t-2 border-outline-variant pt-4">
         <p className="font-mono text-[11px] text-on-surface-variant">
           {activeCount > 0
-            ? 'Filtros guardados en la URL: puedes compartir el enlace.'
-            : 'Sin filtros: se muestra el ranking por defecto del universo.'}
+            ? t('screener.filtersInUrl')
+            : t('screener.noFiltersHint')}
         </p>
         <button
           type="button"
@@ -233,7 +241,7 @@ export default function ScreenerFilterPanel({
           disabled={activeCount === 0}
           className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Limpiar filtros
+          {t('screener.clearFilters')}
         </button>
       </div>
     </section>

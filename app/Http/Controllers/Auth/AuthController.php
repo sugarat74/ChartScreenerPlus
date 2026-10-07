@@ -98,6 +98,6 @@ class AuthController extends Controller
      */
     private function requireStatefulSession(Request $request): void
     {
-        abort_unless($request->hasSession(), 400, 'A stateful session is required.');
+        abort_unless($request->hasSession(), 400, __('messages.stateful_session_required'));
     }
 }

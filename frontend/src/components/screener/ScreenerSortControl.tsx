@@ -8,6 +8,7 @@
  */
 
 import type { ScreenerSort } from '../../lib/api.ts'
+import { useI18n } from '../../i18n/useI18n.ts'
 import { SCREENER_SORT_OPTIONS } from '../../lib/screenerFilters.ts'
 
 const SELECT_CLASS =
@@ -19,13 +20,15 @@ interface ScreenerSortControlProps {
 }
 
 export default function ScreenerSortControl({ value, onChange }: ScreenerSortControlProps) {
+  const { t } = useI18n()
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <label
         htmlFor="screener-sort"
         className="font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface-variant"
       >
-        Ordenar por
+        {t('screener.sortLabel')}
       </label>
       <select
         id="screener-sort"
@@ -35,7 +38,7 @@ export default function ScreenerSortControl({ value, onChange }: ScreenerSortCon
       >
         {SCREENER_SORT_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            {t(option.labelKey)}
           </option>
         ))}
       </select>

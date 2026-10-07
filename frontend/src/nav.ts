@@ -4,18 +4,21 @@
  * Tab labels, paths and the default route are derived from this list so the
  * header navigation and the router cannot drift apart.
  */
+import type { MessageKey } from './i18n/translate.ts'
+
 export type NavItem = {
   readonly path: string
-  readonly label: string
+  /** Catalog key; the header translates it in the active language. */
+  readonly labelKey: MessageKey
   /** Admin-only surfaces are hidden from non-admin sessions (UI affordance). */
   readonly adminOnly?: boolean
 }
 
 export const NAV_ITEMS = [
-  { path: '/screener', label: 'Screener' },
-  { path: '/chart', label: 'Chart' },
-  { path: '/admin', label: 'Admin', adminOnly: true },
-  { path: '/portal', label: 'Portal' },
+  { path: '/screener', labelKey: 'nav.screener' },
+  { path: '/chart', labelKey: 'nav.chart' },
+  { path: '/admin', labelKey: 'nav.admin', adminOnly: true },
+  { path: '/portal', labelKey: 'nav.portal' },
 ] satisfies readonly NavItem[]
 
 export const DEFAULT_ROUTE: string = NAV_ITEMS[0].path

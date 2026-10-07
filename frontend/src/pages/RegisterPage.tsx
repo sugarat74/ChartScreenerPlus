@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
+import { useI18n } from '../i18n/useI18n.ts'
 import AuthField from '../components/AuthField.tsx'
 import { ApiError } from '../lib/api.ts'
 import type { ValidationErrors } from '../lib/api.ts'
@@ -10,6 +11,7 @@ import { DEFAULT_ROUTE, LOGIN_ROUTE } from '../nav.ts'
 export default function RegisterPage() {
   const { user, register } = useAuth()
   const navigate = useNavigate()
+  const { t } = useI18n()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -44,7 +46,7 @@ export default function RegisterPage() {
           setFormError(error.message)
         }
       } else {
-        setFormError('No se pudo contactar al servidor. Inténtalo de nuevo.')
+        setFormError(t('auth.serverUnreachable'))
       }
     } finally {
       setSubmitting(false)
@@ -55,13 +57,13 @@ export default function RegisterPage() {
     <section className="mx-auto flex w-full max-w-md flex-col gap-5">
       <div>
         <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-          Nuevo
+          {t('auth.registerBadge')}
         </span>
         <h2 className="mt-3 font-headline text-3xl font-black tracking-tight uppercase text-on-surface">
-          Crear cuenta
+          {t('auth.registerTitle')}
         </h2>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Registro gratuito. Solo necesitas nombre, email y contraseña.
+          {t('auth.registerIntro')}
         </p>
       </div>
 
@@ -81,7 +83,7 @@ export default function RegisterPage() {
 
         <AuthField
           id="name"
-          label="Nombre"
+          label={t('auth.name')}
           autoComplete="name"
           value={name}
           onChange={setName}
@@ -89,7 +91,7 @@ export default function RegisterPage() {
         />
         <AuthField
           id="email"
-          label="Email"
+          label={t('auth.email')}
           type="email"
           autoComplete="email"
           value={email}
@@ -98,7 +100,7 @@ export default function RegisterPage() {
         />
         <AuthField
           id="password"
-          label="Contraseña"
+          label={t('auth.password')}
           type="password"
           autoComplete="new-password"
           value={password}
@@ -107,7 +109,7 @@ export default function RegisterPage() {
         />
         <AuthField
           id="password_confirmation"
-          label="Repetir contraseña"
+          label={t('auth.passwordConfirmation')}
           type="password"
           autoComplete="new-password"
           value={passwordConfirmation}
@@ -120,14 +122,14 @@ export default function RegisterPage() {
           disabled={submitting}
           className="rounded-md border-2 border-outline bg-primary-container px-4 py-2.5 font-headline text-sm font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {submitting ? 'Creando…' : 'Crear cuenta'}
+          {submitting ? t('auth.registerSubmitting') : t('auth.registerSubmit')}
         </button>
       </form>
 
       <p className="text-sm text-on-surface-variant">
-        ¿Ya tienes cuenta?{' '}
+        {t('auth.haveAccount')}{' '}
         <Link to={LOGIN_ROUTE} className="font-bold text-on-surface underline">
-          Iniciar sesión
+          {t('auth.signIn')}
         </Link>
       </p>
     </section>

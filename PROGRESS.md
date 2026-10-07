@@ -1,5 +1,12 @@
 # Progress Log
 
+## app-multilanguage passing — 2026-10-07
+
+- Implemented Spanish/English across Chartiko on branch `worktree-app-multilanguage`. SPA: `frontend/src/i18n` (registry, typed catalogs, provider, formatters) plus an `ES | EN` selector in the header; every surface (home, auth, Screener, Saved Screeners, Portal, Watchlist, chart, Admin, 404, page titles) reads from the catalogs. Resolution: saved device choice > supported browser language > Spanish; switching keeps URL filters, the selected Candidate and the session. API: `SetLocale` reads `Accept-Language` (sent by the SPA on every request), messages in `lang/{es,en}`, statuses/shapes/`errors` keys/Signal codes unchanged.
+- Verified: `.\init.ps1` exit 0 (Laravel 192 passed / 6 skipped, SPA lint 0 warnings, Vitest 37 tests incl. jsdom component tests, build, engine 47). New Vitest step wired into `init.ps1`; new dev dependencies vitest, jsdom, @testing-library/react, @testing-library/dom.
+- Not verified: real-browser visual/keyboard review of the selector and both languages (no browser in this session; component tests cover behaviour). Static `index.html` stays Spanish by design (no translated URLs/hreflang). Main bundle grows from 406 KB to 431 KB (124 KB gzip) because both catalogs ship eagerly; lazy-loading catalogs is a possible follow-up. Ingestion log lines stored by the backend and Laravel's built-in `Unauthenticated.`/`Too Many Attempts.` texts are not translated.
+- Status `passing`; needs independent validation before `accepted`. Not merged or deployed.
+
 ## public-marketing-seo-geo accepted — 2026-10-07
 
 - Independent validator (subagent, read-only, public GETs only) returned `accept` on all four criteria: home content and `/screener` CTA in initial HTML and SPA; only the home URL is canonical and in the sitemap; app/account/Admin routes noindex via `RouteMetadata.tsx` and live `X-Robots-Tag`; publication recorded with Search Console/citation measurement left open. `.\init.ps1` exit 0 (Laravel 176 passed/6 skipped, frontend build, engine 47).

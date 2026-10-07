@@ -810,7 +810,7 @@
       "auth-registration-login",
       "public-marketing-seo-geo"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Complete Spanish (es) and English (en) translation catalogs cover all user-facing surfaces, including loading, empty, validation, authorization and error states, tooltips and accessibility labels; technical symbols, API identifiers and user-authored names remain unchanged",
       "An accessible language selector switches language without losing active filters, the selected Candidate, current route or session; choice persists after reload and navigation on the same device",
@@ -820,7 +820,13 @@
       "Document language and existing user-facing page titles/descriptions follow the selected locale; bilingual layouts preserve DESIGN.md and keyboard usability; public UI in either language omits EOD/end-of-day labels outside Admin",
       "Catalog completeness, locale resolution/persistence and bilingual representative public/authenticated/Admin flows are verified; init.ps1 passes and implementation documents describe how to add another language"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-07 .\\init.ps1 exit 0 (Baseline OK): Laravel 192 passed / 6 skipped (1812 assertions; was 176/1043), SPA tsc+oxlint 0 warnings, Vitest 4 files / 37 tests (new npm run test step in init.ps1), SPA build, engine 47 passed (existing Starlette warning).",
+      "SPA: frontend/src/i18n (locale registry, typed es/en catalogs where en is typed Messages so missing/extra keys fail tsc, translate with {param} interpolation and Spanish fallback, Intl formatters, I18nProvider above AuthProvider/router, useI18n/useTranslateRef, Interpolate) and LanguageSelector (ES|EN segmented group, aria-pressed, native names with lang) in AppHeader. Every page/component string moved to catalogs: public home, auth, 404, Screener (filters, sort, results, table), Saved Screeners, Portal, Watchlist, chart (legend, panels, canvas aria-label, Lightweight Charts localization.locale, PIVOT line), Admin, RouteMetadata titles/descriptions. Duplicated messageFor/describeFilters helpers consolidated (apiErrorMessage, describeSavedFilters).",
+      "Vitest: locales.test.ts (saved > regional browser language > Spanish; invalid/unsupported fallbacks; storage null/throwing never breaks), translate.test.ts (es/en same keys, non-empty, same placeholders; no EOD/end-of-day outside admin.*; interpolation and fallbacks), format.test.ts (es/en separators, signed percentages, compact volume, UTC market dates without day shift), I18nProvider.test.tsx (jsdom: initial browser language and <html lang>, switch keeps /screener?rsi_min=30&sort=rsi_desc and local input state, persists to localStorage, saved choice wins on reload, throwing storage tolerated, Accept-Language en then es on API requests).",
+      "Laravel: SetLocale middleware prepended to the api group (Accept-Language q-order, primary subtag, fallback config('locales.default')=es, Content-Language header); config/locales.php; lang/{es,en}/{validation,auth,passwords,pagination,messages}.php; controllers and EnsureUserIsAdmin use __('messages.*'). LocalizationTest 16 tests / 769 assertions: header matrix (absent, es, en, en-GB, es-419, EN_us, q-order, unsupported, invalid), localized 404/422 (register validation, failed login, screener ma_cross)/403 with identical statuses and errors keys, identical successful screener payloads across languages, 401 unchanged, lang/es vs lang/en key and placeholder parity. Pint passed. Existing tests unchanged (Laravel's test client sends Accept-Language en-us by default).",
+      "Docs: docs/specs/app-multilanguage.md (design, decisions, how to add a language), ARCHITECTURE.md Localization section, CONSTRAINTS.md frontend and public API rules, AGENTS.md frontend test command and language rule."
+    ],
     "notes": "Added to the backlog on 2026-10-06 at user request for Chartiko. Initial scope assumes Spanish and English, with Spanish fallback, centralized catalogs and an extensible locale registry. Language preference is device-local; account synchronization and additional languages are follow-ups. Translation applies to presentation and user-facing API messages, not market data, Instrument/company names, ticker symbols, technical acronyms, user-entered Saved Screener names or internal operational logs. No automatic translation service, translated URL scheme or new SEO indexing strategy in this feature. public-marketing-seo-geo is currently passing and requires independent acceptance before this dependency is ready. No implementation spec or product code added."
   },
   {

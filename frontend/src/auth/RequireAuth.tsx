@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router'
 import { LOGIN_ROUTE } from '../nav.ts'
+import { useI18n } from '../i18n/useI18n.ts'
 import { useAuth } from './useAuth.ts'
 
 /**
@@ -15,22 +16,23 @@ import { useAuth } from './useAuth.ts'
  */
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const { user, status } = useAuth()
+  const { t } = useI18n()
 
   if (status === 'loading') {
     return (
       <section className="mx-auto flex w-full max-w-lg flex-col gap-4">
         <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-          Portal
+          {t('auth.checkingBadge')}
         </span>
         <h2 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">
-          Comprobando sesión
+          {t('auth.checkingTitle')}
         </h2>
         <p
           role="status"
           aria-busy="true"
           className="text-sm text-on-surface-variant"
         >
-          Verificando tu sesión…
+          {t('auth.checkingBody')}
         </p>
       </section>
     )

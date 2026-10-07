@@ -53,7 +53,7 @@ class WatchlistController extends Controller
 
         if ($instrument === null) {
             throw ValidationException::withMessages([
-                'ticker' => 'Instrumento desconocido.',
+                'ticker' => __('messages.instrument_unknown'),
             ]);
         }
 
@@ -78,14 +78,14 @@ class WatchlistController extends Controller
             ->first();
 
         if ($instrument === null) {
-            return response()->json(['message' => 'Instrument not found.'], 404);
+            return response()->json(['message' => __('messages.instrument_not_found')], 404);
         }
 
         $removed = $request->user()->watchlist()->detach($instrument->id);
 
         if ($removed === 0) {
             return response()->json(
-                ['message' => 'Instrument is not in your watchlist.'],
+                ['message' => __('messages.not_in_watchlist')],
                 404,
             );
         }

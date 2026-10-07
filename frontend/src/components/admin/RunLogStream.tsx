@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n.ts'
 import type { IngestionRunDetail, IngestionRunItem } from '../../lib/api.ts'
 import { LOG_FILTERS } from './logFilter.ts'
 import type { LogFilter } from './logFilter.ts'
@@ -35,6 +36,7 @@ export default function RunLogStream({
   loading,
   error,
 }: RunLogStreamProps) {
+  const { t } = useI18n()
   const items = (run?.items ?? []).filter((item) => {
     if (filter === 'SUCCESS') {
       return item.status === 'success'
@@ -53,14 +55,14 @@ export default function RunLogStream({
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-primary px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span className="font-headline text-sm font-black uppercase tracking-wider text-on-primary">
-            Log de la ejecución
+            {t('admin.logTitle')}
           </span>
           {run ? (
             <span className="font-mono text-[11px] text-surface-dim">#{run.id}</span>
           ) : null}
           {loading ? (
             <span className="font-mono text-[10px] uppercase tracking-wider text-surface-dim">
-              Actualizando…
+              {t('admin.refreshing')}
             </span>
           ) : null}
         </div>
@@ -78,7 +80,7 @@ export default function RunLogStream({
                   : 'border-outline-variant bg-primary text-surface-dim hover:text-on-primary',
               ].join(' ')}
             >
-              {option}
+              {t(`logFilter.${option}` as const)}
             </button>
           ))}
         </div>
@@ -93,13 +95,11 @@ export default function RunLogStream({
       <div className="max-h-96 min-h-40 flex-1 overflow-y-auto px-4 py-3">
         {run === null ? (
           <p className="font-mono text-xs text-surface-dim">
-            Selecciona una ejecución para ver su log.
+            {t('admin.logSelectRun')}
           </p>
         ) : items.length === 0 ? (
           <p className="font-mono text-xs text-surface-dim">
-            {run.status === 'queued'
-              ? 'Ejecución en cola; inicia el worker para comenzar las consultas.'
-              : 'Sin líneas que coincidan con el filtro.'}
+            {run.status === 'queued' ? t('admin.logQueued') : t('admin.logNoMatches')}
           </p>
         ) : (
           <ul className="flex flex-col gap-1.5">
@@ -108,14 +108,14 @@ export default function RunLogStream({
                 <span
                   className={`shrink-0 rounded-[4px] border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${ITEM_CHIP[item.status]}`}
                 >
-                  {item.status}
+                  {t(`logStatus.${item.status}` as const)}
                 </span>
                 <span className="shrink-0 font-bold text-on-primary">
                   {item.ticker ?? '—'}
                 </span>
                 {item.status !== 'processing' ? (
                   <span className={`shrink-0 ${item.status === 'success' ? 'text-gain' : 'text-secondary-container'}`}>
-                    {item.bars_stored} barras
+                    {t('admin.barsStored', { count: item.bars_stored })}
                   </span>
                 ) : null}
                 {item.message ? (

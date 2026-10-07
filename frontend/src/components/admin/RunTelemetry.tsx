@@ -1,14 +1,15 @@
 import type { ReactNode } from 'react'
+import { useI18n } from '../../i18n/useI18n.ts'
 import type { IngestionRunDetail, IngestionRunSummary } from '../../lib/api.ts'
 import RunStatusBadge from './RunStatusBadge.tsx'
 
-function formatDuration(run: IngestionRunDetail | null): string {
+function formatDuration(run: IngestionRunDetail | null, runningLabel: string): string {
   if (!run || !run.started_at) {
     return '—'
   }
 
   if (!run.finished_at) {
-    return 'En curso'
+    return runningLabel
   }
 
   const started = new Date(run.started_at).getTime()
@@ -23,15 +24,6 @@ function formatDuration(run: IngestionRunDetail | null): string {
   const seconds = totalSeconds % 60
 
   return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`
-}
-
-function formatTimestamp(iso: string | null): string {
-  if (!iso) {
-    return '—'
-  }
-
-  const date = new Date(iso)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('es-ES')
 }
 
 interface TileProps {
@@ -62,11 +54,15 @@ interface RunTelemetryProps {
  * current status, scope, success/failure split and wall-clock duration.
  */
 export default function RunTelemetry({ run, runs }: RunTelemetryProps) {
+  const { t, formatDateTime } = useI18n()
   const processed = run ? run.succeeded + run.failed : null
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Tile label="Ejecución seleccionada" hint={run ? `Inicio: ${formatTimestamp(run.started_at)}` : 'Selecciona una ejecución'}>
+      <Tile
+        label={t('admin.tileSelectedRun')}
+        hint={run ? t('admin.tileStarted', { date: formatDateTime(run.started_at) }) : t('admin.tileSelectRun')}
+      >
         {run ? (
           <>
             <span className="font-headline text-2xl font-black text-on-surface">#{run.id}</span>
@@ -77,13 +73,20 @@ export default function RunTelemetry({ run, runs }: RunTelemetryProps) {
         )}
       </Tile>
 
-      <Tile label="Símbolos en la ejecución" hint={`${runs.length} ejecución(es) registradas`}>
+      <Tile label={t('admin.tileSymbols')} hint={t('admin.tileRunsRecorded', { count: runs.length })}>
         <span className="font-headline text-2xl font-black text-on-surface">
           {run ? run.total : '—'}
         </span>
       </Tile>
 
-      <Tile label="Progreso de consultas" hint={run ? `${run.succeeded} éxitos / ${run.failed} fallos` : 'Resultado por instrumento'}>
+      <Tile
+        label={t('admin.tileProgress')}
+        hint={
+          run
+            ? t('admin.tileProgressHint', { succeeded: run.succeeded, failed: run.failed })
+            : t('admin.tileProgressEmpty')
+        }
+      >
         <span className="font-headline text-2xl font-black text-gain">
           {processed ?? '—'}
         </span>
@@ -93,9 +96,12 @@ export default function RunTelemetry({ run, runs }: RunTelemetryProps) {
         </span>
       </Tile>
 
-      <Tile label="Duración" hint={run ? `Fin: ${formatTimestamp(run.finished_at)}` : 'Sin datos'}>
+      <Tile
+        label={t('admin.tileDuration')}
+        hint={run ? t('admin.tileFinished', { date: formatDateTime(run.finished_at) }) : t('admin.tileNoData')}
+      >
         <span className="font-headline text-2xl font-black text-on-surface">
-          {formatDuration(run)}
+          {formatDuration(run, t('admin.durationRunning'))}
         </span>
       </Tile>
     </div>

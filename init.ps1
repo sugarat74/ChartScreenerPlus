@@ -35,6 +35,8 @@ if (Test-Path "frontend/package.json") {
     }
     Write-Host "Typechecking and linting the SPA..."
     Invoke-Checked npm @("--prefix", "frontend", "run", "lint")
+    Write-Host "Running the SPA unit tests..."
+    Invoke-Checked npm @("--prefix", "frontend", "run", "test")
     Write-Host "Building the SPA..."
     Invoke-Checked npm @("--prefix", "frontend", "run", "build")
 }

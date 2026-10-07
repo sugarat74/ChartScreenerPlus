@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // First-party SPA auth: apply Sanctum's stateful middleware
         // (session cookie + CSRF) to requests from SANCTUM_STATEFUL_DOMAINS.
         $middleware->statefulApi();
+
+        // Localize API messages from Accept-Language before any other API
+        // middleware (auth/admin aborts included) can produce a message.
+        $middleware->api(prepend: [SetLocale::class]);
 
         // Server-side admin boundary. Applied to admin route groups after
         // `auth:sanctum` so guests get 401 and non-admins 403.

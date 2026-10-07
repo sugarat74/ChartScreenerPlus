@@ -13,24 +13,18 @@ import RequireAuth from '../auth/RequireAuth.tsx'
 import { useAuth } from '../auth/useAuth.ts'
 import PortalSavedScreeners from '../components/portal/PortalSavedScreeners.tsx'
 import WatchlistTable from '../components/watchlist/WatchlistTable.tsx'
-import { ApiError, watchlistApi } from '../lib/api.ts'
+import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
+import { ApiError, apiErrorMessage, watchlistApi } from '../lib/api.ts'
 import type { WatchlistEntry } from '../lib/api.ts'
 import { LOGIN_ROUTE } from '../nav.ts'
-
-function messageFor(error: unknown): string {
-  if (error instanceof ApiError) {
-    const firstValidation = Object.values(error.errors)[0]?.[0]
-    return firstValidation ?? error.message
-  }
-
-  return 'No se pudo contactar con el servidor. Inténtalo de nuevo.'
-}
 
 const ACTION_LINK_CLASS =
   'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
 function WatchlistPanel() {
   const { user } = useAuth()
+  const { t } = useI18n()
+  const tRef = useTranslateRef()
   const navigate = useNavigate()
 
   const [items, setItems] = useState<WatchlistEntry[]>([])
@@ -67,7 +61,7 @@ function WatchlistPanel() {
           navigate(LOGIN_ROUTE, { replace: true })
           return
         }
-        setError(messageFor(caught))
+        setError(apiErrorMessage(caught, tRef.current('common.networkError')))
         setLoading(false)
       }
     })()
@@ -75,7 +69,7 @@ function WatchlistPanel() {
     return () => {
       active = false
     }
-  }, [user, reloadToken, navigate])
+  }, [user, reloadToken, navigate, tRef])
 
   function reload() {
     setLoading(true)
@@ -97,7 +91,7 @@ function WatchlistPanel() {
       } else if (caught instanceof ApiError && caught.status === 401) {
         navigate(LOGIN_ROUTE, { replace: true })
       } else {
-        setRemoveError(messageFor(caught))
+        setRemoveError(apiErrorMessage(caught, t('common.networkError')))
       }
     } finally {
       setRemovingTicker(null)
@@ -109,14 +103,16 @@ function WatchlistPanel() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-            Watchlist
+            {t('watchlist.title')}
           </h3>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Los instrumentos que sigues. Añade o quita desde la ficha de cada instrumento.
+            {t('watchlist.intro')}
           </p>
         </div>
         <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-          {items.length} {items.length === 1 ? 'ticker' : 'tickers'}
+          {items.length === 1
+            ? t('watchlist.countOne', { count: items.length })
+            : t('watchlist.countOther', { count: items.length })}
         </span>
       </div>
 
@@ -127,7 +123,7 @@ function WatchlistPanel() {
           className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]"
         >
           <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
-            Cargando watchlist…
+            {t('watchlist.loading')}
           </p>
           <div className="mt-4 flex flex-col gap-2" aria-hidden="true">
             <div className="h-9 rounded-[2px] bg-surface-container" />
@@ -144,12 +140,12 @@ function WatchlistPanel() {
         >
           <div>
             <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">
-              No se pudo cargar tu watchlist
+              {t('watchlist.loadError')}
             </p>
             <p className="mt-1 font-mono text-xs text-on-secondary-container">{error}</p>
           </div>
           <button type="button" onClick={reload} className={ACTION_LINK_CLASS}>
-            Reintentar
+            {t('common.retry')}
           </button>
         </div>
       ) : null}
@@ -157,14 +153,14 @@ function WatchlistPanel() {
       {!loading && error === null && items.length === 0 ? (
         <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
           <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-            Tu watchlist está vacía
+            {t('watchlist.emptyTitle')}
           </p>
           <p className="mt-2 text-sm text-on-surface-variant">
-            Abre un candidato en el Screener y pulsa «Seguir» para añadirlo a tu radar.
+            {t('watchlist.emptyBody')}
           </p>
           <div className="mt-4 flex justify-center">
             <Link to="/screener" className={ACTION_LINK_CLASS}>
-              Ir al Screener
+              {t('watchlist.goToScreener')}
             </Link>
           </div>
         </div>
@@ -192,25 +188,27 @@ function WatchlistPanel() {
 }
 
 export default function PortalPage() {
+  const { t } = useI18n()
+
   return (
     <RequireAuth>
       <section className="flex flex-col gap-6">
         <header className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-              Mi Portal
+              {t('portal.badge')}
             </span>
             <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-              Sesión de Usuario Registrado
+              {t('portal.session')}
             </span>
           </div>
 
           <div>
             <h1 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">
-              Portal
+              {t('portal.title')}
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-              Tus Screeners guardados y tu watchlist personal en un solo lugar.
+              {t('portal.intro')}
             </p>
           </div>
         </header>

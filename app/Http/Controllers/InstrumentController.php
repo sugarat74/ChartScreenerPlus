@@ -42,7 +42,7 @@ class InstrumentController extends Controller
         $instrument = Instrument::query()->where('ticker', $ticker)->first();
 
         if ($instrument === null) {
-            return response()->json(['message' => 'Instrument not found.'], 404);
+            return response()->json(['message' => __('messages.instrument_not_found')], 404);
         }
 
         $limit = $this->resolveLimit($request);

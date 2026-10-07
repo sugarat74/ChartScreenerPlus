@@ -19,7 +19,8 @@ import SignalLevelsPanel from '../components/chart/SignalLevelsPanel.tsx'
 // the chart is actually rendered so the Screener bundle stays lean.
 const InteractiveChart = lazy(() => import('../components/chart/InteractiveChart.tsx'))
 import WatchlistButton from '../components/watchlist/WatchlistButton.tsx'
-import { ApiError, instrumentApi } from '../lib/api.ts'
+import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
+import { ApiError, apiErrorMessage, instrumentApi } from '../lib/api.ts'
 import type { InstrumentDetailResponse } from '../lib/api.ts'
 import { CHART_BAR_LIMIT, insufficientHistory, signalLevels, smaLevels } from '../lib/chartData.ts'
 
@@ -33,51 +34,27 @@ interface LoadedResult {
   error: string | null
 }
 
-function messageFor(error: unknown): string {
-  if (error instanceof ApiError) {
-    const firstValidation = Object.values(error.errors)[0]?.[0]
-    return firstValidation ?? error.message
-  }
-
-  return 'No se pudo contactar con el servidor. Inténtalo de nuevo.'
-}
-
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === 'AbortError'
-}
-
-function formatLevel(value: number | null): string {
-  return value === null ? '—' : value.toFixed(2)
-}
-
-function formatVolume(value: number): string {
-  if (value >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(2)}B`
-  }
-  if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(2)}M`
-  }
-  if (value >= 1_000) {
-    return `${(value / 1_000).toFixed(1)}K`
-  }
-  return String(value)
 }
 
 const ACTION_LINK_CLASS =
   'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
 function ScreenerLink() {
+  const { t } = useI18n()
   return (
     <Link to="/screener" className={ACTION_LINK_CLASS}>
-      Volver al Screener
+      {t('chart.backToScreener')}
     </Link>
   )
 }
 
 function RetryButton({ onRetry }: { onRetry: () => void }) {
+  const { t } = useI18n()
   return (
     <button type="button" onClick={onRetry} className={ACTION_LINK_CLASS}>
-      Reintentar
+      {t('common.retry')}
     </button>
   )
 }
@@ -103,15 +80,13 @@ function LegendValue({
 }
 
 function GuidancePanel() {
+  const { t } = useI18n()
   return (
     <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-        Selecciona un candidato
+        {t('chart.guidanceTitle')}
       </p>
-      <p className="mt-2 text-sm text-on-surface-variant">
-        Abre el gráfico de un instrumento desde la tabla del Screener para ver sus velas,
-        volumen, medias móviles y niveles de señal.
-      </p>
+      <p className="mt-2 text-sm text-on-surface-variant">{t('chart.guidanceBody')}</p>
       <div className="mt-4 flex justify-center">
         <ScreenerLink />
       </div>
@@ -120,6 +95,7 @@ function GuidancePanel() {
 }
 
 function LoadingPanel() {
+  const { t } = useI18n()
   return (
     <div
       role="status"
@@ -127,7 +103,7 @@ function LoadingPanel() {
       className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]"
     >
       <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
-        Cargando instrumento…
+        {t('chart.loadingInstrument')}
       </p>
       <div className="mt-4 h-[420px] rounded-[2px] bg-surface-container" aria-hidden="true" />
     </div>
@@ -135,10 +111,11 @@ function LoadingPanel() {
 }
 
 function NotFoundPanel({ message }: { message: string }) {
+  const { t } = useI18n()
   return (
     <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-        Instrumento no encontrado
+        {t('chart.notFoundTitle')}
       </p>
       <p className="mt-2 font-mono text-xs text-on-surface-variant">{message}</p>
       <div className="mt-4 flex justify-center">
@@ -149,14 +126,13 @@ function NotFoundPanel({ message }: { message: string }) {
 }
 
 function EmptyPanel({ ticker }: { ticker: string }) {
+  const { t } = useI18n()
   return (
     <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-        Sin datos para {ticker}
+        {t('chart.emptyTitle', { ticker })}
       </p>
-      <p className="mt-2 text-sm text-on-surface-variant">
-        Este instrumento todavía no tiene barras diarias almacenadas.
-      </p>
+      <p className="mt-2 text-sm text-on-surface-variant">{t('chart.emptyBody')}</p>
       <div className="mt-4 flex justify-center">
         <ScreenerLink />
       </div>
@@ -165,6 +141,7 @@ function EmptyPanel({ ticker }: { ticker: string }) {
 }
 
 function ErrorPanel({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useI18n()
   return (
     <div
       role="alert"
@@ -172,7 +149,7 @@ function ErrorPanel({ message, onRetry }: { message: string; onRetry: () => void
     >
       <div>
         <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">
-          No se pudo cargar el instrumento
+          {t('chart.errorTitle')}
         </p>
         <p className="mt-1 font-mono text-xs text-on-secondary-container">{message}</p>
       </div>
@@ -182,6 +159,8 @@ function ErrorPanel({ message, onRetry }: { message: string; onRetry: () => void
 }
 
 export default function InstrumentChartPage() {
+  const { t, formatPrice, formatCompact, formatMarketDate } = useI18n()
+  const tRef = useTranslateRef()
   const params = useParams<{ ticker: string }>()
   const requestedTicker =
     params.ticker !== undefined && params.ticker !== '' ? params.ticker : null
@@ -212,13 +191,18 @@ export default function InstrumentChartPage() {
           setResult({ key, status: 'not_found', payload: null, error: caught.message })
           return
         }
-        setResult({ key, status: 'error', payload: null, error: messageFor(caught) })
+        setResult({
+          key,
+          status: 'error',
+          payload: null,
+          error: apiErrorMessage(caught, tRef.current('common.networkError')),
+        })
       })
 
     return () => {
       controller.abort()
     }
-  }, [normalizedTicker, retryToken])
+  }, [normalizedTicker, retryToken, tRef])
 
   function retry() {
     setRetryToken((token) => token + 1)
@@ -232,22 +216,23 @@ export default function InstrumentChartPage() {
   const current = active !== null && active.status === 'ready' ? active.payload : null
   const error = active?.error ?? null
 
+  const pivotLabel = t('chart.pivot')
   const lastBar = current !== null && current.bars.length > 0 ? current.bars[current.bars.length - 1] : null
   const averages = current === null ? [] : smaLevels(current.snapshot)
-  const pivot = current === null ? null : (signalLevels(current.signals)[0] ?? null)
+  const pivot = current === null ? null : (signalLevels(current.signals, pivotLabel)[0] ?? null)
   const needsHistory = current !== null && insufficientHistory(current.bars, current.snapshot)
 
-  const heading = current?.instrument.ticker ?? normalizedTicker ?? 'Chart'
+  const heading = current?.instrument.ticker ?? normalizedTicker ?? t('nav.chart')
 
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
           <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-            Superficie
+            {t('chart.badge')}
           </span>
           <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-            Acceso público
+            {t('chart.access')}
           </span>
         </div>
 
@@ -262,21 +247,19 @@ export default function InstrumentChartPage() {
                 {current.instrument.exchange}
               </p>
             ) : (
-              <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-                Gráfico interactivo de un instrumento.
-              </p>
+              <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">{t('chart.intro')}</p>
             )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {current !== null ? (
               <span className="rounded-[4px] border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-primary-container shadow-[1px_1px_0px_#1a1a1a]">
-                ANÁLISIS
+                {t('chart.analysisBadge')}
               </span>
             ) : null}
             {current?.meta.latest_bar_date ? (
               <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-                Última sesión · {current.meta.latest_bar_date}
+                {t('chart.lastSession', { date: formatMarketDate(current.meta.latest_bar_date) })}
               </span>
             ) : null}
             {current !== null ? <WatchlistButton ticker={current.instrument.ticker} /> : null}
@@ -288,11 +271,11 @@ export default function InstrumentChartPage() {
       {normalizedTicker === null ? <GuidancePanel /> : null}
 
       {normalizedTicker !== null && status === 'not_found' ? (
-        <NotFoundPanel message={error ?? 'Instrument not found.'} />
+        <NotFoundPanel message={error ?? t('chart.notFoundFallback')} />
       ) : null}
 
       {normalizedTicker !== null && status === 'error' ? (
-        <ErrorPanel message={error ?? 'Error desconocido.'} onRetry={retry} />
+        <ErrorPanel message={error ?? t('common.unknownError')} onRetry={retry} />
       ) : null}
 
       {normalizedTicker !== null && status !== 'not_found' && status !== 'error' && current === null ? (
@@ -307,44 +290,40 @@ export default function InstrumentChartPage() {
         <>
           <div className="rounded-md border-2 border-outline bg-surface-bright p-3 shadow-[2px_2px_0px_#1a1a1a]">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs">
-              <span className="font-bold text-on-surface">{lastBar.date}</span>
-              <LegendValue label="O" value={formatLevel(lastBar.open)} />
-              <LegendValue label="H" value={formatLevel(lastBar.high)} accent="gain" />
-              <LegendValue label="L" value={formatLevel(lastBar.low)} accent="loss" />
+              <span className="font-bold text-on-surface">{formatMarketDate(lastBar.date)}</span>
+              <LegendValue label={t('chart.legendOpen')} value={formatPrice(lastBar.open)} />
+              <LegendValue label={t('chart.legendHigh')} value={formatPrice(lastBar.high)} accent="gain" />
+              <LegendValue label={t('chart.legendLow')} value={formatPrice(lastBar.low)} accent="loss" />
               <LegendValue
-                label="C"
-                value={formatLevel(lastBar.close)}
+                label={t('chart.legendClose')}
+                value={formatPrice(lastBar.close)}
                 accent={lastBar.close >= lastBar.open ? 'gain' : 'loss'}
               />
-              <LegendValue label="Vol" value={formatVolume(lastBar.volume)} />
-              <LegendValue
-                label="RSI"
-                value={formatLevel(current.snapshot?.rsi14 ?? null)}
-              />
-              <LegendValue label="RVOL" value={formatLevel(current.snapshot?.rvol ?? null)} />
+              <LegendValue label={t('chart.legendVolume')} value={formatCompact(lastBar.volume)} />
+              <LegendValue label="RSI" value={formatPrice(current.snapshot?.rsi14 ?? null)} />
+              <LegendValue label="RVOL" value={formatPrice(current.snapshot?.rvol ?? null)} />
             </div>
 
             <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-on-surface-variant">
               {averages.length === 0 ? (
-                <span>Sin medias móviles disponibles</span>
+                <span>{t('chart.noAverages')}</span>
               ) : (
                 averages.map((level) => (
                   <span key={level.title}>
-                    {level.title} {formatLevel(level.price)}
+                    {level.title} {formatPrice(level.price)}
                   </span>
                 ))
               )}
               {pivot !== null ? (
                 <span className="font-bold text-on-surface">
-                  PIVOTE {formatLevel(pivot.price)}
+                  {pivotLabel} {formatPrice(pivot.price)}
                 </span>
               ) : null}
             </div>
 
             {needsHistory ? (
               <p className="mt-3 rounded-[4px] border border-outline-variant bg-surface-container px-2 py-1.5 text-xs text-on-surface-variant">
-                Historial insuficiente: se muestran las velas disponibles, pero todavía no hay
-                medias móviles (SMA 20/50/200) para la última sesión.
+                {t('chart.insufficientHistory')}
               </p>
             ) : null}
 
@@ -357,7 +336,7 @@ export default function InstrumentChartPage() {
                     className="flex h-[420px] items-center justify-center bg-surface-bright"
                   >
                     <span className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
-                      Cargando gráfico…
+                      {t('chart.loadingChart')}
                     </span>
                   </div>
                 }

@@ -23,7 +23,7 @@ class EnsureUserIsAdmin
         $user = $request->user();
 
         if ($user === null || ! $user->isAdmin()) {
-            abort(403, 'Admin access required.');
+            abort(403, __('messages.admin_required'));
         }
 
         return $next($request);
