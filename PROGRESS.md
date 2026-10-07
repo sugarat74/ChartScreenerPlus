@@ -1,5 +1,12 @@
 # Progress Log
 
+## admin-users-sessions passing — 2026-10-07
+
+- Operator chose a 90-day retention for sign-in data. Implemented on branch `worktree-admin-users-backlog`: `login_events` recorded from Laravel auth events (no passwords), daily `model:prune` after 90 days, Admin API for summary, users (search/pagination/detail), active sessions (opaque refs), activity log, and ending one or all sessions with the caller's current session protected and every revocation audited. SPA: `/admin` now has tabs Ingestion | Users | Sessions | Activity (es/en).
+- Verified: `.\init.ps1` exit 0 (Laravel 215 passed / 6 skipped, Vitest 44, lint clean, build, engine 47).
+- Not verified: real-browser review of the new screens; production behaviour after deploy (requires the scheduler cron already used by ingestion to run `prune-login-events`). Open: no public privacy notice exists — draft record in `docs/legal/tratamiento-actividad-de-acceso.md` needs the owner's data and a professional review. Bundle grew to 460 KB (129 KB gzip); lazy-loading Admin routes is a possible follow-up.
+- Status `passing`; needs independent validation. Not merged or deployed.
+
 ## Admin users and sessions added to backlog — 2026-10-07
 
 - User asked for an Admin backend extension to see users, connections, etc. Added `admin-users-sessions` (`not_started`): paginated/searchable user list with activity and ownership counts, per-user detail, global active-session view, summary tiles, sign-in/failed/sign-out activity log, and Admin revocation of sessions (current session protected, revocations audited).

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
-import { Link } from 'react-router'
+import type { FormEvent } from 'react'
 import { useAuth } from '../auth/useAuth.ts'
 import RunHistoryTable from '../components/admin/RunHistoryTable.tsx'
 import RunLogStream from '../components/admin/RunLogStream.tsx'
@@ -10,47 +9,20 @@ import type { LogFilter } from '../components/admin/logFilter.ts'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { adminIngestionApi, apiErrorMessage, isTerminalRunStatus } from '../lib/api.ts'
 import type { IngestionRunDetail, IngestionRunSummary } from '../lib/api.ts'
-import { LOGIN_ROUTE } from '../nav.ts'
 
 /** Poll cadence for a non-terminal run (queued/running). */
 const POLL_INTERVAL_MS = 2500
-
-interface AdminNoticeProps {
-  eyebrow: string
-  title: string
-  message: string
-  children?: ReactNode
-}
-
-function AdminNotice({ eyebrow, title, message, children }: AdminNoticeProps) {
-  return (
-    <section className="mx-auto flex w-full max-w-lg flex-col gap-4">
-      <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-        {eyebrow}
-      </span>
-      <h2 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">
-        {title}
-      </h2>
-      <p className="text-sm text-on-surface-variant">{message}</p>
-      {children ? (
-        <div className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
-          {children}
-        </div>
-      ) : null}
-    </section>
-  )
-}
 
 /**
  * Admin ingestion panel.
  *
  * Backed entirely by the real run ledger: trigger a run, poll its status while
  * it is non-terminal, inspect its per-instrument log and retry only the failed
- * instruments. The guard below is a UI affordance only — every request is
- * authorized server-side by `auth:sanctum` + `admin`.
+ * instruments. It renders inside `AdminLayout`, whose guard is a UI affordance
+ * only — every request is authorized server-side by `auth:sanctum` + `admin`.
  */
 export default function AdminPage() {
-  const { user, status: authStatus } = useAuth()
+  const { user } = useAuth()
   const { t } = useI18n()
   const tRef = useTranslateRef()
   const isAdmin = user?.role === 'admin'
@@ -188,43 +160,6 @@ export default function AdminPage() {
     } finally {
       setRetryingId(null)
     }
-  }
-
-  if (authStatus === 'loading') {
-    return (
-      <AdminNotice
-        eyebrow={t('admin.eyebrow')}
-        title={t('admin.checkingTitle')}
-        message={t('admin.checkingBody')}
-      />
-    )
-  }
-
-  if (user === null) {
-    return (
-      <AdminNotice
-        eyebrow={t('admin.eyebrow')}
-        title={t('admin.signInTitle')}
-        message={t('admin.signInBody')}
-      >
-        <Link
-          to={LOGIN_ROUTE}
-          className="inline-block rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px"
-        >
-          {t('admin.signIn')}
-        </Link>
-      </AdminNotice>
-    )
-  }
-
-  if (!isAdmin) {
-    return (
-      <AdminNotice
-        eyebrow={t('admin.eyebrow')}
-        title={t('admin.restrictedTitle')}
-        message={t('admin.restrictedBody')}
-      />
-    )
   }
 
   const bannerRun = selectedRun ?? runs[0] ?? null

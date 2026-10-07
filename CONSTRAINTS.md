@@ -171,6 +171,10 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - Run/item payloads **MUST** be explicit arrays with the documented fields and **MUST NOT** leak model internals. Reason: the SPA contract is fixed and the detail can carry ~503 items.
 - Admin panel tests **MUST** be offline: `Http::fake` for the engine and `Queue::fake()` (or `dispatchSync`) for the job, with `actingAs(User::factory()->admin())` and the 401/403 cases asserted for every endpoint. Reason: deterministic, worker-free tests.
 - `role` on `AuthUser` **MUST** only drive UI visibility; it **MUST NOT** be treated as authorization by the SPA. Reason: the `admin` middleware is the only enforcement point.
+- Admin user/session/activity endpoints **MUST** stay in the same `auth:sanctum` + `admin` group with 401/403 tests for each, and their payloads **MUST NOT** include password hashes, remember tokens, raw session ids or session payloads; sessions are addressed only by the opaque HMAC `ref`. Reason: the Admin view must not become a credential or session-hijack leak.
+- An Admin action **MUST NOT** end the caller's own current session (single revoke `422`, "end all" keeps it), and every revocation **MUST** be written to `login_events` with the acting Admin. Reason: avoid self-lockout and keep an audit trail.
+- Role changes, suspension, deletion and impersonation **MUST NOT** be added to the Admin area without an explicit feature; role granting stays out of band (`app:make-admin`). Reason: `docs/user-and-access-model.md` protects the last Admin.
+- Sign-in activity **MUST NOT** store passwords and **MUST** be pruned after `config('admin.activity_retention_days')` (90) by the scheduled `model:prune`; changing the period requires updating the privacy documentation. Reason: IPs and emails are personal data with a declared retention.
 
 ## Public API
 

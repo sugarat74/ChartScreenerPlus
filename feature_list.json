@@ -862,7 +862,7 @@
       "access-control-guard",
       "app-multilanguage"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Every new endpoint lives under the existing auth:sanctum + admin group: guests get 401 and Registered Users 403 on each one, covered by feature tests; the SPA guard is only a UI affordance",
       "User list supports server-side search by name/email, a bounded page size and stable ordering; responses never expose password hashes, remember tokens, raw session payloads or session ids (only an opaque reference usable for revocation)",
@@ -874,7 +874,13 @@
       "Admin UI follows DESIGN.md, is fully translated in Spanish and English through the existing i18n catalogs, keeps EOD wording confined to Admin ingestion surfaces, and has loading, empty, error and pagination states",
       ".\\init.ps1 passes and docs (user-and-access-model, ARCHITECTURE, CONSTRAINTS, spec) describe the new Admin capabilities, data retention and revocation behaviour"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-07 .\\init.ps1 exit 0 (Baseline OK): Laravel 215 passed / 6 skipped (1999 assertions; was 196), SPA tsc+oxlint clean, Vitest 5 files / 44 tests, build (main bundle 460 KB / 129 KB gzip), engine 47 passed.",
+      "Backend: login_events migration + LoginEvent (MassPrunable, 90 days via config/admin.php ADMIN_ACTIVITY_RETENTION_DAYS; model:prune scheduled daily 03:15 as prune-login-events); LoginEventRecorder listens to Login/Failed/Logout on the web guard; SessionDirectory reads the database session store and exposes only an HMAC ref; Admin\\UserController (summary, list with case-insensitive search and bounded per_page 25/100, detail, end all sessions keeping the caller's current one), Admin\\SessionController (active sessions, end one; 422 for the current session, 404 unknown), Admin\\ActivityController (log with event/user filters, 422 invalid event); CopySqliteToPgsql skips login_events; lang es/en messages.",
+      "AdminUsersSessionsTest 19 tests / 116 assertions: 401 guest and 403 user on all 7 endpoints; sign-in/failed/sign-out recording with lower-cased email, IP and UA and no passwords; search, pagination clamp, counts, last sign-in/activity and secret-free payloads; summary counts; active sessions only, no session ids or payloads; revoke one audited with actor; current session protected through a real database-session sign-in; end all; user detail; activity filters/validation; 90-day prune; schedule entry; user-agent labels. Pint passed.",
+      "SPA: /admin layout route with one guard and tabs (Ingestion, Users, Users/:id, Sessions, Activity), URL-backed search/page/event filter, confirmation before ending sessions, current session labelled and without a button, es/en adminUsers catalog. AdminUsers.test.tsx (jsdom, 5 tests): non-admin restricted with no admin API calls, current-session protection and confirmed DELETE by ref with reload, declined confirmation, summary tiles and URL search, section tabs.",
+      "Docs: docs/specs/admin-users-sessions.md, docs/legal/tratamiento-actividad-de-acceso.md (draft processing record, owner data pending), user-and-access-model capability table and revocation rules, ARCHITECTURE and CONSTRAINTS sections, risks entry for the missing public privacy notice."
+    ],
     "notes": "Added to the backlog on 2026-10-07 at user request (\"ampliar el backend cuando se conecta el admin, que vea usuarios, conexiones, etc.\"). Interpretation: \"conexiones\" = active sessions plus sign-in history. Scope is supervision plus session revocation only, because docs/user-and-access-model.md keeps role granting out of band in the MVP and forbids locking out the last Admin; role management, suspension/deletion, impersonation, real-time presence/websockets, analytics/tracking of page views and exports are follow-ups. Sessions already use the database driver (sessions table on PostgreSQL in production), so active sessions are queryable; sign-in history needs a new table. Retention period for sign-in/IP data is an open decision for the operator (proposal: 90 days). No implementation spec or product code added yet."
   }
 ]

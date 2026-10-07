@@ -25,6 +25,8 @@
 | Trigger / re-run Ingestion Runs | no | no | yes |
 | Manage Instrument universe | no | no | yes |
 | View ingestion logs and telemetry | no | no | yes |
+| View users, active sessions and sign-in activity | no | no | yes |
+| End another user's sessions | no | no (own via sign-out) | yes (never own current) |
 
 ## Ownership Boundaries
 
@@ -48,6 +50,7 @@
 ## Revocation / Expiry
 
 - Sessions expire after a configured idle/absolute timeout and can be revoked by the user logging out.
+- **Admin session revocation (implemented, `admin-users-sessions`):** an Admin can end any user's session (`DELETE /api/admin/sessions/{ref}`) or all of a user's sessions (`DELETE /api/admin/users/{id}/sessions`). The Admin's own current session is never ended by these actions (single: `422`; all: kept). Every revocation is recorded in `login_events` with the acting Admin. Admins can also read the user list, active sessions and sign-in activity (kept 90 days); they cannot change roles, suspend or delete accounts through the app.
 - Deactivating or deleting an account revokes access to owned Saved Screeners and Watchlists (cascade delete acceptable in the MVP).
 - Admin role is granted out of band (seed/manual), not self-service in the MVP.
 

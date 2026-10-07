@@ -7,6 +7,8 @@
 - **PostgreSQL migration (2026-10-06, `db-postgresql-migration` passing in repo, not cut over):** code, CI and runbook exist; production still runs SQLite until an operator runs `deploy/migrate-to-postgresql.sh` from the root console in a maintenance window. Open: confirm the VPS PostgreSQL major version matches CI's `postgres:18` image; run the `--dry-run` first (SQLite may hold values PostgreSQL rejects, reported by table/id/column); rollback after cut-over loses writes made on PostgreSQL; PgBouncer is a hard runtime dependency (bypass documented); off-VPS backup copy is not configured; the backup restore test compares counts with live data and must run while ingestion is idle.
 - **Production data (2026-10-04):** live SQLite has 68,136 Daily Bars but no Indicator Snapshots or Signals. Local backfill evidence is not production evidence; execute the existing computation pipeline as a separately scoped operational task before expecting a populated Candidate list.
 
+- **Privacy notice missing (2026-10-07):** `admin-users-sessions` stores sign-in activity (email, IP, user agent) for 90 days, but the site publishes no privacy notice or legal pages. A draft processing record is in `docs/legal/tratamiento-actividad-de-acceso.md`; the owner's identifying data and a professional review are pending before publishing it (run the `web-legal-compliance-eu` skill for the full set of legal pages).
+
 ## Implementation-Time Questions
 
 - Exact indicator parameter defaults (SMA 20/50/200, EMA 21/55, RSI 14, MACD 12/26/9, ADX, Bollinger 20/2, RVOL baseline window).

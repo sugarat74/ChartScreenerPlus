@@ -20,6 +20,9 @@ return [
     'universe_not_found' => 'Universo no encontrado.',
     'admin_required' => 'Se requiere acceso de administrador.',
     'stateful_session_required' => 'Se requiere una sesión con estado.',
+    'user_not_found' => 'Usuario no encontrado.',
+    'session_not_found' => 'Sesión no encontrada o ya finalizada.',
+    'session_is_current' => 'No puedes cerrar la sesión que estás usando ahora mismo.',
 
     // Errores de API generados por el framework (App\Http\LocalizedFrameworkMessages).
     'http' => [

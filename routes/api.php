@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\IngestionRunController;
+use App\Http\Controllers\Admin\SessionController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\InstrumentController;
 use App\Http\Controllers\SavedScreenerController;
@@ -53,4 +56,16 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/ingestion/runs', [IngestionRunController::class, 'store']);
     Route::get('/ingestion/runs/{run}', [IngestionRunController::class, 'show']);
     Route::post('/ingestion/runs/{run}/retry', [IngestionRunController::class, 'retry']);
+
+    // Admin overview of users, sessions and sign-in activity
+    // (admin-users-sessions). Read-only except ending sessions; session ids
+    // are never exposed (opaque `ref`), and the caller's own current session
+    // is protected from revocation.
+    Route::get('/users/summary', [UserController::class, 'summary']);
+    Route::get('/users', [UserController::class, 'index']);
+    Route::get('/users/{user}', [UserController::class, 'show'])->whereNumber('user');
+    Route::delete('/users/{user}/sessions', [UserController::class, 'revokeSessions'])->whereNumber('user');
+    Route::get('/sessions', [SessionController::class, 'index']);
+    Route::delete('/sessions/{reference}', [SessionController::class, 'destroy'])->where('reference', '[a-f0-9]{40}');
+    Route::get('/activity', [ActivityController::class, 'index']);
 });

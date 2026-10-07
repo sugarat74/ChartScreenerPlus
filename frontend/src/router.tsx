@@ -1,6 +1,11 @@
 import { createBrowserRouter } from 'react-router'
 import AppLayout from './layouts/AppLayout.tsx'
 import AdminPage from './pages/AdminPage.tsx'
+import AdminActivityPage from './pages/admin/AdminActivityPage.tsx'
+import AdminLayout from './pages/admin/AdminLayout.tsx'
+import AdminSessionsPage from './pages/admin/AdminSessionsPage.tsx'
+import AdminUserDetailPage from './pages/admin/AdminUserDetailPage.tsx'
+import AdminUsersPage from './pages/admin/AdminUsersPage.tsx'
 import LandingPage from './pages/LandingPage.tsx'
 import InstrumentChartPage from './pages/InstrumentChartPage.tsx'
 import LoginPage from './pages/LoginPage.tsx'
@@ -19,7 +24,19 @@ export const router = createBrowserRouter([
       { path: 'screener', element: <ScreenerPage /> },
       { path: 'chart', element: <InstrumentChartPage /> },
       { path: 'instruments/:ticker', element: <InstrumentChartPage /> },
-      { path: 'admin', element: <AdminPage /> },
+      {
+        // One guard + section tabs for every Admin surface (UI affordance only;
+        // the API enforces auth:sanctum + admin).
+        path: 'admin',
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminPage /> },
+          { path: 'users', element: <AdminUsersPage /> },
+          { path: 'users/:userId', element: <AdminUserDetailPage /> },
+          { path: 'sessions', element: <AdminSessionsPage /> },
+          { path: 'activity', element: <AdminActivityPage /> },
+        ],
+      },
       { path: 'portal', element: <PortalPage /> },
       { path: routeSegment(LOGIN_ROUTE), element: <LoginPage /> },
       { path: routeSegment(REGISTER_ROUTE), element: <RegisterPage /> },

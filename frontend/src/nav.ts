@@ -12,12 +12,14 @@ export type NavItem = {
   readonly labelKey: MessageKey
   /** Admin-only surfaces are hidden from non-admin sessions (UI affordance). */
   readonly adminOnly?: boolean
+  /** Keep the tab active on nested routes (e.g. `/admin/users`). */
+  readonly nested?: boolean
 }
 
 export const NAV_ITEMS = [
   { path: '/screener', labelKey: 'nav.screener' },
   { path: '/chart', labelKey: 'nav.chart' },
-  { path: '/admin', labelKey: 'nav.admin', adminOnly: true },
+  { path: '/admin', labelKey: 'nav.admin', adminOnly: true, nested: true },
   { path: '/portal', labelKey: 'nav.portal' },
 ] satisfies readonly NavItem[]
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\LoginEvent;
 use App\Services\Market\MarketCalendar;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Carbon;
@@ -41,3 +42,18 @@ Schedule::command('ingestion:pipeline', ['--universe' => config('ingestion.unive
     ->weekdays()
     ->skip(fn () => app(MarketCalendar::class)->isHoliday(now($timezone)))
     ->withoutOverlapping(120);
+
+/*
+|--------------------------------------------------------------------------
+| Personal-data retention
+|--------------------------------------------------------------------------
+|
+| Sign-in activity (email, IP, user agent) older than
+| config('admin.activity_retention_days') (90) is deleted daily.
+|
+*/
+
+Schedule::command('model:prune', ['--model' => [LoginEvent::class]])
+    ->name('prune-login-events')
+    ->dailyAt('03:15')
+    ->withoutOverlapping();

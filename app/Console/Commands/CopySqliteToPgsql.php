@@ -53,6 +53,9 @@ class CopySqliteToPgsql extends Command
         'failed_jobs',
         'password_reset_tokens',
         'migrations',
+        // Sign-in activity is short-lived personal data (90-day retention);
+        // it postdates the one-time SQLite cut-over and is never copied.
+        'login_events',
     ];
 
     private const CHUNK = 500;

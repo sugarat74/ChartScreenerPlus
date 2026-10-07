@@ -19,6 +19,9 @@ return [
     'universe_not_found' => 'Universe not found.',
     'admin_required' => 'Admin access required.',
     'stateful_session_required' => 'A stateful session is required.',
+    'user_not_found' => 'User not found.',
+    'session_not_found' => 'Session not found or already ended.',
+    'session_is_current' => 'You cannot end the session you are using right now.',
 
     // Framework-generated API errors (App\Http\LocalizedFrameworkMessages).
     'http' => [

@@ -221,6 +221,133 @@ export const adminIngestionApi = {
   },
 }
 
+/** Coarse device label; `null` parts mean "unknown" (translated by the SPA). */
+export type AdminDevice = { browser: string | null; os: string | null }
+
+export type AdminPage<T> = {
+  data: T[]
+  meta: { current_page: number; last_page: number; per_page: number; total: number }
+}
+
+export type AdminUsersSummary = {
+  users_total: number
+  admins_total: number
+  users_new_7d: number
+  users_new_30d: number
+  users_active_24h: number
+  sessions_active: number
+  failed_logins_24h: number
+  activity_retention_days: number
+}
+
+export type AdminUserRow = {
+  id: number
+  name: string
+  email: string
+  role: UserRole
+  created_at: string | null
+  last_login_at: string | null
+  last_activity_at: string | null
+  active_sessions_count: number
+  saved_screeners_count: number
+  watchlist_count: number
+}
+
+/** An active session. `ref` is opaque: the session id never leaves the server. */
+export type AdminSession = {
+  ref: string
+  user_id: number | null
+  ip_address: string | null
+  device: AdminDevice
+  last_activity_at: string
+  is_current: boolean
+}
+
+export type AdminSessionRow = AdminSession & {
+  user: { id: number; name: string; email: string; role: UserRole } | null
+}
+
+export type AdminActivityEventType = 'login' | 'failed' | 'logout' | 'session_revoked'
+
+export type AdminActivityEvent = {
+  id: number
+  event: AdminActivityEventType
+  email: string | null
+  ip_address: string | null
+  device: AdminDevice
+  sessions_revoked: number | null
+  actor: { id: number; name: string } | null
+  created_at: string | null
+  user?: { id: number; name: string; email: string } | null
+}
+
+export type AdminUserDetail = {
+  user: AdminUserRow
+  sessions: AdminSession[]
+  activity: AdminActivityEvent[]
+}
+
+function adminQuery(params: Record<string, string | number | null | undefined>): string {
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null && value !== undefined && value !== '') {
+      query.set(key, String(value))
+    }
+  }
+  const text = query.toString()
+  return text === '' ? '' : `?${text}`
+}
+
+/**
+ * Admin overview of users, sessions and sign-in activity
+ * (admin-users-sessions). Authorized server-side by `auth:sanctum` + `admin`
+ * (401 guest, 403 non-admin); the SPA guard is only a UI affordance.
+ */
+export const adminUsersApi = {
+  async summary(): Promise<AdminUsersSummary> {
+    const payload = await request<{ summary: AdminUsersSummary }>('/api/admin/users/summary')
+    return payload.summary
+  },
+
+  list(params: { search?: string; page?: number; perPage?: number } = {}): Promise<AdminPage<AdminUserRow>> {
+    return request<AdminPage<AdminUserRow>>(
+      `/api/admin/users${adminQuery({ search: params.search, page: params.page, per_page: params.perPage })}`,
+    )
+  },
+
+  detail(id: number): Promise<AdminUserDetail> {
+    return request<AdminUserDetail>(`/api/admin/users/${id}`)
+  },
+
+  /** End every session of a user; the caller's current session is kept. */
+  async revokeUserSessions(id: number): Promise<number> {
+    await ensureCsrfCookie()
+    const payload = await request<{ revoked: number }>(`/api/admin/users/${id}/sessions`, { method: 'DELETE' })
+    return payload.revoked
+  },
+
+  sessions(params: { page?: number } = {}): Promise<AdminPage<AdminSessionRow>> {
+    return request<AdminPage<AdminSessionRow>>(`/api/admin/sessions${adminQuery({ page: params.page })}`)
+  },
+
+  /** End one session by its opaque reference (the current one is refused with 422). */
+  async revokeSession(ref: string): Promise<number> {
+    await ensureCsrfCookie()
+    const payload = await request<{ revoked: number }>(`/api/admin/sessions/${encodeURIComponent(ref)}`, {
+      method: 'DELETE',
+    })
+    return payload.revoked
+  },
+
+  activity(
+    params: { event?: AdminActivityEventType | null; userId?: number | null; page?: number } = {},
+  ): Promise<AdminPage<AdminActivityEvent>> {
+    return request<AdminPage<AdminActivityEvent>>(
+      `/api/admin/activity${adminQuery({ event: params.event, user_id: params.userId, page: params.page })}`,
+    )
+  },
+}
+
 /** The 9 fixed signal type strings the engine emits and the screener filters on. */
 export type ScreenerSignalType =
   | 'golden_cross'

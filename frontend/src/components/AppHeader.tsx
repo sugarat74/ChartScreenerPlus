@@ -123,7 +123,7 @@ export default function AppHeader() {
           <NavLink
             key={item.path}
             to={item.path}
-            end
+            end={!('nested' in item && item.nested)}
             className={({ isActive }) =>
               [
                 'whitespace-nowrap border-b-2 px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider transition-colors',

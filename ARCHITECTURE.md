@@ -112,6 +112,12 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
 - **Manual recovery, no catch-up.** A missed run is triggered manually with `php artisan ingestion:pipeline` (full) or the existing `php artisan ingestion:run` (ingestion only). `--force` bypasses the trading-day guard for manual recovery. There is no backfill/"run if late" logic; `schedule:run` does not backfill a missed minute.
 - **Production.** The schedule only defines when to run; production still needs a host cron / Task Scheduler entry running `php artisan schedule:run` (a deployment concern). `init.ps1` starts no scheduler or daemon.
 
+## Admin Users, Sessions And Sign-in Activity
+
+- SPA: `/admin` is a layout route (`frontend/src/pages/admin/AdminLayout.tsx`) with one guard and section tabs: Ingestion (`/admin`), Users (`/admin/users`, `/admin/users/:userId`), Sessions (`/admin/sessions`), Activity (`/admin/activity`). Search, page and event filters are URL-backed.
+- API (`auth:sanctum` + `admin`): `Admin\UserController` (summary, list, detail, end all sessions of a user), `Admin\SessionController` (active sessions, end one by opaque `ref`), `Admin\ActivityController` (sign-in log). Session ids never leave the server (`ref` = truncated HMAC with the app key, `App\Services\Admin\SessionDirectory`); the caller's current session cannot be ended.
+- Sign-in activity: `App\Services\Admin\LoginEventRecorder` listens to Laravel's `Login`/`Failed`/`Logout` events on the `web` guard and writes `login_events` (no passwords). `LoginEvent` is mass-prunable after `config('admin.activity_retention_days')` (90); `model:prune` runs daily at 03:15. Spec: `docs/specs/admin-users-sessions.md`.
+
 ## Admin Ingestion Panel
 
 - **Server-side boundary.** All four endpoints live in the existing `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')` group in `routes/api.php`: guests get **401**, authenticated non-admins get **403**. The SPA hides the Admin tab for non-admins and guards the page, but that is a UI affordance only — the API is the enforcement point. Existence checks happen in the controller (not implicit route-model binding) so an unknown run id still returns the 401/403 contract for a non-admin and `404` only for an admin.

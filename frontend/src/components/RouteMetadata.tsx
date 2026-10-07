@@ -25,7 +25,7 @@ export default function RouteMetadata() {
     const isHome = pathname === '/' && search === ''
     const tickerMatch = pathname.match(/^\/instruments\/([a-z0-9.-]+)$/i)
     const ticker = tickerMatch ? tickerMatch[1].toUpperCase() : null
-    const keys = ROUTE_METADATA[pathname]
+    const keys = ROUTE_METADATA[pathname] ?? (pathname.startsWith('/admin/') ? ROUTE_METADATA['/admin'] : undefined)
     const routeMetadata = keys
       ? { title: t(keys.title), description: t(keys.description) }
       : ticker !== null
