@@ -708,13 +708,14 @@
     "title": "Rebrand product to Chartiko and keep EOD wording only in Admin",
     "user_visible_behavior": "Chartiko appears in the header, shared chart-themed logo/favicon and browser metadata. Public screens omit EOD labels while Admin keeps its operational terminology.",
     "depends_on": ["app-shell-navigation", "chart-interactive"],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Chartiko wordmark and shared logo preserve the current terminal palette and hard shadows",
       "Public labels, tooltips and chart accessibility text omit EOD; Admin retains it",
       "Standard gate passes without changing data contracts or VPS service identifiers"
     ],
     "evidence": [
+      "independent validator accept (2026-10-07): wordmark/logo/favicon use DESIGN.md ink #1a1a1a, white and accent #ffcc00 with hard offset shadows (favicon.svg, AppHeader.tsx:34-50, index.html metadata, RouteMetadata titles); grep for EOD/end-of-day/fin de dia in frontend/src, index.html and public/ found 6 hits, all Admin-only (RunHistoryTable via AdminPage, AdminPage.tsx:213/230/246/308, lib/api.ts:175 comment); .\\init.ps1 exit 0 (Laravel 176 passed/6 skipped, 1043 assertions; frontend build; engine 47); rebrand commits changed copy/metadata/service Description only, no API shapes, Signal codes or VPS service identifiers; live www.chartiko.com serves Chartiko title/application-name/favicon (favicon byte-identical to repo) and the live bundle contains only the 5 Admin EOD strings; no intraday implication. Not checked: rendered visuals in a browser.",
       "2026-10-04: baseline and post-change init.ps1 exit 0; Laravel 154 tests / 985 assertions, frontend lint/build 131 modules, engine 47 tests with existing Starlette warning.",
       "SVG XML parse passed; built index includes Chartiko title, description and application-name metadata. Source search locates EOD only in Admin UI and an admin-client comment; no old public brand remains. git diff --check clean.",
       "Current docs/default APP_NAME/service descriptions and marketing skill updated; marketing skill quick_validate.py passes. Existing /var/www/alphapulse and service/health IDs preserved. docs/chartiko-brand.md records deployment/session compatibility handoff.",
