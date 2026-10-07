@@ -850,5 +850,31 @@
       "Repository check: frontend/src has no localStorage/sessionStorage use; Chartiko notes record only Laravel session and XSRF-TOKEN cookies, still to be confirmed against the served site by the feature audit."
     ],
     "notes": "User-requested project skill only (2026-10-06), first half of the skill + feature plan; the Chartiko feature legal-compliance-eu is not yet in the backlog and needs owner identity data (name, NIF, address, email). No application, legal page or deployment changes. No comparative eval iterations or independent forward-test. init.ps1 not rerun: no product code changed. Not legal advice; final texts need lawyer review."
+  },
+  {
+    "id": "admin-users-sessions",
+    "area": "admin",
+    "title": "Admin overview of users, sessions and sign-in activity",
+    "user_visible_behavior": "When an Admin signs in, the Admin area gains a Users section next to the ingestion panel: a searchable, paginated list of registered accounts (name, email, role, sign-up date, last sign-in, last activity, Saved Screener and Watchlist counts), a per-user detail view with that user's active sessions and recent sign-in history, a global view of currently active sessions, and summary tiles (total users, new users in the last 7/30 days, users active in the last 24 h, active sessions, failed sign-ins in the last 24 h). The Admin can end (revoke) one session or all sessions of a user. Registered Users and Visitors never see any of it.",
+    "depends_on": [
+      "auth-roles-admin",
+      "admin-ingestion-panel",
+      "access-control-guard",
+      "app-multilanguage"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Every new endpoint lives under the existing auth:sanctum + admin group: guests get 401 and Registered Users 403 on each one, covered by feature tests; the SPA guard is only a UI affordance",
+      "User list supports server-side search by name/email, a bounded page size and stable ordering; responses never expose password hashes, remember tokens, raw session payloads or session ids (only an opaque reference usable for revocation)",
+      "Sign-in activity is recorded server-side for successful sign-ins, failed attempts (without storing the attempted password) and sign-outs, with timestamp, user (when known), IP and user agent; failed attempts against unknown emails do not reveal whether the account exists",
+      "Active sessions are read from the database session store and show user, last activity, IP and a readable device/browser label; revoking a session or all of a user's sessions removes them so the next request from that browser is unauthenticated, and the action is itself recorded in the activity log with the acting Admin",
+      "An Admin can revoke their own other sessions but the current one is protected from accidental self-lockout; role changes, account deletion and account suspension are explicitly out of scope (role granting stays out of band via app:make-admin)",
+      "Personal data handling is documented: sign-in records and stored IPs follow a defined retention period enforced by a scheduled prune command, and the privacy notice/legal docs are updated accordingly (reviewed with the web-legal-compliance-eu skill)",
+      "Summary tiles and lists are computed with bounded queries (no N+1 over users) and work on both SQLite (local/CI) and PostgreSQL (production); CI test and test-pgsql jobs stay green",
+      "Admin UI follows DESIGN.md, is fully translated in Spanish and English through the existing i18n catalogs, keeps EOD wording confined to Admin ingestion surfaces, and has loading, empty, error and pagination states",
+      ".\\init.ps1 passes and docs (user-and-access-model, ARCHITECTURE, CONSTRAINTS, spec) describe the new Admin capabilities, data retention and revocation behaviour"
+    ],
+    "evidence": [],
+    "notes": "Added to the backlog on 2026-10-07 at user request (\"ampliar el backend cuando se conecta el admin, que vea usuarios, conexiones, etc.\"). Interpretation: \"conexiones\" = active sessions plus sign-in history. Scope is supervision plus session revocation only, because docs/user-and-access-model.md keeps role granting out of band in the MVP and forbids locking out the last Admin; role management, suspension/deletion, impersonation, real-time presence/websockets, analytics/tracking of page views and exports are follow-ups. Sessions already use the database driver (sessions table on PostgreSQL in production), so active sessions are queryable; sign-in history needs a new table. Retention period for sign-in/IP data is an open decision for the operator (proposal: 90 days). No implementation spec or product code added yet."
   }
 ]

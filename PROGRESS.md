@@ -1,5 +1,11 @@
 # Progress Log
 
+## Admin users and sessions added to backlog — 2026-10-07
+
+- User asked for an Admin backend extension to see users, connections, etc. Added `admin-users-sessions` (`not_started`): paginated/searchable user list with activity and ownership counts, per-user detail, global active-session view, summary tiles, sign-in/failed/sign-out activity log, and Admin revocation of sessions (current session protected, revocations audited).
+- Scope deliberately excludes role changes, suspension/deletion, impersonation and real-time presence: `docs/user-and-access-model.md` keeps role granting out of band and protects the last Admin. Personal data (IPs, sign-in history) needs a retention period (proposed 90 days, operator decision) with a scheduled prune and privacy-notice update.
+- Dependencies (`auth-roles-admin`, `admin-ingestion-panel`, `access-control-guard`, `app-multilanguage`) are all accepted, so the feature is ready. Backlog-only change: JSON parses, ID unique, prior entries unchanged; `init.ps1` not rerun.
+
 ## app-multilanguage accepted — 2026-10-07
 
 - Independent validator re-ran the gate on `1f66100` and returned `accept`: D1 (framework API errors) and D2-D4 fixed, no regressions; D5 (both catalogs bundled eagerly) kept as a follow-up. Evidence in `feature_list.json`.
