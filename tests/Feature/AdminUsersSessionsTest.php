@@ -80,6 +80,18 @@ class AdminUsersSessionsTest extends TestCase
 
         $this->postJson('/api/login', ['email' => 'ana@example.com', 'password' => 'wrong-password'])->assertStatus(422);
         $this->postJson('/api/login', ['email' => 'ana@example.com', 'password' => 'correct-horse-battery'])->assertOk();
+        $this->postJson('/api/logout')->assertNoContent();
+
+        // Register runs inside DB::transaction: a failed activity write must
+        // not abort it (PostgreSQL aborts the whole transaction otherwise).
+        $this->postJson('/api/register', [
+            'name' => 'Bea',
+            'email' => 'bea@example.com',
+            'password' => 'another-strong-pass-1',
+            'password_confirmation' => 'another-strong-pass-1',
+        ])->assertCreated();
+        // The user row is committed (an aborted transaction would roll it back).
+        $this->assertDatabaseHas('users', ['email' => 'bea@example.com']);
     }
 
     public function test_last_activity_falls_back_to_the_latest_sign_in_without_sessions(): void

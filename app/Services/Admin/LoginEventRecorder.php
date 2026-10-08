@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
@@ -65,16 +66,21 @@ class LoginEventRecorder
     ): void {
         $resolvedEmail = $user instanceof User ? $user->email : $email;
 
+        $attributes = [
+            'event' => $type,
+            'user_id' => $user?->getAuthIdentifier(),
+            'actor_id' => $actor?->id,
+            'email' => $resolvedEmail === null ? null : mb_substr(mb_strtolower(trim($resolvedEmail)), 0, 255),
+            'ip_address' => $withClient ? $this->request->ip() : null,
+            'user_agent' => $withClient ? (mb_substr((string) $this->request->userAgent(), 0, 512) ?: null) : null,
+            'sessions_revoked' => $sessionsRevoked,
+        ];
+
         try {
-            LoginEvent::query()->create([
-                'event' => $type,
-                'user_id' => $user?->getAuthIdentifier(),
-                'actor_id' => $actor?->id,
-                'email' => $resolvedEmail === null ? null : mb_substr(mb_strtolower(trim($resolvedEmail)), 0, 255),
-                'ip_address' => $withClient ? $this->request->ip() : null,
-                'user_agent' => $withClient ? (mb_substr((string) $this->request->userAgent(), 0, 512) ?: null) : null,
-                'sessions_revoked' => $sessionsRevoked,
-            ]);
+            // Own transaction: inside an outer one (e.g. register) Laravel uses
+            // a SAVEPOINT, so a failed insert rolls back only itself. Without
+            // it PostgreSQL would abort the caller's whole transaction.
+            DB::transaction(fn () => LoginEvent::query()->create($attributes));
         } catch (Throwable $exception) {
             report($exception);
         }
