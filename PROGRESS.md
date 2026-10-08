@@ -1,5 +1,10 @@
 # Progress Log
 
+## db-postgresql-migration accepted — 2026-10-08
+
+- Independent validation (read-only on repo, CI and production) first returned `revise`: PgBouncer lacked `Restart=on-failure` (spec Decision 10). Fixed in repo (install script drop-in + CI assertion, masked copy-error values, README) and, with operator authorization, in production (drop-in, daemon-reload, PgBouncer restart; SQLite rollback source made 0440). Deployed `96f2e94`; second round `accept`.
+- Open operational risks: no off-VPS backup copy; temporary root SSH key still authorized and `sshd` PasswordAuthentication yes; ingestion run id 1 stuck `running` since 2026-10-03; keep the SQLite rollback source until at least 2026-11-05.
+
 ## admin-users-sessions accepted — 2026-10-08
 
 - Second validator round found a PostgreSQL-only defect: a failed `login_events` insert aborted the surrounding transaction (register), so catching it was not enough; fixed with a savepoint (`437592f`), CI `test` + `test-pgsql` green. Third round returned `accept`.

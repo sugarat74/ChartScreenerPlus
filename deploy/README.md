@@ -160,7 +160,9 @@ Ensaya este rollback en el dry-run o en un clon antes de la ventana real.
   compruébalo con `systemctl show -p Restart pgbouncer`.
 - **Contraseñas en logs:** `postgresql-add-project.sh` fija la contraseña con `ALTER ROLE … PASSWORD`;
   mantén `log_statement` en `none` (`ddl`, `mod` y `all` registran esa sentencia en los logs de
-  PostgreSQL).
+  PostgreSQL). Además, con `log_min_error_statement=error` (por defecto) una sentencia que falle se
+  registra con su texto: si `postgresql-add-project.sh` falla, revisa y limpia
+  `/var/log/postgresql/postgresql-18-main.log`.
 
 ### Backups
 

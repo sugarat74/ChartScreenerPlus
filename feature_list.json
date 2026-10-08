@@ -775,7 +775,7 @@
     "depends_on": [
       "db-schema-market-data"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "CI runs php artisan test against both SQLite and a PostgreSQL service; deploy requires both jobs",
       ".\\init.ps1 still exits 0 with local in-memory SQLite and no PostgreSQL installed",
@@ -787,6 +787,8 @@
       "Rollback to the backed-up SQLite .env is documented and exercised before the production window"
     ],
     "evidence": [
+      "2026-10-08 validation round 1 (revise): all criteria verified read-only in repo, CI and production, but PgBouncer had Restart=no against spec Decision 10. Fixed: install-pgbouncer.sh systemd drop-in Restart=on-failure/RestartSec=2 with CI assertion; operator-authorized production apply (drop-in, daemon-reload, pgbouncer restart; site 200/401 after); SQLite rollback source chmod 0440; copy errors mask PostgreSQL DETAIL values and SQL text (PostgreSQL test asserts no value printed); README corrections. main 96f2e94 deployed by run 37801236428 (test, test-pgsql, deploy success).",
+      "independent validator accept (2026-10-08, round 2): drop-in present in production (Restart=on-failure, RestartUSec=2s, active, 127.0.0.1:6432 only), CI logs show the Restart assertion, SQLite source 0440, masking verified, test-pgsql 223/223; regression checks pass (pgsql via 6432/5432, loopback-only, transaction pooling, least-privilege role, services active, ingestion scheduled, db:monitor, daily 0600 dumps, API 200/401). Open risks: no off-VPS backup, temporary root key + sshd PasswordAuthentication yes, stale run id 1, SQLite source kept until >= 2026-11-05. Not checked: real PgBouncer crash/restart, new restore test.",
       "2026-10-06 repo side on branch worktree-db-postgresql-migration, draft PR #2. CI run 37447938238 (dd741a6): test (SQLite) pass; test-pgsql pass: 182 tests / 1114 assertions through PgBouncer 1.22 (transaction mode, 127.0.0.1:6432) with migrations on direct 5432, 0 skipped, including all copy scenarios (exact copy + sequence reset, abort on invalid value, dry-run report/no write, non-empty target refusal, SQLite-only duplicate aborts). Provisioned by the production scripts install-pgbouncer.sh and postgresql-add-project.sh against postgres:18.",
       "CI pooling/exposure checks: SHOW POOLS lists chartiko/chartiko in transaction mode; SHOW CONFIG listen_addr=127.0.0.1, auth_type=hba, pool_mode=transaction; only listener 127.0.0.1:6432; wrong password rejected; chartiko role has no superuser/createdb/createrole/replication/bypassrls; chartiko denied CONNECT to database postgres; PUBLIC has no CONNECT on chartiko. db:monitor through the pool succeeds.",
       "Local init.ps1 exit 0 on SQLite: Laravel 176 passed / 6 skipped (PostgreSQL-only copy scenarios) / 1043 assertions; frontend lint+build; engine 47 passed (existing Starlette warning). All deploy/*.sh pass bash -n.",
