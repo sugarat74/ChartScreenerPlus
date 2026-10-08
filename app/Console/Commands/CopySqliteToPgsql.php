@@ -218,9 +218,16 @@ class CopySqliteToPgsql extends Command
             // different strings) name the key in PostgreSQL's own message.
             $first = $batch[0]['id'];
             $last = $batch[count($batch) - 1]['id'];
+            // Keep the constraint and column names but never print data values
+            // (PostgreSQL's DETAIL echoes them: "Key (col)=(value)").
+            $message = (string) ($exception->getPrevious()?->getMessage() ?? $exception->getMessage());
+            $message = preg_replace('/(Key \([^)]*\))=\(.*?\)( already exists| is not present)?/s', '$1=(…)$2', $message) ?? '';
+            $message = preg_replace('/Failing row contains \(.*?\)\./s', 'Failing row contains (…).', $message) ?? '';
+            // The SQL text with bound values is never printed either.
+            $message = preg_replace('/\s*\(Connection: .*$/s', '', $message) ?? '';
 
             throw new RuntimeException(
-                "Table [{$table}] ids {$first}-{$last} rejected by PostgreSQL: ".($exception->getPrevious()?->getMessage() ?? $exception->getMessage()),
+                "Table [{$table}] ids {$first}-{$last} rejected by PostgreSQL: {$message}",
                 previous: $exception,
             );
         }

@@ -1,4 +1,4 @@
-# Despliegue de Chartiko en VPS (OVH, Ubuntu 24.04)
+# Despliegue de Chartiko en VPS (OVH, Ubuntu 26.04)
 
 Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
 `alphapulse-*` conservan identificadores internos compatibles con el VPS existente.
@@ -146,12 +146,21 @@ Reejecutarlo rota la contraseña. Añade `<proyecto>` a la línea del cron de ba
 6. Borra `/root/chartiko-pgsql.env`. Conserva `shared/database/database.sqlite` sin
    cambios al menos 30 días como origen de rollback.
 
-**Rollback manual** (después de completar la migración): como root,
+**Rollback manual** (después de completar la migración; en producción la carpeta válida es
+`/root/chartiko-pgsql-cutover-20261006T184407Z`, la `…181456Z` quedó vacía y la `…183353Z` es el
+primer intento revertido): como root,
 `cp -a /root/chartiko-pgsql-cutover-<fecha>/env.before /var/www/alphapulse/shared/.env`,
 luego como `deploy` `php artisan config:cache` en `current`, `systemctl reload php*-fpm`
 y `systemctl restart alphapulse-queue`. Todo lo escrito en PostgreSQL desde la
 migración se pierde al volver: mantén la ventana corta y verifica antes de reabrir.
 Ensaya este rollback en el dry-run o en un clon antes de la ventana real.
+
+- **Reinicio automático:** `install-pgbouncer.sh` instala
+  `/etc/systemd/system/pgbouncer.service.d/restart.conf` (`Restart=on-failure`, `RestartSec=2`);
+  compruébalo con `systemctl show -p Restart pgbouncer`.
+- **Contraseñas en logs:** `postgresql-add-project.sh` fija la contraseña con `ALTER ROLE … PASSWORD`;
+  mantén `log_statement` en `none` (`ddl`, `mod` y `all` registran esa sentencia en los logs de
+  PostgreSQL).
 
 ### Backups
 

@@ -45,6 +45,12 @@ fi
 chown postgres:postgres "$ETC/databases.ini" "$ETC/userlist.txt"
 chmod 0640 "$ETC/databases.ini" "$ETC/userlist.txt"
 
+# PgBouncer is a hard runtime dependency (every app query goes through it):
+# let systemd bring it back after a crash (spec Decision 10).
+install -d -m 0755 /etc/systemd/system/pgbouncer.service.d
+printf '[Service]\nRestart=on-failure\nRestartSec=2\n' > /etc/systemd/system/pgbouncer.service.d/restart.conf
+chmod 0644 /etc/systemd/system/pgbouncer.service.d/restart.conf
+systemctl daemon-reload
 systemctl enable pgbouncer >/dev/null
 systemctl restart pgbouncer || restore
 for _ in $(seq 1 20); do

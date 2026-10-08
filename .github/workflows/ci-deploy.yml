@@ -101,6 +101,9 @@ jobs:
           if [ ! -s listeners.txt ] || grep -qv '^127\.0\.0\.1:6432$' listeners.txt; then
             echo 'PgBouncer must listen on 127.0.0.1:6432 only' >&2; exit 1
           fi
+          # Hard runtime dependency: systemd must restart it after a crash.
+          systemctl show -p Restart pgbouncer | tee restart.txt
+          grep -qx 'Restart=on-failure' restart.txt
           if PGPASSWORD=wrong-password psql -X -h 127.0.0.1 -p 6432 -U chartiko -d chartiko -c 'select 1'; then
             echo 'PgBouncer accepted a wrong password' >&2; exit 1
           fi

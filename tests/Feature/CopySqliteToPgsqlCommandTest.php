@@ -216,6 +216,8 @@ class CopySqliteToPgsqlCommandTest extends TestCase
 
         $this->artisan('db:copy-sqlite-to-pgsql')
             ->expectsOutputToContain('Table [indicator_snapshots] ids 1-3 rejected by PostgreSQL')
+            ->expectsOutputToContain('Key (instrument_id, date)=(…)')
+            ->doesntExpectOutputToContain('2026-09-03')
             ->assertFailed();
 
         $this->assertSame(0, DB::table('daily_bars')->count());
