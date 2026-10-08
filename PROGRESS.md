@@ -1,5 +1,11 @@
 # Progress Log
 
+## Admin operations MCP added to backlog — 2026-10-08
+
+- User asked to record, for later, an MCP server for Admin operations. Added `admin-ops-mcp` (`not_started`, depends on accepted `admin-ingestion-panel`, `admin-users-sessions`, `auth-roles-admin`): Laravel-served HTTPS MCP with revocable Admin-only tokens, audited calls, read-only tools (ingestion status/logs, users/sessions, activity, health) and ability-gated write tools (trigger/retry run, end sessions); no shell/SQL/secrets. Goal: operate production without the temporary root SSH key.
+- Also installed (developer tooling, outside the repo) the Playwright MCP server at Claude Code user scope (`@playwright/mcp`, Edge) so future validations can do real-browser checks.
+- Backlog-only change: JSON parses, ID unique, prior entries unchanged; `init.ps1` not rerun.
+
 ## db-postgresql-migration accepted — 2026-10-08
 
 - Independent validation (read-only on repo, CI and production) first returned `revise`: PgBouncer lacked `Restart=on-failure` (spec Decision 10). Fixed in repo (install script drop-in + CI assertion, masked copy-error values, README) and, with operator authorization, in production (drop-in, daemon-reload, PgBouncer restart; SQLite rollback source made 0440). Deployed `96f2e94`; second round `accept`.

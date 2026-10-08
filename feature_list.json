@@ -887,5 +887,28 @@
       "Docs: docs/specs/admin-users-sessions.md, docs/legal/tratamiento-actividad-de-acceso.md (draft processing record, owner data pending), user-and-access-model capability table and revocation rules, ARCHITECTURE and CONSTRAINTS sections, risks entry for the missing public privacy notice."
     ],
     "notes": "Added to the backlog on 2026-10-07 at user request (\"ampliar el backend cuando se conecta el admin, que vea usuarios, conexiones, etc.\"). Interpretation: \"conexiones\" = active sessions plus sign-in history. Scope is supervision plus session revocation only, because docs/user-and-access-model.md keeps role granting out of band in the MVP and forbids locking out the last Admin; role management, suspension/deletion, impersonation, real-time presence/websockets, analytics/tracking of page views and exports are follow-ups. Sessions already use the database driver (sessions table on PostgreSQL in production), so active sessions are queryable; sign-in history needs a new table. Retention period for sign-in/IP data is an open decision for the operator (proposal: 90 days). No implementation spec or product code added yet."
+  },
+  {
+    "id": "admin-ops-mcp",
+    "area": "admin",
+    "title": "Admin operations MCP server for Chartiko",
+    "user_visible_behavior": "An Admin (or an AI assistant acting for an Admin) can connect an MCP client such as Claude Code to Chartiko and operate the backend through authorized tools instead of root SSH: read ingestion status, run logs, users/sessions summaries and a health report, and, as explicitly confirmed actions, trigger or retry an ingestion run and end a user's sessions. Registered Users and Visitors get no access.",
+    "depends_on": [
+      "admin-ingestion-panel",
+      "admin-users-sessions",
+      "auth-roles-admin"
+    ],
+    "status": "not_started",
+    "verification": [
+      "MCP server is served by Laravel over HTTPS (Streamable HTTP) under the existing domain, implemented with the official laravel/mcp package or an equivalent maintained library; it reuses the existing Admin services/controllers instead of duplicating business logic",
+      "Authentication uses a dedicated, revocable, expiring Admin-only credential (Sanctum token with explicit abilities or OAuth); requests without a token get 401, non-admin tokens 403; tokens are never logged, are listed/revocable from the Admin area and every MCP call is audited (tool, actor, outcome) with the same 90-day retention rules",
+      "Read-only tools: ingestion_status, list_runs, run_log, users_summary, active_sessions, activity_log and health (queue backlog/failures, last ingestion pipeline, PgBouncer/DB reachability, last backup age); outputs are bounded, paginated and never expose passwords, session ids/payloads, tokens or .env secrets",
+      "Write tools (trigger_run, retry_run, end_user_sessions) require a separate token ability, reuse the same validation as the REST API (422/404 semantics), protect the caller's current session, and are clearly marked as destructive/side-effecting in their MCP annotations",
+      "No shell, SQL, file-system or arbitrary artisan execution is exposed; the server cannot read secrets or change configuration, deployment, roles or users",
+      "Rate limited per token; tool schemas documented; a feature test suite covers 401/403, abilities, every tool's happy path and validation errors, audit rows and absence of secrets; an MCP client smoke test (e.g. MCP Inspector or Claude Code) is recorded",
+      "Docs explain how to issue/revoke a token and connect Claude Code (claude mcp add --transport http ...), and record that the temporary root SSH key can be retired once operations move to this server; .\\init.ps1 and CI (SQLite + PostgreSQL) pass"
+    ],
+    "evidence": [],
+    "notes": "Added to the backlog on 2026-10-08 at user request, to be done later. Motivation: day-to-day production operation currently relies on a temporary root SSH key; an authorized, audited MCP over the Admin API removes that need. Out of scope: product-facing/Copilot MCP (screener/instrument tools for end users, AI Copilot is outside the MVP), database or shell access, role management. Related open risk: retire the temporary root key and disable sshd PasswordAuthentication once this exists. No spec or product code added yet."
   }
 ]
