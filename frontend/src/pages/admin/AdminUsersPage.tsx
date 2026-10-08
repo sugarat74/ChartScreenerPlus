@@ -104,7 +104,11 @@ export default function AdminUsersPage() {
         <div aria-busy={users.loading} className="flex flex-col gap-3">
           {users.data.data.length === 0 ? (
             <p className="rounded-[4px] border-2 border-dashed border-outline-variant bg-surface-container px-3 py-4 text-center font-mono text-xs text-on-surface-variant">
-              {search === '' ? t('adminUsers.usersEmpty') : t('adminUsers.usersNoMatch', { search })}
+              {users.data.meta.total > 0
+                ? t('adminUsers.pageEmpty')
+                : search === ''
+                  ? t('adminUsers.usersEmpty')
+                  : t('adminUsers.usersNoMatch', { search })}
             </p>
           ) : (
             <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">

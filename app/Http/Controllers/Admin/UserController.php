@@ -56,10 +56,12 @@ class UserController extends Controller
 
         $paginator = $this->withOverview(User::query())
             ->when($search !== '', function (Builder $query) use ($search): void {
-                $like = '%'.mb_strtolower($search).'%';
+                // Wildcards in the input are literal; `!` is the escape char on
+                // both SQLite and PostgreSQL.
+                $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($search)).'%';
                 $query->where(function (Builder $inner) use ($like): void {
-                    $inner->whereRaw('LOWER(name) LIKE ?', [$like])
-                        ->orWhereRaw('LOWER(email) LIKE ?', [$like]);
+                    $inner->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$like])
+                        ->orWhereRaw("LOWER(email) LIKE ? ESCAPE '!'", [$like]);
                 });
             })
             ->orderByDesc('created_at')
@@ -167,6 +169,13 @@ class UserController extends Controller
     {
         $lastLogin = $user->getAttribute('last_login_at');
         $lastActivity = $user->getAttribute('last_activity_ts');
+        $lastLoginAt = $lastLogin === null ? null : Carbon::parse($lastLogin);
+        $lastActivityAt = $lastActivity === null ? null : Carbon::createFromTimestamp((int) $lastActivity);
+        // Session rows disappear on sign-out/revocation/expiry; fall back to the
+        // latest sign-in so "last activity" never regresses to empty.
+        if ($lastLoginAt !== null && ($lastActivityAt === null || $lastLoginAt->greaterThan($lastActivityAt))) {
+            $lastActivityAt = $lastLoginAt;
+        }
 
         return [
             'id' => $user->id,
@@ -174,8 +183,8 @@ class UserController extends Controller
             'email' => $user->email,
             'role' => $user->role,
             'created_at' => $user->created_at?->toIso8601String(),
-            'last_login_at' => $lastLogin === null ? null : Carbon::parse($lastLogin)->toIso8601String(),
-            'last_activity_at' => $lastActivity === null ? null : Carbon::createFromTimestamp((int) $lastActivity)->toIso8601String(),
+            'last_login_at' => $lastLoginAt?->toIso8601String(),
+            'last_activity_at' => $lastActivityAt?->toIso8601String(),
             'active_sessions_count' => (int) $user->getAttribute('active_sessions_count'),
             'saved_screeners_count' => (int) $user->getAttribute('saved_screeners_count'),
             'watchlist_count' => (int) $user->getAttribute('watchlist_count'),

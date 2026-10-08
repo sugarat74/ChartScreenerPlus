@@ -38,6 +38,10 @@ de uso del servicio (art. 6.1.b RGPD). *Pendiente de confirmar por el profesiona
 - Registro de actividad de acceso (`login_events`): **90 días**. Un proceso diario
   (`model:prune`, 03:15) borra los registros más antiguos. Configurable con
   `ADMIN_ACTIVITY_RETENTION_DAYS`; cualquier cambio debe reflejarse en el aviso de privacidad.
+- Copias de seguridad: el volcado diario de PostgreSQL (`chartiko-backup-postgresql`, privado en el
+  VPS) incluye `login_events` y se conserva 14 días, de modo que un registro puede persistir en las
+  copias hasta unos 14 días después de borrarse de la base de datos (como máximo ~104 días en total).
+  Debe indicarse en el aviso de privacidad o ajustarse la rotación de copias.
 - Sesiones: mientras están activas; caducan tras el tiempo de inactividad configurado
   (`SESSION_LIFETIME`, 120 minutos) y el recolector de sesiones las elimina.
 

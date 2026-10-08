@@ -56,7 +56,7 @@ export default function AdminSessionsPage() {
         <div aria-busy={sessions.loading} className="flex flex-col gap-3">
           {sessions.data.data.length === 0 ? (
             <p className="rounded-[4px] border-2 border-dashed border-outline-variant bg-surface-container px-3 py-4 text-center font-mono text-xs text-on-surface-variant">
-              {t('adminUsers.sessionsEmpty')}
+              {sessions.data.meta.total > 0 ? t('adminUsers.pageEmpty') : t('adminUsers.sessionsEmpty')}
             </p>
           ) : (
             <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">

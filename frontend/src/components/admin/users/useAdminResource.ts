@@ -35,9 +35,11 @@ export function useAdminResource<T>(key: string, load: () => Promise<T>): AdminR
       })
       .catch((caught: unknown) => {
         if (active) {
+          // Keep data only when retrying the same request; a failed new
+          // request must not keep showing the previous view's data.
           setState((previous) => ({
             key,
-            data: previous.data,
+            data: previous.key === key ? previous.data : null,
             error: apiErrorMessage(caught, tRef.current('common.networkError')),
             done: true,
           }))
@@ -54,6 +56,7 @@ export function useAdminResource<T>(key: string, load: () => Promise<T>): AdminR
   const reload = useCallback(() => setToken((value) => value + 1), [])
 
   return {
+    // While a new key loads, the previous data stays visible (refreshing).
     data: state.data,
     loading: !state.done || state.key !== key,
     error: state.key === key ? state.error : null,

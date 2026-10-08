@@ -44,6 +44,13 @@ analytics and exports. Role granting stays out of band (`app:make-admin`), as
   | DELETE | `/api/admin/sessions/{ref}` | end one session; `422` for the caller's current session, `404` unknown |
   | GET | `/api/admin/activity?event=&user_id=&page=` | sign-in log, newest first; invalid `event` is `422` |
 
+  Search lower-cases the input and treats `%`/`_` literally (`LIKE … ESCAPE '!'`); case-insensitive
+  matching of non-ASCII letters works on PostgreSQL (production) but SQLite's `LOWER` is ASCII-only,
+  so locally `PÉREZ` does not match `pérez`. "Last activity" is the newest of the latest session
+  activity and the latest sign-in (session rows vanish on sign-out/revocation/expiry);
+  "active in 24 h" counts users with session activity in the last 24 h.
+  Recording never breaks authentication (a failed write is `report()`ed), and `session_revoked`
+  rows store no IP/user agent because the request belongs to the acting Admin.
   Lists return `{data, meta: {current_page, last_page, per_page, total}}`. User rows carry last
   sign-in, last activity and counts via subqueries (no N+1). Responses never include password
   hashes, remember tokens, session ids or payloads. Revocations are logged as `session_revoked`

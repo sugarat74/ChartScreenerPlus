@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\UserAgentLabel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -71,11 +72,38 @@ class AdminUsersSessionsTest extends TestCase
         $this->assertStringNotContainsString('correct-horse-battery', $stored);
     }
 
+    public function test_a_failing_activity_write_never_breaks_sign_in(): void
+    {
+        User::factory()->create(['email' => 'ana@example.com', 'password' => 'correct-horse-battery']);
+        Schema::drop('login_events');
+        $this->withHeader('Origin', 'http://localhost:5173');
+
+        $this->postJson('/api/login', ['email' => 'ana@example.com', 'password' => 'wrong-password'])->assertStatus(422);
+        $this->postJson('/api/login', ['email' => 'ana@example.com', 'password' => 'correct-horse-battery'])->assertOk();
+    }
+
+    public function test_last_activity_falls_back_to_the_latest_sign_in_without_sessions(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $ana = User::factory()->create(['email' => 'ana@example.com']);
+        $signedIn = now()->subHours(5)->startOfSecond();
+        LoginEvent::query()->create(['event' => 'login', 'user_id' => $ana->id, 'created_at' => $signedIn]);
+
+        $row = $this->actingAs($admin)->getJson('/api/admin/users?search=ana@example.com')->json('data.0');
+
+        $this->assertSame($signedIn->toIso8601String(), $row['last_login_at']);
+        $this->assertSame($row['last_login_at'], $row['last_activity_at']);
+        $this->assertSame(0, $row['active_sessions_count']);
+    }
+
     public function test_user_list_is_searchable_paginated_and_never_exposes_secrets(): void
     {
         $admin = User::factory()->admin()->create(['name' => 'Root Admin', 'email' => 'root@example.com', 'created_at' => now()->subDays(40)]);
         $ana = User::factory()->create(['name' => 'Ana Pérez', 'email' => 'ana@example.com', 'created_at' => now()->subDays(2)]);
-        User::factory()->count(3)->create(['created_at' => now()->subDays(10)]);
+        // Fixed identities: Faker names/emails could contain "ana" (Diana, Hannah).
+        foreach (['Bob Stone', 'Carl Moss', 'Dirk Ruiz'] as $index => $name) {
+            User::factory()->create(['name' => $name, 'email' => "user{$index}@test.invalid", 'created_at' => now()->subDays(10)]);
+        }
 
         $ana->savedScreeners()->create(['name' => 'Golden', 'filters' => ['signal' => ['golden_cross']]]);
         $instrument = Instrument::query()->create(['ticker' => 'NVDA', 'company' => 'NVIDIA', 'sector' => 'Tech', 'exchange' => 'NASDAQ', 'active' => true]);
@@ -108,6 +136,10 @@ class AdminUsersSessionsTest extends TestCase
         $this->assertSame('ana@example.com', $page->json('data.0.email'));
         $this->getJson('/api/admin/users?per_page=9999')->assertJsonPath('meta.per_page', 100);
         $this->getJson('/api/admin/users?per_page=abc')->assertJsonPath('meta.per_page', 25);
+
+        // Wildcards are literal, not "match everything".
+        $this->getJson('/api/admin/users?search=%25')->assertJsonPath('meta.total', 0);
+        $this->getJson('/api/admin/users?search=_')->assertJsonPath('meta.total', 0);
 
         $all = json_encode($this->getJson('/api/admin/users')->json());
         $this->assertStringNotContainsString('password', $all);
@@ -175,11 +207,14 @@ class AdminUsersSessionsTest extends TestCase
 
         $this->assertDatabaseMissing('sessions', ['id' => $end]);
         $this->assertDatabaseHas('sessions', ['id' => $keep]);
+        // The Admin's own IP/device are never stored under the target user.
         $this->assertDatabaseHas('login_events', [
             'event' => 'session_revoked',
             'user_id' => $ana->id,
             'actor_id' => $admin->id,
             'sessions_revoked' => 1,
+            'ip_address' => null,
+            'user_agent' => null,
         ]);
 
         $this->deleteJson("/api/admin/sessions/{$ref}")->assertStatus(404);

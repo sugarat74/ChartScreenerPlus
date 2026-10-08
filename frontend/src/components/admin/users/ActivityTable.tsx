@@ -14,16 +14,18 @@ interface ActivityTableProps {
   events: AdminActivityEvent[]
   /** Show the account column (global log); the user detail view hides it. */
   showUser?: boolean
+  /** Text when there are no rows (e.g. a page beyond the last one). */
+  emptyMessage?: string
 }
 
 /** Sign-in activity rows; the event chip always carries a text label. */
-export default function ActivityTable({ events, showUser = false }: ActivityTableProps) {
-  const { t, formatDateTime } = useI18n()
+export default function ActivityTable({ events, showUser = false, emptyMessage }: ActivityTableProps) {
+  const { t, formatDateTime, formatInteger } = useI18n()
 
   if (events.length === 0) {
     return (
       <p className="rounded-[4px] border-2 border-dashed border-outline-variant bg-surface-container px-3 py-4 text-center font-mono text-xs text-on-surface-variant">
-        {t('adminUsers.activityEmpty')}
+        {emptyMessage ?? t('adminUsers.activityEmpty')}
       </p>
     )
   }
@@ -71,7 +73,7 @@ export default function ActivityTable({ events, showUser = false }: ActivityTabl
               <td className="px-4 py-2 text-on-surface-variant">
                 {event.event === 'session_revoked'
                   ? t('adminUsers.revokedDetail', {
-                      count: event.sessions_revoked ?? 0,
+                      count: formatInteger(event.sessions_revoked ?? 0),
                       actor: event.actor?.name ?? t('adminUsers.unknown'),
                     })
                   : event.event === 'failed' && !showUser

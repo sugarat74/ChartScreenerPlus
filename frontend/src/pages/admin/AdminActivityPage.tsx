@@ -66,7 +66,11 @@ export default function AdminActivityPage() {
 
       {activity.data !== null ? (
         <div aria-busy={activity.loading} className="flex flex-col gap-3">
-          <ActivityTable events={activity.data.data} showUser />
+          <ActivityTable
+            events={activity.data.data}
+            showUser
+            emptyMessage={activity.data.meta.total > 0 ? t('adminUsers.pageEmpty') : undefined}
+          />
           <AdminPagination
             page={activity.data.meta.current_page}
             lastPage={activity.data.meta.last_page}

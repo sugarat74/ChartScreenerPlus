@@ -1,5 +1,10 @@
 # Progress Log
 
+## admin-users-sessions revised after independent validation — 2026-10-08
+
+- Validator returned `revise`: High — `test_user_list_is_searchable…` was flaky (Faker names like Diana/Hannah match `ana`), making `init.ps1`/CI fail randomly; Low — audit write failure could break login, revocation rows stored the Admin's IP/UA under the target, last activity vanished after sign-out, unescaped LIKE wildcards, UI out-of-range page/format/stale-data details, backup retention not mentioned in the legal draft. It live-verified that revoked browsers get 401 and the current session is protected.
+- All fixed with tests (flaky test 10/10 green). `.\init.ps1` exit 0: Laravel 217 passed / 6 skipped, Vitest 44, lint clean, build, engine 47. Status stays `passing`; re-validation requested.
+
 ## admin-users-sessions passing — 2026-10-07
 
 - Operator chose a 90-day retention for sign-in data. Implemented on branch `worktree-admin-users-backlog`: `login_events` recorded from Laravel auth events (no passwords), daily `model:prune` after 90 days, Admin API for summary, users (search/pagination/detail), active sessions (opaque refs), activity log, and ending one or all sessions with the caller's current session protected and every revocation audited. SPA: `/admin` now has tabs Ingestion | Users | Sessions | Activity (es/en).

@@ -399,6 +399,7 @@ export const en: Messages = {
     activityTitle: 'Sign-in activity',
     activityIntro: 'Sign-ins, failed attempts, sign-outs and sessions ended by an admin.',
     activityEmpty: 'No recorded activity.',
+    pageEmpty: 'This page has no results. Go back to an earlier page.',
     eventFilter: 'Event type',
     eventAll: 'All',
   },

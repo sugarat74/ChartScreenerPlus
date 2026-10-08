@@ -402,6 +402,7 @@ export const es = {
     activityTitle: 'Actividad de acceso',
     activityIntro: 'Inicios de sesión, intentos fallidos, cierres de sesión y sesiones cerradas por un admin.',
     activityEmpty: 'Sin actividad registrada.',
+    pageEmpty: 'Esta página no tiene resultados. Vuelve a una página anterior.',
     eventFilter: 'Tipo de evento',
     eventAll: 'Todos',
   },
