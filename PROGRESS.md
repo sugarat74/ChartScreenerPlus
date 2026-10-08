@@ -1,5 +1,10 @@
 # Progress Log
 
+## admin-users-sessions accepted — 2026-10-08
+
+- Second validator round found a PostgreSQL-only defect: a failed `login_events` insert aborted the surrounding transaction (register), so catching it was not enough; fixed with a savepoint (`437592f`), CI `test` + `test-pgsql` green. Third round returned `accept`.
+- `admin-users-sessions` -> `accepted`. Open (non-blocking): no public privacy notice yet (draft in `docs/legal/`), real-browser visual review of the Admin screens.
+
 ## admin-users-sessions revised after independent validation — 2026-10-08
 
 - Validator returned `revise`: High — `test_user_list_is_searchable…` was flaky (Faker names like Diana/Hannah match `ana`), making `init.ps1`/CI fail randomly; Low — audit write failure could break login, revocation rows stored the Admin's IP/UA under the target, last activity vanished after sign-out, unescaped LIKE wildcards, UI out-of-range page/format/stale-data details, backup retention not mentioned in the legal draft. It live-verified that revoked browsers get 401 and the current session is protected.

@@ -862,7 +862,7 @@
       "access-control-guard",
       "app-multilanguage"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Every new endpoint lives under the existing auth:sanctum + admin group: guests get 401 and Registered Users 403 on each one, covered by feature tests; the SPA guard is only a UI affordance",
       "User list supports server-side search by name/email, a bounded page size and stable ordering; responses never expose password hashes, remember tokens, raw session payloads or session ids (only an opaque reference usable for revocation)",
@@ -875,6 +875,8 @@
       ".\\init.ps1 passes and docs (user-and-access-model, ARCHITECTURE, CONSTRAINTS, spec) describe the new Admin capabilities, data retention and revocation behaviour"
     ],
     "evidence": [
+      "2026-10-08 second revise round: validator found that the audit try/catch aborted PostgreSQL transactions (CI test-pgsql failed on 89d080a with SQLSTATE 25P02; register could return 201 for an uncommitted user). Fixed in 437592f by running the insert in its own DB::transaction (SAVEPOINT when nested); test now also registers with login_events dropped. CI run 37734687081: test and test-pgsql success (223 passed on PostgreSQL).",
+      "independent validator accept (2026-10-08, third round on 437592f): savepoint isolation verified via test-pgsql logs; .\\init.ps1 exit 0; Pint passed; AdminUsersSessionsTest 10/10 runs green (plus 25/25 on 89d080a); earlier live checks hold (revoked browser gets 401, current session protected, end-all keeps it, no secrets, opaque refs, 90-day prune and schedule, bounded queries). Low non-blocking: session-based 'active in 24 h', SQLite ASCII-only LOWER locally, no public privacy notice yet (recorded). Not checked: local PostgreSQL, real-browser visual pass.",
       "2026-10-08 revise round: validator found a High flaky test (Faker names containing 'ana' broke the search assertion ~20% of runs) and Low items. Fixed: fixed test identities (AdminUsersSessionsTest 10/10 consecutive runs green, 21 tests / 123 assertions); LoginEventRecorder wraps writes in try/catch + report() (login still 200 with login_events dropped, tested); session_revoked rows store no IP/UA (tested); last_activity_at falls back to the latest sign-in (tested); LIKE wildcards escaped with ESCAPE '!' (tested); SPA out-of-range page message, formatted revoked count, failed new key clears stale data; legal draft notes 14-day backup rotation; spec documents SQLite ASCII-only LOWER. .\\init.ps1 exit 0 (Laravel 217 passed / 6 skipped, Vitest 44, lint clean, build, engine 47); Pint passed.",
       "2026-10-07 .\\init.ps1 exit 0 (Baseline OK): Laravel 215 passed / 6 skipped (1999 assertions; was 196), SPA tsc+oxlint clean, Vitest 5 files / 44 tests, build (main bundle 460 KB / 129 KB gzip), engine 47 passed.",
       "Backend: login_events migration + LoginEvent (MassPrunable, 90 days via config/admin.php ADMIN_ACTIVITY_RETENTION_DAYS; model:prune scheduled daily 03:15 as prune-login-events); LoginEventRecorder listens to Login/Failed/Logout on the web guard; SessionDirectory reads the database session store and exposes only an HMAC ref; Admin\\UserController (summary, list with case-insensitive search and bounded per_page 25/100, detail, end all sessions keeping the caller's current one), Admin\\SessionController (active sessions, end one; 422 for the current session, 404 unknown), Admin\\ActivityController (log with event/user filters, 422 invalid event); CopySqliteToPgsql skips login_events; lang es/en messages.",
