@@ -118,6 +118,35 @@ class AlertsApiTest extends TestCase
         $this->assertDatabaseHas('alerts', ['id' => $foreign->id]);
     }
 
+    public function test_changing_only_the_signal_types_resets_the_baseline(): void
+    {
+        $user = User::factory()->create();
+        $alert = Alert::factory()->for($user)->create(['signal_types' => ['golden_cross']]);
+        $alert->forceFill(['last_state' => ['signals' => ['NVDA' => ['golden_cross']]], 'last_evaluated_as_of' => '2026-10-01'])->save();
+
+        // Same set in another order: canonical, so nothing resets.
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['signal_types' => ['golden_cross']])->assertOk();
+        $this->assertNotNull($alert->fresh()->last_state);
+
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['signal_types' => ['golden_cross', 'rsi_oversold']])->assertOk();
+        $this->assertNull($alert->fresh()->last_state);
+        $this->assertNull($alert->fresh()->last_evaluated_as_of);
+    }
+
+    public function test_deleting_an_account_removes_its_alerts_and_notifications(): void
+    {
+        $user = User::factory()->create();
+        Alert::factory()->for($user)->create();
+        $user->notify(new AlertTriggered(1, 'watchlist_signal', '2026-10-01', null, null, [], 0));
+        $other = User::factory()->create();
+        $other->notify(new AlertTriggered(2, 'watchlist_signal', '2026-10-01', null, null, [], 0));
+
+        $user->delete();
+
+        $this->assertDatabaseCount('alerts', 0);
+        $this->assertDatabaseCount('notifications', 1);
+    }
+
     public function test_screener_alerts_cannot_take_signal_types(): void
     {
         $user = User::factory()->create();

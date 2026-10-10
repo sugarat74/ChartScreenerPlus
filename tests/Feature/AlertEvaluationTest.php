@@ -207,6 +207,26 @@ class AlertEvaluationTest extends TestCase
         $this->assertNull($failing->fresh()->last_state);
     }
 
+    public function test_a_failing_notification_rolls_back_the_state_update(): void
+    {
+        $user = User::factory()->create();
+        $nvda = $this->member('NVDA', 50);
+        $user->watchlist()->attach($nvda->id);
+        $alert = $user->alerts()->create(['kind' => Alert::KIND_WATCHLIST, 'signal_types' => ['golden_cross']]);
+        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $baseline = $alert->fresh()->last_state;
+
+        Signal::factory()->create(['instrument_id' => $nvda->id, 'date' => '2026-10-02', 'type' => 'golden_cross']);
+        $this->newSession($nvda, '2026-10-02');
+        // Make the notification insert fail inside the evaluator's transaction.
+        DB::statement('DROP TABLE notifications');
+
+        $this->artisan('alerts:evaluate')->expectsOutputToContain('failed')->assertExitCode(1);
+
+        $this->assertSame($baseline, $alert->fresh()->last_state);
+        $this->assertSame('2026-10-01', $alert->fresh()->last_evaluated_as_of->toDateString());
+    }
+
     public function test_no_data_means_nothing_to_evaluate(): void
     {
         User::factory()->create()->alerts()->create(['kind' => Alert::KIND_WATCHLIST, 'signal_types' => ['golden_cross']]);

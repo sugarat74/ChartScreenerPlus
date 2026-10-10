@@ -103,4 +103,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(Alert::class);
     }
+
+    /**
+     * Notifications are a morph relation without a foreign key, so they are
+     * removed explicitly with the account (alerts cascade by FK).
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user): void {
+            $user->notifications()->delete();
+        });
+    }
 }

@@ -46,9 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/watchlist', [WatchlistController::class, 'store']);
     Route::delete('/watchlist/{ticker}', [WatchlistController::class, 'destroy']);
 
-    // Saved Screeners: user-owned named screener definitions. Every query is
-    // scoped to `$request->user()->savedScreeners()`; no endpoint accepts a
-    // `user_id`. `/screeners` does not collide with the public `/screener`.
     // Alerts and their in-app notifications (alerts-engine): scoped to the
     // authenticated user like Saved Screeners; foreign ids are a 404.
     Route::get('/alerts', [AlertController::class, 'index']);
@@ -58,6 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
 
+    // Saved Screeners: user-owned named screener definitions. Every query is
+    // scoped to `$request->user()->savedScreeners()`; no endpoint accepts a
+    // `user_id`. `/screeners` does not collide with the public `/screener`.
     Route::get('/screeners', [SavedScreenerController::class, 'index']);
     Route::post('/screeners', [SavedScreenerController::class, 'store']);
     Route::delete('/screeners/{screener}', [SavedScreenerController::class, 'destroy']);

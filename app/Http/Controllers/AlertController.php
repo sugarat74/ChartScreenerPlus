@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alert;
+use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -68,28 +71,42 @@ class AlertController extends Controller
             'signal_types.*' => ['required', 'string', Rule::in(self::SIGNAL_TYPES)],
         ]);
 
-        if ($user->alerts()->count() >= (int) config('alerts.max_per_user')) {
-            throw ValidationException::withMessages([
-                'kind' => [__('messages.alerts.limit', ['max' => (int) config('alerts.max_per_user')])],
-            ]);
-        }
+        try {
+            // The limit and duplicate checks and the insert run under a lock on
+            // the user's row, so parallel requests cannot exceed the limit or
+            // create a second Watchlist alert; a race on the unique
+            // (user, saved screener) index still ends as the duplicate 422.
+            $alert = DB::transaction(function () use ($user, $validated): Alert {
+                User::query()->whereKey($user->id)->lockForUpdate()->first();
 
-        $duplicate = $validated['kind'] === Alert::KIND_SCREENER
-            ? $user->alerts()->where('saved_screener_id', $validated['saved_screener_id'])->exists()
-            : $user->alerts()->where('kind', Alert::KIND_WATCHLIST)->exists();
+                if ($user->alerts()->count() >= (int) config('alerts.max_per_user')) {
+                    throw ValidationException::withMessages([
+                        'kind' => [__('messages.alerts.limit', ['max' => (int) config('alerts.max_per_user')])],
+                    ]);
+                }
 
-        if ($duplicate) {
+                $duplicate = $validated['kind'] === Alert::KIND_SCREENER
+                    ? $user->alerts()->where('saved_screener_id', $validated['saved_screener_id'])->exists()
+                    : $user->alerts()->where('kind', Alert::KIND_WATCHLIST)->exists();
+
+                if ($duplicate) {
+                    throw ValidationException::withMessages([
+                        'kind' => [__('messages.alerts.duplicate')],
+                    ]);
+                }
+
+                return $user->alerts()->create([
+                    'kind' => $validated['kind'],
+                    'saved_screener_id' => $validated['saved_screener_id'] ?? null,
+                    'signal_types' => isset($validated['signal_types']) ? $this->canonicalTypes($validated['signal_types']) : null,
+                    'active' => true,
+                ]);
+            });
+        } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages([
                 'kind' => [__('messages.alerts.duplicate')],
             ]);
         }
-
-        $alert = $user->alerts()->create([
-            'kind' => $validated['kind'],
-            'saved_screener_id' => $validated['saved_screener_id'] ?? null,
-            'signal_types' => isset($validated['signal_types']) ? $this->canonicalTypes($validated['signal_types']) : null,
-            'active' => true,
-        ]);
 
         return response()->json(['alert' => $this->payload($alert->load('savedScreener'))], 201);
     }
