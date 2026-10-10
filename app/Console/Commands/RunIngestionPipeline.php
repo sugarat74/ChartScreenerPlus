@@ -7,11 +7,11 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Run the full EOD pipeline in order: ingestion -> indicators -> signals.
+ * Run the full EOD pipeline in order: ingestion -> indicators -> signals -> patterns.
  *
  * This is a thin composition wrapper: it never reimplements any stage and
- * delegates to the accepted `ingestion:run`, `indicators:compute` and
- * `signals:detect` commands via `$this->call()`, so each stage keeps its own
+ * delegates to the `ingestion:run`, `indicators:compute`, `signals:detect` and
+ * `patterns:detect` commands via `$this->call()`, so each stage keeps its own
  * behavior and ledger.
  *
  * Guards:
@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Cache;
  *   the directly testable path.
  *
  * Failure policy: if ingestion fails (a `failed` run), later stages are skipped.
- * If a later stage fails, the remaining stage is still attempted and the command
+ * If a later stage fails, the remaining stages are still attempted and the command
  * exits `1` so the scheduler records the failure.
  */
 class RunIngestionPipeline extends Command
@@ -69,15 +69,16 @@ class RunIngestionPipeline extends Command
             $ingestion = $this->call('ingestion:run', ['--universe' => $universe]);
 
             if ($ingestion !== self::SUCCESS) {
-                $this->error('EOD pipeline stopped: ingestion failed; indicators and signals were skipped.');
+                $this->error('EOD pipeline stopped: ingestion failed; indicators, signals and patterns were skipped.');
 
                 return self::FAILURE;
             }
 
             $indicators = $this->call('indicators:compute', ['--universe' => $universe]);
             $signals = $this->call('signals:detect', ['--universe' => $universe]);
+            $patterns = $this->call('patterns:detect', ['--universe' => $universe]);
 
-            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS) {
+            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS) {
                 $this->error('EOD pipeline finished with errors.');
 
                 return self::FAILURE;

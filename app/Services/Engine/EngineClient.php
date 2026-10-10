@@ -89,4 +89,30 @@ class EngineClient
 
         return is_array($signals) ? $signals : [];
     }
+
+    /**
+     * Detect the chartist patterns active on the as-of bar of a bar series.
+     *
+     * The response is `{patterns: [{type, status, as_of_date, start_date,
+     * end_date, breakout_level, points, metadata}]}`; an empty result is valid.
+     *
+     * @param  array<int, array<string, mixed>>  $bars
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws RequestException when the engine responds with an error status.
+     * @throws ConnectionException when the engine is unreachable.
+     */
+    public function detectPatterns(array $bars): array
+    {
+        $baseUrl = rtrim((string) config('engine.url'), '/');
+
+        $payload = Http::acceptJson()
+            ->post($baseUrl.'/patterns/detect', ['bars' => $bars])
+            ->throw()
+            ->json();
+
+        $patterns = is_array($payload) ? ($payload['patterns'] ?? []) : [];
+
+        return is_array($patterns) ? $patterns : [];
+    }
 }

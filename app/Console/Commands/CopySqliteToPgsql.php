@@ -56,6 +56,8 @@ class CopySqliteToPgsql extends Command
         // Sign-in activity is short-lived personal data (90-day retention);
         // it postdates the one-time SQLite cut-over and is never copied.
         'login_events',
+        // Derived, replaced by every `patterns:detect`; postdates the cut-over.
+        'chart_patterns',
     ];
 
     private const CHUNK = 500;

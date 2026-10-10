@@ -95,6 +95,11 @@ def test_double_top_invalidated_by_a_close_above_the_tops():
     assert found(series(DOUBLE_TOP + [(147, 96), (160, 104.5)]), "double_top") is None
 
 
+def test_double_top_peaks_must_be_the_highest_of_their_span():
+    # A higher high between the two peaks makes them not a double top.
+    assert found(series([(0, 70), (80, 100), (95, 86), (105, 104), (120, 85), (140, 100.5), (150, 95)]), "double_top") is None
+
+
 def test_double_top_near_misses():
     assert found(series([(0, 70), (80, 100), (110, 85), (140, 105.5), (150, 100)]), "double_top") is None  # 5% apart
     assert found(series([(0, 70), (80, 100), (110, 93), (140, 100.5), (150, 97)]), "double_top") is None  # 7% trough
@@ -118,6 +123,11 @@ def test_double_bottom_forming_confirmed_gone_invalidated():
 
     assert found(series(DOUBLE_BOTTOM + [(185, 135)]), "double_bottom") is None
     assert found(series(DOUBLE_BOTTOM + [(147, 104), (160, 95.5)]), "double_bottom") is None
+
+
+def test_double_bottom_lows_must_be_the_lowest_of_their_span():
+    # A deeper low between the two lows (a U, not a W) is not a double bottom.
+    assert found(series([(0, 130), (80, 100), (95, 112), (105, 92), (120, 115), (140, 99.5), (150, 105)]), "double_bottom") is None
 
 
 def test_double_bottom_near_miss_without_prior_decline():
@@ -146,6 +156,17 @@ def test_cup_with_handle_confirmed_needs_volume():
     assert with_volume.metadata["breakout_close"] == pytest.approx(100)
 
 
+def test_cup_rims_must_be_the_highest_of_the_cup():
+    # A hump above the rims inside the cup is not a cup.
+    assert found(series([(0, 70), (40, 100), (70, 78), (90, 106), (115, 80), (140, 99), (148, 94), (152, 97)]), "cup_with_handle") is None
+    # A hump above the lower rim (99) but below the higher one (100) breaks the
+    # big cup; only the smaller, valid cup that starts at the hump remains.
+    smaller = found(series([(0, 70), (40, 100), (70, 78), (90, 99.7), (115, 80), (140, 99), (148, 94), (152, 97)]), "cup_with_handle")
+    assert smaller is not None
+    assert smaller.points[0].role == "rim_left"
+    assert smaller.points[0].date == START + timedelta(days=90)
+
+
 def test_cup_with_handle_near_misses():
     assert found(series([(0, 70), (40, 100), (90, 60), (140, 99), (148, 94), (152, 97)]), "cup_with_handle") is None  # 40% deep
     assert found(series([(0, 70), (40, 100), (90, 75), (140, 99), (148, 84), (152, 88)]), "cup_with_handle") is None  # handle too deep
@@ -166,6 +187,14 @@ def test_bull_flag_forming_then_confirmed():
 
     confirmed = found(series(FLAG + [(97, 72)], volumes=POLE_VOLUME), "bull_flag")
     assert confirmed is not None and confirmed.status == "confirmed"
+
+
+def test_flag_never_rises_above_the_pole_top():
+    bars = series(FLAG, volumes=POLE_VOLUME)
+    assert found(bars, "bull_flag") is not None
+    # An intraday spike above the pole top inside the flag (close still lower).
+    bars[86] = bars[86].model_copy(update={"high": 71.0})
+    assert found(bars, "bull_flag") is None
 
 
 def test_bull_flag_near_misses():

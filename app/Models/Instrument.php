@@ -95,4 +95,14 @@ class Instrument extends Model
     {
         return $this->hasMany(Signal::class);
     }
+
+    /**
+     * The chartist patterns currently active on this instrument.
+     *
+     * @return HasMany<ChartPattern, $this>
+     */
+    public function chartPatterns(): HasMany
+    {
+        return $this->hasMany(ChartPattern::class);
+    }
 }

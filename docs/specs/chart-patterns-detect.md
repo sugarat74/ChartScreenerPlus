@@ -5,7 +5,7 @@
 - `id`: `chart-patterns-detect`
 - `area`: `engine`
 - `depends_on`: `signals-detect`, `ingestion-scheduler` (both accepted)
-- `status`: `not_started` (planned 2026-10-10 at the user's explicit request; chartist patterns were "later than MVP Signal work" in `AGENTS.md`)
+- `status`: implemented 2026-10-10 (planned the same day at the user's explicit request)
 - `source`: `feature_list.json`
 
 ## Goal
@@ -51,6 +51,8 @@ All percentages are relative to the referenced price. `i` = as-of index.
 | `double_bottom` | Mirror of `double_top` with swing lows `L1`, `L2`, peak `H = max(high[t1..t2])`, rise `(H-max(L1,L2))/max(L1,L2) >= 10%`; prior decline `L1 <= 0.85 * max(high[t1-60 .. t1])` | `H` (neckline) | a close `> H` after `t2` | any close `< min(L1,L2) * 0.97` after `t2` |
 | `cup_with_handle` | Left rim swing high `A` (ta), cup low `B = min(low[ta..tc])` at tb, right rim swing high `C` (tc): `30 <= tc-ta <= 325`; depth `12% <= (A-B)/A <= 35%`; `0.95A <= C <= 1.05A`; `tb` in the middle 20–80% of `[ta, tc]`; handle: `5 <= i-tc` and handle span `tc..i` (or up to the breakout) `<= 25` sessions, handle low `D >= B + (A-B)/2` and `(C-D)/C <= 12%` | pivot `P = max(high[tc..breakout-1])` (C when no handle highs exceed it) | a close `> P` with `rvol >= 1.5` | handle low falls below `B + (A-B)/2`, or handle exceeds 25 sessions without breakout |
 | `bull_flag` | Pole: from swing low `S` (ts) to swing high `T` (tt), `tt-ts <= 15`, rise `(T-S)/S >= 15%`; flag: `5 <= flag length <= 20` sessions after `tt`; flag low `>= T - 0.5*(T-S)`; least-squares slope of flag closes `<= 0`; mean flag volume `<` mean pole volume | `F = max(high` over the flag`)` | a close `> F` | flag low `< T - 0.5*(T-S)` or flag longer than 20 sessions without breakout |
+
+Extreme rule (added during implementation, see Findings): a pattern's own extremes are the extremes of its span — no higher high between the double-top peaks, no lower low between the double-bottom lows, nothing inside the cup above the higher rim and no intermediate swing high above the lower rim, no flag high above the pole top before the breakout.
 
 Boundary rules: inequalities as written; any `null` input (e.g. `rvol` before 50 bars) means the rule cannot confirm, never a false pattern. Parameters live as named constants in one module so a later spec can tune them with tests.
 
@@ -159,3 +161,13 @@ Given `ingestion:pipeline` runs, `patterns:detect` runs after `signals:detect`; 
 - [ ] Replace semantics, idempotence and failure safety proven; unique key exists.
 - [ ] Pipeline runs the stage after signals; engine has no DB access; no new Python dependencies.
 - [ ] Docs updated; `init.ps1` exit 0; `feature_list.json` and `PROGRESS.md` updated.
+
+## Implementation Findings
+
+Recorded during implementation (2026-10-10).
+
+1. **Extreme rule.** A visual check of the first local run over 494 S&P 500 instruments showed "double bottoms" with a much deeper low between the two lows, "double tops" with higher highs between the peaks and "cups" with humps above the rims. The table's geometry implied, but did not state, that a pattern's points are the extremes of its span. Each detector now enforces it (tests: `test_double_top_peaks_must_be_the_highest_of_their_span`, `test_double_bottom_lows_must_be_the_lowest_of_their_span`, `test_cup_rims_must_be_the_highest_of_the_cup`, `test_flag_never_rises_above_the_pole_top`). For the cup the strict check is "nothing above the higher rim, no intermediate swing high above the lower rim", so the descent right after a slightly higher left rim is not mistaken for a hump.
+2. **Local run (dev SQLite, as-of 2026-10-02).** `patterns:detect --universe=sp500` with the real engine: 494 instruments in about 30 s, 178 patterns — double_top 84 forming / 13 confirmed, double_bottom 52 / 9, cup_with_handle 16 / 1, bull_flag 2 / 1. Before the extreme rule it was 354. One instance per type/status was plotted and checked by eye; double tops remain frequent, which is input for the calibration spec.
+3. **Breakout detection details.** Cup: a close above the running handle pivot only counts after at least 5 handle sessions and with `rvol >= 1.5`; a close above the pivot without volume keeps the pattern `forming`. Flag: the breakout is the first close above the flag's high after at least 5 flag sessions; `breakout_level` is that flag high.
+4. **Copy command.** `db:copy-sqlite-to-pgsql` classifies `chart_patterns` as skipped (derived data, recomputed by the pipeline), otherwise the command would reject an unclassified table.
+5. **Persistent E2E.** None exists; the CLI/engine flow is covered by engine tests, Laravel feature tests and the local run above.

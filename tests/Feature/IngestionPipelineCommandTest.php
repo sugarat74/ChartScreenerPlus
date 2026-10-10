@@ -121,14 +121,38 @@ class IngestionPipelineCommandTest extends TestCase
     }
 
     /**
+     * A fake engine pattern response.
+     *
+     * @return array<string, mixed>
+     */
+    private function patternsResponse(): array
+    {
+        return [
+            'patterns' => [[
+                'type' => 'double_bottom',
+                'status' => 'forming',
+                'as_of_date' => '2026-09-03',
+                'start_date' => '2026-09-01',
+                'end_date' => '2026-09-03',
+                'breakout_level' => 101.5,
+                'points' => [['date' => '2026-09-01', 'price' => 99.0, 'role' => 'left_low']],
+                'metadata' => ['rise_pct' => 10.5],
+            ]],
+        ];
+    }
+
+    /**
      * A complete set of offline engine fakes for the whole pipeline.
      */
-    private function fakeEngine(int $barCount = 3): void
+    private function fakeEngine(int $barCount = 3, ?int $patternsStatus = null): void
     {
         Http::fake([
             '*/eod/AAA' => Http::response($this->barsResponse('AAA', $barCount)),
             '*/indicators/compute' => Http::response($this->snapshotsResponse($barCount)),
             '*/signals/detect' => Http::response($this->signalsResponse()),
+            '*/patterns/detect' => $patternsStatus === null
+                ? Http::response($this->patternsResponse())
+                : Http::response(['detail' => 'Engine failed.'], $patternsStatus),
         ]);
     }
 
@@ -153,9 +177,26 @@ class IngestionPipelineCommandTest extends TestCase
         $this->assertDatabaseCount('daily_bars', 3);
         $this->assertDatabaseCount('indicator_snapshots', 3);
         $this->assertDatabaseCount('signals', 1);
+        $this->assertDatabaseCount('chart_patterns', 1);
 
         // One request per stage.
-        Http::assertSentCount(3);
+        Http::assertSentCount(4);
+    }
+
+    public function test_a_pattern_stage_failure_fails_the_pipeline_but_keeps_earlier_stages(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->fakeEngine(patternsStatus: 500);
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('EOD pipeline finished with errors.')
+            ->assertExitCode(1);
+
+        $this->assertDatabaseCount('daily_bars', 3);
+        $this->assertDatabaseCount('indicator_snapshots', 3);
+        $this->assertDatabaseCount('signals', 1);
+        $this->assertDatabaseCount('chart_patterns', 0);
     }
 
     public function test_a_holiday_is_skipped_without_running_or_calling_the_engine(): void
@@ -244,7 +285,8 @@ class IngestionPipelineCommandTest extends TestCase
         $this->assertDatabaseCount('signals', 0);
         Http::assertSentCount(1);
         Http::assertNotSent(fn (Request $request): bool => str_contains($request->url(), 'indicators')
-            || str_contains($request->url(), 'signals'));
+            || str_contains($request->url(), 'signals')
+            || str_contains($request->url(), 'patterns'));
     }
 
     public function test_re_running_the_pipeline_is_idempotent(): void
@@ -261,5 +303,6 @@ class IngestionPipelineCommandTest extends TestCase
         $this->assertDatabaseCount('daily_bars', 3);
         $this->assertDatabaseCount('indicator_snapshots', 3);
         $this->assertDatabaseCount('signals', 1);
+        $this->assertDatabaseCount('chart_patterns', 1);
     }
 }

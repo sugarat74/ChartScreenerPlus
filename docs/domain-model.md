@@ -7,6 +7,7 @@
 - **Daily Bar (OHLCV):** one trading day for one Instrument. Stored per Instrument and date.
 - **Indicator Snapshot:** computed indicators for an Instrument on a given Daily Bar (SMA/EMA, RSI, MACD, ADX, Bollinger, RVOL...).
 - **Signal:** deterministic condition derived from Indicators (e.g. Golden Cross, Breakout with RVOL). Belongs to an Instrument and a Daily Bar.
+- **Chart Pattern:** a geometric formation (double top/bottom, cup with handle, bull flag) active on an Instrument's latest Daily Bar, with key points, a status and one breakout level.
 - **Screener (definition):** a named set of technical filters over a Universe, optionally saved by a Registered User.
 - **Screener Result (Candidate list):** the ranked Instruments returned when a Screener is applied.
 - **Watchlist Entry:** a follow relationship between a Registered User and an Instrument.
@@ -35,6 +36,9 @@
 
 **Signal**
 Recomputed on every Ingestion Run. A Signal is not edited by users; it is derived and can appear or disappear between runs.
+
+**Chart Pattern**
+`forming -> confirmed`, recomputed on every run like Signals; it disappears when invalidated or 10 sessions after its breakout.
 
 ## Important Scenarios
 

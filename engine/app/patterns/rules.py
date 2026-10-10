@@ -72,6 +72,8 @@ def double_top(bars: list[Bar], rvol: list[float | None], start: int) -> Pattern
             top = max(h1, h2)
             if abs(h2 - h1) / top > DOUBLE_PEAK_TOLERANCE:
                 continue
+            if bars[_argmax_high(bars, t1, t2)].high > top:
+                continue
             trough_index = _argmin_low(bars, t1, t2)
             trough = bars[trough_index].low
             lower_peak = min(h1, h2)
@@ -133,6 +135,8 @@ def double_bottom(bars: list[Bar], rvol: list[float | None], start: int) -> Patt
             l1, l2 = bars[t1].low, bars[t2].low
             bottom = min(l1, l2)
             if abs(l2 - l1) / max(l1, l2) > DOUBLE_PEAK_TOLERANCE:
+                continue
+            if bars[_argmin_low(bars, t1, t2)].low < bottom:
                 continue
             peak_index = _argmax_high(bars, t1, t2)
             peak = bars[peak_index].high
@@ -197,6 +201,13 @@ def cup_with_handle(bars: list[Bar], rvol: list[float | None], start: int) -> Pa
                 break
             rim_left = bars[ta].high
             if not (1 - CUP_RIM_TOLERANCE) * rim_left <= rim_right <= (1 + CUP_RIM_TOLERANCE) * rim_left:
+                continue
+            # The rims are the cup's highs: nothing inside rises above the
+            # higher rim, and no intermediate hump (a swing high) above the
+            # lower one.
+            if bars[_argmax_high(bars, ta, tc)].high > max(rim_left, rim_right):
+                continue
+            if any(bars[j].high > min(rim_left, rim_right) for j in highs[a + 1 : c]):
                 continue
             tb = _argmin_low(bars, ta, tc)
             cup_low = bars[tb].low
@@ -290,7 +301,7 @@ def bull_flag(bars: list[Bar], rvol: list[float | None], start: int) -> Pattern 
                     break
                 if bar.low < flag_low:
                     flag_low, flag_low_index = bar.low, j
-                if flag_low < floor:
+                if flag_low < floor or bar.high > top:
                     invalid = True
                     break
                 flag_high = max(flag_high, bar.high)
