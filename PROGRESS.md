@@ -1,5 +1,15 @@
 # Progress Log
 
+## Specs for chartist patterns and alerts — 2026-10-10
+
+- User asked to plan chartist patterns and alerts (both outside the original MVP scope guard). Split into five dependency-ordered features, all `not_started`, each with a spec in `docs/specs/`:
+  - `chart-patterns-detect` — engine rules for double_top, double_bottom, cup_with_handle, bull_flag (explicit parameter table), `chart_patterns` table, `patterns:detect`, pipeline stage. No targets.
+  - `chart-patterns-ui` — screener `pattern`/`pattern_status` filters, payloads, Saved Screener keys, chart markers + one breakout line, accessible panel.
+  - `alerts-engine` — Alerts (new Candidates in a Saved Screener; Signal types appearing on the Watchlist), baseline-then-diff evaluation once per as-of, database notifications, API, 90-day pruning, `CandidateQuery` extraction.
+  - `alerts-ui` — Portal toggles, Watchlist signal form, header bell, `/portal/notificaciones` inbox.
+  - `alerts-email-digest` — opt-in daily digest, signed and one-click unsubscribe, no tracking; production blocked until a chartiko.com mailbox and SMTP provider exist.
+- Next ready feature: `chart-patterns-detect` (or `alerts-engine`; they are independent). Specs only; no code changed.
+
 ## Browser QA, legal pages, infographic and tooling records — 2026-10-10
 
 - **Tooling (point 4):** committed the 2026-10-09 independent validations (web-deploy-security-skill, web-marketing-seo-geo-skill, web-legal-compliance-eu-skill accepted) and the web-to-mobile skill. `architecture-infographic` revise fixed (PostgreSQL behind PgBouncer as production storage, SQLite only local/tests/rollback source, cron verified) and accepted by an independent validator.
