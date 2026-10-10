@@ -362,6 +362,14 @@ export type ScreenerSignalType =
 
 export type ScreenerMaCross = 'bullish' | 'bearish'
 
+/** The four chartist pattern types the engine detects (chart-patterns-detect). */
+export type ScreenerPatternType = 'double_top' | 'double_bottom' | 'cup_with_handle' | 'bull_flag'
+
+export type PatternStatus = 'forming' | 'confirmed'
+
+/** `any` matches both statuses; it only narrows a non-empty pattern filter. */
+export type ScreenerPatternStatus = 'any' | PatternStatus
+
 /** The six ranking orders the frozen screener API supports. */
 export type ScreenerSort =
   | 'rvol_desc'
@@ -385,7 +393,18 @@ export type ScreenerFilters = {
   minRvol: number | null
   priceAboveSma200: boolean
   maCross: ScreenerMaCross | null
+  /** OR-combined like `signals`; `patternStatus` narrows them. */
+  patterns: ScreenerPatternType[]
+  patternStatus: ScreenerPatternStatus
   sort: ScreenerSort
+}
+
+/** A pattern summary on a Candidate (the chart uses the instrument detail). */
+export type CandidatePattern = {
+  type: string
+  status: PatternStatus
+  breakout_level: number
+  end_date: string
 }
 
 export type ScreenerCandidate = {
@@ -400,6 +419,7 @@ export type ScreenerCandidate = {
   rvol: number | null
   rsi14: number | null
   signals: string[]
+  patterns: CandidatePattern[]
 }
 
 export type ScreenerResponse = {
@@ -435,6 +455,12 @@ function screenerQueryString(filters: ScreenerFilters): string {
   if (filters.maCross !== null) {
     params.set('ma_cross', filters.maCross)
   }
+  if (filters.patterns.length > 0) {
+    params.set('pattern', filters.patterns.join(','))
+    if (filters.patternStatus !== 'any') {
+      params.set('pattern_status', filters.patternStatus)
+    }
+  }
   params.set('sort', filters.sort)
   return params.toString()
 }
@@ -453,9 +479,10 @@ export const screenerApi = {
 }
 
 /**
- * The seven-key canonical definition stored with a Saved Screener. It uses the
+ * The nine-key canonical definition stored with a Saved Screener. It uses the
  * API's own param names (snake_case) and includes `sort`, so applying a Screener
- * restores the exact filters and ranking the user saved.
+ * restores the exact filters and ranking the user saved. The pattern keys are
+ * optional on read: Screeners saved before them come back with API defaults.
  */
 export type SavedScreenerFilters = {
   signal: ScreenerSignalType[]
@@ -464,6 +491,8 @@ export type SavedScreenerFilters = {
   min_rvol: number | null
   price_above_sma200: boolean
   ma_cross: ScreenerMaCross | null
+  pattern?: ScreenerPatternType[]
+  pattern_status?: ScreenerPatternStatus
   sort: ScreenerSort
 }
 
@@ -542,6 +571,19 @@ export type InstrumentSignal = {
   metadata: Record<string, number> | null
 }
 
+/** One key point of a pattern; `role` names it (left_low, rim_right…). */
+export type InstrumentPatternPoint = { date: string; price: number; role: string }
+
+/** An active chartist pattern; `breakout_level` is its only price line. */
+export type InstrumentPattern = {
+  type: string
+  status: PatternStatus
+  start_date: string
+  end_date: string
+  breakout_level: number
+  points: InstrumentPatternPoint[]
+}
+
 export type InstrumentDetailResponse = {
   instrument: {
     ticker: string
@@ -553,6 +595,8 @@ export type InstrumentDetailResponse = {
   bars: InstrumentBar[]
   snapshot: InstrumentSnapshot | null
   signals: InstrumentSignal[]
+  /** Absent from responses of older deployments; treat as empty. */
+  patterns?: InstrumentPattern[]
   meta: { limit: number; bar_count: number; latest_bar_date: string | null }
 }
 

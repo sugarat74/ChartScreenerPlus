@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChartPattern;
 use App\Models\SavedScreener;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -91,7 +92,7 @@ class SavedScreenerController extends Controller
             ],
             'filters' => [
                 'required',
-                'array:signal,rsi_min,rsi_max,min_rvol,price_above_sma200,ma_cross,sort',
+                'array:signal,rsi_min,rsi_max,min_rvol,price_above_sma200,ma_cross,pattern,pattern_status,sort',
             ],
             'filters.signal' => ['present', 'array'],
             'filters.signal.*' => ['required', 'string', Rule::in(self::SIGNAL_TYPES)],
@@ -100,11 +101,13 @@ class SavedScreenerController extends Controller
             'filters.min_rvol' => ['present', 'nullable', 'numeric', 'min:0'],
             'filters.price_above_sma200' => ['present', 'boolean'],
             'filters.ma_cross' => ['present', 'nullable', Rule::in(['bullish', 'bearish'])],
+            'filters.pattern' => ['sometimes', 'array'],
+            'filters.pattern.*' => ['required', 'string', Rule::in(ChartPattern::TYPES)],
+            'filters.pattern_status' => ['sometimes', Rule::in(['any', 'forming', 'confirmed'])],
             'filters.sort' => ['present', Rule::in(self::SORTS)],
         ]);
 
-        $filters = $validated['filters'];
-        $filters['signal'] = $this->canonicalSignals($filters['signal']);
+        $filters = $this->canonicalFilters($validated['filters']);
 
         $screener = $request->user()->savedScreeners()->create([
             'name' => $validated['name'],
@@ -168,6 +171,36 @@ class SavedScreenerController extends Controller
     }
 
     /**
+     * The canonical nine-key filter object: signals deduped and ordered, and
+     * the pattern keys (added by chart-patterns-ui) defaulted when absent so
+     * Saved Screeners created before them keep loading.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
+     */
+    private function canonicalFilters(array $filters): array
+    {
+        $patterns = array_unique(is_array($filters['pattern'] ?? null) ? $filters['pattern'] : []);
+
+        return [
+            'signal' => $this->canonicalSignals(is_array($filters['signal'] ?? null) ? $filters['signal'] : []),
+            'rsi_min' => $filters['rsi_min'] ?? null,
+            'rsi_max' => $filters['rsi_max'] ?? null,
+            'min_rvol' => $filters['min_rvol'] ?? null,
+            'price_above_sma200' => (bool) ($filters['price_above_sma200'] ?? false),
+            'ma_cross' => $filters['ma_cross'] ?? null,
+            'pattern' => array_values(array_filter(
+                ChartPattern::TYPES,
+                fn (string $type): bool => in_array($type, $patterns, true),
+            )),
+            'pattern_status' => in_array($filters['pattern_status'] ?? null, ['any', 'forming', 'confirmed'], true)
+                ? $filters['pattern_status']
+                : 'any',
+            'sort' => $filters['sort'] ?? 'rvol_desc',
+        ];
+    }
+
+    /**
      * Shape one Saved Screener for the API.
      *
      * @return array{id: int, name: string, filters: array<string, mixed>}
@@ -177,7 +210,7 @@ class SavedScreenerController extends Controller
         return [
             'id' => $screener->id,
             'name' => $screener->name,
-            'filters' => $screener->filters,
+            'filters' => $this->canonicalFilters(is_array($screener->filters) ? $screener->filters : []),
         ];
     }
 }

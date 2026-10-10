@@ -140,6 +140,76 @@ export function signalLevels(signals: readonly ChartSignal[], pivotTitle: string
   return levels
 }
 
+export interface ChartPatternPoint {
+  date: string
+  price: number
+  role: string
+}
+
+export interface ChartPattern {
+  type: string
+  status: string
+  breakout_level: number
+  points: readonly ChartPatternPoint[]
+}
+
+/** A point marker on the price series; `time` is a `YYYY-MM-DD` string. */
+export interface ChartMarker {
+  time: string
+  position: 'aboveBar' | 'belowBar'
+  shape: 'circle'
+  color: string
+  text: string
+}
+
+/** Roles that mark a pattern high (drawn above the bar); every other role is a low. */
+const HIGH_ROLES = new Set(['left_peak', 'right_peak', 'peak', 'rim_left', 'rim_right', 'pole_top'])
+
+/**
+ * One breakout-level line per active pattern (chart-patterns-ui). The breakout
+ * level is the only price line a pattern exposes: no target or stop is ever
+ * derived (`CONSTRAINTS.md` -> Frontend Chart).
+ */
+export function patternLevels(
+  patterns: readonly ChartPattern[],
+  title: (pattern: ChartPattern) => string,
+): ChartLevel[] {
+  return patterns
+    .filter((pattern) => Number.isFinite(pattern.breakout_level))
+    .map((pattern) => ({ price: pattern.breakout_level, title: title(pattern), color: CHART_COLORS.tertiary }))
+}
+
+/**
+ * Key-point markers for the active patterns, limited to dates present in the
+ * loaded bars (a point outside the window is listed in the panel only) and
+ * sorted by time, as the charting library requires.
+ */
+export function patternMarkers(
+  patterns: readonly ChartPattern[],
+  bars: readonly ChartBar[],
+  label: (role: string) => string,
+): ChartMarker[] {
+  const dates = new Set(bars.map((bar) => bar.date))
+  const markers: ChartMarker[] = []
+
+  for (const pattern of patterns) {
+    for (const point of pattern.points) {
+      if (!dates.has(point.date) || !Number.isFinite(point.price)) {
+        continue
+      }
+      markers.push({
+        time: point.date,
+        position: HIGH_ROLES.has(point.role) ? 'aboveBar' : 'belowBar',
+        shape: 'circle',
+        color: CHART_COLORS.tertiary,
+        text: label(point.role),
+      })
+    }
+  }
+
+  return markers.sort((left, right) => (left.time < right.time ? -1 : left.time > right.time ? 1 : 0))
+}
+
 /** `true` when there is at least one bar to draw. */
 export function hasChartData(bars: readonly ChartBar[]): boolean {
   return bars.length > 0

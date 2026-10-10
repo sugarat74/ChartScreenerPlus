@@ -7,11 +7,20 @@
 import type { KeyboardEvent } from 'react'
 import type { MessageKey } from '../../i18n/translate.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
-import type { ScreenerFilters, ScreenerMaCross, ScreenerSignalType } from '../../lib/api.ts'
+import type {
+  ScreenerFilters,
+  ScreenerMaCross,
+  ScreenerPatternStatus,
+  ScreenerPatternType,
+  ScreenerSignalType,
+} from '../../lib/api.ts'
 import {
   MIN_RVOL_PRESETS,
+  SCREENER_PATTERN_STATUSES,
+  SCREENER_PATTERN_TYPES,
   SCREENER_SIGNAL_TYPES,
   parseRsiInput,
+  patternLabel,
   signalLabel,
 } from '../../lib/screenerFilters.ts'
 
@@ -35,6 +44,20 @@ const MA_CROSS_OPTIONS: ReadonlyArray<{ value: ScreenerMaCross | null; labelKey:
   { value: 'bullish', labelKey: 'screener.maCrossBullish' },
   { value: 'bearish', labelKey: 'screener.maCrossBearish' },
 ]
+
+const PATTERN_STATUS_LABELS: Record<ScreenerPatternStatus, MessageKey> = {
+  any: 'patterns.status.any',
+  forming: 'patterns.status.forming',
+  confirmed: 'patterns.status.confirmed',
+}
+
+function segmentClass(selected: boolean, index: number): string {
+  return [
+    'px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
+    index > 0 ? 'border-l-2 border-outline' : '',
+    selected ? 'bg-primary text-on-primary' : 'bg-surface-bright text-on-surface-variant hover:bg-surface-container',
+  ].join(' ')
+}
 
 function toDraft(value: number | null): string {
   return value === null ? '' : String(value)
@@ -64,6 +87,13 @@ export default function ScreenerFilterPanel({
       ? filters.signals.filter((value) => value !== type)
       : [...filters.signals, type]
     onChange({ signals })
+  }
+
+  function togglePattern(type: ScreenerPatternType) {
+    const patterns = filters.patterns.includes(type)
+      ? filters.patterns.filter((value) => value !== type)
+      : [...filters.patterns, type]
+    onChange(patterns.length > 0 ? { patterns } : { patterns, patternStatus: 'any' })
   }
 
   function handleNumberKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -213,19 +243,59 @@ export default function ScreenerFilterPanel({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => onChange({ maCross: option.value })}
-                  className={[
-                    'px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none',
-                    index > 0 ? 'border-l-2 border-outline' : '',
-                    selected
-                      ? 'bg-primary text-on-primary'
-                      : 'bg-surface-bright text-on-surface-variant hover:bg-surface-container',
-                  ].join(' ')}
+                  className={segmentClass(selected, index)}
                 >
                   {t(option.labelKey)}
                 </button>
               )
             })}
           </div>
+        </fieldset>
+
+        <fieldset className="flex min-w-60 flex-col gap-2">
+          <legend className={LEGEND_CLASS}>
+            {filters.patterns.length > 0
+              ? t('patterns.legendCount', { count: filters.patterns.length })
+              : t('patterns.legend')}
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {SCREENER_PATTERN_TYPES.map((type) => {
+              const selected = filters.patterns.includes(type)
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => togglePattern(type)}
+                  className={chipClass(selected)}
+                >
+                  {patternLabel(type, t)}
+                </button>
+              )
+            })}
+          </div>
+          <div
+            role="group"
+            aria-label={t('patterns.statusAria')}
+            className="inline-flex w-fit overflow-hidden rounded-[4px] border-2 border-outline"
+          >
+            {SCREENER_PATTERN_STATUSES.map((status, index) => {
+              const selected = filters.patternStatus === status
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  aria-pressed={selected}
+                  disabled={filters.patterns.length === 0}
+                  onClick={() => onChange({ patternStatus: status })}
+                  className={segmentClass(selected, index)}
+                >
+                  {t(PATTERN_STATUS_LABELS[status])}
+                </button>
+              )
+            })}
+          </div>
+          <p className="max-w-xs font-mono text-[10px] text-on-surface-variant">{t('patterns.hint')}</p>
         </fieldset>
       </div>
 

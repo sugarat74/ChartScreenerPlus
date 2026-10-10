@@ -1003,14 +1003,19 @@
       "saved-screeners",
       "app-multilanguage"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "GET /api/screener accepts pattern and pattern_status with localized 422s; candidate and instrument-detail payloads include patterns",
       "Saved Screeners round-trip the pattern filter and old rows still load",
       "Chart draws point markers and one breakout line per active pattern, never a target or stop; accessible panel lists them",
       "es/en complete, no overflow at 390 px, real-browser check recorded; .\\init.ps1 passes"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-10: Laravel ChartPatternsApiTest 7 tests (pattern OR filter in comma and array form, pattern_status narrowing and ignored without pattern, candidate patterns payload, localized 422s es/en, instrument-detail points without target, Saved Screener round-trip and 422s, legacy seven-key rows and payloads defaulted); existing Screener/Instrument/SavedScreeners shape tests updated. Frontend 62 Vitest tests incl. patterns.test.ts (URL parse/patch, active count, nine-key serialize, legacy deserialize, breakout lines, markers) and PatternPanel.test.tsx (panel, empty state, chips + status control, candidate badges); tsc + oxlint clean.",
+      "Real browser (Edge via Playwright, local dev stack with 178 locally detected patterns): es 1366 px and en 390 px: Doble suelo chip -> ?pattern=double_bottom with badges; Confirmado -> ?pattern_status=confirmed with exactly the 9 confirmed double bottoms; chart shows S1/C/S2 markers and one dotted 'Doble suelo' breakout line (no target); 'Patrones activos' panel lists status, dates, breakout level and named points; 0 px overflow; no JS errors. 12/12.",
+      ".\\init.ps1 exit 0: Laravel 238 passed / 6 skipped (2184 assertions), frontend 62 tests + lint + build, engine 67 passed.",
+      "2026-10-10 independent validation accept: all 12 criteria pass with file:line evidence (API filters and localized 422s live in es/en, payloads, throttle unchanged, nine-key Saved Screeners and legacy rows, URL round-trip, chips/status control, text badges, markers + one breakout line per pattern and no target on META/DE/NWSA, PatternPanel, es/en parity, 0 px overflow at 390 px, docs); 53 API tests, 62 Vitest, lint, build, init.ps1, implementer browser script 12/12 plus the validator's own probes. Low findings fixed before merge: a status-only deep link or stored row now reads as `any` (Vitest), ARCHITECTURE wording 'six' -> 'eight' criteria. Nits left: shared colour for pattern markers/lines, 'Señales' column header."
+    ],
     "notes": "Planned 2026-10-10. Spec: docs/specs/chart-patterns-ui.md. Requires a CONSTRAINTS.md update to the chart drawing rule."
   },
   {

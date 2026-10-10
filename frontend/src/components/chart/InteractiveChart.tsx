@@ -5,7 +5,8 @@
  * embedded TradingView widget — and the `attributionLogo` layout option stays
  * enabled to satisfy its attribution requirement. This component is
  * presentational: it never fetches, never computes indicators and never draws
- * stop/target (not modeled). The chart is created in one effect whose cleanup
+ * stop/target (not modeled). Active chartist patterns add key-point markers
+ * and one breakout-level line each. The chart is created in one effect whose cleanup
  * always calls `chart.remove()`, so a ticker change or unmount (including
  * React StrictMode double-invocation) cannot leak a canvas.
  */
@@ -18,17 +19,24 @@ import {
   HistogramSeries,
   LineStyle,
   createChart,
+  createSeriesMarkers,
 } from 'lightweight-charts'
 import { LOCALE_DEFINITIONS } from '../../i18n/locales.ts'
+import type { MessageKey } from '../../i18n/translate.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
-import type { InstrumentBar, InstrumentSignal, InstrumentSnapshot } from '../../lib/api.ts'
+import { patternLabel } from '../../lib/screenerFilters.ts'
+import type { InstrumentBar, InstrumentPattern, InstrumentSignal, InstrumentSnapshot } from '../../lib/api.ts'
 import {
   CHART_COLORS,
+  patternLevels,
+  patternMarkers,
   signalLevels,
   smaLevels,
   toCandlestickData,
   toVolumeData,
 } from '../../lib/chartData.ts'
+
+const NO_PATTERNS: InstrumentPattern[] = []
 
 /** Mirrors the `--font-mono` token stack. */
 const MONO_FONT_FAMILY =
@@ -39,6 +47,7 @@ interface InteractiveChartProps {
   bars: InstrumentBar[]
   snapshot: InstrumentSnapshot | null
   signals: InstrumentSignal[]
+  patterns?: InstrumentPattern[]
 }
 
 export default function InteractiveChart({
@@ -46,6 +55,7 @@ export default function InteractiveChart({
   bars,
   snapshot,
   signals,
+  patterns = NO_PATTERNS,
 }: InteractiveChartProps) {
   const { locale, t } = useI18n()
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -118,13 +128,29 @@ export default function InteractiveChart({
       })
     }
 
+    // One breakout-level line per active pattern plus its key points.
+    for (const level of patternLevels(patterns, (pattern) => patternLabel(pattern.type, t))) {
+      candleSeries.createPriceLine({
+        price: level.price,
+        color: level.color,
+        lineWidth: 2,
+        lineStyle: LineStyle.Dotted,
+        axisLabelVisible: true,
+        title: level.title,
+      })
+    }
+    const markers = patternMarkers(patterns, bars, (role) => t(`patterns.rolesShort.${role}` as MessageKey))
+    if (markers.length > 0) {
+      createSeriesMarkers(candleSeries, markers)
+    }
+
     chart.timeScale().fitContent()
 
     return () => {
       // Removes the series, price lines and observers from the container.
       chart.remove()
     }
-  }, [ticker, bars, snapshot, signals, locale, pivotTitle])
+  }, [ticker, bars, snapshot, signals, patterns, locale, pivotTitle, t])
 
   return (
     <div

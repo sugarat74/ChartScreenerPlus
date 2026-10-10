@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChartPattern;
 use App\Models\DailyBar;
 use App\Models\IndicatorSnapshot;
 use App\Models\Instrument;
@@ -68,11 +69,27 @@ class InstrumentController extends Controller
             ->map(fn (Signal $signal): array => $this->signalPayload($signal))
             ->all();
 
+        // The current active patterns; only `breakout_level` is a price line
+        // (no target is modeled), points carry their role for the chart.
+        $patterns = $instrument->chartPatterns()
+            ->orderBy('type')
+            ->get()
+            ->map(fn (ChartPattern $pattern): array => [
+                'type' => $pattern->type,
+                'status' => $pattern->status,
+                'start_date' => $pattern->start_date->format('Y-m-d'),
+                'end_date' => $pattern->end_date->format('Y-m-d'),
+                'breakout_level' => $pattern->breakout_level,
+                'points' => array_values($pattern->points ?? []),
+            ])
+            ->all();
+
         return response()->json([
             'instrument' => $this->instrumentPayload($instrument),
             'bars' => $bars,
             'snapshot' => $snapshot === null ? null : $this->snapshotPayload($snapshot),
             'signals' => $signals,
+            'patterns' => $patterns,
             'meta' => [
                 'limit' => $limit,
                 'bar_count' => count($bars),

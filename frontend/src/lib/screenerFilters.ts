@@ -2,16 +2,19 @@
  * Screener filter helpers. Pure functions with no React dependency so the URL
  * round-trip (parse -> patch -> canonical key) is auditable and deterministic.
  *
- * The SPA owns exactly seven query keys, all named after the screener API
- * params: the six criteria (`signal`, `rsi_min`, `rsi_max`, `min_rvol`,
- * `price_above_sma200`, `ma_cross`) plus the ranking key `sort`; any other query
- * param (a campaign tag, a future `limit`) is preserved untouched.
+ * The SPA owns exactly nine query keys, all named after the screener API
+ * params: the criteria (`signal`, `rsi_min`, `rsi_max`, `min_rvol`,
+ * `price_above_sma200`, `ma_cross`, `pattern`, `pattern_status`) plus the
+ * ranking key `sort`; any other query param (a campaign tag, a future `limit`)
+ * is preserved untouched.
  */
 
 import type {
   SavedScreenerFilters,
   ScreenerFilters,
   ScreenerMaCross,
+  ScreenerPatternStatus,
+  ScreenerPatternType,
   ScreenerSignalType,
   ScreenerSort,
 } from './api.ts'
@@ -29,6 +32,16 @@ export const SCREENER_SIGNAL_TYPES: readonly ScreenerSignalType[] = [
   'macd_bullish_cross',
   'macd_bearish_cross',
 ]
+
+/** Canonical order of the chartist pattern types (chart-patterns-detect). */
+export const SCREENER_PATTERN_TYPES: readonly ScreenerPatternType[] = [
+  'double_bottom',
+  'double_top',
+  'cup_with_handle',
+  'bull_flag',
+]
+
+export const SCREENER_PATTERN_STATUSES: readonly ScreenerPatternStatus[] = ['any', 'forming', 'confirmed']
 
 /** Preset Min RVOL buttons; `+ Todos` (off) is handled by the control. */
 export const MIN_RVOL_PRESETS: readonly number[] = [1, 1.5, 2, 3]
@@ -53,6 +66,8 @@ export const EMPTY_SCREENER_FILTERS: ScreenerFilters = {
   minRvol: null,
   priceAboveSma200: false,
   maCross: null,
+  patterns: [],
+  patternStatus: 'any',
   sort: DEFAULT_SCREENER_SORT,
 }
 
@@ -68,6 +83,8 @@ export const EMPTY_SCREENER_CRITERIA: Partial<ScreenerFilters> = {
   minRvol: null,
   priceAboveSma200: false,
   maCross: null,
+  patterns: [],
+  patternStatus: 'any',
 }
 
 function isKnownSignalType(value: string): value is ScreenerSignalType {
@@ -78,6 +95,20 @@ function isKnownSignalType(value: string): value is ScreenerSignalType {
 export function normalizeSignals(values: readonly string[]): ScreenerSignalType[] {
   const known = new Set(values.filter(isKnownSignalType))
   return SCREENER_SIGNAL_TYPES.filter((type) => known.has(type))
+}
+
+function isKnownPatternType(value: string): value is ScreenerPatternType {
+  return (SCREENER_PATTERN_TYPES as readonly string[]).includes(value)
+}
+
+/** Dedupe and order arbitrary type strings into the canonical pattern order. */
+export function normalizePatterns(values: readonly string[]): ScreenerPatternType[] {
+  const known = new Set(values.filter(isKnownPatternType))
+  return SCREENER_PATTERN_TYPES.filter((type) => known.has(type))
+}
+
+function parsePatternStatus(raw: unknown): ScreenerPatternStatus {
+  return raw === 'forming' || raw === 'confirmed' ? raw : 'any'
 }
 
 /**
@@ -126,6 +157,7 @@ export function parseScreenerSort(value: string | null): ScreenerSort {
  */
 export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
   const rawSignals = params.getAll('signal').flatMap((value) => value.split(','))
+  const patterns = normalizePatterns(params.getAll('pattern').flatMap((value) => value.split(',')))
 
   return {
     signals: normalizeSignals(rawSignals),
@@ -134,6 +166,9 @@ export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
     minRvol: parseMinRvol(params.get('min_rvol')),
     priceAboveSma200: params.get('price_above_sma200') === '1' || params.get('price_above_sma200') === 'true',
     maCross: parseMaCross(params.get('ma_cross')),
+    patterns,
+    // A status only narrows selected patterns; without them it is `any`.
+    patternStatus: patterns.length > 0 ? parsePatternStatus(params.get('pattern_status')) : 'any',
     sort: parseScreenerSort(params.get('sort')),
   }
 }
@@ -177,6 +212,13 @@ export function patchScreenerFilters(
   if (patch.maCross !== undefined) {
     setOrDelete(next, 'ma_cross', patch.maCross)
   }
+  if (patch.patterns !== undefined) {
+    const patterns = normalizePatterns(patch.patterns)
+    setOrDelete(next, 'pattern', patterns.length > 0 ? patterns.join(',') : null)
+  }
+  if (patch.patternStatus !== undefined) {
+    setOrDelete(next, 'pattern_status', patch.patternStatus === 'any' ? null : patch.patternStatus)
+  }
   if (patch.sort !== undefined) {
     setOrDelete(next, 'sort', patch.sort === DEFAULT_SCREENER_SORT ? null : patch.sort)
   }
@@ -191,7 +233,8 @@ export function hasActiveFilters(filters: ScreenerFilters): boolean {
     filters.rsiMax !== null ||
     filters.minRvol !== null ||
     filters.priceAboveSma200 ||
-    filters.maCross !== null
+    filters.maCross !== null ||
+    filters.patterns.length > 0
   )
 }
 
@@ -203,7 +246,8 @@ export function countActiveFilters(filters: ScreenerFilters): number {
     (filters.rsiMax !== null ? 1 : 0) +
     (filters.minRvol !== null ? 1 : 0) +
     (filters.priceAboveSma200 ? 1 : 0) +
-    (filters.maCross !== null ? 1 : 0)
+    (filters.maCross !== null ? 1 : 0) +
+    filters.patterns.length
   )
 }
 
@@ -216,14 +260,16 @@ export function screenerFiltersKey(filters: ScreenerFilters): string {
     filters.minRvol ?? '',
     filters.priceAboveSma200 ? '1' : '',
     filters.maCross ?? '',
+    filters.patterns.join(','),
+    filters.patterns.length > 0 ? filters.patternStatus : 'any',
     filters.sort,
   ].join('|')
 }
 
 /**
- * Serialize the live filter state into the canonical seven-key definition that
+ * Serialize the live filter state into the canonical nine-key definition that
  * is stored with a Saved Screener (API param names, `sort` included). The SPA
- * always emits all seven keys, so a stored definition is always complete and
+ * always emits all nine keys, so a stored definition is always complete and
  * re-appliable without defaults.
  */
 export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreenerFilters {
@@ -234,6 +280,8 @@ export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreene
     min_rvol: filters.minRvol,
     price_above_sma200: filters.priceAboveSma200,
     ma_cross: filters.maCross,
+    pattern: normalizePatterns(filters.patterns),
+    pattern_status: filters.patterns.length > 0 ? filters.patternStatus : 'any',
     sort: filters.sort,
   }
 }
@@ -256,6 +304,7 @@ export function deserializeScreenerFilters(
   const rsiMin = storedNumber(payload.rsi_min)
   const rsiMax = storedNumber(payload.rsi_max)
   const minRvol = storedNumber(payload.min_rvol)
+  const storedPatterns = normalizePatterns(Array.isArray(payload.pattern) ? payload.pattern : [])
 
   return {
     signals: normalizeSignals(Array.isArray(payload.signal) ? payload.signal : []),
@@ -265,6 +314,8 @@ export function deserializeScreenerFilters(
     priceAboveSma200: payload.price_above_sma200 === true,
     maCross:
       payload.ma_cross === 'bullish' || payload.ma_cross === 'bearish' ? payload.ma_cross : null,
+    patterns: storedPatterns,
+    patternStatus: storedPatterns.length > 0 ? parsePatternStatus(payload.pattern_status) : 'any',
     sort: parseScreenerSort(typeof payload.sort === 'string' ? payload.sort : null),
   }
 }
@@ -302,6 +353,11 @@ export function describeSavedFilters(
   if (filters.ma_cross === 'bearish') {
     parts.push(t('saved.describeMaBearish'))
   }
+  if (Array.isArray(filters.pattern) && filters.pattern.length > 0) {
+    const labels = filters.pattern.map((type) => patternLabel(type, t)).join(', ')
+    const status = filters.pattern_status
+    parts.push(status === 'forming' || status === 'confirmed' ? `${labels} (${t(`patterns.status.${status}`)})` : labels)
+  }
 
   const sort = SCREENER_SORT_OPTIONS.find((option) => option.value === filters.sort)
   if (sort !== undefined) {
@@ -317,4 +373,9 @@ export function describeSavedFilters(
  */
 export function signalLabel(type: string, t: Translate): string {
   return isKnownSignalType(type) ? t(`signals.${type}` as const) : type
+}
+
+/** Display label for a chartist pattern type; unknown types fall back to themselves. */
+export function patternLabel(type: string, t: Translate): string {
+  return isKnownPatternType(type) ? t(`patterns.types.${type}` as const) : type
 }
