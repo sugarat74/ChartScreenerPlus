@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1900" viewBox="0 0 1440 1900" role="img" aria-labelledby="title desc">
   <title id="title">Chartiko: arquitectura, procesos y software</title>
-  <desc id="desc">El navegador ejecuta React. Nginx sirve la SPA y envía API y Sanctum a PHP-FPM y Laravel. Laravel controla SQLite y llama por HTTP privado al motor Python FastAPI. Un worker procesa consultas de Admin y cron activa el pipeline diario de datos, indicadores y señales.</desc>
+  <desc id="desc">El navegador ejecuta React. Nginx sirve la SPA y envía API y Sanctum a PHP-FPM y Laravel. Laravel controla PostgreSQL (vía PgBouncer) y llama por HTTP privado al motor Python FastAPI. Un worker procesa consultas de Admin y cron activa el pipeline diario de datos, indicadores y señales.</desc>
   <defs>
     <style>
       text{font-family:Arial,Helvetica,sans-serif;fill:#1a1a1a}
@@ -22,7 +22,7 @@
   <rect x="48" y="42" width="1344" height="132" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
   <text x="72" y="102" class="h1">CHARTIKO / ARQUITECTURA</text>
   <text x="74" y="143" class="body">De las cotizaciones a una lista de Candidates y su gráfico interactivo.</text>
-  <text x="48" y="210" class="small">Mapa técnico del repositorio · 04 octubre 2026 · Producción documentada y desarrollo local</text>
+  <text x="48" y="210" class="small">Mapa técnico del repositorio · 04 octubre 2026, act. 10 octubre · Producción documentada y desarrollo local</text>
 
   <text x="48" y="262" class="h2">01 / COMPONENTES Y CONEXIONES</text>
   <rect x="54" y="294" width="410" height="206" class="shadow"/>
@@ -69,7 +69,7 @@
 
   <rect x="974" y="558" width="418" height="212" class="shadow"/>
   <rect x="968" y="552" width="418" height="212" class="card"/>
-  <text x="990" y="589" class="h3">SQLITE / PERSISTENCIA</text>
+  <text x="990" y="589" class="h3">POSTGRESQL / PERSISTENCIA</text>
   <text x="990" y="625" class="body">Daily Bars · Indicator Snapshots</text>
   <text x="990" y="657" class="body">Signals · Universe · Instruments</text>
   <text x="990" y="692" class="body">Users · Screeners · Watchlist</text>
@@ -77,11 +77,11 @@
   <path d="M508 662 H462" class="flow"/>
   <text x="468" y="642" class="small">GET</text>
   <path d="M1180 494 V548" class="flow"/>
-  <text x="1200" y="525" class="small">Laravel lee / escribe</text>
+  <text x="1200" y="525" class="small">vía PgBouncer :6432</text>
   <path d="M1040 494 V523 H712 V548" class="flow"/>
   <text x="555" y="517" class="small">HTTP / JSON privado · petición y respuesta</text>
   <rect x="48" y="793" width="1338" height="53" fill="#eee9e0" stroke="#1a1a1a" stroke-width="2"/>
-  <text x="70" y="827" class="body">Laravel posee la base de datos. Python recibe series y devuelve resultados; no accede a SQLite.</text>
+  <text x="70" y="827" class="body">Laravel posee la base PostgreSQL (vía PgBouncer). Python recibe series y devuelve resultados; no accede a ella.</text>
 
   <text x="48" y="902" class="h2">02 / PROCESOS QUE MUEVEN LA APLICACIÓN</text>
   <rect x="48" y="924" width="1338" height="117" class="card"/>
@@ -95,7 +95,7 @@
   <rect x="48" y="1057" width="62" height="132" fill="#ffcc00" stroke="#1a1a1a" stroke-width="2"/>
   <text x="68" y="1110" class="h3">B</text>
   <text x="130" y="1093" class="h3">CONSULTA MANUAL DESDE ADMIN</text>
-  <text x="130" y="1125" class="body">Admin → API (202) → job en SQLite → queue:work → Engine → Laravel guarda Daily Bars.</text>
+  <text x="130" y="1125" class="body">Admin → API (202) → job en PostgreSQL → queue:work → Engine → Laravel guarda Daily Bars.</text>
   <text x="130" y="1153" class="small">La SPA consulta el progreso: queued → running → completed / partial / failed. Reintento de los fallidos.</text>
   <text x="130" y="1177" class="small">Este job ejecuta la adquisición de datos; los cálculos posteriores se ejecutan mediante el pipeline o comandos.</text>
 
@@ -114,18 +114,18 @@
   <path d="M48 1512 H1386 M48 1554 H1386 M48 1596 H1386 M48 1638 H1386" stroke="#d0cbc3"/>
   <text x="70" y="1498" class="body">Servidor web</text><text x="295" y="1498" class="body">Ubuntu · Nginx · Certbot</text><text x="850" y="1498" class="body">VPS, HTTP/HTTPS y certificados</text>
   <text x="70" y="1540" class="body">Backend</text><text x="295" y="1540" class="body">PHP CLI + FPM · Composer · Laravel 13</text><text x="850" y="1540" class="body">API, dependencias y comandos</text>
-  <text x="70" y="1582" class="body">Datos</text><text x="295" y="1582" class="body">SQLite · extensión PHP pdo_sqlite</text><text x="850" y="1582" class="body">Almacén compartido por Laravel</text>
+  <text x="70" y="1582" class="body">Datos</text><text x="295" y="1582" class="body">PostgreSQL 18 · PgBouncer · pdo_pgsql</text><text x="850" y="1582" class="body">Producción; SQLite solo en local/tests</text>
   <text x="70" y="1624" class="body">Motor</text><text x="295" y="1624" class="body">Python · venv / pip · FastAPI / Uvicorn / httpx</text><text x="850" y="1624" class="body">Servicio interno de análisis</text>
   <text x="70" y="1666" class="body">Construcción / ops</text><text x="295" y="1666" class="body">Node.js / npm / Vite · Git · systemd · cron</text><text x="850" y="1666" class="body">Build SPA, servicios y programación</text>
 
   <rect x="48" y="1704" width="650" height="104" fill="#eee9e0" stroke="#1a1a1a" stroke-width="2"/>
   <text x="70" y="1736" class="h3">DESARROLLO / WINDOWS + LARAGON</text>
-  <text x="70" y="1767" class="small">PHP 8.4.8 · Python 3.10 · Node 22 · Composer 2.10.3</text>
+  <text x="70" y="1767" class="small">PHP 8.4.8 · Python 3.10 · Node 22 · SQLite local</text>
   <text x="70" y="1793" class="small">Vite :5173 → Laravel :8000 → Engine :8090; worker aparte.</text>
   <rect x="720" y="1704" width="666" height="104" fill="#eee9e0" stroke="#1a1a1a" stroke-width="2"/>
   <text x="742" y="1736" class="h3">PRODUCCIÓN / VPS</text>
-  <text x="742" y="1767" class="small">Informe 04/10: Ubuntu 26.04 · Nginx 1.28.3 · PHP-FPM 8.5.</text>
+  <text x="742" y="1767" class="small">10/10: Ubuntu 26.04 · Nginx 1.28 · PHP-FPM 8.5 · PostgreSQL 18.</text>
   <text x="742" y="1793" class="small">SPA compilada; Node no sirve peticiones. Engine y worker: systemd.</text>
   <text x="48" y="1847" class="small">Datos diarios de cierre (EOD) · Etiquetas EOD solo en Admin dentro de la aplicación · Copilot fuera del MVP</text>
-  <text x="48" y="1877" class="small">Fuentes: ARCHITECTURE.md · código Laravel / frontend / engine · deploy/ · informe de producción 04/10/2026</text>
+  <text x="48" y="1877" class="small">Fuentes: ARCHITECTURE.md · código Laravel / frontend / engine · deploy/ · informe de producción 04/10/2026 · migración PostgreSQL 10/2026</text>
 </svg>
