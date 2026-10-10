@@ -5,7 +5,7 @@
 - `id`: `chart-patterns-ui`
 - `area`: `frontend` + `api`
 - `depends_on`: `chart-patterns-detect`, `screener-filters-ui`, `chart-interactive`, `saved-screeners`, `app-multilanguage`
-- `status`: `not_started` (planned 2026-10-10)
+- `status`: implemented 2026-10-10 (planned the same day)
 - `source`: `feature_list.json`
 
 ## Goal
@@ -141,3 +141,10 @@ Given English is selected, pattern names, statuses and roles are in English; at 
 - [ ] Chart draws points + one breakout line per active pattern, never targets/stops; accessible panel present.
 - [ ] Old Saved Screeners load; new ones round-trip.
 - [ ] es/en complete; mobile OK; DESIGN.md respected; docs updated; `init.ps1` exit 0.
+
+## Implementation Findings
+
+1. **Status control.** The segmented status control is disabled until a pattern chip is selected, and removing the last pattern resets `pattern_status` to `any`, so the status never filters on its own (the API also ignores it without `pattern`).
+2. **Payload compatibility.** `patterns` is optional in the SPA types (`InstrumentDetailResponse.patterns?`, `candidate.patterns ?? []`) so an SPA deployed ahead of the API cannot crash; Saved Screener pattern keys are optional on input, always stored canonically, and defaulted on read for older rows.
+3. **Chart.** Markers use `createSeriesMarkers` with short role labels from `patterns.rolesShort.*`; only points inside the loaded bar window are drawn (the panel lists all). Breakout lines are dotted in the tertiary token colour to distinguish them from SMA (dashed) and the signal pivot.
+4. **Browser QA note.** The first Playwright run counted the previous result list; the script now waits for the filtered `/api/screener` response. Port 5173 was held by another local process, so the check ran Vite on 5180.
