@@ -758,7 +758,7 @@
     "title": "Summarize Chartiko architecture, processes and required software",
     "user_visible_behavior": "A Spanish infographic in docs explains the frontend, backend, Python engine, persistence, manual and scheduled processes, and software requirements.",
     "depends_on": [],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Standalone SVG parses and contains the main components and processes",
       "Responsibilities and dependencies match current repository code and documentation"
@@ -767,9 +767,10 @@
       "2026-10-04: docs/arquitectura-infografia.svg created at 1440 x 1900 with companion docs/arquitectura-infografia.md; PowerShell XML parsing succeeded.",
       "Source review: ARCHITECTURE.md, domain docs, frontend/package.json, composer.json, engine/requirements.txt and app/__main__.py, deploy scripts/config and RunIngestionJob. Differentiates Admin acquisition from the full indicator/signal pipeline and documented production versions from local runtimes.",
       "2026-10-09 independent validation revise: SVG XML parses (1440 x 1900), but SVG and companion Markdown still describe SQLite as production persistence and queue storage; current ARCHITECTURE.md and accepted db-postgresql-migration specify PostgreSQL behind PgBouncer. Update both artifacts, distinguish local SQLite from production, verify visual layout and rerun checks before acceptance.",
-      "2026-10-10 revise fix: SVG and Markdown now show PostgreSQL 18 behind PgBouncer (127.0.0.1:6432, transaction mode) as production persistence and queue/session/cache store, with SQLite only for local development, the CI test job and the rollback source; production versions, drivers and the /etc/cron.d/alphapulse schedule:run entry checked read-only on the VPS. XML parses (1440 x 1900); rendered in Edge via Playwright with an automated text-overflow check (none) and visual review of the screenshot."
+      "2026-10-10 revise fix: SVG and Markdown now show PostgreSQL 18 behind PgBouncer (127.0.0.1:6432, transaction mode) as production persistence and queue/session/cache store, with SQLite only for local development, the CI test job and the rollback source; production versions, drivers and the /etc/cron.d/alphapulse schedule:run entry checked read-only on the VPS. XML parses (1440 x 1900); rendered in Edge via Playwright with an automated text-overflow check (none) and visual review of the screenshot.",
+      "2026-10-10 independent validation accept: XML parses 1440 x 1900; Edge render shows no text overflow or overlap; PostgreSQL/PgBouncer, SQLite scoping, CI jobs, cron and component facts match ARCHITECTURE.md, deploy/, config/, engine/ and package manifests. Low notes: production versions and the 8/9 Oct completed runs are point-in-time claims; PgBouncer is an arrow label, not a box."
     ],
-    "notes": "Documentation only; no product or operational changes. Independent validation returned revise on 2026-10-09 because the SVG and Markdown describe SQLite as production persistence after the accepted PostgreSQL/PgBouncer migration. Update both artifacts and inspect a rendered view; status remains passing until revalidation."
+    "notes": "Documentation only; no product or operational changes. Revise (2026-10-09) fixed on 2026-10-10 by showing PostgreSQL behind PgBouncer as production storage; independently accepted the same day. Re-render and recheck overflow after any text edit (little horizontal headroom)."
   },
   {
     "id": "db-postgresql-migration",
