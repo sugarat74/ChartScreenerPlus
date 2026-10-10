@@ -1,6 +1,6 @@
 # Spec: legal-compliance-eu — public legal pages (privacy, legal notice, cookies)
 
-Status: implemented locally, publication blocked until the owner's identifying data is configured.
+Status: accepted 2026-10-10 (implemented, not deployed); publication blocked until the owner's identifying data is configured.
 Prepared with the `web-legal-compliance-eu` skill on 2026-10-10. Not legal advice: the texts
 need a professional review before or shortly after publication.
 
@@ -53,7 +53,7 @@ logrotate and the Laravel `daily` log channel).
 | User account | name, email, password hash | create and run the account | contract (6.1.b) | while the account exists; deletion on request |
 | Saved Screeners and Watchlist | filters, tickers linked to the account | the requested feature | contract (6.1.b) | while the account exists |
 | Sessions and sign-in activity | IP, user agent, last activity; sign-ins, failures (typed email), sign-outs, Admin revocations | security, Admin session control | legitimate interest in security (6.1.f) | sessions: lifetime; activity: 90 days |
-| Server and application logs | IP, date, URL, user agent, errors | operation and security | legitimate interest (6.1.f) | 14 days |
+| Server and application logs | IP, date, URL, referer, user agent, errors | operation and security | legitimate interest (6.1.f) | 14 days |
 | Backups | full database copy | recovery | legitimate interest (6.1.f) | 14 days |
 | Requests by email | email and message | answer rights and enquiries | legal obligation (6.1.c) / legitimate interest | while handled, then limitation periods |
 
