@@ -1,15 +1,40 @@
 # Progress Log
 
+## Independent validation of five passing features — 2026-10-09
+
+- Applied the explicit `feature_list.json` verification criteria to four reusable skills and one documentation artifact. The product-oriented `feature-validator` procedure requires a spec under `docs/specs`; these five have none, so its spec-dependent path does not apply. Reviewed current artifacts and diff rather than treating self-verification as acceptance.
+- `web-deploy-security-skill` **accept**: valid skill, resources and 34-control checklist; scenario outputs distinguish evidence gaps, SPA fallback and confirmed exposure. Existing synthetic 18/18 grading supports behavior but does not approve production. Non-blocking future cleanup: name current PostgreSQL/PgBouncer topology explicitly in Chartiko-specific guidance.
+- `web-marketing-seo-geo-skill` **accept**: valid resources; audit and implementation modes, private-route authorization, factual copy and measurement limits are explicit. Current Google Search guidance still treats useful crawlable content as central and `llms.txt` as optional. No live ranking, traffic, conversion or citation measurement was attempted. Non-blocking wording cleanup: use "fecha de sesión" instead of "fecha EOD" in public-chart guidance to avoid ambiguity with the project presentation rule.
+- `web-legal-compliance-eu-skill` **accept**: valid resources; separates audit, drafting and implementation, guards unknown owner data, inventories terminal storage before deciding on consent and reserves legal review. AEPD same-level rejection and BOE accessibility material were rechecked. Acceptance covers the skill only, not Chartiko legal compliance or legal advice; owner data and site audit remain pending.
+- `web-to-mobile-skill` **accept**: valid schema/UI metadata/resources, current-code architecture study, separate cookie and mobile-token paths, device revocation, chart spike, workspace migration and Android/iOS gates. React Native, Expo, Laravel Sanctum and TradingView primary documentation support the proposal. No app, native build or device flow exists yet; skill and study files are still untracked local work.
+- `architecture-infographic` **revise** (medium, factual): the SVG labels SQLite as persistence and says Admin jobs use SQLite; companion Markdown says Laravel writes all data to SQLite and cron installation is unverified. Current `ARCHITECTURE.md` and accepted `db-postgresql-migration` record production PostgreSQL behind PgBouncer, with local SQLite and retained rollback source. Repair brief: update both SVG and Markdown to distinguish local/test SQLite from production PostgreSQL/PgBouncer and queue/session/cache storage; refresh the production/scheduler evidence date; render and inspect the SVG for clipping/legibility; parse XML, recheck links and verify against current architecture before revalidation. Keep `passing` until that is done.
+- Verification: four `quick_validate.py` runs passed; local Markdown links resolved; SVG parsed at 1440×1900. `init.ps1` exited 0: Laravel 217 passed / 6 skipped (2010 assertions), SPA lint, 44 Vitest tests, SPA build, engine 47 passed (existing Starlette deprecation warning). Four feature states moved to `accepted`; infographic remains `passing` with the finding recorded in `feature_list.json`.
+
 ## Admin operations MCP added to backlog — 2026-10-08
 
 - User asked to record, for later, an MCP server for Admin operations. Added `admin-ops-mcp` (`not_started`, depends on accepted `admin-ingestion-panel`, `admin-users-sessions`, `auth-roles-admin`): Laravel-served HTTPS MCP with revocable Admin-only tokens, audited calls, read-only tools (ingestion status/logs, users/sessions, activity, health) and ability-gated write tools (trigger/retry run, end sessions); no shell/SQL/secrets. Goal: operate production without the temporary root SSH key.
 - Also installed (developer tooling, outside the repo) the Playwright MCP server at Claude Code user scope (`@playwright/mcp`, Edge) so future validations can do real-browser checks.
 - Backlog-only change: JSON parses, ID unique, prior entries unchanged; `init.ps1` not rerun.
 
+## Local main integrated from worktree — 2026-10-08
+
+- Fast-forwarded local `main` from `96833a1` to `c2bbb47` (`origin/main`, also the `worktree-pgsql-validation-fixes` HEAD). Preserved the existing mobile planning edits in this file and `feature_list.json`; both remain uncommitted. Resolved the overlapping progress headings without dropping either entry.
+- `init.ps1` passed after restoring missing frontend development dependencies with `npm --prefix frontend ci`: Laravel 217 passed / 6 skipped (2010 assertions), SPA lint, 44 Vitest tests, SPA build, engine 47 passed (one existing Starlette deprecation warning). The first run stopped at SPA lint because the local `node_modules` lacked Vitest and Testing Library.
+- Local untracked paths (`%SystemDrive%/`, `.claude/`, `.opencode/skills/web-to-mobile/`, `docs/mobile/`) were left as found. `npm ci` reported Node v22.21.0 below React Router's declared >=22.22.0 engine and one high-severity audit finding; verification nevertheless passed. Dependency/security follow-up was outside this merge.
+
 ## db-postgresql-migration accepted — 2026-10-08
 
 - Independent validation (read-only on repo, CI and production) first returned `revise`: PgBouncer lacked `Restart=on-failure` (spec Decision 10). Fixed in repo (install script drop-in + CI assertion, masked copy-error values, README) and, with operator authorization, in production (drop-in, daemon-reload, PgBouncer restart; SQLite rollback source made 0440). Deployed `96f2e94`; second round `accept`.
 - Open operational risks: no off-VPS backup copy; temporary root SSH key still authorized and `sshd` PasswordAuthentication yes; ingestion run id 1 stuck `running` since 2026-10-03; keep the SQLite rollback source until at least 2026-11-05.
+
+## Web-to-mobile skill and architecture prepared - 2026-10-08
+
+- User requested a skill to extend Chartiko to Android/iOS while developing web and mobile in parallel. Created .opencode/skills/web-to-mobile/ (SKILL.md, UI metadata and three focused references) and docs/mobile/architecture-plan.md; installed an identical personal Codex skill.
+- Recommended proposal: React Native + Expo/TypeScript, mobile/ alongside frontend/ and root Laravel, pure shared packages via an explicit future workspace migration, shared versioned Laravel API, cookie/CSRF web auth plus scoped expiring mobile tokens, PostgreSQL only behind Laravel and the private Python engine. Includes Git integration, independent releases, backward compatibility, Android/iOS gates, chart spike and effort ranges.
+- Observed blockers for direct reuse: AuthController requires a web session; User lacks HasApiTokens; web API transport reads cookies; current Admin revocation covers web sessions, so device credentials/audit need their own design. Existing native-app MVP exclusion does not prevent the explicitly requested study.
+- Verification: quick_validate.py passed in UTF-8 mode for repository and personal skill; UI fields, local Markdown links and five copied file hashes checked; backlog JSON parses and all previous entries are unchanged. Initial validator run hit Windows cp1252 decoding; rerunning with python -X utf8 resolved it without changing validation rules.
+- Scope: skill and study only; no mobile application, API/toolchain/deploy modifications, production actions or dependency installs. init.ps1/product tests not rerun. No independent behavioral forward-test, native build or device QA; tooling feature web-to-mobile-skill is passing, independent acceptance pending.
+- Next implementation increment: define the contract and validate the chart renderer in Android/iOS. Pending assumptions: Admin web-only initially, device-token expiry/support window, workspace dependency compatibility, iOS build/device access, signing/store/privacy preparation. These are recorded in the study, not silently enabled.
 
 ## admin-users-sessions accepted — 2026-10-08
 

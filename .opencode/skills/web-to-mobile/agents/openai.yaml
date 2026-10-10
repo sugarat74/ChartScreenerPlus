@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web a Android e iOS"
+  short_description: "Arquitectura móvil y desarrollo paralelo con la web"
+  default_prompt: "Usa $web-to-mobile para evaluar este proyecto y preparar su arquitectura Android/iOS con API compartida y desarrollo paralelo."
