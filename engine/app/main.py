@@ -9,9 +9,12 @@ from app.models import (
     EodResponse,
     IndicatorsComputeRequest,
     IndicatorsComputeResponse,
+    PatternsDetectRequest,
+    PatternsDetectResponse,
     SignalsDetectRequest,
     SignalsDetectResponse,
 )
+from app.patterns.detect import detect_patterns
 from app.signals.detect import detect_signals
 from app.sources.stooq import fetch_eod
 
@@ -66,6 +69,12 @@ def create_app() -> FastAPI:
         """Detect the deterministic signals that hold on the as-of bar (pure)."""
 
         return SignalsDetectResponse(signals=detect_signals(request.bars))
+
+    @application.post("/patterns/detect", response_model=PatternsDetectResponse)
+    def patterns_detect(request: PatternsDetectRequest) -> PatternsDetectResponse:
+        """Detect the chartist patterns active on the as-of bar (pure)."""
+
+        return PatternsDetectResponse(patterns=detect_patterns(request.bars))
 
     return application
 

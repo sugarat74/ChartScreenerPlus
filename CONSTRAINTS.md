@@ -148,6 +148,15 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - `signals` **MUST** stay unique per `(instrument_id, date, type)`. Reason: one row per active signal type per instrument/date is the invariant the replace logic and the future screener rely on.
 - Signal tests **MUST** be offline: engine tests use synthetic `Snapshot`s / crafted bars / committed fixtures, Laravel tests use `Http::fake`. No test may hit the network. Reason: deterministic rules must be provable from explicit boundary values.
 
+## Chartist Patterns
+
+- The engine **MUST** own the pattern rules (`engine/app/patterns/`), stdlib only, no database access; Laravel **MUST** own persistence. Reason: same Chinese wall as signals.
+- The vocabulary **MUST** stay `double_top`, `double_bottom`, `cup_with_handle`, `bull_flag` and the statuses `forming`, `confirmed` (`App\Models\ChartPattern::TYPES` / `STATUSES` mirror them). Reason: the strings are the contract with the database and the future screener/chart.
+- The parameters in `docs/specs/chart-patterns-detect.md` (as named constants in `rules.py`) **MUST NOT** be tuned silently: any change needs a spec and updated tests. Swings are strict with `k = 5`; a pattern's own extremes **MUST** be the extremes of its span (no higher high between double-top peaks, no lower low between double-bottom lows, nothing inside a cup above the higher rim and no intermediate swing high above the lower rim, no flag high above the pole top). Reason: calibration is a product decision; the extreme rules stop the most common false positives.
+- Patterns **MUST** be evaluated on the as-of bar without reading later bars; `confirmed` only for a breakout within the last 10 sessions; at most one pattern per type per instrument. Reason: `chart_patterns` is the current active set.
+- No target, measured move, stop or probability **MUST** be computed or stored; `breakout_level` is the only price line. Reason: targets would be advice-like behavior that the product does not model.
+- `patterns:detect` **MUST** fetch before deleting and replace inside one transaction; an engine failure **MUST** keep the previous set and exit `1`. `chart_patterns` **MUST** stay unique per `(instrument_id, as_of_date, type)`. Tests **MUST** be offline (synthetic series in `engine/tests/test_patterns.py`, `Http::fake` in Laravel).
+
 ## Operations And Scheduling
 
 - `config/app.php` **MUST** keep `timezone = 'UTC'`. The daily EOD event **MUST** get its timezone from `config('ingestion.timezone')` via the event's `->timezone()` (default `America/New_York`). Reason: changing the app-wide timezone would ripple into `now()`, stored timestamps and tests; applying the market timezone only to the event keeps the wall-clock time DST-aware while everything else stays UTC.

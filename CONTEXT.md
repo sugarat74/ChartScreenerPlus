@@ -30,7 +30,7 @@ The computed technical indicators for an Instrument for a given Daily Bar: movin
 
 ### Signal
 
-A deterministic, rule-based condition derived from Indicators (e.g. `Golden Cross`, `RSI oversold`, `RVOL > 2`). The MVP produces Signals, not geometric pattern detections.
+A deterministic, rule-based condition derived from Indicators (e.g. `Golden Cross`, `RSI oversold`, `RVOL > 2`) on the latest Daily Bar. Geometric formations are Chartist Patterns, a separate concept.
 
 ### Golden Cross
 
@@ -38,7 +38,7 @@ A bullish Signal where the short-term moving average (e.g. SMA 50) crosses above
 
 ### Chartist Pattern (Patrón chartista)
 
-A geometric price formation (Cup & Handle, Double Top, Flag, Triangle...). These are the product's long-term ambition but are **not** part of the MVP, which uses deterministic Signals first.
+A geometric price formation detected by explicit deterministic rules over swing points. In scope since 2026-10-10: Double Top, Double Bottom, Cup with Handle and Bull Flag (triangles, head-and-shoulders, wedges and bear flags are future scope). A pattern is **forming** (geometry complete, no breakout yet) or **confirmed** (a close beyond its **Breakout level** within the last 10 sessions). The Breakout level (neckline or pivot) is the only price line a pattern exposes; Chartiko never derives targets.
 
 ### RVOL (Relative Volume)
 
