@@ -5,7 +5,7 @@
 - GitHub Flow: specs and the AGENTS.md scope update merged via PR #7; this feature on branch `feat/chart-patterns-detect`.
 - Engine `engine/app/patterns/` (swings, four detectors, `POST /patterns/detect`), `chart_patterns` table, `patterns:detect`, pipeline stage after signals. No targets.
 - A visual check of a local run exposed missing "extreme" rules (pattern points must be the extremes of their span); added with tests and recorded in the spec. Local run: 178 patterns over 494 instruments; parameters stay initial, calibration later.
-- `.\init.ps1` exit 0. Status `passing`; independent validation next.
+- `.\init.ps1` exit 0. Independent validator accepted (0 mismatches re-deriving all 178 patterns); low notes kept for the calibration spec.
 
 ## Specs for chartist patterns and alerts — 2026-10-10
 

@@ -975,7 +975,7 @@
       "signals-detect",
       "ingestion-scheduler"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Engine detects the four types with the parameter table in docs/specs/chart-patterns-detect.md; positive, near-miss and invalidation tests per type; swings never look ahead",
       "POST /patterns/detect returns patterns for the as-of bar; malformed input is 422; no new Python dependencies",
@@ -986,9 +986,10 @@
     "evidence": [
       "2026-10-10: engine pytest 67 passed (21 pattern tests: swings, positive/near-miss/invalidation per type, extreme rules, statuses, endpoint 200/422), ruff clean. Laravel DetectPatternsCommandTest 6 tests (store, idempotent + status replace, disappear, failure-safe, malformed dropped, universe/unknown targets) and pipeline test with the new stage and a pattern-stage failure; migration up/down/up round-trip with unique (instrument_id, as_of_date, type).",
       "Local run with the real engine on the dev SQLite DB (as-of 2026-10-02): 494 instruments in about 30 s, 178 patterns (double_top 84 forming/13 confirmed, double_bottom 52/9, cup_with_handle 16/1, bull_flag 2/1); one instance per type/status plotted and checked by eye. The check found missing extreme rules, now enforced and tested (see the spec's Implementation Findings).",
-      ".\\init.ps1 exit 0: Laravel 231 passed / 6 skipped (2123 assertions), frontend 52 tests + lint + build, engine 67 passed."
+      ".\\init.ps1 exit 0: Laravel 231 passed / 6 skipped (2123 assertions), frontend 52 tests + lint + build, engine 67 passed.",
+      "2026-10-10 independent validation accept: every table rule/boundary verified in code; an independent re-implementation re-derived all 178 stored patterns from the dev DB with 0 mismatches; adversarial probes (confirmation window 9/10, handle 25/26, flag 20/21, invalidation at 1.03, latest instance, no look-ahead) pass; engine 67 tests + ruff, Laravel pattern/pipeline tests, migration round-trip, idempotent re-runs. Low notes for the calibration spec: cup handle may rise above the rim without volume and stay forming; no post-breakout invalidation for flag/cup; handle_sessions counts the breakout bar; prior-move slice excludes t1."
     ],
-    "notes": "Planned 2026-10-10 at user request (chartist patterns were 'later than MVP Signal work'). Spec: docs/specs/chart-patterns-detect.md. Parameters are initial and explicit; calibration needs a later spec."
+    "notes": "Planned 2026-10-10 at user request (chartist patterns were 'later than MVP Signal work'). Spec: docs/specs/chart-patterns-detect.md. Parameters are initial and explicit; calibration needs a later spec. Accepted 2026-10-10 (PR #8); calibration spec should address the validator's low notes."
   },
   {
     "id": "chart-patterns-ui",
