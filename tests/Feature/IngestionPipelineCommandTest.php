@@ -163,6 +163,7 @@ class IngestionPipelineCommandTest extends TestCase
         $this->fakeEngine();
 
         $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
             ->expectsOutputToContain('EOD pipeline completed.')
             ->assertExitCode(0);
 
@@ -181,6 +182,24 @@ class IngestionPipelineCommandTest extends TestCase
 
         // One request per stage.
         Http::assertSentCount(4);
+    }
+
+    public function test_alerts_are_not_evaluated_when_signal_detection_fails(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        Http::fake([
+            '*/eod/AAA' => Http::response($this->barsResponse('AAA', 3)),
+            '*/indicators/compute' => Http::response($this->snapshotsResponse(3)),
+            '*/signals/detect' => Http::response(['detail' => 'Engine failed.'], 500),
+            '*/patterns/detect' => Http::response($this->patternsResponse()),
+        ]);
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Alerts were not evaluated because signal detection failed.')
+            ->doesntExpectOutputToContain('Alerts as of')
+            ->expectsOutputToContain('EOD pipeline finished with errors.')
+            ->assertExitCode(1);
     }
 
     public function test_a_pattern_stage_failure_fails_the_pipeline_but_keeps_earlier_stages(): void

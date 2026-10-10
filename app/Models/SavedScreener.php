@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A named, user-owned screener definition.
@@ -43,5 +44,15 @@ class SavedScreener extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Alerts on this Screener's new Candidates (deleted with it by FK cascade).
+     *
+     * @return HasMany<Alert, $this>
+     */
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(Alert::class);
     }
 }

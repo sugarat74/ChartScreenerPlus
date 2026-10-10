@@ -24,7 +24,7 @@ function legalInfo(published: boolean): LegalInfo {
     published,
     owner: published ? OWNER : null,
     updated_at: '2026-10-10',
-    retention: { sign_in_activity_days: 90, session_minutes: 120, backup_days: 14, server_log_days: 14 },
+    retention: { sign_in_activity_days: 90, session_minutes: 120, backup_days: 14, server_log_days: 14, notification_days: 90 },
   }
 }
 
@@ -129,6 +129,7 @@ describe('legal pages once the owner data is configured', () => {
     )
     expect(document.body.textContent).toMatch(/a los 90 días/)
     expect(document.body.textContent).toMatch(/Canadá/)
+    expect(document.body.textContent).toMatch(/notificaciones se borran automáticamente a los 90 días/)
     expect(document.body.textContent).not.toMatch(/\{\w+\}/)
 
     const nav = screen.getByRole('navigation', { name: 'Información legal' })

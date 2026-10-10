@@ -60,6 +60,14 @@ An Instrument that currently satisfies a Screener's filters. Shown as a ranked l
 
 A Registered User's persisted filter definition, which can be re-applied at any time. Owned by that user.
 
+### Alert (Alerta)
+
+A Registered User's rule evaluated after each daily data update: **new Candidates** entering one of their Saved Screeners, or chosen **Signal types appearing** on their Watchlist Instruments. The first evaluation only records a baseline; later ones notify additions. Never real-time.
+
+### Notification
+
+The in-app message an Alert produces when it finds something new (instruments and reasons). Read in Chartiko; kept 90 days. Email delivery is a separate, opt-in digest.
+
 ### Watchlist (Seguimiento / Radar)
 
 A Registered User's personal list of Instruments they follow. Owned by that user.

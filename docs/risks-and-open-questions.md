@@ -22,8 +22,8 @@
 ## Later / Not MVP
 
 - AI Copilot (natural-language refinement) and any LLM dependency.
-- Chartist pattern detection (Cup & Handle, Double Top/Bottom, flags).
-- Automated alerts/notifications (email, Telegram, push).
+- ~~Chartist pattern detection (Cup & Handle, Double Top/Bottom, flags).~~ In scope since 2026-10-10: `chart-patterns-detect` and `chart-patterns-ui` (four types; triangles, head-and-shoulders, wedges and bear flags remain later).
+- Automated alerts/notifications: in-app alerts in scope since 2026-10-10 (`alerts-engine`, `alerts-ui`) and an opt-in email digest planned (`alerts-email-digest`); Telegram and push remain later.
 - Multi-market and additional universes (NASDAQ 100, Russell 2000, IBEX 35).
 - Paid plans/subscriptions and licensing.
 - Backtesting and historical strategy performance.

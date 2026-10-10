@@ -31,6 +31,17 @@ export const legalEs: LegalTexts = {
         ],
       },
       {
+        heading: 'Alertas y notificaciones',
+        paragraphs: [
+          'Si creas alertas guardamos su configuración (el Screener guardado o los tipos de señal que eliges para tu Watchlist) y, tras cada actualización diaria de datos, las notificaciones con los instrumentos que las han activado.',
+        ],
+        items: [
+          'Finalidad: avisarte dentro de Chartiko de los cambios que has pedido seguir.',
+          'Base jurídica: ejecución del contrato de uso del servicio (art. 6.1.b RGPD).',
+          'Conservación: las alertas, mientras las mantengas; las notificaciones se borran automáticamente a los {notificationDays} días.',
+        ],
+      },
+      {
         heading: 'Sesiones y seguridad del acceso',
         paragraphs: [
           'Para mantener tu sesión y proteger las cuentas registramos la dirección IP, el navegador (agente de usuario) y la hora de la última actividad de cada sesión, así como los inicios de sesión, los intentos fallidos (con el email introducido, que puede no corresponder a ninguna cuenta), los cierres de sesión y las sesiones cerradas por la administración. Los visitantes sin cuenta también tienen una sesión técnica con la dirección IP, el navegador y la última actividad.',
@@ -73,7 +84,7 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Lo que no hacemos',
         paragraphs: [
-          'No usamos herramientas de analítica, publicidad ni redes sociales, no enviamos comunicaciones comerciales, no elaboramos perfiles ni tomamos decisiones automatizadas que te afecten. Los datos de mercado que muestra Chartiko se obtienen desde el servidor y no implican datos de los visitantes.',
+          'No usamos herramientas de analítica, publicidad ni redes sociales, no enviamos comunicaciones comerciales ni emails de alertas, no elaboramos perfiles ni tomamos decisiones automatizadas que te afecten. Los datos de mercado que muestra Chartiko se obtienen desde el servidor y no implican datos de los visitantes.',
         ],
       },
       {

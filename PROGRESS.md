@@ -1,5 +1,11 @@
 # Progress Log
 
+## alerts-engine implemented — 2026-10-10
+
+- `chart-patterns-ui` accepted and merged (PR #9, squash `6f71bbb`); this feature on `feat/alerts-engine`.
+- `CandidateQuery` service shared by the Screener API and alerts; `alerts` + `notifications` tables; `AlertEvaluator` (baseline, additions only, once per as-of); `alerts:evaluate` as last pipeline stage gated on signals; `notifications:prune` daily (90 days); alerts and notifications API; privacy texts list the new processing.
+- `.\init.ps1` exit 0. Independent validator accepted; its low findings (create race, notifications on account deletion, missing tests, docs) were fixed before merge. UI (`alerts-ui`) and email (`alerts-email-digest`) remain.
+
 ## chart-patterns-ui implemented — 2026-10-10
 
 - `chart-patterns-detect` accepted and merged (PR #8, squash `13cfd21`); this feature on `feat/chart-patterns-ui`, rebased onto it.

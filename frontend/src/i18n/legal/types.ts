@@ -4,7 +4,7 @@
  *
  * Placeholders, filled by `LegalPage` from `GET /api/legal`:
  * `{ownerName}` `{ownerTaxId}` `{ownerAddress}` `{ownerEmail}` (mailto link),
- * `{activityDays}` `{sessionMinutes}` `{backupDays}` `{logDays}`,
+ * `{activityDays}` `{sessionMinutes}` `{backupDays}` `{logDays}` `{notificationDays}`,
  * `{cookiesLink}` `{privacyLink}` (in-app links).
  */
 export type LegalSection = {

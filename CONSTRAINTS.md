@@ -157,6 +157,14 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - No target, measured move, stop or probability **MUST** be computed or stored; `breakout_level` is the only price line. Reason: targets would be advice-like behavior that the product does not model.
 - `patterns:detect` **MUST** fetch before deleting and replace inside one transaction; an engine failure **MUST** keep the previous set and exit `1`. `chart_patterns` **MUST** stay unique per `(instrument_id, as_of_date, type)`. Tests **MUST** be offline (synthetic series in `engine/tests/test_patterns.py`, `Http::fake` in Laravel).
 
+## Alerts
+
+- Alerts **MUST** be evaluated at most once per as-of date, **MUST NOT** notify on their first evaluation (baseline) and **MUST** notify only additions versus the previous evaluation. Reason: no floods and no duplicates when the pipeline or the command is re-run.
+- `alerts:evaluate` **MUST** run only after a successful `signals:detect` in the pipeline, and one failing alert **MUST NOT** stop the others or change its own stored state. Reason: users are never notified from a partial signal set.
+- Alerts and notifications **MUST** be read and written only through `$request->user()->alerts()` / `->notifications()`; a foreign id **MUST** be a `404`, more than `config('alerts.max_per_user')` alerts or a duplicate (same Saved Screener, second Watchlist alert) **MUST** be a localized `422`. Reason: same ownership model as Saved Screeners.
+- Notifications **MUST** be in-app only (database channel); email is a separate, opt-in feature (`alerts-email-digest`). They **MUST** be deleted after `config('alerts.notification_retention_days')` days, and the privacy policy **MUST** state that retention. Reason: data minimization and the published privacy text.
+- The Screener result for an alert **MUST** come from `App\Services\Screener\CandidateQuery`, the same code as `GET /api/screener`. Reason: an alert must never disagree with what the user sees.
+
 ## Operations And Scheduling
 
 - `config/app.php` **MUST** keep `timezone = 'UTC'`. The daily EOD event **MUST** get its timezone from `config('ingestion.timezone')` via the event's `->timezone()` (default `America/New_York`). Reason: changing the app-wide timezone would ripple into `now()`, stored timestamps and tests; applying the market timezone only to the event keeps the wall-clock time DST-aware while everything else stays UTC.

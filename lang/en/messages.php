@@ -41,6 +41,11 @@ return [
         'run_without_failures' => 'This run has no failed instruments to retry.',
     ],
 
+    'alerts' => [
+        'limit' => 'You can have at most :max alerts.',
+        'duplicate' => 'You already have this alert.',
+        'not_found' => 'Alert not found.',
+    ],
     'screener' => [
         'signal_unknown_types' => 'The signal parameter must contain only known signal types.',
         'signal_invalid' => 'The selected signal type is invalid.',
