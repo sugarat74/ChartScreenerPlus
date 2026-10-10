@@ -4,7 +4,7 @@
 
 - `chart-patterns-detect` accepted and merged (PR #8, squash `13cfd21`); this feature on `feat/chart-patterns-ui`, rebased onto it.
 - API: `pattern`/`pattern_status` screener filters, `patterns` in candidate and instrument-detail payloads, nine-key Saved Screener filters with defaults for old rows. SPA: pattern chips + status control, candidate badges, chart markers + breakout line, `PatternPanel`, es/en strings.
-- Browser QA 12/12 (es desktop, en mobile); `.\init.ps1` exit 0. Status `passing`; independent validation next.
+- Browser QA 12/12 (es desktop, en mobile); `.\init.ps1` exit 0. Independent validator accepted; its two low findings were fixed before merge.
 
 ## chart-patterns-detect implemented — 2026-10-10
 

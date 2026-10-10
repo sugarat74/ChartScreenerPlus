@@ -19,6 +19,11 @@ describe('pattern filters in the URL (chart-patterns-ui)', () => {
     expect(filters.patterns).toEqual(['double_bottom', 'bull_flag'])
     expect(filters.patternStatus).toBe('confirmed')
     expect(parseScreenerFilters(new URLSearchParams('pattern_status=maybe')).patternStatus).toBe('any')
+    // A status without patterns is never kept (it would apply silently later).
+    expect(parseScreenerFilters(new URLSearchParams('pattern_status=confirmed')).patternStatus).toBe('any')
+    expect(
+      serializeScreenerFilters({ ...EMPTY_SCREENER_FILTERS, patterns: [], patternStatus: 'confirmed' }).pattern_status,
+    ).toBe('any')
   })
 
   it('patches only its own keys and omits the default status', () => {

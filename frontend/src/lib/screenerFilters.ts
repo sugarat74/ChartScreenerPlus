@@ -157,6 +157,7 @@ export function parseScreenerSort(value: string | null): ScreenerSort {
  */
 export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
   const rawSignals = params.getAll('signal').flatMap((value) => value.split(','))
+  const patterns = normalizePatterns(params.getAll('pattern').flatMap((value) => value.split(',')))
 
   return {
     signals: normalizeSignals(rawSignals),
@@ -165,8 +166,9 @@ export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
     minRvol: parseMinRvol(params.get('min_rvol')),
     priceAboveSma200: params.get('price_above_sma200') === '1' || params.get('price_above_sma200') === 'true',
     maCross: parseMaCross(params.get('ma_cross')),
-    patterns: normalizePatterns(params.getAll('pattern').flatMap((value) => value.split(','))),
-    patternStatus: parsePatternStatus(params.get('pattern_status')),
+    patterns,
+    // A status only narrows selected patterns; without them it is `any`.
+    patternStatus: patterns.length > 0 ? parsePatternStatus(params.get('pattern_status')) : 'any',
     sort: parseScreenerSort(params.get('sort')),
   }
 }
@@ -279,7 +281,7 @@ export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreene
     price_above_sma200: filters.priceAboveSma200,
     ma_cross: filters.maCross,
     pattern: normalizePatterns(filters.patterns),
-    pattern_status: filters.patternStatus,
+    pattern_status: filters.patterns.length > 0 ? filters.patternStatus : 'any',
     sort: filters.sort,
   }
 }
@@ -302,6 +304,7 @@ export function deserializeScreenerFilters(
   const rsiMin = storedNumber(payload.rsi_min)
   const rsiMax = storedNumber(payload.rsi_max)
   const minRvol = storedNumber(payload.min_rvol)
+  const storedPatterns = normalizePatterns(Array.isArray(payload.pattern) ? payload.pattern : [])
 
   return {
     signals: normalizeSignals(Array.isArray(payload.signal) ? payload.signal : []),
@@ -311,8 +314,8 @@ export function deserializeScreenerFilters(
     priceAboveSma200: payload.price_above_sma200 === true,
     maCross:
       payload.ma_cross === 'bullish' || payload.ma_cross === 'bearish' ? payload.ma_cross : null,
-    patterns: normalizePatterns(Array.isArray(payload.pattern) ? payload.pattern : []),
-    patternStatus: parsePatternStatus(payload.pattern_status),
+    patterns: storedPatterns,
+    patternStatus: storedPatterns.length > 0 ? parsePatternStatus(payload.pattern_status) : 'any',
     sort: parseScreenerSort(typeof payload.sort === 'string' ? payload.sort : null),
   }
 }
