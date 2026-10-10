@@ -119,8 +119,9 @@ export const es = {
   },
   auth: {
     registerPrivacy:
-      'Responsable: {owner}. Finalidad: crear y gestionar tu cuenta. Base jurídica: ejecución del contrato. Destinatarios: no se ceden datos salvo obligación legal. Derechos: acceso, rectificación, supresión y otros, como explica la {policy}.',
+      'Responsable: {owner}. Finalidad: crear y gestionar tu cuenta. Base jurídica: ejecución del contrato. Destinatarios: no se ceden datos salvo obligación legal. Derechos: acceso, rectificación, supresión y otros, como explica la {policy}. Al crear la cuenta aceptas las {terms} y declaras tener al menos 14 años.',
     registerPrivacyPolicy: 'política de privacidad',
+    registerPrivacyTerms: 'condiciones de uso',
     registerPrivacyBasic:
       'Usamos tu nombre, tu email y tu contraseña solo para crear y gestionar tu cuenta. Debes tener al menos 14 años.',
     serverUnreachable: 'No se pudo contactar al servidor. Inténtalo de nuevo.',

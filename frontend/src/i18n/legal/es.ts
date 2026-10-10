@@ -27,24 +27,24 @@ export const legalEs: LegalTexts = {
         items: [
           'Finalidad: crear y mantener tu cuenta y ofrecerte las funciones de usuario registrado.',
           'Base jurídica: ejecución del contrato de uso del servicio que aceptas al registrarte (art. 6.1.b RGPD).',
-          'Conservación: mientras mantengas la cuenta. Si pides su supresión la borramos; las copias de seguridad pueden conservarla hasta {backupDays} días más.',
+          'Conservación: mientras mantengas la cuenta. Si pides su supresión la borramos; las copias de seguridad pueden conservarla hasta {backupDays} días más y el registro de actividad de acceso conserva el email hasta que se borra, a los {activityDays} días.',
         ],
       },
       {
         heading: 'Sesiones y seguridad del acceso',
         paragraphs: [
-          'Para mantener tu sesión y proteger las cuentas registramos la dirección IP, el navegador (agente de usuario) y la hora de la última actividad de cada sesión, así como los inicios de sesión, los intentos fallidos (con el email introducido, que puede no corresponder a ninguna cuenta), los cierres de sesión y las sesiones cerradas por la administración.',
+          'Para mantener tu sesión y proteger las cuentas registramos la dirección IP, el navegador (agente de usuario) y la hora de la última actividad de cada sesión, así como los inicios de sesión, los intentos fallidos (con el email introducido, que puede no corresponder a ninguna cuenta), los cierres de sesión y las sesiones cerradas por la administración. Los visitantes sin cuenta también tienen una sesión técnica con la dirección IP, el navegador y la última actividad.',
         ],
         items: [
           'Finalidad: mantener la sesión, detectar accesos indebidos o intentos repetidos y permitir que la administración cierre sesiones abiertas. No se usa para publicidad ni para seguir tu navegación.',
           'Base jurídica: interés legítimo en garantizar la seguridad de la red y de la información (art. 6.1.f RGPD).',
-          'Conservación: las sesiones caducan tras {sessionMinutes} minutos de inactividad; el registro de actividad de acceso se borra automáticamente a los {activityDays} días.',
+          'Conservación: las sesiones caducan tras {sessionMinutes} minutos de inactividad y las caducadas se eliminan periódicamente; el registro de actividad de acceso se borra automáticamente a los {activityDays} días.',
         ],
       },
       {
         heading: 'Registros técnicos del servidor',
         paragraphs: [
-          'Al visitar Chartiko, el servidor web registra la dirección IP, la fecha y hora, la página solicitada y el navegador, y la aplicación registra los errores técnicos que se producen.',
+          'Al visitar Chartiko, el servidor web registra la dirección IP, la fecha y hora, la página solicitada, la página de procedencia (referer) y el navegador, y la aplicación registra los errores técnicos que se producen.',
         ],
         items: [
           'Finalidad: hacer funcionar el servicio, diagnosticar errores y protegerlo frente a abusos.',

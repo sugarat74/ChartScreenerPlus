@@ -47,7 +47,7 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
     body = (
       <>
         <p className="text-base leading-7 text-on-surface-variant">{document.intro}</p>
-        {kind === 'cookies' ? <CookieTable rows={texts.cookies.rows} values={values} /> : null}
+        {kind === 'cookies' ? <CookieTable rows={texts.cookies.rows} values={values} label={document.title} /> : null}
         {document.sections.map((section) => (
           <section key={section.heading} className="flex flex-col gap-2">
             <h2 className="font-headline text-xl font-bold">{section.heading}</h2>
@@ -87,10 +87,15 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
   )
 }
 
-function CookieTable({ rows, values }: { rows: CookieRow[]; values: Record<string, ReactNode> }) {
+function CookieTable({ rows, values, label }: { rows: CookieRow[]; values: Record<string, ReactNode>; label: string }) {
   const { t } = useI18n()
   return (
-    <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright">
+    <div
+      role="region"
+      aria-label={label}
+      tabIndex={0}
+      className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright focus:outline-2 focus:outline-offset-2 focus:outline-outline"
+    >
       <table className="w-full min-w-[40rem] text-left text-sm">
         <thead className="border-b-2 border-outline bg-surface-container font-mono text-xs uppercase">
           <tr>

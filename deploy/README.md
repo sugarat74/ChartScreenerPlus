@@ -18,6 +18,9 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    para publicar la privacidad y el aviso legal, `LEGAL_OWNER_NAME`, `LEGAL_OWNER_TAX_ID`,
    `LEGAL_OWNER_ADDRESS` y `LEGAL_CONTACT_EMAIL` (opcional `LEGAL_OWNER_REGISTRY`; ver
    `docs/specs/legal-compliance-eu.md`). Tras cambiarlos: `php artisan config:cache` y recargar PHP-FPM.
+   Antes de publicar la privacidad, borra la SQLite de rollback (`shared/database/database.sqlite`, no antes
+   del 2026-11-05) y las copias `/root/chartiko-pgsql-cutover-*/database.before.sqlite`: contienen datos
+   personales fuera de la retención de copias declarada (14 días).
    Dueño `deploy:www-data`, permisos 640.
 4. GitHub > Settings > Environments > `production`: restringe las ramas de despliegue a `main`.
    Secrets de Actions: `VPS_HOST` (IP), `VPS_SSH_KEY` (clave de deploy) y

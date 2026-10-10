@@ -27,24 +27,24 @@ export const legalEn: LegalTexts = {
         items: [
           'Purpose: to create and maintain your account and provide the features for registered users.',
           'Legal basis: performance of the terms of use you accept when you sign up (Art. 6(1)(b) GDPR).',
-          'Retention: while you keep the account. If you ask us to delete it we do so; backups may keep it for up to {backupDays} more days.',
+          'Retention: while you keep the account. If you ask us to delete it we do so; backups may keep it for up to {backupDays} more days and the sign-in activity log keeps the email until it is deleted after {activityDays} days.',
         ],
       },
       {
         heading: 'Sessions and sign-in security',
         paragraphs: [
-          'To keep you signed in and protect accounts we record the IP address, the browser (user agent) and the time of the last activity of each session, as well as sign-ins, failed attempts (with the email entered, which may not belong to any account), sign-outs and sessions ended by the administration.',
+          'To keep you signed in and protect accounts we record the IP address, the browser (user agent) and the time of the last activity of each session, as well as sign-ins, failed attempts (with the email entered, which may not belong to any account), sign-outs and sessions ended by the administration. Visitors without an account also have a technical session with the IP address, browser and last activity.',
         ],
         items: [
           'Purpose: to keep the session, detect unauthorised access or repeated attempts, and let the administration end open sessions. It is not used for advertising or to track your browsing.',
           'Legal basis: legitimate interest in ensuring network and information security (Art. 6(1)(f) GDPR).',
-          'Retention: sessions expire after {sessionMinutes} minutes of inactivity; the sign-in activity log is deleted automatically after {activityDays} days.',
+          'Retention: sessions expire after {sessionMinutes} minutes of inactivity and expired ones are deleted periodically; the sign-in activity log is deleted automatically after {activityDays} days.',
         ],
       },
       {
         heading: 'Server logs',
         paragraphs: [
-          'When you visit Chartiko, the web server records the IP address, date and time, the page requested and the browser, and the application records any technical errors.',
+          'When you visit Chartiko, the web server records the IP address, date and time, the page requested, the referring page (referer) and the browser, and the application records any technical errors.',
         ],
         items: [
           'Purpose: to run the service, diagnose errors and protect it against abuse.',

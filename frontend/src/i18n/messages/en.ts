@@ -116,8 +116,9 @@ export const en: Messages = {
   },
   auth: {
     registerPrivacy:
-      'Controller: {owner}. Purpose: to create and manage your account. Legal basis: performance of the terms of use. Recipients: no data is shared unless required by law. Rights: access, rectification, erasure and more, as explained in the {policy}.',
+      'Controller: {owner}. Purpose: to create and manage your account. Legal basis: performance of the terms of use. Recipients: no data is shared unless required by law. Rights: access, rectification, erasure and more, as explained in the {policy}. By creating an account you accept the {terms} and confirm you are at least 14 years old.',
     registerPrivacyPolicy: 'privacy policy',
+    registerPrivacyTerms: 'terms of use',
     registerPrivacyBasic:
       'We use your name, email and password only to create and manage your account. You must be at least 14 years old.',
     serverUnreachable: 'Could not reach the server. Please try again.',

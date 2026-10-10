@@ -76,6 +76,9 @@ Decision: **no consent banner**; the cookie policy is informative.
 
 ## Out of scope / findings for the owner
 
+- **Before publishing:** delete the SQLite rollback source (`shared/database/database.sqlite`, kept until at
+  least 2026-11-05) and the cut-over copies `/root/chartiko-pgsql-cutover-*/database.before.sqlite`. They hold
+  users, sessions and sign-in activity outside the stated 14-day backup retention.
 - Self-service account deletion and data export do not exist; rights are handled by email
   (one month). Admin tooling to delete a user is not built.
 - `LOG_STACK=single` in production keeps `laravel.log` with no rotation. Set `LOG_STACK=daily`

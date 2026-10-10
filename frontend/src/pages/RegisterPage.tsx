@@ -8,7 +8,7 @@ import Interpolate from '../i18n/Interpolate.tsx'
 import { useLegalInfo } from '../legal/useLegalInfo.ts'
 import { ApiError } from '../lib/api.ts'
 import type { ValidationErrors } from '../lib/api.ts'
-import { DEFAULT_ROUTE, LOGIN_ROUTE, PRIVACY_ROUTE } from '../nav.ts'
+import { DEFAULT_ROUTE, LEGAL_NOTICE_ROUTE, LOGIN_ROUTE, PRIVACY_ROUTE } from '../nav.ts'
 
 export default function RegisterPage() {
   const { user, register } = useAuth()
@@ -139,6 +139,11 @@ export default function RegisterPage() {
                 policy: (
                   <Link to={PRIVACY_ROUTE} className="font-bold text-on-surface underline">
                     {t('auth.registerPrivacyPolicy')}
+                  </Link>
+                ),
+                terms: (
+                  <Link to={LEGAL_NOTICE_ROUTE} className="font-bold text-on-surface underline">
+                    {t('auth.registerPrivacyTerms')}
                   </Link>
                 ),
               }}

@@ -146,7 +146,9 @@ describe('legal pages once the owner data is configured', () => {
     renderAt('/register')
     const notice = await screen.findByTestId('register-privacy')
     await within(notice).findByRole('link', { name: 'política de privacidad' })
+    expect(within(notice).getByRole('link', { name: 'condiciones de uso' }).getAttribute('href')).toBe('/aviso-legal')
     expect(notice.textContent).toMatch(/Responsable: Owner Test/)
+    expect(notice.textContent).toMatch(/al menos 14 años/)
   })
 
   it('renders the English texts when English is selected', async () => {
