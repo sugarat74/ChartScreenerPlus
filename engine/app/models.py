@@ -81,3 +81,41 @@ class SignalsDetectResponse(BaseModel):
     """The signals that hold on the as-of bar of the submitted series."""
 
     signals: list[Signal]
+
+
+class PatternPoint(BaseModel):
+    """One key point of a chartist pattern (a swing or a pattern extreme)."""
+
+    date: date
+    price: float
+    role: str
+
+
+class Pattern(BaseModel):
+    """A chartist pattern active on the as-of bar.
+
+    ``status`` is ``forming`` (geometry complete, no breakout yet) or
+    ``confirmed`` (breakout close within the last sessions). ``breakout_level``
+    is the single price line the pattern exposes; no target is ever computed.
+    """
+
+    type: str
+    status: str
+    as_of_date: date
+    start_date: date
+    end_date: date
+    breakout_level: float
+    points: list[PatternPoint]
+    metadata: dict[str, float]
+
+
+class PatternsDetectRequest(BaseModel):
+    """Request body for ``POST /patterns/detect``."""
+
+    bars: list[Bar]
+
+
+class PatternsDetectResponse(BaseModel):
+    """The patterns active on the as-of bar of the submitted series."""
+
+    patterns: list[Pattern]
