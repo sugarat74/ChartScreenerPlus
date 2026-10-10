@@ -74,10 +74,6 @@ export default function LandingPage() {
           {t('landing.exploreScreener')}
         </Link>
       </section>
-
-      <p className="border-t border-outline-variant pt-5 text-xs leading-5 text-on-surface-variant">
-        {t('landing.disclaimer')}
-      </p>
     </article>
   )
 }

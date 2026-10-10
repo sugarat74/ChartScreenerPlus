@@ -32,6 +32,11 @@ export const DEFAULT_ROUTE: string = NAV_ITEMS[0].path
 export const LOGIN_ROUTE = '/login'
 export const REGISTER_ROUTE = '/register'
 
+/** Public legal pages (docs/specs/legal-compliance-eu.md), linked from the footer. */
+export const PRIVACY_ROUTE = '/privacidad'
+export const LEGAL_NOTICE_ROUTE = '/aviso-legal'
+export const COOKIES_ROUTE = '/cookies'
+
 /**
  * react-router nested routes must be relative; `NAV_ITEMS`/auth routes store
  * absolute paths for links. Strip the leading slash when declaring a child.

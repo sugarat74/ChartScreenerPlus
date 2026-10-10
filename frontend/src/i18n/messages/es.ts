@@ -54,8 +54,36 @@ export const es = {
     instrumentTitle: 'Gráfico de {ticker} | Chartiko',
     instrumentDescription:
       'Consulta el gráfico, los indicadores y las Signals disponibles para {ticker} en Chartiko.',
+    privacyTitle: 'Política de privacidad | Chartiko',
+    privacyDescription: 'Qué datos personales trata Chartiko, para qué y cómo ejercer tus derechos.',
+    legalNoticeTitle: 'Aviso legal y condiciones de uso | Chartiko',
+    legalNoticeDescription: 'Titular de Chartiko, condiciones de uso y aviso sobre la información de inversión.',
+    cookiesTitle: 'Política de cookies | Chartiko',
+    cookiesDescription: 'Cookies y almacenamiento local que usa Chartiko.',
     notFoundTitle: 'Página no encontrada | Chartiko',
     notFoundDescription: 'No se encontró esta página de Chartiko.',
+  },
+  footer: {
+    disclaimer:
+      'Chartiko ofrece información técnica con fines informativos y educativos. No es asesoramiento de inversión ni una recomendación personalizada; invertir conlleva riesgo de pérdida.',
+    navAria: 'Información legal',
+    privacy: 'Privacidad',
+    legalNotice: 'Aviso legal',
+    cookies: 'Cookies',
+  },
+  legal: {
+    updated: 'Última actualización: {date}',
+    pendingTitle: 'Página en preparación',
+    pendingBody: 'Esta página se publicará en cuanto el titular complete sus datos identificativos.',
+    loadError: 'No se pudo cargar la información legal. Inténtalo de nuevo más tarde.',
+    registry: 'Datos registrales: {registry}',
+    cookiesLink: 'política de cookies',
+    privacyLink: 'política de privacidad',
+    columnName: 'Nombre',
+    columnType: 'Tipo',
+    columnPurpose: 'Finalidad',
+    columnDuration: 'Duración',
+    columnCategory: 'Categoría',
   },
   landing: {
     eyebrow: 'Análisis técnico de acciones',
@@ -88,10 +116,13 @@ export const es = {
     faqRealtimeQ: '¿Chartiko ofrece datos en tiempo real?',
     faqRealtimeA: 'No. Chartiko analiza datos diarios y no ofrece cotizaciones intradía.',
     exploreScreener: 'Explorar el Screener',
-    disclaimer:
-      'Chartiko es una herramienta de análisis técnico. La información presentada tiene fines informativos y no constituye asesoramiento financiero.',
   },
   auth: {
+    registerPrivacy:
+      'Responsable: {owner}. Finalidad: crear y gestionar tu cuenta. Base jurídica: ejecución del contrato. Destinatarios: no se ceden datos salvo obligación legal. Derechos: acceso, rectificación, supresión y otros, como explica la {policy}.',
+    registerPrivacyPolicy: 'política de privacidad',
+    registerPrivacyBasic:
+      'Usamos tu nombre, tu email y tu contraseña solo para crear y gestionar tu cuenta. Debes tener al menos 14 años.',
     serverUnreachable: 'No se pudo contactar al servidor. Inténtalo de nuevo.',
     email: 'Email',
     password: 'Contraseña',

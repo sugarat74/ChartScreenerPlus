@@ -49,8 +49,11 @@ de uso del servicio (art. 6.1.b RGPD). *Pendiente de confirmar por el profesiona
 
 - Acceso limitado a cuentas con rol de administrador.
 - Encargado de tratamiento: proveedor de alojamiento del VPS (OVH). *Pendiente: verificar contrato
-  de encargo y ubicación de los datos.*
-- No hay cesiones a terceros ni transferencias internacionales previstas.
+  de encargo (DPA).*
+- No hay cesiones a terceros.
+- Transferencia internacional: el VPS está en Canadá (OVH Beauharnois, Quebec; comprobado el
+  2026-10-10). Se apoya en la decisión de adecuación de la UE para Canadá (2002/2/CE); confirmar en
+  la revisión jurídica junto con el DPA de OVH.
 
 ## Derechos
 
@@ -67,6 +70,7 @@ Acceso, rectificación, supresión, oposición, limitación y portabilidad media
 ## Pendiente antes de publicar
 
 1. Datos identificativos del responsable.
-2. Publicar un aviso de privacidad en la web que incluya este tratamiento (ahora no existe ninguna
-   página de privacidad; ver `docs/risks-and-open-questions.md`).
+2. La política de privacidad de la web (`/privacidad`, feature `legal-compliance-eu`) ya incluye este
+   tratamiento; se publica automáticamente al configurar los datos del punto 1 en producción
+   (`docs/specs/legal-compliance-eu.md`).
 3. Revisión por un profesional de la base jurídica y del texto final.

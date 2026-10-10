@@ -167,6 +167,7 @@ class AuthTest extends TestCase
 
         for ($i = 0; $i < 7; $i++) {
             $this->assertNotSame(429, $this->getJson('/api/screener?limit=1')->getStatusCode());
+            $this->getJson('/api/legal')->assertOk();
         }
 
         $this->postJson('/api/login', ['email' => 'browser@example.com', 'password' => 'Password123!'])

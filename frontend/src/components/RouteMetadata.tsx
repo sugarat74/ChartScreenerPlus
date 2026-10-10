@@ -10,6 +10,9 @@ const ROUTE_METADATA: Record<string, { title: MessageKey; description: MessageKe
   '/admin': { title: 'meta.adminTitle', description: 'meta.adminDescription' },
   '/login': { title: 'meta.loginTitle', description: 'meta.loginDescription' },
   '/register': { title: 'meta.registerTitle', description: 'meta.registerDescription' },
+  '/privacidad': { title: 'meta.privacyTitle', description: 'meta.privacyDescription' },
+  '/aviso-legal': { title: 'meta.legalNoticeTitle', description: 'meta.legalNoticeDescription' },
+  '/cookies': { title: 'meta.cookiesTitle', description: 'meta.cookiesDescription' },
 }
 
 /**

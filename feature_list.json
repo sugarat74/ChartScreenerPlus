@@ -939,5 +939,29 @@
       "2026-10-09 independent validation accept: schema, UI metadata, local links and architecture plan checked against current code and official React Native, Expo, Laravel and TradingView sources; init.ps1 exit 0. No Android/iOS app or native build was validated."
     ],
     "notes": "Source: .opencode/skills/web-to-mobile/SKILL.md; installed under the personal Codex skills directory. Project study: docs/mobile/architecture-plan.md. Independently accepted as planning/tooling on 2026-10-09. Recommends React Native + Expo, one Git repository with frontend/mobile/pure packages, shared Laravel API and private engine, with workspaces as a separate proposed migration. Mobile remains unimplemented; proposed assumptions (Admin web-only, token expiry, compatibility window) and chart/iOS/signing dependencies are recorded."
+  },
+  {
+    "id": "legal-compliance-eu",
+    "area": "legal",
+    "title": "Public legal pages: privacy policy, legal notice/terms and cookie policy",
+    "user_visible_behavior": "Every page shows a footer with the investment-information disclaimer and legal links. Visitors can read a cookie policy listing the real storage, and, once the owner's identity is configured, a privacy policy and a legal notice/terms of use in Spanish and English; the registration form shows a first-layer privacy notice. Until the owner data exists the privacy policy and legal notice show a 'being prepared' notice instead of placeholders.",
+    "depends_on": [
+      "admin-users-sessions",
+      "app-multilanguage"
+    ],
+    "status": "passing",
+    "verification": [
+      "Texts match the verified processing and terminal-storage inventory in docs/specs/legal-compliance-eu.md (no invented or omitted processing, no consent banner because nothing non-exempt is stored, VPS location and transfer stated)",
+      "Owner identity is never invented: GET /api/legal returns published=false and no owner data until name, tax ID, address and email are configured; privacy and legal notice pages and their footer/registration links are withheld while unpublished",
+      "Retention figures in the texts come from configuration (sign-in activity, session lifetime, backups, logs)",
+      "Footer disclaimer on every page; cookie policy always published; registration first layer links the policy only when published",
+      "es/en texts, accessible at 390 px without horizontal overflow; .\\init.ps1 passes; real-browser check of both states"
+    ],
+    "evidence": [
+      "2026-10-10: inventory checked read-only: cookies XSRF-TOKEN and alphapulse-session (Secure, SameSite=Lax, Max-Age 7200) from production headers; only localStorage key chartiko.locale; no third-party requests on first load (Playwright, production and local); nginx logrotate daily x14; backups 14 days; VPS geolocated to OVH Beauharnois, Canada.",
+      "Tests: LegalInfoTest 5 tests / 51 assertions (unpublished, any missing field leaks nothing, published, retention from config, public without cookies); frontend LegalPage.test.tsx 8 tests (footer links, gate without placeholders, cookie table durations, register first layer, published owner/mailto/retention, legal-notice disclaimer, English). .\\init.ps1 exit 0: Laravel 222 passed / 6 skipped (2061 assertions), frontend 52 tests + lint + build (160 modules), engine 47 passed.",
+      "Real browser (Edge via Playwright) on the local stack: unpublished state shows 'Página en preparación' and only the Cookies footer link; with fake owner data on the dev server process, es/en privacy, legal notice and register show the owner, no unresolved {placeholders}, footer links Privacy/Legal notice/Cookies, 0 px overflow at 390 px. Full local QA suite 43/43."
+    ],
+    "notes": "Implemented with the web-legal-compliance-eu skill (closing state: implemented locally, publication blocked by owner data). Before publishing in production: set LEGAL_OWNER_NAME, LEGAL_OWNER_TAX_ID, LEGAL_OWNER_ADDRESS, LEGAL_CONTACT_EMAIL (optional LEGAL_OWNER_REGISTRY), set LOG_STACK=daily and LOG_DAILY_DAYS=14, config:cache and reload PHP-FPM. Needs a professional review (legal basis for sign-in activity, transfer to Canada and OVH DPA, minimum age 14, terms). No self-service account deletion/export: rights by email. Landing-only disclaimer replaced by the global footer disclaimer. Not deployed."
   }
 ]

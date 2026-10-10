@@ -7,13 +7,21 @@ import AdminSessionsPage from './pages/admin/AdminSessionsPage.tsx'
 import AdminUserDetailPage from './pages/admin/AdminUserDetailPage.tsx'
 import AdminUsersPage from './pages/admin/AdminUsersPage.tsx'
 import LandingPage from './pages/LandingPage.tsx'
+import LegalPage from './pages/LegalPage.tsx'
 import InstrumentChartPage from './pages/InstrumentChartPage.tsx'
 import LoginPage from './pages/LoginPage.tsx'
 import NotFoundPage from './pages/NotFoundPage.tsx'
 import PortalPage from './pages/PortalPage.tsx'
 import RegisterPage from './pages/RegisterPage.tsx'
 import ScreenerPage from './pages/ScreenerPage.tsx'
-import { LOGIN_ROUTE, REGISTER_ROUTE, routeSegment } from './nav.ts'
+import {
+  COOKIES_ROUTE,
+  LEGAL_NOTICE_ROUTE,
+  LOGIN_ROUTE,
+  PRIVACY_ROUTE,
+  REGISTER_ROUTE,
+  routeSegment,
+} from './nav.ts'
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +48,9 @@ export const router = createBrowserRouter([
       { path: 'portal', element: <PortalPage /> },
       { path: routeSegment(LOGIN_ROUTE), element: <LoginPage /> },
       { path: routeSegment(REGISTER_ROUTE), element: <RegisterPage /> },
+      { path: routeSegment(PRIVACY_ROUTE), element: <LegalPage kind="privacy" /> },
+      { path: routeSegment(LEGAL_NOTICE_ROUTE), element: <LegalPage kind="notice" /> },
+      { path: routeSegment(COOKIES_ROUTE), element: <LegalPage kind="cookies" /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\InstrumentController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\SavedScreenerController;
 use App\Http\Controllers\ScreenerController;
 use App\Http\Controllers\WatchlistController;
@@ -28,6 +29,10 @@ Route::get('/instruments/{ticker}', [InstrumentController::class, 'show']);
 // bad semantic filter/sort values are a `422` and an unknown universe is a JSON
 // `404` (`CONSTRAINTS.md` -> Public API).
 Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throttle:60,1,screener');
+
+// Public facts for the legal pages (owner identity once configured, retention
+// figures). Anonymous and throttled; see docs/specs/legal-compliance-eu.md.
+Route::get('/legal', [LegalController::class, 'show'])->middleware('throttle:60,1,legal');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);

@@ -609,3 +609,34 @@ export const watchlistApi = {
     await request<void>(`/api/watchlist/${encodeURIComponent(ticker)}`, { method: 'DELETE' })
   },
 }
+
+/** Owner identity shown on the legal pages (every field configured by the owner). */
+export type LegalOwner = {
+  name: string
+  tax_id: string
+  address: string
+  email: string
+  registry: string | null
+}
+
+/**
+ * `GET /api/legal` (public). `owner` is null and `published` false until the
+ * owner's identity is configured (`docs/specs/legal-compliance-eu.md`).
+ */
+export type LegalInfo = {
+  published: boolean
+  owner: LegalOwner | null
+  updated_at: string
+  retention: {
+    sign_in_activity_days: number
+    session_minutes: number
+    backup_days: number
+    server_log_days: number
+  }
+}
+
+export const legalApi = {
+  async info(): Promise<LegalInfo> {
+    return request<LegalInfo>('/api/legal')
+  },
+}

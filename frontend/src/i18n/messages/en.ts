@@ -51,8 +51,36 @@ export const en: Messages = {
     instrumentTitle: '{ticker} chart | Chartiko',
     instrumentDescription:
       'View the chart, indicators and Signals available for {ticker} in Chartiko.',
+    privacyTitle: 'Privacy policy | Chartiko',
+    privacyDescription: 'Which personal data Chartiko processes, why, and how to exercise your rights.',
+    legalNoticeTitle: 'Legal notice and terms of use | Chartiko',
+    legalNoticeDescription: 'Owner of Chartiko, terms of use and the notice about investment information.',
+    cookiesTitle: 'Cookie policy | Chartiko',
+    cookiesDescription: 'Cookies and local storage used by Chartiko.',
     notFoundTitle: 'Page not found | Chartiko',
     notFoundDescription: 'This Chartiko page could not be found.',
+  },
+  footer: {
+    disclaimer:
+      'Chartiko provides technical information for information and educational purposes only. It is not investment advice or a personal recommendation; investing involves the risk of loss.',
+    navAria: 'Legal information',
+    privacy: 'Privacy',
+    legalNotice: 'Legal notice',
+    cookies: 'Cookies',
+  },
+  legal: {
+    updated: 'Last updated: {date}',
+    pendingTitle: 'Page being prepared',
+    pendingBody: 'This page will be published as soon as the owner completes their identifying details.',
+    loadError: 'The legal information could not be loaded. Please try again later.',
+    registry: 'Registry details: {registry}',
+    cookiesLink: 'cookie policy',
+    privacyLink: 'privacy policy',
+    columnName: 'Name',
+    columnType: 'Type',
+    columnPurpose: 'Purpose',
+    columnDuration: 'Duration',
+    columnCategory: 'Category',
   },
   landing: {
     eyebrow: 'Technical stock analysis',
@@ -85,10 +113,13 @@ export const en: Messages = {
     faqRealtimeQ: 'Does Chartiko offer real-time data?',
     faqRealtimeA: 'No. Chartiko analyses daily data and does not offer intraday quotes.',
     exploreScreener: 'Explore the Screener',
-    disclaimer:
-      'Chartiko is a technical analysis tool. The information shown is for informational purposes only and does not constitute financial advice.',
   },
   auth: {
+    registerPrivacy:
+      'Controller: {owner}. Purpose: to create and manage your account. Legal basis: performance of the terms of use. Recipients: no data is shared unless required by law. Rights: access, rectification, erasure and more, as explained in the {policy}.',
+    registerPrivacyPolicy: 'privacy policy',
+    registerPrivacyBasic:
+      'We use your name, email and password only to create and manage your account. You must be at least 14 years old.',
     serverUnreachable: 'Could not reach the server. Please try again.',
     email: 'Email',
     password: 'Password',

@@ -13,7 +13,11 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    el bloque PostgreSQL de `.env.example` (`DB_CONNECTION=pgsql`, `DB_HOST=127.0.0.1`,
    `DB_PORT=6432`, `DB_DIRECT_PORT=5432`, `DB_DATABASE=chartiko`, `DB_USERNAME=chartiko`,
    `DB_PASSWORD` = la contraseña dada a `postgresql-add-project.sh`; ver más abajo),
-   `SANCTUM_STATEFUL_DOMAINS=www.chartiko.com`, `SESSION_SECURE_COOKIE=true`.
+   `SANCTUM_STATEFUL_DOMAINS=www.chartiko.com`, `SESSION_SECURE_COOKIE=true`,
+   `LOG_STACK=daily` + `LOG_DAILY_DAYS=14` (la política de privacidad declara 14 días de logs) y,
+   para publicar la privacidad y el aviso legal, `LEGAL_OWNER_NAME`, `LEGAL_OWNER_TAX_ID`,
+   `LEGAL_OWNER_ADDRESS` y `LEGAL_CONTACT_EMAIL` (opcional `LEGAL_OWNER_REGISTRY`; ver
+   `docs/specs/legal-compliance-eu.md`). Tras cambiarlos: `php artisan config:cache` y recargar PHP-FPM.
    Dueño `deploy:www-data`, permisos 640.
 4. GitHub > Settings > Environments > `production`: restringe las ramas de despliegue a `main`.
    Secrets de Actions: `VPS_HOST` (IP), `VPS_SSH_KEY` (clave de deploy) y

@@ -4,14 +4,19 @@ import { Link, Navigate, useNavigate } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import AuthField from '../components/AuthField.tsx'
+import Interpolate from '../i18n/Interpolate.tsx'
+import { useLegalInfo } from '../legal/useLegalInfo.ts'
 import { ApiError } from '../lib/api.ts'
 import type { ValidationErrors } from '../lib/api.ts'
-import { DEFAULT_ROUTE, LOGIN_ROUTE } from '../nav.ts'
+import { DEFAULT_ROUTE, LOGIN_ROUTE, PRIVACY_ROUTE } from '../nav.ts'
 
 export default function RegisterPage() {
   const { user, register } = useAuth()
   const navigate = useNavigate()
   const { t } = useI18n()
+  // First-layer privacy notice (LOPDGDD art. 11); the full policy is linked
+  // only once published (docs/specs/legal-compliance-eu.md).
+  const legal = useLegalInfo()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -124,6 +129,24 @@ export default function RegisterPage() {
         >
           {submitting ? t('auth.registerSubmitting') : t('auth.registerSubmit')}
         </button>
+
+        <p data-testid="register-privacy" className="text-xs leading-5 text-on-surface-variant">
+          {legal.status === 'ready' && legal.info.owner ? (
+            <Interpolate
+              template={t('auth.registerPrivacy')}
+              values={{
+                owner: legal.info.owner.name,
+                policy: (
+                  <Link to={PRIVACY_ROUTE} className="font-bold text-on-surface underline">
+                    {t('auth.registerPrivacyPolicy')}
+                  </Link>
+                ),
+              }}
+            />
+          ) : (
+            t('auth.registerPrivacyBasic')
+          )}
+        </p>
       </form>
 
       <p className="text-sm text-on-surface-variant">
