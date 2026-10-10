@@ -676,6 +676,7 @@ export type LegalInfo = {
     session_minutes: number
     backup_days: number
     server_log_days: number
+    notification_days: number
   }
 }
 

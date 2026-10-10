@@ -58,6 +58,9 @@ class CopySqliteToPgsql extends Command
         'login_events',
         // Derived, replaced by every `patterns:detect`; postdates the cut-over.
         'chart_patterns',
+        // Alerts and their notifications postdate the one-time SQLite cut-over.
+        'alerts',
+        'notifications',
     ];
 
     private const CHUNK = 500;

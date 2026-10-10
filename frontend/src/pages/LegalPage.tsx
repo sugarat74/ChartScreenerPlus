@@ -141,6 +141,7 @@ function placeholderValues(info: LegalInfo, cookiesLabel: string, privacyLabel: 
     sessionMinutes: info.retention.session_minutes,
     backupDays: info.retention.backup_days,
     logDays: info.retention.server_log_days,
+    notificationDays: info.retention.notification_days,
     cookiesLink: (
       <Link to={COOKIES_ROUTE} className={LINK_CLASS}>
         {cookiesLabel}

@@ -92,4 +92,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(SavedScreener::class);
     }
+
+    /**
+     * The Alert rules this account owns. Every alert query starts here, so an
+     * id from another account is simply not found (404).
+     *
+     * @return HasMany<Alert, $this>
+     */
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(Alert::class);
+    }
 }

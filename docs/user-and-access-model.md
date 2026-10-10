@@ -36,6 +36,8 @@
 - Registered Users never own or edit Instruments, Daily Bars, Snapshots, Signals or Ingestion Runs; those are system/Admin-owned.
 - Admin actions are global (affect all users' Candidates on the next run).
 
+- **Alerts and notifications (implemented by `alerts-engine`):** `alerts` rows are owned by `user_id` (not fillable; created through `$request->user()->alerts()`), notifications by their notifiable user. `GET/POST /api/alerts`, `PATCH/DELETE /api/alerts/{id}`, `GET /api/notifications`, `POST /api/notifications/read` are `auth:sanctum` and always scoped to the caller: a foreign alert id is a `404`, foreign notification ids are ignored. Admins have no access to other users' alerts or notifications.
+
 ## Access Rules
 
 - Browsing requires no session.

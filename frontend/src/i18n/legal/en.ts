@@ -31,6 +31,17 @@ export const legalEn: LegalTexts = {
         ],
       },
       {
+        heading: 'Alerts and notifications',
+        paragraphs: [
+          'If you create alerts we store their settings (the Saved Screener or the signal types you choose for your Watchlist) and, after each daily data update, the notifications listing the instruments that triggered them.',
+        ],
+        items: [
+          'Purpose: to let you know inside Chartiko about the changes you asked to follow.',
+          'Legal basis: performance of the terms of use of the service (Art. 6(1)(b) GDPR).',
+          'Retention: alerts while you keep them; notifications are deleted automatically after {notificationDays} days.',
+        ],
+      },
+      {
         heading: 'Sessions and sign-in security',
         paragraphs: [
           'To keep you signed in and protect accounts we record the IP address, the browser (user agent) and the time of the last activity of each session, as well as sign-ins, failed attempts (with the email entered, which may not belong to any account), sign-outs and sessions ended by the administration. Visitors without an account also have a technical session with the IP address, browser and last activity.',
@@ -73,7 +84,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'What we do not do',
         paragraphs: [
-          'We use no analytics, advertising or social media tools, send no marketing communications, and do no profiling or automated decision-making that affects you. The market data Chartiko shows is fetched by the server and involves no visitor data.',
+          'We use no analytics, advertising or social media tools, send no marketing communications or alert emails, and do no profiling or automated decision-making that affects you. The market data Chartiko shows is fetched by the server and involves no visitor data.',
         ],
       },
       {

@@ -7,11 +7,13 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Run the full EOD pipeline in order: ingestion -> indicators -> signals -> patterns.
+ * Run the full EOD pipeline in order: ingestion -> indicators -> signals -> patterns
+ * -> alerts.
  *
  * This is a thin composition wrapper: it never reimplements any stage and
- * delegates to the `ingestion:run`, `indicators:compute`, `signals:detect` and
- * `patterns:detect` commands via `$this->call()`, so each stage keeps its own
+ * delegates to the `ingestion:run`, `indicators:compute`, `signals:detect`,
+ * `patterns:detect` and `alerts:evaluate` commands via `$this->call()`, so each
+ * stage keeps its own
  * behavior and ledger.
  *
  * Guards:
@@ -23,7 +25,8 @@ use Illuminate\Support\Facades\Cache;
  *
  * Failure policy: if ingestion fails (a `failed` run), later stages are skipped.
  * If a later stage fails, the remaining stages are still attempted and the command
- * exits `1` so the scheduler records the failure.
+ * exits `1` so the scheduler records the failure. Alerts run last and only when
+ * signals succeeded, so users are never notified from a partial signal set.
  */
 class RunIngestionPipeline extends Command
 {
@@ -77,8 +80,13 @@ class RunIngestionPipeline extends Command
             $indicators = $this->call('indicators:compute', ['--universe' => $universe]);
             $signals = $this->call('signals:detect', ['--universe' => $universe]);
             $patterns = $this->call('patterns:detect', ['--universe' => $universe]);
+            $alerts = $signals === self::SUCCESS ? $this->call('alerts:evaluate') : self::FAILURE;
 
-            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS) {
+            if ($signals !== self::SUCCESS) {
+                $this->warn('Alerts were not evaluated because signal detection failed.');
+            }
+
+            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS || $alerts !== self::SUCCESS) {
                 $this->error('EOD pipeline finished with errors.');
 
                 return self::FAILURE;

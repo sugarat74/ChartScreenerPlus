@@ -4,9 +4,11 @@ use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\IngestionRunController;
 use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\InstrumentController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SavedScreenerController;
 use App\Http\Controllers\ScreenerController;
 use App\Http\Controllers\WatchlistController;
@@ -47,6 +49,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Saved Screeners: user-owned named screener definitions. Every query is
     // scoped to `$request->user()->savedScreeners()`; no endpoint accepts a
     // `user_id`. `/screeners` does not collide with the public `/screener`.
+    // Alerts and their in-app notifications (alerts-engine): scoped to the
+    // authenticated user like Saved Screeners; foreign ids are a 404.
+    Route::get('/alerts', [AlertController::class, 'index']);
+    Route::post('/alerts', [AlertController::class, 'store']);
+    Route::patch('/alerts/{alert}', [AlertController::class, 'update']);
+    Route::delete('/alerts/{alert}', [AlertController::class, 'destroy']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/read', [NotificationController::class, 'markRead']);
+
     Route::get('/screeners', [SavedScreenerController::class, 'index']);
     Route::post('/screeners', [SavedScreenerController::class, 'store']);
     Route::delete('/screeners/{screener}', [SavedScreenerController::class, 'destroy']);

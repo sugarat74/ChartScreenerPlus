@@ -29,6 +29,7 @@ class LegalController extends Controller
                 'session_minutes' => (int) config('session.lifetime'),
                 'backup_days' => (int) config('legal.backup_retention_days'),
                 'server_log_days' => (int) config('legal.server_log_retention_days'),
+                'notification_days' => (int) config('alerts.notification_retention_days'),
             ],
         ]);
     }

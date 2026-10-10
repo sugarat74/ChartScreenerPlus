@@ -5,7 +5,7 @@
 - `id`: `alerts-engine`
 - `area`: `backend`
 - `depends_on`: `saved-screeners`, `watchlist`, `signals-detect`, `ingestion-scheduler`, `app-multilanguage`
-- `status`: `not_started` (planned 2026-10-10 at the user's explicit request; "automatic alerts/notifications" were out of MVP scope in `AGENTS.md`)
+- `status`: implemented 2026-10-10 (planned the same day at the user's explicit request)
 - `source`: `feature_list.json`
 
 ## Goal
@@ -140,3 +140,13 @@ If one Alert throws during evaluation, others still evaluate; the command report
 - [ ] Two kinds only; baseline, diff, once-per-as-of semantics proven; failures isolated.
 - [ ] Ownership 404, limits 422, visitor 401; screener API unchanged.
 - [ ] Pipeline stage gated on signals success; pruning scheduled; legal texts and docs updated; `init.ps1` exit 0.
+
+## Implementation Findings
+
+1. **As-of date** is the latest stored Daily Bar date across all instruments (`max(daily_bars.date)`), so both alert kinds advance together after each pipeline run.
+2. **Duplicates.** One `screener_new_candidates` alert per Saved Screener (unique `(user_id, saved_screener_id)`) and one `watchlist_signal` alert per user; a second one is a localized `422` (`messages.alerts.duplicate`). `saved_screener_id` is prohibited for Watchlist alerts and `signal_types` for Screener alerts.
+3. **Baseline resets.** Re-activating a paused alert or changing its signal types clears `last_state`/`last_evaluated_as_of`, so the next run records a new baseline instead of notifying everything that changed meanwhile.
+4. **Watchlist state** uses each followed Instrument's current signal set (signals are replaced per run), filtered to the chosen types; a type that persists does not notify again.
+5. **Notifications API** returns only `AlertTriggered` notifications; `mark read` ignores ids that are not the caller's (no error, nothing changes).
+6. **Privacy.** The privacy policy (es/en) now lists alerts and notifications with a configurable retention (`retention.notification_days` from `GET /api/legal`).
+7. **Copy command.** `alerts` and `notifications` are classified as skipped tables in `db:copy-sqlite-to-pgsql` (they postdate the cut-over).

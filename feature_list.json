@@ -1030,7 +1030,7 @@
       "ingestion-scheduler",
       "app-multilanguage"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Two alert kinds; first evaluation stores a baseline without notifying; later evaluations notify only additions; once per as-of; failures isolated",
       "Screener candidate logic extracted to a service with /api/screener behaviour unchanged",
@@ -1038,7 +1038,11 @@
       "ingestion:pipeline runs alerts:evaluate last when signals succeeded; notifications pruned after 90 days; privacy texts updated",
       ".\\init.ps1 and CI (SQLite + PostgreSQL) pass"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-10: CandidateQuery extracted from ScreenerController with no behaviour change (ScreenerApiTest + ChartPatternsApiTest 27 tests incl. the constant-query-count guard). AlertEvaluationTest 9 tests (screener baseline then only new candidates, once per as-of, watchlist signal appears vs persists, paused/owner isolation, 50-item cap with `more`, failing alert isolated with exit 1, no data, FK cascade from Saved Screener, 90-day pruning). AlertsApiTest 6 tests (401 on every route, both kinds, ownership 404, validation/duplicate/limit 422 localized es/en, baseline reset on re-activation/type change, notifications pagination, unread_count, mark read scoped). Pipeline: alerts run last and are skipped when signals fail. LegalInfoTest/LegalPage tests include notification retention.",
+      "Local smoke on the dev DB (494 instruments, as-of 2026-10-02): two QA alerts -> first run 2 baseline in 1.2 s, second run 2 already evaluated, no notifications.",
+      ".\\init.ps1 exit 0: Laravel 254 passed / 6 skipped (2314 assertions), frontend 62 tests + lint + build, engine 67 passed."
+    ],
     "notes": "Planned 2026-10-10 at user request ('automatic alerts/notifications' were outside the MVP). Spec: docs/specs/alerts-engine.md. Pattern alerts are a later extension once chart-patterns-detect is accepted."
   },
   {

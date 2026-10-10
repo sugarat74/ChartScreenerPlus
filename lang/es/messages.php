@@ -42,6 +42,11 @@ return [
         'run_without_failures' => 'Esta ejecución no tiene instrumentos fallidos que reintentar.',
     ],
 
+    'alerts' => [
+        'limit' => 'Puedes tener como máximo :max alertas.',
+        'duplicate' => 'Ya tienes esta alerta.',
+        'not_found' => 'Alerta no encontrada.',
+    ],
     'screener' => [
         'signal_unknown_types' => 'El parámetro signal solo puede contener tipos de señal conocidos.',
         'signal_invalid' => 'El tipo de señal seleccionado no es válido.',

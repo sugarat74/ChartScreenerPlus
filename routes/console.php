@@ -49,11 +49,18 @@ Schedule::command('ingestion:pipeline', ['--universe' => config('ingestion.unive
 |--------------------------------------------------------------------------
 |
 | Sign-in activity (email, IP, user agent) older than
-| config('admin.activity_retention_days') (90) is deleted daily.
+| config('admin.activity_retention_days') (90) is deleted daily, and so are
+| in-app alert notifications older than
+| config('alerts.notification_retention_days') (90).
 |
 */
 
 Schedule::command('model:prune', ['--model' => [LoginEvent::class]])
     ->name('prune-login-events')
     ->dailyAt('03:15')
+    ->withoutOverlapping();
+
+Schedule::command('notifications:prune')
+    ->name('prune-notifications')
+    ->dailyAt('03:20')
     ->withoutOverlapping();
