@@ -56,7 +56,9 @@ Read only when relevant:
 
 In scope: EOD ingestion of the S&P 500, Indicator Snapshots, deterministic Signals, Screener with multi-criteria filters, ranked Candidate list, interactive chart, Saved Screeners and Watchlist for Registered Users, Admin panel for ingestion.
 
-Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, fundamentals/news, automatic alerts/notifications, non-US markets, native apps, AI Copilot, paid plans. Geometric chartist patterns (Cup & Handle, Double Top, flags) are the product's ambition but **later than MVP Signal work**.
+Also in scope since 2026-10-10 (explicit user decision), as specified in `docs/specs/`: geometric Chartist Patterns detected by deterministic rules (`chart-patterns-detect`, `chart-patterns-ui`; initial parameters are to be calibrated later, never targets or advice) and Alerts with in-app notifications and an opt-in email digest (`alerts-engine`, `alerts-ui`, `alerts-email-digest`; evaluated once per daily run, never real-time). Alerts on chartist patterns come later, after patterns are accepted.
+
+Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, fundamentals/news, real-time or push/SMS notifications, non-US markets, native apps, AI Copilot, paid plans.
 
 ## Startup Workflow
 

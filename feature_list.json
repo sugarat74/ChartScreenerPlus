@@ -965,5 +965,111 @@
       "2026-10-10 independent validation round 2: accept. M1, M2, L1, L2, L4 and L6 verified fixed with file:line evidence; gate, es/en parity, footer/register/cookie behaviour and accessibility re-checked; Laravel 21 tests (Legal+Auth), frontend 52 tests, lint and build pass; Edge browser check es/en at 1280 and 390 px (published state, keyboard-scrollable cookie table, no third-party requests). Non-blocking notes: L4 sentence names only the email (rows also keep IP/UA until pruning); terms acceptance is a notice without checkbox (legal review)."
     ],
     "notes": "Implemented with the web-legal-compliance-eu skill (closing state: implemented locally, publication blocked by owner data). Before publishing in production: set LEGAL_OWNER_NAME, LEGAL_OWNER_TAX_ID, LEGAL_OWNER_ADDRESS, LEGAL_CONTACT_EMAIL (optional LEGAL_OWNER_REGISTRY), set LOG_STACK=daily and LOG_DAILY_DAYS=14, delete the SQLite rollback source (not before 2026-11-05) and the /root/chartiko-pgsql-cutover-*/database.before.sqlite copies, config:cache and reload PHP-FPM. Needs a professional review (legal basis for sign-in activity, transfer to Canada and OVH DPA, minimum age 14, terms). No self-service account deletion/export: rights by email. Landing-only disclaimer replaced by the global footer disclaimer. Not deployed."
+  },
+  {
+    "id": "chart-patterns-detect",
+    "area": "engine",
+    "title": "Detect chartist patterns (double top/bottom, cup with handle, bull flag)",
+    "user_visible_behavior": "After each daily pipeline run, every Instrument carries its current active Chartist Patterns (double_top, double_bottom, cup_with_handle, bull_flag) with status forming or confirmed, key points and one breakout level, detected by explicit deterministic rules. No UI in this slice.",
+    "depends_on": [
+      "signals-detect",
+      "ingestion-scheduler"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Engine detects the four types with the parameter table in docs/specs/chart-patterns-detect.md; positive, near-miss and invalidation tests per type; swings never look ahead",
+      "POST /patterns/detect returns patterns for the as-of bar; malformed input is 422; no new Python dependencies",
+      "patterns:detect replaces each instrument's set (fetch before delete, transaction), is idempotent and failure-safe; unique (instrument_id, as_of_date, type)",
+      "ingestion:pipeline runs patterns:detect after signals:detect",
+      "No targets, stops or probabilities stored; docs updated; .\\init.ps1 and CI (SQLite + PostgreSQL) pass"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-10 at user request (chartist patterns were 'later than MVP Signal work'). Spec: docs/specs/chart-patterns-detect.md. Parameters are initial and explicit; calibration needs a later spec."
+  },
+  {
+    "id": "chart-patterns-ui",
+    "area": "frontend",
+    "title": "Show chartist patterns in the Screener and on the chart",
+    "user_visible_behavior": "Visitors and Registered Users can filter Candidates by pattern type and status, see pattern badges, save the pattern filter in a Saved Screener, and see each active pattern on the Instrument chart as key-point markers plus one breakout-level line with an accessible text panel, in Spanish and English. No targets are drawn.",
+    "depends_on": [
+      "chart-patterns-detect",
+      "screener-filters-ui",
+      "chart-interactive",
+      "saved-screeners",
+      "app-multilanguage"
+    ],
+    "status": "not_started",
+    "verification": [
+      "GET /api/screener accepts pattern and pattern_status with localized 422s; candidate and instrument-detail payloads include patterns",
+      "Saved Screeners round-trip the pattern filter and old rows still load",
+      "Chart draws point markers and one breakout line per active pattern, never a target or stop; accessible panel lists them",
+      "es/en complete, no overflow at 390 px, real-browser check recorded; .\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-10. Spec: docs/specs/chart-patterns-ui.md. Requires a CONSTRAINTS.md update to the chart drawing rule."
+  },
+  {
+    "id": "alerts-engine",
+    "area": "backend",
+    "title": "Alerts: rules, daily evaluation and in-app notifications (backend)",
+    "user_visible_behavior": "A Registered User can define up to 10 Alerts (new Candidates in a Saved Screener; chosen Signal types appearing on Watchlist Instruments) through the API; after each daily pipeline run the alerts are evaluated once and new findings become in-app Notifications readable through the API.",
+    "depends_on": [
+      "saved-screeners",
+      "watchlist",
+      "signals-detect",
+      "ingestion-scheduler",
+      "app-multilanguage"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Two alert kinds; first evaluation stores a baseline without notifying; later evaluations notify only additions; once per as-of; failures isolated",
+      "Screener candidate logic extracted to a service with /api/screener behaviour unchanged",
+      "Alerts and notifications API enforce ownership (404), limits (422) and auth (401); messages localized",
+      "ingestion:pipeline runs alerts:evaluate last when signals succeeded; notifications pruned after 90 days; privacy texts updated",
+      ".\\init.ps1 and CI (SQLite + PostgreSQL) pass"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-10 at user request ('automatic alerts/notifications' were outside the MVP). Spec: docs/specs/alerts-engine.md. Pattern alerts are a later extension once chart-patterns-detect is accepted."
+  },
+  {
+    "id": "alerts-ui",
+    "area": "frontend",
+    "title": "Alerts: Portal configuration and notification inbox",
+    "user_visible_behavior": "Registered Users enable alerts per Saved Screener and choose Signal types for their Watchlist in the Portal, see a header bell with the unread count, and read and mark notifications in an inbox page linking to charts, in Spanish and English.",
+    "depends_on": [
+      "alerts-engine",
+      "user-portal",
+      "app-shell-navigation",
+      "app-multilanguage"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Saved Screener toggle and Watchlist signal form create, pause and delete alerts through the API",
+      "Header bell shows an accessible unread count; inbox paginates, links tickers and marks read",
+      "Visitors see no bell; limits and errors shown inline; no EOD wording; es/en; 390 px OK",
+      "Real-browser check recorded; .\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-ui.md."
+  },
+  {
+    "id": "alerts-email-digest",
+    "area": "backend",
+    "title": "Alerts: daily email digest (opt-in)",
+    "user_visible_behavior": "Registered Users who opt in from the Portal receive one email per day summarizing that day's alert notifications, in their language, with a one-click unsubscribe and no tracking.",
+    "depends_on": [
+      "alerts-engine",
+      "alerts-ui",
+      "legal-compliance-eu"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Opt-in defaults to off; one digest per user per as-of (ledger); queued with retries; mail failures never break the pipeline",
+      "Signed unsubscribe link and RFC 8058 one-click POST work without a session",
+      "HTML and text parts in es/en with disclaimer and privacy link, no tracking pixels",
+      "Privacy texts and deploy docs (SMTP, SPF/DKIM/DMARC) updated; .\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-email-digest.md. Production sending blocked until the owner has a chartiko.com mailbox and an SMTP/API provider (DPA and data location to record in the privacy policy)."
   }
 ]
