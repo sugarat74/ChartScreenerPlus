@@ -12,8 +12,11 @@ use App\Http\Controllers\WatchlistController;
 use Illuminate\Support\Facades\Route;
 
 // First-party SPA auth (Sanctum session cookie + CSRF). No API tokens.
+// Every `throttle:max,decay,prefix` here carries its own prefix: without it the
+// counter is keyed only by IP (or user), so public browsing spent the login
+// budget and a visitor got 429 on their first sign-in.
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1,login');
 
 // Public read-only market data: browsing charts requires no session
 // (docs/user-and-access-model.md). The payload is bounded and the 404 for an
@@ -24,7 +27,7 @@ Route::get('/instruments/{ticker}', [InstrumentController::class, 'show']);
 // throttled (`60,1`) so anonymous browsing stays bounded. `limit` is clamped;
 // bad semantic filter/sort values are a `422` and an unknown universe is a JSON
 // `404` (`CONSTRAINTS.md` -> Public API).
-Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throttle:60,1');
+Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throttle:60,1,screener');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);

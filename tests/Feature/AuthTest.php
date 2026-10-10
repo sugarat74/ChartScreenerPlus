@@ -159,6 +159,31 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_public_browsing_does_not_spend_the_login_rate_limit(): void
+    {
+        // Route throttles keyed only by IP shared one counter, so a visitor
+        // who filtered the screener a few times got 429 on the first sign-in.
+        User::factory()->create(['email' => 'browser@example.com', 'password' => 'Password123!']);
+
+        for ($i = 0; $i < 7; $i++) {
+            $this->assertNotSame(429, $this->getJson('/api/screener?limit=1')->getStatusCode());
+        }
+
+        $this->postJson('/api/login', ['email' => 'browser@example.com', 'password' => 'Password123!'])
+            ->assertOk();
+    }
+
+    public function test_login_is_still_limited_to_six_attempts_per_minute(): void
+    {
+        for ($i = 0; $i < 6; $i++) {
+            $this->postJson('/api/login', ['email' => 'nobody@example.com', 'password' => 'wrong'])
+                ->assertUnprocessable();
+        }
+
+        $this->postJson('/api/login', ['email' => 'nobody@example.com', 'password' => 'wrong'])
+            ->assertTooManyRequests();
+    }
+
     public function test_registration_without_a_stateful_session_is_rejected_before_writing(): void
     {
         // A non-matching Origin means Sanctum does not attach the session
