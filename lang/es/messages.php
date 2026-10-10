@@ -45,6 +45,8 @@ return [
     'screener' => [
         'signal_unknown_types' => 'El parámetro signal solo puede contener tipos de señal conocidos.',
         'signal_invalid' => 'El tipo de señal seleccionado no es válido.',
+        'pattern_invalid' => 'El tipo de patrón seleccionado no es válido.',
+        'pattern_status_invalid' => 'El estado de patrón debe ser any, forming o confirmed.',
         'parameter_number' => 'El parámetro :parameter debe ser un número.',
         'parameter_boolean' => 'El parámetro :parameter debe ser booleano (1/true/on/yes o 0/false/off/no).',
         'ma_cross_invalid' => 'El parámetro ma_cross debe ser bullish o bearish.',

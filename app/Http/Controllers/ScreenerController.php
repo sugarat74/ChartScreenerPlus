@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChartPattern;
 use App\Models\Instrument;
 use App\Models\Universe;
 use Illuminate\Http\JsonResponse;
@@ -51,6 +52,11 @@ class ScreenerController extends Controller
     ];
 
     /**
+     * Pattern statuses accepted by `?pattern_status` (`any` = both).
+     */
+    private const PATTERN_STATUSES = ['any', 'forming', 'confirmed'];
+
+    /**
      * The supported sort orders (all with a ticker-ASC tie-break, nulls last).
      */
     private const SORTS = [
@@ -79,7 +85,7 @@ class ScreenerController extends Controller
         // A Candidate must have both a latest bar and a latest snapshot: without
         // either, the candidate fields cannot be produced, even with no filter.
         $members = $universe->instruments()
-            ->with(['latestBar', 'latestSnapshot', 'signals'])
+            ->with(['latestBar', 'latestSnapshot', 'signals', 'chartPatterns'])
             ->get()
             ->filter(fn (Instrument $instrument): bool => $instrument->latestBar !== null
                 && $instrument->latestSnapshot !== null)
@@ -143,7 +149,7 @@ class ScreenerController extends Controller
      * is clamped rather than validated. Every other param can change which rows
      * are returned or their order, so a bad value is a `422`.
      *
-     * @return array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, sort: string}
+     * @return array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string}
      */
     private function resolveFilters(Request $request): array
     {
@@ -154,8 +160,70 @@ class ScreenerController extends Controller
             'min_rvol' => $this->numericParam($request, 'min_rvol'),
             'price_above_sma200' => $this->resolveBooleanFlag($request, 'price_above_sma200'),
             'ma_cross' => $this->resolveMaCross($request),
+            'pattern' => $this->resolvePatternTypes($request),
+            'pattern_status' => $this->resolvePatternStatus($request),
             'sort' => $this->resolveSort($request),
         ];
+    }
+
+    /**
+     * Resolve `?pattern` (comma string and/or array, OR-combined) like `?signal`.
+     *
+     * @return list<string>
+     */
+    private function resolvePatternTypes(Request $request): array
+    {
+        $raw = $request->query('pattern');
+
+        if ($raw === null) {
+            return [];
+        }
+
+        $types = [];
+
+        foreach (is_array($raw) ? $raw : explode(',', (string) $raw) as $value) {
+            if (! is_string($value)) {
+                throw ValidationException::withMessages([
+                    'pattern' => [__('messages.screener.pattern_invalid')],
+                ]);
+            }
+
+            $type = trim($value);
+
+            if ($type === '') {
+                continue;
+            }
+
+            if (! in_array($type, ChartPattern::TYPES, true)) {
+                throw ValidationException::withMessages([
+                    'pattern' => [__('messages.screener.pattern_invalid')],
+                ]);
+            }
+
+            $types[$type] = true;
+        }
+
+        return array_keys($types);
+    }
+
+    /**
+     * Resolve `?pattern_status` (`any` by default); it only narrows `?pattern`.
+     */
+    private function resolvePatternStatus(Request $request): string
+    {
+        $value = $request->query('pattern_status');
+
+        if ($value === null || $value === '') {
+            return 'any';
+        }
+
+        if (! is_string($value) || ! in_array($value, self::PATTERN_STATUSES, true)) {
+            throw ValidationException::withMessages([
+                'pattern_status' => [__('messages.screener.pattern_status_invalid')],
+            ]);
+        }
+
+        return $value;
     }
 
     /**
@@ -338,7 +406,7 @@ class ScreenerController extends Controller
      * derived filter, so such an instrument is excluded whenever that filter is
      * applied.
      *
-     * @param  array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, sort: string}  $filters
+     * @param  array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string}  $filters
      */
     private function matchesFilters(Instrument $instrument, array $filters): bool
     {
@@ -347,6 +415,13 @@ class ScreenerController extends Controller
 
         if ($filters['signal'] !== [] && ! $instrument->signals->contains(
             fn ($signal): bool => in_array($signal->type, $filters['signal'], true)
+        )) {
+            return false;
+        }
+
+        if ($filters['pattern'] !== [] && ! $instrument->chartPatterns->contains(
+            fn (ChartPattern $pattern): bool => in_array($pattern->type, $filters['pattern'], true)
+                && ($filters['pattern_status'] === 'any' || $pattern->status === $filters['pattern_status'])
         )) {
             return false;
         }
@@ -434,6 +509,16 @@ class ScreenerController extends Controller
                 ->unique()
                 ->sort()
                 ->values()
+                ->all(),
+            'patterns' => $instrument->chartPatterns
+                ->sortBy('type')
+                ->values()
+                ->map(fn (ChartPattern $pattern): array => [
+                    'type' => $pattern->type,
+                    'status' => $pattern->status,
+                    'breakout_level' => $pattern->breakout_level,
+                    'end_date' => $pattern->end_date->format('Y-m-d'),
+                ])
                 ->all(),
         ];
     }

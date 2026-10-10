@@ -73,7 +73,7 @@ class SavedScreenersApiTest extends TestCase
             ->assertJsonPath('screener.filters.sort', 'rsi_desc')
             ->assertJsonStructure([
                 'screener' => ['id', 'name', 'filters' => [
-                    'signal', 'rsi_min', 'rsi_max', 'min_rvol', 'price_above_sma200', 'ma_cross', 'sort',
+                    'signal', 'rsi_min', 'rsi_max', 'min_rvol', 'price_above_sma200', 'ma_cross', 'pattern', 'pattern_status', 'sort',
                 ]],
             ]);
 
@@ -89,6 +89,8 @@ class SavedScreenersApiTest extends TestCase
             'min_rvol' => 2,
             'price_above_sma200' => true,
             'ma_cross' => null,
+            'pattern' => [],
+            'pattern_status' => 'any',
             'sort' => 'rsi_desc',
         ], $saved->filters);
     }

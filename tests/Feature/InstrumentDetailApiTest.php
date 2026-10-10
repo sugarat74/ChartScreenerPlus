@@ -331,7 +331,7 @@ class InstrumentDetailApiTest extends TestCase
         $payload = $this->getJson('/api/instruments/NVDA')->assertOk()->json();
 
         $this->assertSame(
-            ['instrument', 'bars', 'snapshot', 'signals', 'meta'],
+            ['instrument', 'bars', 'snapshot', 'signals', 'patterns', 'meta'],
             array_keys($payload),
         );
 

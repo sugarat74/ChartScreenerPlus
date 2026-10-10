@@ -44,6 +44,8 @@ return [
     'screener' => [
         'signal_unknown_types' => 'The signal parameter must contain only known signal types.',
         'signal_invalid' => 'The selected signal type is invalid.',
+        'pattern_invalid' => 'The selected pattern type is invalid.',
+        'pattern_status_invalid' => 'The pattern status must be any, forming or confirmed.',
         'parameter_number' => 'The :parameter parameter must be a number.',
         'parameter_boolean' => 'The :parameter parameter must be a boolean (1/true/on/yes or 0/false/off/no).',
         'ma_cross_invalid' => 'The ma_cross parameter must be one of: bullish, bearish.',
