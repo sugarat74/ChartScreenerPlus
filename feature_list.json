@@ -52,13 +52,13 @@
     "id": "app-shell-navigation",
     "area": "frontend",
     "title": "Build the app shell and navigation",
-    "user_visible_behavior": "A user sees the AlphaPulse header, EOD status, primary action and tab navigation (Screener, Chart, Admin, Portal) with the design tokens applied.",
+    "user_visible_behavior": "A user sees the Chartiko header with language and session controls and tab navigation for Screener, Admin (when authorized) and Portal; Instrument charts open from Candidate and Watchlist tickers.",
     "depends_on": [
       "repo-scaffold-frontend"
     ],
     "status": "accepted",
     "verification": [
-      "Header and tab bar render per DESIGN.md (2px borders, hard shadows, accent button, mono metrics)",
+      "Header and tab bar render per DESIGN.md (brand, language and session controls, 2px borders and hard shadows; no inert context or refresh controls)",
       "Tabs switch the active surface without a full reload",
       "Layout is usable at desktop and tablet widths"
     ],
@@ -70,9 +70,10 @@
       "dev smoke on port 5177: / 200, /screener 200, /chart 200, /admin 200, /portal 200, /does-not-exist 200; transformed /src/router.tsx 200 and /src/main.tsx 200; index.html contains #root and loads /src/main.tsx; router module contains all four route paths; main module uses RouterProvider; server tree killed and port 5177 released (no orphan vite process)",
       "built CSS contains #ffcc00 / #1a1a1a / .sticky / position:sticky / overflow-x:auto / font-black; built JS contains /screener /chart /admin /portal",
       "init.ps1 -> Laravel 13.34.0 + 2 tests passed + SPA lint 0 errors + SPA build OK, exit 0, starts no server",
-      "independent validator accept (2026-09-29): reran init.ps1 exit 0, lint/build exit 0, dev smoke port 57708 all routes 200 with teardown, root Vite assets untouched, generated artifacts ignored; react-router engine mismatch accepted as documented low-risk note"
+      "independent validator accept (2026-09-29): reran init.ps1 exit 0, lint/build exit 0, dev smoke port 57708 all routes 200 with teardown, root Vite assets untouched, generated artifacts ignored; react-router engine mismatch accepted as documented low-risk note",
+      "2026-10-11 user-directed UI cleanup: removed the redundant Chart tab and disabled header refresh/context controls; Candidate and Watchlist ticker links still open /instruments/:ticker and legacy /chart remains reachable. init.ps1 exit 0 after the change."
     ],
-    "notes": "Routing: react-router data router (createBrowserRouter + RouterProvider) with AppLayout (AppHeader + Outlet); / redirects to /screener; routes /screener /chart /admin /portal and * -> NotFoundPage. Tab labels/paths single-sourced in frontend/src/nav.ts. No Copilot route. Header follows DESIGN.md tokens (2px ink borders, hard shadows, #ffcc00 primary button, mono status, 2px active underline) and the tab bar scrolls horizontally on narrow widths. See docs/specs/app-shell-navigation.md, ARCHITECTURE.md, CONSTRAINTS.md."
+    "notes": "Routing: react-router data router (createBrowserRouter + RouterProvider) with AppLayout (AppHeader + Outlet); / is the public landing page, and /screener /chart /instruments/:ticker /admin /portal remain routes. Only Screener, Admin (when authorized) and Portal are tabs, single-sourced in frontend/src/nav.ts. /chart is a legacy guidance route without a tab; Instrument charts open from Candidates and Watchlist. Header has brand, language and session controls without an inert refresh button. See DESIGN.md, ARCHITECTURE.md and CONSTRAINTS.md; docs/specs/app-shell-navigation.md records the original implementation contract."
   },
   {
     "id": "python-engine-scaffold",

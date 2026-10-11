@@ -1,5 +1,11 @@
 # Progress Log
 
+## Header and chart navigation simplified — 2026-10-11
+
+- At the user's request, removed the Chart tab because `/chart` without a ticker only shows guidance back to Screener. Instrument charts remain reachable through ticker links in Candidates and Watchlist; the legacy `/chart` URL remains available for existing links.
+- Removed the header's decorative "Análisis técnico" context chip and disabled "Actualizar datos" button in both locales. Real data refresh remains in Admin. Updated the current UI description in DESIGN.md, ARCHITECTURE.md and the accepted `app-shell-navigation` backlog entry; the original implementation spec remains historical.
+- Baseline before and after the edit: `.\init.ps1` exit 0 (Laravel 257 passed / 6 skipped, SPA lint, 62 Vitest tests, SPA build, engine 67 passed with one existing Starlette warning). Candidate and Watchlist ticker links were checked in source; no browser visual check was run for this small removal. No API, auth or ingestion behavior changed.
+
 ## alerts-engine implemented — 2026-10-10
 
 - `chart-patterns-ui` accepted and merged (PR #9, squash `6f71bbb`); this feature on `feat/alerts-engine`.
