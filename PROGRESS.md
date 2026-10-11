@@ -4,7 +4,7 @@
 
 - At the user's request, `/` now opens the anonymous Screener with a concise introduction and a link to `/como-funciona`. The former landing explanation lives at `/como-funciona` and is available as a tab. Current product links use `/`; legacy `/screener` URLs redirect client-side to `/` while retaining query filters and hash.
 - Updated Spanish and English copy, initial HTML fallback, route metadata, production robots header, DESIGN.md, ARCHITECTURE.md and CONSTRAINTS.md. Only the homepage stays indexable and in the sitemap; the explanatory route is noindex under the existing app-route policy.
-- Verification: baseline `init.ps1` passed before changes (257 Laravel passed / 6 skipped, SPA lint, 62 Vitest tests/build, 67 engine tests). After changes, `init.ps1` passed (257 Laravel passed / 6 skipped, SPA lint, 63 Vitest tests including legacy-filter URL preservation, SPA build, 67 engine tests). Deployment verification is recorded separately below.
+- Verification: baseline `init.ps1` passed before changes (257 Laravel passed / 6 skipped, SPA lint, 62 Vitest tests/build, 67 engine tests). After changes, `init.ps1` passed (257 Laravel passed / 6 skipped, SPA lint, 63 Vitest tests including legacy-filter URL preservation, SPA build, 67 engine tests). Deployment and live verification follow through the GitHub CI workflow.
 - Remaining product scope: `admin-ops-mcp`, `alerts-ui` and `alerts-email-digest` remain not started. The former marketing/SEO acceptance evidence is historical; current initial HTML is a concise Screener description and links to the noindex detailed page.
 
 ## Header and chart navigation simplified — 2026-10-11
