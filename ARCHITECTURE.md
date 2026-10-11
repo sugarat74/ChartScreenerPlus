@@ -28,15 +28,15 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
 - Route list:
   - `/` -> public Chartiko landing page with Screener CTA and search metadata
   - `/screener` -> Screener (filter controls + Candidate list; anonymous)
-  - `/chart` -> instrument chart in "no ticker selected" mode (guidance only; anonymous, no request)
+  - `/chart` -> legacy direct link to the "no ticker selected" guidance (anonymous, no request); it is not a navigation tab
   - `/instruments/:ticker` -> instrument chart for one ticker (anonymous deep link)
   - `/admin` -> Admin ingestion panel (admin-only; guest/non-admin see a restricted state)
   - `/portal` -> Portal (the signed-in user's owned Saved Screeners and Watchlist entries; a Visitor is redirected to `/login`)
   - `/login` -> sign-in screen
   - `/register` -> account-creation screen
   - `*` -> token-styled Not Found placeholder (rendered inside the shell)
-- Tab paths and label catalog keys are single-sourced in `frontend/src/nav.ts` (`NAV_ITEMS`, `DEFAULT_ROUTE`); auth paths are exported there too (`LOGIN_ROUTE`, `REGISTER_ROUTE`) and the router derives child segments from them with `routeSegment`.
-- The header (brand, "technical analysis" context chip, inert data-refresh action, `ES | EN` language selector, user pill) lives in `frontend/src/components/AppHeader.tsx`; it is auth-aware and shows the signed-in user plus a sign-out control, or a translated sign-in link for a Visitor.
+- Tab paths and label catalog keys are single-sourced in `frontend/src/nav.ts` (`NAV_ITEMS`, `DEFAULT_ROUTE`). The tabs are Screener, Admin (for Admin users) and Portal; charts are reached through Candidate and Watchlist ticker links. Auth paths are exported there too (`LOGIN_ROUTE`, `REGISTER_ROUTE`) and the router derives child segments from them with `routeSegment`.
+- The header (brand, `ES | EN` language selector, user pill) lives in `frontend/src/components/AppHeader.tsx`; it is auth-aware and shows the signed-in user plus a sign-out control, or a translated sign-in link for a Visitor. Data refresh remains an action in Admin, with no disabled header button.
 - History routing needs a server-side SPA fallback when the SPA is deployed behind Laravel or another host; the Vite dev server already provides it. Configuration is deferred to deployment work.
 
 ## Localization (Spanish / English)
@@ -187,7 +187,7 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
 
 ## Chart UI
 
-- **Routes and entry.** `/instruments/:ticker` is the canonical per-instrument deep link and `/chart` renders the same page in "no ticker" mode (a guidance panel that links to `/screener`, issuing **no** API request). Both mount `frontend/src/pages/InstrumentChartPage.tsx` inside the shell. The primary entry is the ticker cell of each `CandidateTable` row (`react-router` `<Link to={'/instruments/' + encodeURIComponent(ticker)}>`); `nav.ts`/`AppHeader.tsx` are unchanged, so the Chart tab stays `/chart` and is not highlighted on a deep link (accepted cosmetic nit). The page is **anonymous**: it never calls `useAuth`, never redirects and never prompts for login (`docs/user-and-access-model.md`).
+- **Routes and entry.** `/instruments/:ticker` is the canonical per-instrument deep link and `/chart` remains a legacy no-ticker guidance route (no API request). Both mount `frontend/src/pages/InstrumentChartPage.tsx` inside the shell. The primary entry is the ticker cell of each `CandidateTable` row (`react-router` `<Link to={'/instruments/' + encodeURIComponent(ticker)}>`); Watchlist tickers also link to charts. There is no Chart tab. The page is **anonymous**: it never calls `useAuth`, never redirects and never prompts for login (`docs/user-and-access-model.md`).
 - **Charting library (self-hosted, decided).** `lightweight-charts` (TradingView Lightweight Charts) is added to `frontend/` as a pinned dependency (**5.2.1**, Apache-2.0, runtime dep `fancy-canvas@2.1.0` MIT). The **embedded TradingView widget is not used**. The library's `layout.attributionLogo` option stays **enabled** (its default): the Apache-2.0 NOTICE requires the TradingView attribution link on the page that shows the chart. The chart is lazy-loaded (`React.lazy`) as its own Vite chunk so the Screener bundle stays lean.
 - **Data source (frozen).** The only source is `GET /api/instruments/{ticker}` via `frontend/src/lib/api.ts` -> `instrumentApi.detail(ticker, {limit})`; the page always requests `?limit=CHART_BAR_LIMIT` (`252`). The API returns the most recent N bars **ascending by date** and the SPA renders that order as-is (no re-ordering, no client-side fetch inside the chart component).
 - **Chart contents.** A `CandlestickSeries` for the bars; a `HistogramSeries` in **pane index 1** for volume, one bar per Daily Bar colored by candle direction (`gain`/`loss`); horizontal **price lines** for the latest non-null `sma20`/`sma50`/`sma200` (`SMA 20`/`SMA 50`/`SMA 200`) and for the active `pivot_breakout_rvol` signal's `metadata.pivot` (title `PIVOTE`). Active chartist patterns add key-point markers (`createSeriesMarkers`, short role labels, only on loaded bars) and one dotted `breakout_level` price line titled with the pattern name. The page also renders a mono OHLC/legend strip (last bar + SMA values + pivot), a textual "Señales activas" panel and a "Patrones activos" panel (`PatternPanel`: status, dates, breakout level and named points), because the canvas is not screen-reader navigable.

@@ -1,19 +1,14 @@
 import { useState } from 'react'
-import { Link, NavLink, useLocation } from 'react-router'
+import { Link, NavLink } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import { DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
 import LanguageSelector from './LanguageSelector.tsx'
 
-/**
- * Sticky product chrome: Chartiko brand, analysis context, inert primary action,
- * language selector, user pill and the route-backed tab bar. Styling follows
- * DESIGN.md tokens only.
- */
+/** Sticky product chrome: brand, language, session controls and route-backed tabs. */
 export default function AppHeader() {
   const { user, status, logout } = useAuth()
   const { t } = useI18n()
-  const { pathname } = useLocation()
   const [signingOut, setSigningOut] = useState(false)
 
   // Admin-only tabs are hidden for everyone else; the API is the real gate.
@@ -57,23 +52,6 @@ export default function AppHeader() {
         </Link>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="hidden items-center gap-2 rounded border border-outline bg-surface-container px-2.5 py-1 font-mono text-xs md:flex">
-            <span className="h-2 w-2 rounded-full border border-outline bg-surface-dim" />
-            <span className="text-on-surface">{t('header.context')}</span>
-          </div>
-
-          {pathname !== '/' && (
-            <button
-              type="button"
-              disabled
-              aria-disabled="true"
-              title={t('header.refreshTitle')}
-              className="rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {t('header.refresh')}
-            </button>
-          )}
-
           <LanguageSelector />
 
           {status === 'loading' ? (
