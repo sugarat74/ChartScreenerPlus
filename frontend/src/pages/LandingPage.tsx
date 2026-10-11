@@ -33,7 +33,7 @@ export default function LandingPage() {
         <p className="max-w-3xl text-base leading-7 text-on-surface-variant sm:text-lg">
           {t('landing.intro')}
         </p>
-        <Link to="/screener" className={CTA_CLASS}>
+        <Link to="/" className={CTA_CLASS}>
           {t('landing.openScreener')} <span aria-hidden="true" className="ml-2">→</span>
         </Link>
       </header>
@@ -70,7 +70,7 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-        <Link to="/screener" className={`${CTA_CLASS} mt-5`}>
+        <Link to="/" className={`${CTA_CLASS} mt-5`}>
           {t('landing.exploreScreener')}
         </Link>
       </section>

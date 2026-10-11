@@ -45,7 +45,7 @@ const ACTION_LINK_CLASS =
 function ScreenerLink() {
   const { t } = useI18n()
   return (
-    <Link to="/screener" className={ACTION_LINK_CLASS}>
+    <Link to="/" className={ACTION_LINK_CLASS}>
       {t('chart.backToScreener')}
     </Link>
   )

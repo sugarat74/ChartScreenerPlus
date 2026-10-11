@@ -9,6 +9,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage.tsx'
 import LandingPage from './pages/LandingPage.tsx'
 import LegalPage from './pages/LegalPage.tsx'
 import InstrumentChartPage from './pages/InstrumentChartPage.tsx'
+import LegacyScreenerRedirect from './pages/LegacyScreenerRedirect.tsx'
 import LoginPage from './pages/LoginPage.tsx'
 import NotFoundPage from './pages/NotFoundPage.tsx'
 import PortalPage from './pages/PortalPage.tsx'
@@ -28,8 +29,9 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppLayout />,
     children: [
-      { index: true, element: <LandingPage /> },
-      { path: 'screener', element: <ScreenerPage /> },
+      { index: true, element: <ScreenerPage /> },
+      { path: 'screener', element: <LegacyScreenerRedirect /> },
+      { path: 'como-funciona', element: <LandingPage /> },
       { path: 'chart', element: <InstrumentChartPage /> },
       { path: 'instruments/:ticker', element: <InstrumentChartPage /> },
       {

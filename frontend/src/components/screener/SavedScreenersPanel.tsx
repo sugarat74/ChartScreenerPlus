@@ -1,8 +1,8 @@
 /**
- * Saved Screeners panel for `/screener`.
+ * Saved Screeners panel for the public Screener at `/`.
  *
  * This is the only auth-aware affordance on the Screener: a Visitor gets a
- * plain sign-in link (never a redirect) so `/screener` stays anonymous. Saving
+ * plain sign-in link (never a redirect) so the Screener stays anonymous. Saving
  * persists the CURRENT URL filter set; applying deserializes the stored
  * definition and patches the URL, so the results are restored server-side
  * through the page's existing fetch effect. Reads/writes go through
