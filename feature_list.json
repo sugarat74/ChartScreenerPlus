@@ -753,7 +753,7 @@
     "Report: docs/marketing/2026-10-04-seo-geo.md. Production deployment is blocked by the NO APTO findings in docs/security/2026-10-04-141702-produccion.md.",
     "2026-10-11 homepage revision: initial HTML now has a concise Screener description and a /como-funciona link; React home renders Screener, and detailed explanation is on /como-funciona. Existing home canonical and sitemap remain; RouteMetadata and Nginx template mark the explanatory route noindex. init.ps1 exit 0."
     ],
-    "notes": "Marketing/SEO/GEO preparation deployed and HTTP-verified on 2026-10-04. The 2026-10-11 navigation change moves the detailed explanation to /como-funciona; only / remains indexable and in the sitemap. No campaign sends or external analytics setup. Independent acceptance, SSR/prerender for deep routes, real server 404 behavior, Search Console and citation measurement remain open."
+    "notes": "Marketing/SEO/GEO preparation deployed and HTTP-verified on 2026-10-04. The 2026-10-11 navigation change moves the detailed explanation to /como-funciona; the SPA marks it noindex, and only / remains in the sitemap. The live Nginx site does not reload the template during normal deploys: /como-funciona lacks the server X-Robots-Tag until a privileged config update. No campaign sends or external analytics setup. Independent acceptance, SSR/prerender for deep routes, real server 404 behavior, Search Console and citation measurement remain open."
   },
   {
     "id": "architecture-infographic",
