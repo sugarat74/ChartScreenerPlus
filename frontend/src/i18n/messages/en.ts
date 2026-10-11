@@ -24,6 +24,7 @@ export const en: Messages = {
   },
   nav: {
     screener: 'Screener',
+    howItWorks: 'How it works',
     chart: 'Chart',
     admin: 'Admin',
     portal: 'Portal',
@@ -35,6 +36,8 @@ export const en: Messages = {
     screenerTitle: 'Stock screener | Chartiko',
     screenerDescription:
       'Apply technical filters to the stock universe and review ranked Candidates in Chartiko.',
+    howItWorksTitle: 'How Chartiko works | Chartiko',
+    howItWorksDescription: 'Learn how to filter stocks, review Candidates and explore their charts in Chartiko.',
     chartTitle: 'Stock charts | Chartiko',
     chartDescription: 'Explore prices, volume, indicators and Signals for instruments in Chartiko.',
     portalTitle: 'My Portal | Chartiko',
@@ -221,7 +224,8 @@ export const en: Messages = {
     badge: 'Surface',
     access: 'Public access',
     title: 'Screener',
-    intro: 'Technical filters over the universe. Filtering and ranking are computed on the server.',
+    intro: 'Filter S&P 500 stocks with technical criteria, review ranked Candidates and open their interactive charts.',
+    howItWorksLink: 'Learn how Chartiko works →',
     showing: 'Showing {returned} of {total} candidates',
     universeTitle: 'Universe resolved by the server',
     universe: 'Universe · {name}',

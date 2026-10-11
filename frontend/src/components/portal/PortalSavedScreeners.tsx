@@ -78,7 +78,7 @@ export default function PortalSavedScreeners() {
   function apply(screener: SavedScreener) {
     const patch = deserializeScreenerFilters(screener.filters)
     const params = patchScreenerFilters(new URLSearchParams(), patch)
-    navigate(`/screener${params.size > 0 ? `?${params.toString()}` : ''}`)
+    navigate(`/${params.size > 0 ? `?${params.toString()}` : ''}`)
   }
 
   async function remove(id: number) {

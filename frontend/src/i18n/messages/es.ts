@@ -27,6 +27,7 @@ export const es = {
   },
   nav: {
     screener: 'Screener',
+    howItWorks: 'Cómo funciona',
     chart: 'Chart',
     admin: 'Admin',
     portal: 'Portal',
@@ -38,6 +39,8 @@ export const es = {
     screenerTitle: 'Screener de acciones | Chartiko',
     screenerDescription:
       'Aplica filtros técnicos al universo de acciones y consulta Candidates ordenados en Chartiko.',
+    howItWorksTitle: 'Cómo funciona Chartiko | Chartiko',
+    howItWorksDescription: 'Conoce cómo filtrar acciones, revisar Candidates y explorar sus gráficos en Chartiko.',
     chartTitle: 'Gráficos de acciones | Chartiko',
     chartDescription: 'Explora precios, volumen, indicadores y Signals de los instrumentos en Chartiko.',
     portalTitle: 'Mi Portal | Chartiko',
@@ -224,7 +227,8 @@ export const es = {
     badge: 'Superficie',
     access: 'Acceso público',
     title: 'Screener',
-    intro: 'Filtros técnicos sobre el universo. El filtrado y el ranking se calculan en el servidor.',
+    intro: 'Filtra acciones del S&P 500 con criterios técnicos, revisa Candidates ordenados y abre sus gráficos interactivos.',
+    howItWorksLink: 'Conoce cómo funciona Chartiko →',
     showing: 'Mostrando {returned} de {total} candidatos',
     universeTitle: 'Universo resuelto por el servidor',
     universe: 'Universo · {name}',

@@ -17,7 +17,8 @@ export type NavItem = {
 }
 
 export const NAV_ITEMS = [
-  { path: '/screener', labelKey: 'nav.screener' },
+  { path: '/', labelKey: 'nav.screener' },
+  { path: '/como-funciona', labelKey: 'nav.howItWorks' },
   { path: '/admin', labelKey: 'nav.admin', adminOnly: true, nested: true },
   { path: '/portal', labelKey: 'nav.portal' },
 ] satisfies readonly NavItem[]

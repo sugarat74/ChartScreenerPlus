@@ -159,7 +159,7 @@ function WatchlistPanel() {
             {t('watchlist.emptyBody')}
           </p>
           <div className="mt-4 flex justify-center">
-            <Link to="/screener" className={ACTION_LINK_CLASS}>
+            <Link to="/" className={ACTION_LINK_CLASS}>
               {t('watchlist.goToScreener')}
             </Link>
           </div>

@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
 import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
@@ -153,6 +153,12 @@ export default function ScreenerPage() {
         <p className="max-w-2xl text-sm text-on-surface-variant">
           {t('screener.intro')}
         </p>
+        <Link
+          to="/como-funciona"
+          className="w-fit font-mono text-xs font-bold text-on-surface underline underline-offset-4 hover:text-primary focus:outline-2 focus:outline-offset-2 focus:outline-outline"
+        >
+          {t('screener.howItWorksLink')}
+        </Link>
       </header>
 
       <ScreenerFilterPanel
