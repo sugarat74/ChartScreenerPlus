@@ -1,5 +1,11 @@
 # Progress Log
 
+## Compact Saved Screeners section — 2026-10-12
+
+- At the user's request, the Screener's Saved Screeners card is now a compact native disclosure, closed by default for Registered Users. Its summary shows the saved count; opening it exposes the unchanged save, apply and delete actions. A Visitor sees only a small sign-in link in that position.
+- The Screener API, authorization, URL filter state and Portal are unchanged. Updated DESIGN.md, ARCHITECTURE.md and the accepted `saved-screeners` backlog entry to describe the current presentation; historical implementation evidence remains.
+- Baseline `init.ps1` passed before changes. After the edit, `init.ps1` passed: Laravel 257 passed / 6 skipped (2326 assertions), SPA lint, 63 Vitest tests, production build (162 modules), and engine 67 passed with the existing Starlette warning. The built CSS includes the native disclosure marker and open-state styles. Deployment follows through the standard GitHub workflow.
+
 ## Screener homepage and Cómo funciona tab — 2026-10-11
 
 - At the user's request, `/` now opens the anonymous Screener with a concise introduction and a link to `/como-funciona`. The former landing explanation lives at `/como-funciona` and is available as a tab. Current product links use `/`; legacy `/screener` URLs redirect client-side to `/` while retaining query filters and hash.

@@ -576,7 +576,7 @@
     "id": "saved-screeners",
     "area": "screener",
     "title": "Save and re-apply screeners",
-    "user_visible_behavior": "A Registered User saves the current filter set as a named Screener and re-applies it later.",
+    "user_visible_behavior": "A Registered User opens a compact, initially closed Saved Screeners section to save the current filter set as a named Screener or re-apply one later. A Visitor sees a small sign-in link.",
     "depends_on": [
       "auth-registration-login",
       "screener-api",
@@ -589,6 +589,7 @@
       "A second user cannot read or delete the first user's Screener"
     ],
     "evidence": [
+      "2026-10-12 UI refinement: native details/summary replaces the prominent card; the closed row shows the saved count and an error/loading label when needed, while save/apply/delete stay inside. Guest presentation is a small sign-in link. Existing ownership and API semantics are unchanged. init.ps1 exit 0: Laravel 257 passed/6 skipped (2326 assertions), SPA lint, 63 Vitest tests, production build 162 modules, engine 67 passed. Built CSS includes details marker and open-state styles.",
       "Migration round-trip: php artisan migrate --force created 2026_09_30_130000_create_saved_screeners_table (batch 2); php artisan db:table saved_screeners shows id/user_id/name/filters/created_at/updated_at, the compound unique index saved_screeners_user_id_name_unique (user_id, name) and the FK user_id -> users with on delete: cascade; php artisan migrate:rollback --force rolled it back and migrate --force re-applied it cleanly (DB left working)",
       "php artisan test --filter=SavedScreenersApiTest -> 17 passed (96 assertions), exit 0; tests/Feature/SavedScreenersApiTest.php covers: guest 401 on GET/POST/DELETE (0 rows), save 201 with the canonical stored filters (signal deduped/canonicalised, sort rsi_desc, min_rvol, boolean flag) + user_id ownership, empty list exact JSON {screeners:[]}, name ordering (alpha/momentum/zeta), cross-user isolation (B list [] / B delete 404 exact message / A row untouched), a client-supplied user_id is ignored, duplicate name 422 errors.name with no second row while another user reuses the name, trim before storage/uniqueness, missing/blank/non-string/over-60 name 422, unknown filter key 422 errors.filters, missing canonical key 422 errors.filters.sort, unknown signal 422 errors.filters.signal.0, rsi_min 150 and min_rvol -1 422, unknown sort 422 errors.filters.sort, delete 204 then 404, unknown id 404, user-delete cascade",
       "php artisan test -> 150 passed (956 assertions), exit 0 (baseline 133 passed/860 assertions; +17 tests/+96 assertions, all pre-existing suites stay green)",
