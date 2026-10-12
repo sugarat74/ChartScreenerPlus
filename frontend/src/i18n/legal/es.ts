@@ -134,13 +134,13 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Objeto',
         paragraphs: [
-          'Chartiko (www.chartiko.com) es una herramienta web de análisis técnico de acciones: permite filtrar un universo de acciones con criterios técnicos, consultar una lista ordenada de Candidates y explorar gráficos con indicadores y Signals. Los usuarios registrados pueden guardar Screeners y mantener una Watchlist. El uso del servicio no requiere pago.',
+          'Chartiko (www.chartiko.com) es una herramienta web de análisis técnico de acciones: permite filtrar un universo de acciones con criterios técnicos, consultar una lista ordenada de candidatos y explorar gráficos con indicadores y Signals. Los usuarios registrados pueden guardar Screeners y mantener una Watchlist. El uso del servicio no requiere pago.',
         ],
       },
       {
         heading: 'No es asesoramiento de inversión',
         paragraphs: [
-          'La información de Chartiko (Screener, Candidates, Signals y gráficos) se genera automáticamente a partir de datos de mercado e indicadores técnicos y tiene carácter exclusivamente informativo y educativo. No constituye asesoramiento en materia de inversión, recomendación personalizada ni oferta de compra o venta de instrumentos financieros.',
+          'La información de Chartiko (Screener, candidatos, Signals y gráficos) se genera automáticamente a partir de datos de mercado e indicadores técnicos y tiene carácter exclusivamente informativo y educativo. No constituye asesoramiento en materia de inversión, recomendación personalizada ni oferta de compra o venta de instrumentos financieros.',
           'Los datos pueden contener errores o retrasos. Las rentabilidades pasadas no garantizan resultados futuros e invertir conlleva riesgo de pérdida. Consulta a un profesional autorizado antes de tomar decisiones de inversión.',
         ],
       },

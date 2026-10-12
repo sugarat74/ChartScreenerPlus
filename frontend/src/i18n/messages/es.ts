@@ -35,12 +35,12 @@ export const es = {
   meta: {
     homeTitle: 'Chartiko | Screener de análisis técnico de acciones',
     homeDescription:
-      'Filtra acciones del S&P 500 con criterios técnicos, revisa Candidates ordenados y explora sus gráficos e indicadores.',
+      'Filtra acciones del S&P 500 con criterios técnicos, revisa candidatos ordenados y explora sus gráficos e indicadores.',
     screenerTitle: 'Screener de acciones | Chartiko',
     screenerDescription:
-      'Aplica filtros técnicos al universo de acciones y consulta Candidates ordenados en Chartiko.',
+      'Aplica filtros técnicos al universo de acciones y consulta candidatos ordenados en Chartiko.',
     howItWorksTitle: 'Cómo funciona Chartiko | Chartiko',
-    howItWorksDescription: 'Conoce cómo filtrar acciones, revisar Candidates y explorar sus gráficos en Chartiko.',
+    howItWorksDescription: 'Conoce cómo filtrar acciones, revisar candidatos y explorar sus gráficos en Chartiko.',
     chartTitle: 'Gráficos de acciones | Chartiko',
     chartDescription: 'Explora precios, volumen, indicadores y Signals de los instrumentos en Chartiko.',
     portalTitle: 'Mi Portal | Chartiko',
@@ -87,9 +87,9 @@ export const es = {
   },
   landing: {
     eyebrow: 'Análisis técnico de acciones',
-    title: 'Encuentra Candidates entre cientos de acciones.',
+    title: 'Encuentra candidatos entre cientos de acciones.',
     intro:
-      'Chartiko aplica filtros técnicos al universo del S&P 500, ordena los resultados y te permite revisar cada Candidate en un gráfico interactivo.',
+      'Chartiko aplica filtros técnicos al universo del S&P 500, ordena los resultados y te permite revisar cada candidato en un gráfico interactivo.',
     openScreener: 'Abrir el Screener',
     workflowHeading: 'Cómo funciona Chartiko',
     step1Label: '01 / FILTRA',
@@ -97,7 +97,7 @@ export const es = {
     step1Body:
       'Combina señales e indicadores como medias móviles, RSI, MACD y volumen para acotar la lista de acciones.',
     step2Label: '02 / ORDENA',
-    step2Title: 'Revisa los Candidates',
+    step2Title: 'Revisa los candidatos',
     step2Body:
       'Consulta qué instrumentos cumplen los filtros y cambia el criterio de ordenación para priorizar la revisión.',
     step3Label: '03 / EXPLORA',
@@ -227,7 +227,7 @@ export const es = {
     badge: 'Superficie',
     access: 'Acceso público',
     title: 'Screener',
-    intro: 'Filtra acciones del S&P 500 con criterios técnicos, revisa Candidates ordenados y abre sus gráficos interactivos.',
+    intro: 'Filtra acciones del S&P 500 con criterios técnicos, revisa candidatos ordenados y abre sus gráficos interactivos.',
     howItWorksLink: 'Conoce cómo funciona Chartiko →',
     showing: 'Mostrando {returned} de {total} candidatos',
     universeTitle: 'Universo resuelto por el servidor',
