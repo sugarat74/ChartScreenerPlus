@@ -1,5 +1,11 @@
 # Progress Log
 
+## Backlog: pattern calibration and pattern alerts — 2026-10-12
+
+- Added `chart-patterns-calibration` (labelled review sample, precision/miss-rate report, validator rule fixes, parameter tuning) and `alerts-patterns` (Watchlist alerts when a pattern appears or is confirmed), both `not_started` with specs in `docs/specs/`.
+- Re-checked `alerts-ui` and `alerts-email-digest` specs: still valid; review notes appended.
+- Pending order suggestion: `alerts-ui` → `alerts-patterns`; `alerts-email-digest` when the chartiko.com mailbox exists; `chart-patterns-calibration` any time.
+
 ## screener-precomputed (option C) — 2026-10-12
 
 - `screener_rows` precomputed by `screener:refresh` (pipeline before alerts, `RunIngestionJob`, deploy); `CandidateQuery` filters, ranks and pages in SQL. API contract unchanged.

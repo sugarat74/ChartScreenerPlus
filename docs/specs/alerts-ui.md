@@ -122,3 +122,7 @@ Visitors see no bell and get the login prompt on `/portal/notificaciones`; Engli
 - [ ] All scenarios pass in a real browser; Visitor has no bell; ownership respected via API.
 - [ ] es/en complete; DESIGN.md states covered; no EOD wording; mobile OK.
 - [ ] No backend changes outside `alerts-engine`'s contract; tests, `init.ps1`, docs, evidence updated.
+
+## Review note — 2026-10-12
+
+Still valid after `screener-precomputed`, `screener-pagination` and the header/homepage changes: the files and routes named above exist (the Screener now lives at `/`, which this spec does not touch). Screener alerts evaluated by `alerts-engine` read the precomputed `screener_rows`, refreshed by the pipeline before `alerts:evaluate`; nothing changes for this spec. Pattern alerts are a separate later feature: `docs/specs/alerts-patterns.md`.
