@@ -179,6 +179,8 @@ class IngestionPipelineCommandTest extends TestCase
         $this->assertDatabaseCount('indicator_snapshots', 3);
         $this->assertDatabaseCount('signals', 1);
         $this->assertDatabaseCount('chart_patterns', 1);
+        // The Screener rows were rebuilt from the new data before the alerts.
+        $this->assertDatabaseHas('screener_rows', ['ticker' => 'AAA', 'date' => '2026-09-03', 'signal_count' => 1]);
 
         // One request per stage.
         Http::assertSentCount(4);

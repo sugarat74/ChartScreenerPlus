@@ -35,6 +35,9 @@ php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+# The Screener reads precomputed rows: rebuild them for this release's code
+# (and right after the migration that creates the table).
+php artisan screener:refresh
 if [[ "$DB_DRIVER" == pgsql ]]; then
   # Before activation: the runtime (pooled) path must answer with the app role.
   # db:monitor queries the default connection itself (db:show would go direct).

@@ -3,14 +3,13 @@
 namespace App\Services\Screener;
 
 use App\Models\ChartPattern;
-use App\Models\Instrument;
+use App\Models\ScreenerRow;
 use App\Models\Universe;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * The ranked Candidate list for a Universe and a set of already-validated
- * filters (extracted from `ScreenerController` for `alerts-engine`).
+ * filters, read from the precomputed `screener_rows` (screener-precomputed).
  *
  * `$filters` uses the Screener API param names, i.e. the same shape as a
  * Saved Screener's canonical `filters` object: `signal`, `rsi_min`,
@@ -18,42 +17,61 @@ use Illuminate\Support\Facades\DB;
  * `pattern_status` and `sort`. The HTTP controller validates query params into
  * that shape; `fromSaved()` normalizes a stored definition into it.
  *
+ * Filtering, ranking (nulls last, ticker tie-break in byte order), counting
+ * and paging all happen in SQL, so the cost per request does not grow with
+ * the number of instruments. Rows are rebuilt by `ScreenerRowBuilder`.
+ *
  * @phpstan-type Filters array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string}
  */
 class CandidateQuery
 {
     /**
-     * Every matching Candidate payload, ranked (the caller applies any limit).
-     *
-     * A Candidate must have both a latest bar and a latest snapshot: without
-     * either, the candidate fields cannot be produced, even with no filter.
+     * The sortable column and direction for each supported order.
+     */
+    private const SORTS = [
+        'rvol_desc' => ['rvol', 'desc'],
+        'rsi_desc' => ['rsi14', 'desc'],
+        'rsi_asc' => ['rsi14', 'asc'],
+        'change_desc' => ['change_percent', 'desc'],
+        'change_asc' => ['change_percent', 'asc'],
+        'signal_count_desc' => ['signal_count', 'desc'],
+    ];
+
+    /**
+     * Every matching Candidate payload, ranked (used by alerts).
      *
      * @param  Filters  $filters
      * @return list<array<string, mixed>>
      */
     public function candidates(Universe $universe, array $filters): array
     {
-        $members = $universe->instruments()
-            ->with(['latestBar', 'latestSnapshot', 'signals', 'chartPatterns'])
+        return $this->ranked($this->filtered($universe, $filters), $filters['sort'])
             ->get()
-            ->filter(fn (Instrument $instrument): bool => $instrument->latestBar !== null
-                && $instrument->latestSnapshot !== null)
-            ->values();
-
-        $previousClose = $this->previousCloseByInstrument($members->pluck('id')->all());
-
-        $candidates = $members
-            ->filter(fn (Instrument $instrument): bool => $this->matchesFilters($instrument, $filters))
-            ->map(fn (Instrument $instrument): array => $this->candidatePayload(
-                $instrument,
-                $previousClose->get($instrument->id),
-            ))
-            ->values()
+            ->map(fn (ScreenerRow $row): array => $this->payload($row))
             ->all();
+    }
 
-        $this->sortCandidates($candidates, $filters['sort']);
+    /**
+     * One page of ranked Candidates plus the total number that matched.
+     *
+     * @param  Filters  $filters
+     * @return array{candidates: list<array<string, mixed>>, total: int}
+     */
+    public function page(Universe $universe, array $filters, int $limit, int $offset): array
+    {
+        $query = $this->filtered($universe, $filters);
+        $total = (clone $query)->count();
 
-        return $candidates;
+        $candidates = $total === 0 || $offset >= $total
+            ? []
+            : $this->ranked($query, $filters['sort'])
+                ->offset($offset)
+                ->limit($limit)
+                ->get()
+                ->map(fn (ScreenerRow $row): array => $this->payload($row))
+                ->all();
+
+        return ['candidates' => $candidates, 'total' => $total];
     }
 
     /**
@@ -87,169 +105,59 @@ class CandidateQuery
     }
 
     /**
-     * Build the `instrument_id => previous close` map in one bounded query.
-     *
-     * The previous close is the close of each instrument's second most recent
-     * bar by date. It is read with one correlated subquery **per instrument**
-     * (`order by date desc limit 1 offset 1`), which reads two entries of the
-     * unique `(instrument_id, date)` index backwards plus one table row, so the
-     * cost grows with the number of instruments, not with their bar history.
-     * Never filter or join on `daily_bars` per stored bar here: that scales
-     * with the whole history. An instrument with fewer than two bars is simply
-     * absent from the map.
-     *
-     * @param  list<int>  $instrumentIds
-     * @return Collection<int, float>
-     */
-    private function previousCloseByInstrument(array $instrumentIds): Collection
-    {
-        if ($instrumentIds === []) {
-            return collect();
-        }
-
-        return DB::table('instruments as i')
-            ->whereIn('i.id', $instrumentIds)
-            ->select('i.id')
-            ->selectSub(
-                fn ($query) => $query->from('daily_bars as b')
-                    ->select('b.close')
-                    ->whereColumn('b.instrument_id', 'i.id')
-                    ->orderByDesc('b.date')
-                    ->offset(1)
-                    ->limit(1),
-                'previous_close',
-            )
-            ->get()
-            ->filter(fn (object $row): bool => $row->previous_close !== null)
-            ->mapWithKeys(fn (object $row): array => [(int) $row->id => (float) $row->previous_close]);
-    }
-
-    /**
-     * Whether an instrument satisfies every active filter (AND).
-     *
-     * A `null` indicator (insufficient history) never satisfies a numeric or
-     * derived filter, so such an instrument is excluded whenever that filter is
-     * applied.
+     * Universe members' rows matching every active filter (AND; the signal
+     * and pattern lists are OR). A null indicator never satisfies a numeric
+     * filter, because SQL comparisons with NULL are never true.
      *
      * @param  Filters  $filters
+     * @return Builder<ScreenerRow>
      */
-    private function matchesFilters(Instrument $instrument, array $filters): bool
+    private function filtered(Universe $universe, array $filters): Builder
     {
-        $bar = $instrument->latestBar;
-        $snapshot = $instrument->latestSnapshot;
-
-        if ($filters['signal'] !== [] && ! $instrument->signals->contains(
-            fn ($signal): bool => in_array($signal->type, $filters['signal'], true)
-        )) {
-            return false;
-        }
-
-        if ($filters['pattern'] !== [] && ! $instrument->chartPatterns->contains(
-            fn (ChartPattern $pattern): bool => in_array($pattern->type, $filters['pattern'], true)
-                && ($filters['pattern_status'] === 'any' || $pattern->status === $filters['pattern_status'])
-        )) {
-            return false;
-        }
-
-        if ($filters['rsi_min'] !== null && ! $this->atLeast($snapshot->rsi14, $filters['rsi_min'])) {
-            return false;
-        }
-
-        if ($filters['rsi_max'] !== null && ! $this->atMost($snapshot->rsi14, $filters['rsi_max'])) {
-            return false;
-        }
-
-        if ($filters['min_rvol'] !== null && ! $this->atLeast($snapshot->rvol, $filters['min_rvol'])) {
-            return false;
-        }
-
-        if ($filters['price_above_sma200']) {
-            $sma200 = $this->nullableFloat($snapshot->sma200);
-
-            if ($sma200 === null || (float) $bar->close <= $sma200) {
-                return false;
-            }
-        }
-
-        if ($filters['ma_cross'] !== null) {
-            $sma50 = $this->nullableFloat($snapshot->sma50);
-            $sma200 = $this->nullableFloat($snapshot->sma200);
-
-            if ($sma50 === null || $sma200 === null) {
-                return false;
-            }
-
-            if ($filters['ma_cross'] === 'bullish' && ! ($sma50 > $sma200)) {
-                return false;
-            }
-
-            if ($filters['ma_cross'] === 'bearish' && ! ($sma50 < $sma200)) {
-                return false;
-            }
-        }
-
-        return true;
+        return ScreenerRow::query()
+            ->whereIn('instrument_id', fn ($query) => $query->select('instrument_id')
+                ->from('instrument_universe')
+                ->where('universe_id', $universe->id))
+            ->when($filters['signal'] !== [], fn (Builder $query) => $query->whereExists(
+                fn ($exists) => $exists->selectRaw('1')
+                    ->from('signals')
+                    ->whereColumn('signals.instrument_id', 'screener_rows.instrument_id')
+                    ->whereIn('signals.type', $filters['signal'])
+            ))
+            ->when($filters['pattern'] !== [], fn (Builder $query) => $query->whereExists(
+                fn ($exists) => $exists->selectRaw('1')
+                    ->from('chart_patterns')
+                    ->whereColumn('chart_patterns.instrument_id', 'screener_rows.instrument_id')
+                    ->whereIn('chart_patterns.type', $filters['pattern'])
+                    ->when($filters['pattern_status'] !== 'any', fn ($status) => $status->where('chart_patterns.status', $filters['pattern_status']))
+            ))
+            ->when($filters['rsi_min'] !== null, fn (Builder $query) => $query->where('rsi14', '>=', $filters['rsi_min']))
+            ->when($filters['rsi_max'] !== null, fn (Builder $query) => $query->where('rsi14', '<=', $filters['rsi_max']))
+            ->when($filters['min_rvol'] !== null, fn (Builder $query) => $query->where('rvol', '>=', $filters['min_rvol']))
+            ->when($filters['price_above_sma200'], fn (Builder $query) => $query->where('price_above_sma200', true))
+            ->when($filters['ma_cross'] !== null, fn (Builder $query) => $query->where('ma_cross', $filters['ma_cross']));
     }
 
     /**
-     * Whether a nullable `decimal:4` value is at least `$minimum`.
-     */
-    private function atLeast(mixed $value, float $minimum): bool
-    {
-        return $value !== null && (float) $value >= $minimum;
-    }
-
-    /**
-     * Whether a nullable `decimal:4` value is at most `$maximum`.
-     */
-    private function atMost(mixed $value, float $maximum): bool
-    {
-        return $value !== null && (float) $value <= $maximum;
-    }
-
-    /**
-     * Shape one Candidate for the API.
+     * Order by the sort key with nulls last, then by ticker in byte order
+     * (PostgreSQL's collation could otherwise ignore punctuation such as `.`).
      *
-     * @return array<string, mixed>
+     * @param  Builder<ScreenerRow>  $query
+     * @return Builder<ScreenerRow>
      */
-    private function candidatePayload(Instrument $instrument, ?float $previousClose): array
+    private function ranked(Builder $query, string $sort): Builder
     {
-        $bar = $instrument->latestBar;
-        $snapshot = $instrument->latestSnapshot;
-        $close = (float) $bar->close;
+        [$column, $direction] = self::SORTS[$sort] ?? self::SORTS['rvol_desc'];
 
-        return [
-            'ticker' => $instrument->ticker,
-            'company' => $instrument->company,
-            'sector' => $instrument->sector,
-            'exchange' => $instrument->exchange,
-            'active' => $instrument->active,
-            'date' => $bar->date->format('Y-m-d'),
-            'close' => $close,
-            'change_percent' => $this->changePercent($close, $previousClose),
-            'rvol' => $this->nullableFloat($snapshot->rvol),
-            'rsi14' => $this->nullableFloat($snapshot->rsi14),
-            'signals' => $instrument->signals
-                ->pluck('type')
-                ->unique()
-                ->sort()
-                ->values()
-                ->all(),
-            'patterns' => $instrument->chartPatterns
-                ->sortBy('type')
-                ->values()
-                ->map(fn (ChartPattern $pattern): array => [
-                    'type' => $pattern->type,
-                    'status' => $pattern->status,
-                    'breakout_level' => $pattern->breakout_level,
-                    'end_date' => $pattern->end_date->format('Y-m-d'),
-                ])
-                ->all(),
-        ];
+        $query->orderByRaw("{$column} is null")->orderBy($column, $direction);
+
+        return $query->getConnection()->getDriverName() === 'pgsql'
+            ? $query->orderByRaw('ticker collate "C" asc')
+            : $query->orderBy('ticker');
     }
 
     /**
-     * `((latest close - previous close) / previous close) * 100`, or `null`.
+     * `((close - previous close) / previous close) * 100`, or `null`.
      */
     private function changePercent(float $close, ?float $previousClose): ?float
     {
@@ -261,61 +169,28 @@ class CandidateQuery
     }
 
     /**
-     * Rank the candidates in place by the requested order.
+     * Shape one Candidate for the API (same keys and types as before).
      *
-     * @param  list<array<string, mixed>>  $candidates
+     * @return array<string, mixed>
      */
-    private function sortCandidates(array &$candidates, string $sort): void
+    private function payload(ScreenerRow $row): array
     {
-        usort($candidates, function (array $a, array $b) use ($sort): int {
-            $comparison = $this->compareBySort($a, $b, $sort);
-
-            return $comparison !== 0 ? $comparison : strcmp($a['ticker'], $b['ticker']);
-        });
-    }
-
-    /**
-     * Compare two candidates by the sort's primary key (nulls always last).
-     *
-     * @param  array<string, mixed>  $a
-     * @param  array<string, mixed>  $b
-     */
-    private function compareBySort(array $a, array $b, string $sort): int
-    {
-        [$key, $descending] = match ($sort) {
-            'rsi_desc' => ['rsi14', true],
-            'rsi_asc' => ['rsi14', false],
-            'change_desc' => ['change_percent', true],
-            'change_asc' => ['change_percent', false],
-            'signal_count_desc' => ['signal_count', true],
-            default => ['rvol', true],
-        };
-
-        $left = $key === 'signal_count' ? count($a['signals']) : $a[$key];
-        $right = $key === 'signal_count' ? count($b['signals']) : $b[$key];
-
-        if ($left === null && $right === null) {
-            return 0;
-        }
-
-        if ($left === null) {
-            return 1;
-        }
-
-        if ($right === null) {
-            return -1;
-        }
-
-        $comparison = $left <=> $right;
-
-        return $descending ? -$comparison : $comparison;
-    }
-
-    /**
-     * Convert a nullable `decimal:4` cast value to a JSON number or `null`.
-     */
-    private function nullableFloat(mixed $value): ?float
-    {
-        return $value === null ? null : (float) $value;
+        return [
+            'ticker' => $row->ticker,
+            'company' => $row->company,
+            'sector' => $row->sector,
+            'exchange' => $row->exchange,
+            'active' => $row->active,
+            'date' => $row->date->format('Y-m-d'),
+            'close' => (float) $row->close,
+            // Recomputed from the stored decimals (exactly as before) rather
+            // than read from the `double` sort column, whose text round-trip
+            // can drop the last digits on some drivers (SQLite: 15 digits).
+            'change_percent' => $this->changePercent((float) $row->close, $row->previous_close === null ? null : (float) $row->previous_close),
+            'rvol' => $row->rvol === null ? null : (float) $row->rvol,
+            'rsi14' => $row->rsi14 === null ? null : (float) $row->rsi14,
+            'signals' => $row->signals,
+            'patterns' => $row->patterns,
+        ];
     }
 }

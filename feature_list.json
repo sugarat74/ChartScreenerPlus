@@ -1113,5 +1113,28 @@
       "2026-10-12 independent review: first pass requested changes (keyboard focus lost because buttons were disabled while loading; redundant refetch via setSearchParams deps; redirect race; zero-result page kept in URL; test gaps; optional meta.offset). All fixed in 8a67421 with 3 new tests (focus kept, ranking resets page, zero results drop page); re-review approved. Vitest 72, lint, browser QA 12/12 again, .\\init.ps1 exit 0 (Laravel 259 / 6 skipped). Nit left: a stale zero-result deep link fetches twice."
     ],
     "notes": "Small user-requested feature delivered via GitHub Flow without a separate spec (scope is this entry plus ARCHITECTURE.md Screener API pagination). Option C (precomputed screener table) will move paging into SQL."
+  },
+  {
+    "id": "screener-precomputed",
+    "area": "backend",
+    "title": "Precomputed Screener rows with SQL filtering and paging",
+    "user_visible_behavior": "The Screener answers in the same time whether the universe has 500 or thousands of instruments: the Candidate list, filters, ranking and pages are unchanged, but they come from rows precomputed after each data update and are filtered, ranked and paged in the database.",
+    "depends_on": [
+      "screener-api",
+      "screener-pagination",
+      "chart-patterns-ui",
+      "alerts-engine"
+    ],
+    "status": "passing",
+    "verification": [
+      "screener_rows rebuilt by screener:refresh in the pipeline (before alerts), after RunIngestionJob and on deploy; stale rows removed",
+      "CandidateQuery filters, ranks (nulls last, byte-order ticker tie-break) and pages in SQL with a constant number of queries",
+      "JSON identical to the previous per-request computation for all filter/sort/page combinations (old vs new comparison)",
+      "Tests and docs updated; .\\init.ps1 and CI (SQLite + PostgreSQL) pass; production timing recorded"
+    ],
+    "evidence": [
+      "2026-10-12: old vs new comparison on the dev DB (494 instruments, with and without 178 patterns): 540 checks, 0 differences after recomputing change_percent from stored decimals; matrix time 21–23 s legacy vs 3.3 s new. Scale copy with 5,494 instruments: refresh 1.9 s, page queries 11–19 ms. Laravel suite 264 passed / 6 skipped incl. ScreenerRowBuilderTest (4), pipeline and RunIngestionJob refresh tests."
+    ],
+    "notes": "User request 2026-10-12 ('opción C') after the previous-close fix. Spec: docs/specs/screener-precomputed.md. Manual stage commands need `php artisan screener:refresh` afterwards (documented in deploy/README.md and CONSTRAINTS.md)."
   }
 ]

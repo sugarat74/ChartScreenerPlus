@@ -54,7 +54,7 @@ class ChartPatternsApiTest extends TestCase
      */
     private function tickers(string $query): array
     {
-        return array_column($this->getJson('/api/screener'.$query)->assertOk()->json('candidates'), 'ticker');
+        return array_column($this->refreshScreenerRows()->getJson('/api/screener'.$query)->assertOk()->json('candidates'), 'ticker');
     }
 
     public function test_pattern_filter_matches_any_listed_type(): void
@@ -82,7 +82,7 @@ class ChartPatternsApiTest extends TestCase
     {
         $this->seedPatterns();
 
-        $candidate = collect($this->getJson('/api/screener?pattern=double_bottom&pattern_status=confirmed')->json('candidates'))->sole();
+        $candidate = collect($this->refreshScreenerRows()->getJson('/api/screener?pattern=double_bottom&pattern_status=confirmed')->json('candidates'))->sole();
 
         $this->assertSame([[
             'type' => 'double_bottom',
@@ -94,15 +94,15 @@ class ChartPatternsApiTest extends TestCase
 
     public function test_invalid_pattern_params_are_localized_422s(): void
     {
-        $this->getJson('/api/screener?pattern=triangle', ['Accept-Language' => 'en'])
+        $this->refreshScreenerRows()->getJson('/api/screener?pattern=triangle', ['Accept-Language' => 'en'])
             ->assertUnprocessable()
             ->assertJsonPath('errors.pattern.0', 'The selected pattern type is invalid.');
 
-        $this->getJson('/api/screener?pattern=double_top&pattern_status=maybe', ['Accept-Language' => 'es'])
+        $this->refreshScreenerRows()->getJson('/api/screener?pattern=double_top&pattern_status=maybe', ['Accept-Language' => 'es'])
             ->assertUnprocessable()
             ->assertJsonPath('errors.pattern_status.0', 'El estado de patrón debe ser any, forming o confirmed.');
 
-        $this->getJson('/api/screener?pattern[]=1&pattern[][]=x')->assertUnprocessable()->assertJsonValidationErrors('pattern');
+        $this->refreshScreenerRows()->getJson('/api/screener?pattern[]=1&pattern[][]=x')->assertUnprocessable()->assertJsonValidationErrors('pattern');
     }
 
     public function test_instrument_detail_includes_pattern_points(): void

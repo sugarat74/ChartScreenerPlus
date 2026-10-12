@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Enums\IngestionRunItemStatus;
 use App\Enums\IngestionRunStatus;
 use App\Jobs\RunIngestionJob;
+use App\Models\IndicatorSnapshot;
+use App\Services\Screener\ScreenerRowBuilder;
 use App\Models\IngestionRun;
 use App\Models\Instrument;
 use App\Models\Universe;
@@ -127,6 +129,20 @@ class RunIngestionJobTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_a_manual_run_refreshes_the_screener_rows(): void
+    {
+        $this->universeWith(['AAA']);
+        $runner = app(IngestionRunner::class);
+        [$run, $instrumentIds] = $this->prepareRun($runner);
+        IndicatorSnapshot::factory()->create(['instrument_id' => $instrumentIds[0], 'date' => '2026-09-01']);
+        Http::fake(['*/eod/AAA' => Http::response($this->bars('AAA', 2))]);
+
+        RunIngestionJob::dispatchSync($run->id, $instrumentIds);
+
+        // The latest close/date the Screener shows come from the new bars.
+        $this->assertDatabaseHas('screener_rows', ['instrument_id' => $instrumentIds[0]]);
+    }
+
     public function test_a_mixed_run_finishes_partial(): void
     {
         $runner = app(IngestionRunner::class);
@@ -193,7 +209,7 @@ class RunIngestionJobTest extends TestCase
             '*/eod/AAA' => Http::response($this->bars('AAA', 1)),
         ]);
 
-        (new RunIngestionJob($run->id, $instrumentIds))->handle($runner);
+        (new RunIngestionJob($run->id, $instrumentIds))->handle($runner, app(ScreenerRowBuilder::class));
 
         $finished = $run->fresh();
 

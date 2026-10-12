@@ -132,7 +132,7 @@ class ScreenerApiTest extends TestCase
         $this->signal($nvidia, 'pivot_breakout_rvol');
         $this->signal($nvidia, 'golden_cross');
 
-        $response = $this->getJson('/api/screener')->assertOk();
+        $response = $this->refreshScreenerRows()->getJson('/api/screener')->assertOk();
 
         $response
             ->assertJsonPath('universe.slug', 'sp500')
@@ -181,18 +181,18 @@ class ScreenerApiTest extends TestCase
 
         $this->assertSame(
             ['AAA'],
-            $this->tickers($this->getJson('/api/screener?signal=golden_cross')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?signal=golden_cross')->assertOk()->json('candidates')),
         );
 
         // Multiple types are OR-ed (the union), for both the string and array form.
         $this->assertSame(
             ['AAA', 'BBB'],
-            $this->tickers($this->getJson('/api/screener?signal=golden_cross,rsi_overbought')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?signal=golden_cross,rsi_overbought')->assertOk()->json('candidates')),
         );
 
         $this->assertSame(
             ['AAA', 'BBB'],
-            $this->tickers($this->getJson('/api/screener?signal[]=golden_cross&signal[]=rsi_overbought')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?signal[]=golden_cross&signal[]=rsi_overbought')->assertOk()->json('candidates')),
         );
     }
 
@@ -213,16 +213,16 @@ class ScreenerApiTest extends TestCase
         // An instrument with insufficient history can never satisfy the filter.
         $this->snapshot($members['DDD'], ['rsi14' => null]);
 
-        $bounded = $this->getJson('/api/screener?rsi_min=30&rsi_max=62.5')->assertOk();
+        $bounded = $this->refreshScreenerRows()->getJson('/api/screener?rsi_min=30&rsi_max=62.5')->assertOk();
 
         $this->assertSame(['AAA', 'BBB'], $this->tickers($bounded->json('candidates')));
 
-        $high = $this->getJson('/api/screener?rsi_min=63')->assertOk();
+        $high = $this->refreshScreenerRows()->getJson('/api/screener?rsi_min=63')->assertOk();
         $this->assertSame(['CCC'], $this->tickers($high->json('candidates')));
 
         $this->assertSame(
             [],
-            $this->tickers($this->getJson('/api/screener?rsi_min=200')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?rsi_min=200')->assertOk()->json('candidates')),
         );
     }
 
@@ -243,7 +243,7 @@ class ScreenerApiTest extends TestCase
         $this->snapshot($high, ['rvol' => 4]);
 
         // The boundary is inclusive; the default order is RVOL descending.
-        $response = $this->getJson('/api/screener?min_rvol=2.5')->assertOk();
+        $response = $this->refreshScreenerRows()->getJson('/api/screener?min_rvol=2.5')->assertOk();
 
         $this->assertSame(['CCC', 'BBB'], $this->tickers($response->json('candidates')));
     }
@@ -267,18 +267,18 @@ class ScreenerApiTest extends TestCase
 
         $this->assertSame(
             ['AAA'],
-            $this->tickers($this->getJson('/api/screener?price_above_sma200=1')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?price_above_sma200=1')->assertOk()->json('candidates')),
         );
 
         $this->assertSame(
             ['AAA'],
-            $this->tickers($this->getJson('/api/screener?price_above_sma200=yes')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?price_above_sma200=yes')->assertOk()->json('candidates')),
         );
 
         // An explicit false is simply "filter off".
         $this->assertCount(
             3,
-            $this->getJson('/api/screener?price_above_sma200=0')->assertOk()->json('candidates'),
+            $this->refreshScreenerRows()->getJson('/api/screener?price_above_sma200=0')->assertOk()->json('candidates'),
         );
     }
 
@@ -303,12 +303,12 @@ class ScreenerApiTest extends TestCase
 
         $this->assertSame(
             ['AAA'],
-            $this->tickers($this->getJson('/api/screener?ma_cross=bullish')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?ma_cross=bullish')->assertOk()->json('candidates')),
         );
 
         $this->assertSame(
             ['BBB'],
-            $this->tickers($this->getJson('/api/screener?ma_cross=bearish')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?ma_cross=bearish')->assertOk()->json('candidates')),
         );
     }
 
@@ -332,7 +332,7 @@ class ScreenerApiTest extends TestCase
         $this->signal($wrongVolume, 'golden_cross');
         $this->signal($wrongSignal, 'death_cross');
 
-        $response = $this->getJson('/api/screener?signal=golden_cross&min_rvol=2')->assertOk();
+        $response = $this->refreshScreenerRows()->getJson('/api/screener?signal=golden_cross&min_rvol=2')->assertOk();
 
         $this->assertSame(['AAA'], $this->tickers($response->json('candidates')));
         $this->assertSame(1, $response->json('meta.total'));
@@ -375,13 +375,13 @@ class ScreenerApiTest extends TestCase
         // The default order is `rvol_desc`.
         $this->assertSame(
             $expected['rvol_desc'],
-            $this->tickers($this->getJson('/api/screener')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener')->assertOk()->json('candidates')),
         );
 
         foreach ($expected as $sort => $order) {
             $this->assertSame(
                 $order,
-                $this->tickers($this->getJson('/api/screener?sort='.$sort)->assertOk()->json('candidates')),
+                $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?sort='.$sort)->assertOk()->json('candidates')),
                 "Sort {$sort} returned the wrong ranking.",
             );
         }
@@ -401,7 +401,7 @@ class ScreenerApiTest extends TestCase
 
         $this->assertSame(
             ['AAA', 'ZZZ'],
-            $this->tickers($this->getJson('/api/screener?sort=rvol_desc')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?sort=rvol_desc')->assertOk()->json('candidates')),
         );
     }
 
@@ -422,13 +422,13 @@ class ScreenerApiTest extends TestCase
         // would win the tie-break, so nulls last beats ticker ASC.
         $this->assertSame(
             ['ZZZ', 'AAA'],
-            $this->tickers($this->getJson('/api/screener')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener')->assertOk()->json('candidates')),
         );
 
         // Nulls are last in ascending orders too.
         $this->assertSame(
             ['ZZZ', 'AAA'],
-            $this->tickers($this->getJson('/api/screener?sort=rsi_asc')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?sort=rsi_asc')->assertOk()->json('candidates')),
         );
     }
 
@@ -440,7 +440,7 @@ class ScreenerApiTest extends TestCase
         $this->bars($instrument, 100, 100);
         $this->snapshot($instrument, ['rvol' => 1]);
 
-        $response = $this->getJson('/api/screener?min_rvol=99')
+        $response = $this->refreshScreenerRows()->getJson('/api/screener?min_rvol=99')
             ->assertOk()
             ->assertJsonPath('candidates', [])
             ->assertJsonPath('meta.limit', 50)
@@ -467,7 +467,7 @@ class ScreenerApiTest extends TestCase
 
         $this->assertSame(
             ['AAA'],
-            $this->tickers($this->getJson('/api/screener')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener')->assertOk()->json('candidates')),
         );
     }
 
@@ -489,7 +489,7 @@ class ScreenerApiTest extends TestCase
         $this->bar($zeroPrevious, '2026-09-28', 10);
         $this->snapshot($zeroPrevious);
 
-        $byTicker = $this->getJson('/api/screener')->assertOk()->json('candidates');
+        $byTicker = $this->refreshScreenerRows()->getJson('/api/screener')->assertOk()->json('candidates');
         $byTicker = array_column($byTicker, null, 'ticker');
 
         $this->assertSame('2026-09-28', $byTicker['AAA']['date']);
@@ -514,7 +514,7 @@ class ScreenerApiTest extends TestCase
         $this->bar($instrument, '2026-09-22', 95);
         $this->snapshot($instrument);
 
-        $candidate = collect($this->getJson('/api/screener')->assertOk()->json('candidates'))->sole();
+        $candidate = collect($this->refreshScreenerRows()->getJson('/api/screener')->assertOk()->json('candidates'))->sole();
 
         $this->assertSame('2026-09-28', $candidate['date']);
         $this->assertEqualsWithDelta(20.0, $candidate['change_percent'], 1e-9);
@@ -530,14 +530,14 @@ class ScreenerApiTest extends TestCase
             $this->snapshot($instrument, ['rvol' => $rvol]);
         }
 
-        $tickers = fn (string $query): array => array_column($this->getJson('/api/screener'.$query)->assertOk()->json('candidates'), 'ticker');
+        $tickers = fn (string $query): array => array_column($this->refreshScreenerRows()->getJson('/api/screener'.$query)->assertOk()->json('candidates'), 'ticker');
 
         $this->assertSame(['AAA', 'BBB'], $tickers('?limit=2'));
         $this->assertSame(['CCC', 'DDD'], $tickers('?limit=2&offset=2'));
         $this->assertSame(['EEE'], $tickers('?limit=2&offset=4'));
         $this->assertSame([], $tickers('?limit=2&offset=10'));
 
-        $this->getJson('/api/screener?limit=2&offset=2')
+        $this->refreshScreenerRows()->getJson('/api/screener?limit=2&offset=2')
             ->assertJsonPath('meta.limit', 2)
             ->assertJsonPath('meta.offset', 2)
             ->assertJsonPath('meta.returned', 2)
@@ -545,7 +545,7 @@ class ScreenerApiTest extends TestCase
 
         // Like `limit`, a bad offset is clamped silently, never a 422.
         foreach (['-3', 'abc', ''] as $bad) {
-            $this->getJson('/api/screener?limit=2&offset='.$bad)
+            $this->refreshScreenerRows()->getJson('/api/screener?limit=2&offset='.$bad)
                 ->assertOk()
                 ->assertJsonPath('meta.offset', 0)
                 ->assertJsonPath('candidates.0.ticker', 'AAA');
@@ -562,28 +562,28 @@ class ScreenerApiTest extends TestCase
             $this->snapshot($instrument);
         }
 
-        $default = $this->getJson('/api/screener')->assertOk();
+        $default = $this->refreshScreenerRows()->getJson('/api/screener')->assertOk();
         $default->assertJsonPath('meta.limit', 50)->assertJsonPath('meta.returned', 3);
 
-        $one = $this->getJson('/api/screener?limit=1')->assertOk();
+        $one = $this->refreshScreenerRows()->getJson('/api/screener?limit=1')->assertOk();
         $one
             ->assertJsonPath('meta.limit', 1)
             ->assertJsonPath('meta.returned', 1)
             ->assertJsonPath('meta.total', 3);
 
-        $clamped = $this->getJson('/api/screener?limit=99999')->assertOk();
+        $clamped = $this->refreshScreenerRows()->getJson('/api/screener?limit=99999')->assertOk();
         $clamped->assertJsonPath('meta.limit', 500);
 
-        $zero = $this->getJson('/api/screener?limit=0')->assertOk();
+        $zero = $this->refreshScreenerRows()->getJson('/api/screener?limit=0')->assertOk();
         $zero->assertJsonPath('meta.limit', 1);
 
         // A non-numeric limit is never a 422: it falls back to the default.
-        $this->getJson('/api/screener?limit=abc')->assertOk()->assertJsonPath('meta.limit', 50);
+        $this->refreshScreenerRows()->getJson('/api/screener?limit=abc')->assertOk()->assertJsonPath('meta.limit', 50);
     }
 
     public function test_unknown_universe_returns_404_json(): void
     {
-        $this->getJson('/api/screener?universe=does-not-exist')
+        $this->refreshScreenerRows()->getJson('/api/screener?universe=does-not-exist')
             ->assertNotFound()
             ->assertExactJson(['message' => 'Universe not found.']);
     }
@@ -592,13 +592,13 @@ class ScreenerApiTest extends TestCase
     {
         $this->universe();
 
-        $this->getJson('/api/screener?signal=bogus')->assertStatus(422);
-        $this->getJson('/api/screener?ma_cross=sideways')->assertStatus(422);
-        $this->getJson('/api/screener?rsi_min=abc')->assertStatus(422);
-        $this->getJson('/api/screener?rsi_max=abc')->assertStatus(422);
-        $this->getJson('/api/screener?min_rvol=nope')->assertStatus(422);
-        $this->getJson('/api/screener?price_above_sma200=maybe')->assertStatus(422);
-        $this->getJson('/api/screener?sort=bogus')->assertStatus(422);
+        $this->refreshScreenerRows()->getJson('/api/screener?signal=bogus')->assertStatus(422);
+        $this->refreshScreenerRows()->getJson('/api/screener?ma_cross=sideways')->assertStatus(422);
+        $this->refreshScreenerRows()->getJson('/api/screener?rsi_min=abc')->assertStatus(422);
+        $this->refreshScreenerRows()->getJson('/api/screener?rsi_max=abc')->assertStatus(422);
+        $this->refreshScreenerRows()->getJson('/api/screener?min_rvol=nope')->assertStatus(422);
+        $this->refreshScreenerRows()->getJson('/api/screener?price_above_sma200=maybe')->assertStatus(422);
+        $this->refreshScreenerRows()->getJson('/api/screener?sort=bogus')->assertStatus(422);
     }
 
     public function test_payload_decimals_are_numbers(): void
@@ -616,7 +616,7 @@ class ScreenerApiTest extends TestCase
             'sma200' => 150.25,
         ]);
 
-        $response = $this->getJson('/api/screener')->assertOk();
+        $response = $this->refreshScreenerRows()->getJson('/api/screener')->assertOk();
 
         $candidate = $response->json('candidates.0');
 
@@ -643,7 +643,7 @@ class ScreenerApiTest extends TestCase
         $this->snapshot($instrument);
         $this->signal($instrument, 'golden_cross');
 
-        $payload = $this->getJson('/api/screener')->assertOk()->json();
+        $payload = $this->refreshScreenerRows()->getJson('/api/screener')->assertOk()->json();
 
         $this->assertSame(['universe', 'sort', 'candidates', 'meta'], array_keys($payload));
 
@@ -669,6 +669,8 @@ class ScreenerApiTest extends TestCase
             $this->signal($instrument, 'golden_cross');
         }
 
+        $this->refreshScreenerRows();
+
         $queries = 0;
         DB::listen(function () use (&$queries): void {
             $queries++;
@@ -691,9 +693,9 @@ class ScreenerApiTest extends TestCase
         $this->universe();
 
         for ($attempt = 0; $attempt < 60; $attempt++) {
-            $this->getJson('/api/screener')->assertOk();
+            $this->refreshScreenerRows()->getJson('/api/screener')->assertOk();
         }
 
-        $this->getJson('/api/screener')->assertStatus(429);
+        $this->refreshScreenerRows()->getJson('/api/screener')->assertStatus(429);
     }
 }

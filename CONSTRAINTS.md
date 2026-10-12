@@ -193,6 +193,12 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - Role changes, suspension, deletion and impersonation **MUST NOT** be added to the Admin area without an explicit feature; role granting stays out of band (`app:make-admin`). Reason: `docs/user-and-access-model.md` protects the last Admin.
 - Sign-in activity **MUST NOT** store passwords and **MUST** be pruned after `config('admin.activity_retention_days')` (90) by the scheduled `model:prune`; changing the period requires updating the privacy documentation. Reason: IPs and emails are personal data with a declared retention.
 
+## Screener Rows
+
+- `GET /api/screener` and the alerts **MUST** read Candidates from `screener_rows` through `App\Services\Screener\CandidateQuery` and filter, rank and page in SQL; per-request filtering or ranking in PHP over the whole universe **MUST NOT** come back. Reason: request cost must not grow with the number of instruments.
+- `screener_rows` **MUST** be rebuilt by `screener:refresh` after every data change: it runs in `ingestion:pipeline` before `alerts:evaluate`, after `RunIngestionJob` and in `deploy/deploy.sh`; anyone running `indicators:compute`, `signals:detect` or `patterns:detect` by hand **MUST** run `php artisan screener:refresh` afterwards. Reason: the Screener only shows what the rows hold.
+- The Candidate JSON **MUST** stay identical to the per-request computation (same values, order and `meta`); `change_percent` is recomputed from the stored decimals in the payload. Reason: precomputing is an implementation detail, not a contract change.
+
 ## Public API
 
 - API message text **MUST** come from `lang/<locale>/` via `__()` (no hardcoded user-facing strings in controllers/middleware), with the locale chosen by `SetLocale` from `Accept-Language` (fallback `es`). Every locale in `config/locales.php` **MUST** have the same keys and placeholders as `lang/en` (`LocalizationTest`). Status codes, JSON shapes, `errors` keys and Signal codes **MUST NOT** depend on the locale; the example messages below are the English (`Accept-Language: en`) text. Reason: clients branch on status/keys, never on wording.
