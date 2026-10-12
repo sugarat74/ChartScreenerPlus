@@ -113,6 +113,7 @@ export const guideEs: GuideTexts = {
         {
           term: 'SMA 20, 50 y 200 (media móvil simple)',
           summary: 'Media de los cierres de las últimas 20, 50 o 200 sesiones. Suaviza el precio para ver la tendencia: corta (20), media (50) y larga (200).',
+          illustration: { kind: 'movingAverages', alt: 'Precio en negro y tres niveles horizontales de medias móviles simples, azul, rojo y verde, como referencias actuales.' },
           details: [
             'Lectura habitual: precio por encima de la SMA 200 sugiere tendencia de fondo alcista; la SMA 50 por encima de la SMA 200, también.',
             'En el gráfico se muestran como líneas horizontales en su valor actual.',
@@ -121,6 +122,7 @@ export const guideEs: GuideTexts = {
         {
           term: 'RSI 14 (índice de fuerza relativa)',
           summary: 'Oscilador de 0 a 100 que compara la fuerza de las subidas y de las bajadas de las últimas 14 sesiones (método de Wilder).',
+          illustration: { kind: 'rsi', alt: 'Oscilador RSI azul que cruza una zona superior marcada con línea roja discontinua.' },
           details: [
             '70 o más suele leerse como sobrecompra y 30 o menos como sobreventa; son zonas de atención, no órdenes de compra o venta.',
           ],
@@ -128,11 +130,13 @@ export const guideEs: GuideTexts = {
         {
           term: 'MACD 12/26/9',
           summary: 'Diferencia entre la media exponencial de 12 sesiones y la de 26 (línea MACD), junto con su media exponencial de 9 sesiones (línea de señal). Mide el impulso de la tendencia.',
+          illustration: { kind: 'macd', alt: 'Histograma de MACD a ambos lados de cero y líneas MACD azul y de señal roja que se cruzan.' },
           details: ['Cuando la línea MACD cruza su línea de señal se generan las señales «MACD alcista» o «MACD bajista».'],
         },
         {
           term: 'RVOL (volumen relativo)',
           summary: 'Volumen de la última sesión dividido entre el volumen medio de las 50 sesiones anteriores.',
+          illustration: { kind: 'rvol', alt: 'Barras de volumen con una última barra roja muy superior al promedio azul discontinuo.' },
           details: [
             '1× es un volumen normal; 2× o más indica una participación inusual, que suele acompañar a rupturas y noticias.',
           ],
@@ -140,14 +144,17 @@ export const guideEs: GuideTexts = {
         {
           term: 'Pivote',
           summary: 'Máximo de las 20 sesiones anteriores a la última. Superarlo al cierre es una ruptura.',
+          illustration: { kind: 'pivot', alt: 'Precio negro que supera al final una línea horizontal azul que representa el pivote.' },
           details: ['Aparece en el gráfico como línea «PIVOTE» cuando la señal «Ruptura pivote + RVOL» está activa.'],
         },
         {
           term: 'Volumen',
           summary: 'Número de acciones negociadas en cada sesión. Se muestra como barras bajo el gráfico de precio.',
+          illustration: { kind: 'volume', alt: 'Línea de precio en la parte superior y barras de volumen verdes y rojas en el panel inferior.' },
         },
       ],
       notes: [
+        'Las imágenes son esquemas con datos ficticios: explican la forma de cada indicador, no muestran cotizaciones ni señales actuales.',
         'Chartiko también calcula las EMA de 21 y 55 sesiones, el ADX de 14 y las Bandas de Bollinger (20 sesiones, 2 desviaciones) para futuras funciones; hoy no se muestran ni se usan en los filtros.',
       ],
     },
@@ -183,25 +190,30 @@ export const guideEs: GuideTexts = {
         {
           term: 'Doble suelo',
           summary: 'Dos mínimos parecidos (diferencia de hasta un 3 %), separados entre 15 y 120 sesiones, tras una caída de al menos un 15 % en las 60 sesiones previas, con un rebote intermedio de al menos un 10 %.',
+          illustration: { kind: 'doubleBottom', alt: 'Precio con dos suelos similares y una subida que supera el nivel horizontal de la cresta intermedia.' },
           details: ['Nivel de ruptura: el máximo entre los dos suelos. Se confirma con un cierre por encima; se invalida con un cierre más de un 3 % por debajo de los suelos.'],
         },
         {
           term: 'Doble techo',
           summary: 'Dos máximos parecidos (hasta un 3 % de diferencia), separados entre 15 y 120 sesiones, tras una subida de al menos un 15 % en las 60 sesiones previas, con una caída intermedia de al menos un 10 %.',
+          illustration: { kind: 'doubleTop', alt: 'Precio con dos techos similares y una caída que cruza por debajo del valle intermedio.' },
           details: ['Nivel de ruptura: el mínimo entre los dos techos. Se confirma con un cierre por debajo; se invalida con un cierre más de un 3 % por encima de los techos.'],
         },
         {
           term: 'Taza con asa',
           summary: 'Una taza de 30 a 325 sesiones, con una profundidad de entre el 12 % y el 35 %, el fondo entre el 20 % y el 80 % de su duración, sin picos intermedios por encima del borde más bajo y bordes de altura parecida (hasta un 5 %), seguida de un asa de 5 a 25 sesiones que retrocede como mucho un 12 % y no baja de la mitad de la taza.',
+          illustration: { kind: 'cupWithHandle', alt: 'Precio con base redondeada, un asa corta y una subida por encima del máximo del asa.' },
           details: ['Nivel de ruptura: el máximo del asa. Se confirma con un cierre por encima y un volumen relativo de 1,5× o más.'],
         },
         {
           term: 'Bandera alcista',
           summary: 'Un mástil (subida de al menos un 15 % en 15 sesiones o menos) seguido de una bandera de 5 a 20 sesiones que corrige sin subir, con menos volumen y sin retroceder más de la mitad del mástil.',
+          illustration: { kind: 'bullFlag', alt: 'Precio que sube con fuerza, desciende dentro de un canal estrecho y rompe al alza.' },
           details: ['Nivel de ruptura: el máximo de la bandera. Se confirma con un cierre por encima.'],
         },
       ],
       notes: [
+        'Las imágenes son esquemas con datos ficticios; no son formaciones detectadas en un valor real ni objetivos de precio.',
         'Las reglas usan parámetros iniciales que se irán calibrando. Revisa siempre la figura en el gráfico.',
       ],
     },

@@ -7,6 +7,7 @@
  */
 
 import { Link } from 'react-router'
+import TechnicalExample from '../components/TechnicalExample.tsx'
 import { GUIDE_TEXTS } from '../i18n/guide/index.ts'
 import type { GuideSection } from '../i18n/guide/types.ts'
 import { useI18n } from '../i18n/useI18n.ts'
@@ -110,6 +111,11 @@ function GuideSectionBlock({ section }: { section: GuideSection }) {
               <dt className="font-headline text-base font-bold">{entry.term}</dt>
               <dd className="mt-2 text-sm leading-6 text-on-surface-variant">
                 <p>{entry.summary}</p>
+                {entry.illustration ? (
+                  <div className="mt-3">
+                    <TechnicalExample kind={entry.illustration.kind} label={entry.illustration.alt} />
+                  </div>
+                ) : null}
                 {entry.details ? (
                   <ul className="mt-2 list-disc space-y-1 pl-5">
                     {entry.details.map((detail) => (

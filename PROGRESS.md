@@ -1,8 +1,14 @@
 # Progress Log
 
+## Cómo funciona visual examples — 2026-10-12
+
+- Added one accessible schematic SVG next to each of the six current indicator entries (SMA, RSI, MACD, RVOL, Pivot, Volume) and four Chartist Pattern entries in the accepted user manual. The bilingual guide catalogs own the image descriptions and fictional-data notes. The future-only EMA, ADX and Bollinger calculations remain a note, without images implying they appear in the UI.
+- Work was adapted on a clean branch from `origin/main` after the manual replaced `LandingPage`; the earlier local mockup is excluded. A clean-worktree baseline initially lacked `.env`, and the first post-configuration run exposed a too-literal image-name assertion. Both setup and assertion were corrected. Full `init.ps1` then passed: Laravel 268 passed / 6 skipped, SPA lint, 84 Vitest tests/build, engine 67 passed (existing Starlette warning). Indicator and pattern sections were visually inspected at desktop width; the indicator cards were also inspected in a narrow single-column screenshot.
+- Feature `how-it-works-visual-examples` is `passing` pending independent acceptance. Scope is public guide presentation only; no API, market-data computation or route behavior changed. The previous harness hook changes remain only in the original worktree.
+
 ## Cómo funciona user manual — 2026-10-12
 
-- At the user's request, `/como-funciona` is now a full user manual (`how-it-works-manual`): getting started, data and update time, candidate list (ranking, sorting, paging), every filter, the indicators and what each is for, the exact rule of each of the 9 signals and 5 chart patterns, the chart, the account, FAQ and disclaimer, with a table of contents. es/en texts in `frontend/src/i18n/guide/`.
+- At the user's request, `/como-funciona` is now a full user manual (`how-it-works-manual`): getting started, data and update time, candidate list (ranking, sorting, paging), every filter, the indicators and what each is for, the exact rule of each of the 9 signals and 4 chart patterns, the chart, the account, FAQ and disclaimer, with a table of contents. es/en texts in `frontend/src/i18n/guide/`.
 - Vitest checks that signal/pattern names, sort options, page sizes and filter labels match the UI catalogs and that both languages share one structure. Browser QA es/en at 1366/390 px passed.
 - Independent accuracy review approved (no factual errors); its precision nits were applied. Status `accepted`. `/como-funciona` remains noindex.
 
