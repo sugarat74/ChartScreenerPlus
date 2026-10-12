@@ -25,9 +25,6 @@ import {
 import { LOGIN_ROUTE } from '../../nav.ts'
 
 
-const CARD_CLASS =
-  'rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]'
-
 const LABEL_CLASS =
   'font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface-variant'
 
@@ -169,54 +166,45 @@ export default function SavedScreenersPanel({
   }
 
   if (authStatus === 'loading') {
-    return (
-      <section role="status" aria-busy="true" className={CARD_CLASS}>
-        <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
-          {t('saved.checkingSession')}
-        </p>
-      </section>
-    )
+    return null
   }
 
   if (user === null) {
     return (
-      <section className={CARD_CLASS}>
-        <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-          {t('saved.title')}
-        </h2>
-        <p className="mt-1 text-sm text-on-surface-variant">
-          {t('saved.guestIntro')}
-        </p>
-        <div className="mt-4">
-          <Link to={LOGIN_ROUTE} className={PRIMARY_BUTTON_CLASS}>
-            {t('saved.signInToSave')}
-          </Link>
-        </div>
+      <section aria-label={t('saved.title')} className="flex justify-end">
+        <Link
+          to={LOGIN_ROUTE}
+          className="font-mono text-xs font-bold text-on-surface-variant underline underline-offset-4 hover:text-on-surface focus:outline-2 focus:outline-offset-2 focus:outline-outline"
+        >
+          {t('saved.signInToSave')}
+        </Link>
       </section>
     )
   }
 
   return (
-    <section className={CARD_CLASS}>
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-            {t('saved.title')}
-          </h2>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            {t('saved.intro')}
-          </p>
-        </div>
-        <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-          {items.length === 1
-            ? t('saved.countOne', { count: items.length })
-            : t('saved.countOther', { count: items.length })}
+    <details className="group border-b border-outline-variant pb-2">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 py-1 focus:outline-2 focus:outline-offset-2 focus:outline-outline [&::-webkit-details-marker]:hidden">
+        <span className="font-headline text-sm font-bold uppercase tracking-wide text-on-surface">
+          {t('saved.title')}
         </span>
-      </header>
+        <span className="flex items-center gap-2 font-mono text-xs text-on-surface-variant">
+          <span>
+            {loading
+              ? t('saved.loading')
+              : error !== null
+                ? t('saved.loadError')
+                : items.length === 1
+                  ? t('saved.countOne', { count: items.length })
+                  : t('saved.countOther', { count: items.length })}
+          </span>
+          <span aria-hidden="true" className="inline-block text-lg leading-none transition-transform group-open:rotate-45">+</span>
+        </span>
+      </summary>
 
       <form
         onSubmit={handleSave}
-        className="mt-4 flex flex-wrap items-end gap-3 border-t-2 border-outline-variant pt-4"
+        className="mt-3 flex flex-wrap items-end gap-3 border-t border-outline-variant pt-4"
       >
         <div className="flex flex-col gap-1">
           <label htmlFor="saved-screener-name" className={LABEL_CLASS}>
@@ -339,6 +327,6 @@ export default function SavedScreenersPanel({
           </ul>
         ) : null}
       </div>
-    </section>
+    </details>
   )
 }
