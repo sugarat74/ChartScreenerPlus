@@ -10,6 +10,8 @@
 /** One explained item: a filter, an indicator, a signal, a pattern… */
 export type GuideIllustrationKind =
   | 'movingAverages' | 'rsi' | 'macd' | 'rvol' | 'pivot' | 'volume'
+  | 'goldenCross' | 'deathCross' | 'bullishAlignment' | 'bearishAlignment'
+  | 'pivotBreakoutRvol' | 'rsiOverbought' | 'rsiOversold' | 'macdBullish' | 'macdBearish'
   | 'doubleTop' | 'doubleBottom' | 'cupWithHandle' | 'bullFlag'
 
 export type GuideEntry = {
@@ -18,7 +20,7 @@ export type GuideEntry = {
   summary: string
   /** Optional details: exact rule, how to read it, caveats. */
   details?: string[]
-  /** Accessible, schematic image for an indicator or chart pattern. */
+  /** Accessible, schematic image for an indicator, signal or chart pattern. */
   illustration?: { kind: GuideIllustrationKind; alt: string }
 }
 
