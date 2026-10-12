@@ -1,5 +1,11 @@
 # Progress Log
 
+## Screener latency fix (option A) — 2026-10-12
+
+- Production profiling: `GET /api/screener` took ~4.5 s; 95% was the previous-close query in `CandidateQuery::previousCloseByInstrument()`, which evaluated two correlated subqueries per stored bar (252,595 rows, ~2M buffer hits, EXPLAIN ANALYZE 4,068 ms).
+- Rewritten as one correlated subquery per instrument (`order by date desc limit 1 offset 1` on the unique `(instrument_id, date)` index): 6 ms in production; old vs new previous closes compared for all 503 instruments, 0 mismatches. New test for out-of-order/gapped bars. `.\init.ps1` exit 0 (Laravel 258 / 6 skipped, frontend 63, engine 67).
+- Next for scaling to thousands of instruments: precomputed screener table with SQL filtering and pagination (option C, to specify).
+
 ## Compact Saved Screeners section — 2026-10-12
 
 - At the user's request, the Screener's Saved Screeners card is now a compact native disclosure, closed by default for Registered Users. Its summary shows the saved count; opening it exposes the unchanged save, apply and delete actions. A Visitor sees only a small sign-in link in that position.

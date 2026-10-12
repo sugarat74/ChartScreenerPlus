@@ -501,6 +501,25 @@ class ScreenerApiTest extends TestCase
         $this->assertNull($byTicker['CCC']['change_percent']);
     }
 
+    public function test_change_percent_uses_the_second_latest_bar_by_date_not_by_insertion_order(): void
+    {
+        $universe = $this->universe();
+        $instrument = $this->member($universe, 'AAA');
+
+        // Inserted out of date order, with gaps (weekend/holiday): the previous
+        // close is the bar just before the latest date, whatever the ids are.
+        $this->bar($instrument, '2026-09-28', 120);
+        $this->bar($instrument, '2026-09-21', 90);
+        $this->bar($instrument, '2026-09-25', 100);
+        $this->bar($instrument, '2026-09-22', 95);
+        $this->snapshot($instrument);
+
+        $candidate = collect($this->getJson('/api/screener')->assertOk()->json('candidates'))->sole();
+
+        $this->assertSame('2026-09-28', $candidate['date']);
+        $this->assertEqualsWithDelta(20.0, $candidate['change_percent'], 1e-9);
+    }
+
     public function test_limit_is_bounded_and_clamped(): void
     {
         $universe = $this->universe();
