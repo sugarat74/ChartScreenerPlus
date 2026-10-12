@@ -83,10 +83,14 @@ export default function ScreenerPage() {
   // identity (which changes whenever any search param changes).
   const filtersRef = useRef(filters)
   const paginationRef = useRef(pagination)
+  // react-router recreates `setSearchParams` on every URL change; reading it
+  // through a ref keeps the fetch effect keyed on the query only.
+  const setSearchParamsRef = useRef(setSearchParams)
   useEffect(() => {
     filtersRef.current = filters
     paginationRef.current = pagination
-  }, [filters, pagination])
+    setSearchParamsRef.current = setSearchParams
+  }, [filters, pagination, setSearchParams])
 
   useEffect(() => {
     // Suppress a duplicate identical query (the key is the canonical filters).
@@ -103,16 +107,22 @@ export default function ScreenerPage() {
     screenerApi
       .search(filtersRef.current, controller.signal, { limit: page.limit, offset: screenerOffset(page) })
       .then((response) => {
-        // A page past the end (the list shrank, or a stale link): go to the
-        // last page that has candidates instead of showing an empty list.
-        if (response.meta.returned === 0 && response.meta.total > 0 && page.page > 1) {
-          const last = screenerPageCount(response.meta.total, page.limit)
-          setSearchParams((prev) => patchScreenerPagination(prev, { page: last }), { replace: true })
+        if (controller.signal.aborted) {
           return
+        }
+        // A page past the end (the list shrank, or a stale link): go to the
+        // last page that has candidates instead of showing an empty list;
+        // with no candidates at all, drop the page from the URL.
+        if (response.meta.returned === 0 && page.page > 1) {
+          const last = response.meta.total > 0 ? screenerPageCount(response.meta.total, page.limit) : 1
+          setSearchParamsRef.current((prev) => patchScreenerPagination(prev, { page: last }), { replace: true })
+          if (response.meta.total > 0) {
+            return
+          }
         }
         const next: ScreenerData = {
           candidates: response.candidates,
-          offset: response.meta.offset ?? screenerOffset(page),
+          offset: response.meta.offset,
           returned: response.meta.returned,
           total: response.meta.total,
           universeName: response.universe.name,
@@ -134,7 +144,7 @@ export default function ScreenerPage() {
       // A remount/re-run for the same key (StrictMode) must be able to refetch.
       lastKeyRef.current = null
     }
-  }, [filtersKey, retryToken, tRef, setSearchParams])
+  }, [filtersKey, retryToken, tRef])
 
   // Any filter or ranking change restarts at page 1 (the page size is kept).
   function update(patch: Partial<ScreenerFilters>) {

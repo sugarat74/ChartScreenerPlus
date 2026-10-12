@@ -426,7 +426,7 @@ export type ScreenerResponse = {
   universe: { slug: string; name: string }
   sort: string
   candidates: ScreenerCandidate[]
-  meta: { limit: number; offset?: number; returned: number; total: number }
+  meta: { limit: number; offset: number; returned: number; total: number }
 }
 
 /**

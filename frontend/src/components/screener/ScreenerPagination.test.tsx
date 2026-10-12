@@ -67,7 +67,7 @@ describe('ScreenerPage pagination', () => {
         const url = new URL(input, 'http://localhost')
         const limit = Number(url.searchParams.get('limit') ?? 50)
         const offset = Number(url.searchParams.get('offset') ?? 0)
-        const total = 120
+        const total = url.searchParams.get('rsi_min') === '99' ? 0 : 120
         const rows = Array.from({ length: Math.max(0, Math.min(limit, total - offset)) }, (_, i) => candidate(`T${offset + i + 1}`))
         return new Response(JSON.stringify({
           universe: { slug: 'sp500', name: 'S&P 500' }, sort: 'rvol_desc', candidates: rows,
@@ -122,6 +122,32 @@ describe('ScreenerPage pagination', () => {
     expect(screen.getByTestId('url').textContent).toBe('?limit=100')
     expect(requests.at(-1)).toContain('limit=100')
     expect(requests.at(-1)).not.toContain('offset')
+  })
+
+  it('keeps keyboard focus on the button while the next page loads', async () => {
+    renderAt('/screener')
+    await screen.findByText('Página 1 de 3')
+    const next = screen.getByRole('button', { name: /Siguiente/ })
+    next.focus()
+    fireEvent.click(next)
+    expect(next.hasAttribute('disabled')).toBe(false)
+    expect(document.activeElement).toBe(next)
+    await screen.findByText('Página 2 de 3')
+    expect(document.activeElement).toBe(next)
+  })
+
+  it('changing the ranking restarts at page 1 and keeps the page size', async () => {
+    renderAt('/screener?page=2&limit=25')
+    await screen.findByText('Página 2 de 5')
+    fireEvent.change(screen.getByLabelText(/Ordenar|Orden/), { target: { value: 'rsi_desc' } })
+    await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('?limit=25&sort=rsi_desc'))
+    await screen.findByText('Página 1 de 5')
+  })
+
+  it('drops the page from the URL when nothing matches', async () => {
+    renderAt('/screener?page=2&rsi_min=99')
+    await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('?rsi_min=99'))
+    expect(screen.queryByRole('navigation', { name: 'Paginación de candidatos' })).toBeNull()
   })
 
   it('a stale page past the end jumps to the last page', async () => {

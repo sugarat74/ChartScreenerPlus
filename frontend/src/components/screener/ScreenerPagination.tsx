@@ -14,7 +14,7 @@ interface ScreenerPaginationProps {
   page: number
   limit: number
   total: number
-  /** Disables the controls while a page is loading. */
+  /** A page is loading: announced with `aria-busy`, controls stay focusable. */
   busy: boolean
   onPageChange: (page: number) => void
   onLimitChange: (limit: number) => void
@@ -34,13 +34,14 @@ export default function ScreenerPagination({
   return (
     <nav
       aria-label={t('screener.pagination.aria')}
+      aria-busy={busy}
       className="flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-outline bg-surface-bright px-4 py-3 shadow-[2px_2px_0px_#1a1a1a]"
     >
       <div className="flex items-center gap-2">
         <button
           type="button"
           className={BUTTON_CLASS}
-          disabled={busy || page <= 1}
+          disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
         >
           <span aria-hidden="true">←</span> {t('screener.pagination.previous')}
@@ -51,7 +52,7 @@ export default function ScreenerPagination({
         <button
           type="button"
           className={BUTTON_CLASS}
-          disabled={busy || page >= pages}
+          disabled={page >= pages}
           onClick={() => onPageChange(page + 1)}
         >
           {t('screener.pagination.next')} <span aria-hidden="true">→</span>
@@ -62,7 +63,6 @@ export default function ScreenerPagination({
         {t('screener.pagination.perPage')}
         <select
           value={limit}
-          disabled={busy}
           onChange={(event) => onLimitChange(Number(event.target.value))}
           className="rounded-md border-2 border-outline bg-surface-bright px-2 py-1 font-mono text-xs text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
         >
