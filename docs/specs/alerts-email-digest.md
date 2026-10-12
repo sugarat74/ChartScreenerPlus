@@ -110,3 +110,7 @@ so I notice relevant setups even if I don't open Chartiko that day.
 - [ ] Opt-in default off; one digest per user per as-of; no tracking; signed unsubscribe and one-click work.
 - [ ] Mail failures never break the pipeline; tests offline (`Mail::fake`).
 - [ ] Legal texts updated before any production send; docs and `init.ps1` OK.
+
+## Review note — 2026-10-12
+
+Still valid after `screener-precomputed`, `screener-pagination` and the header/homepage changes: the files and routes named above exist (the Screener now lives at `/`, which this spec does not touch). Screener alerts evaluated by `alerts-engine` read the precomputed `screener_rows`, refreshed by the pipeline before `alerts:evaluate`; nothing changes for this spec. Pattern alerts are a separate later feature: `docs/specs/alerts-patterns.md`.

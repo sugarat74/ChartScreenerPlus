@@ -1138,5 +1138,45 @@
       "2026-10-12 independent re-review: approve. Laravel 268 passed / 6 skipped; adversarial 784/784 and real-data 540/540 identical; all round-1 findings verified fixed. Nit applied: sort key formatted with locale-independent sprintf('%.17H')."
     ],
     "notes": "User request 2026-10-12 ('opción C') after the previous-close fix. Spec: docs/specs/screener-precomputed.md. Manual stage commands need `php artisan screener:refresh` afterwards (documented in deploy/README.md and CONSTRAINTS.md)."
+  },
+  {
+    "id": "chart-patterns-calibration",
+    "area": "engine",
+    "title": "Calibrate chartist pattern detection with a labelled sample",
+    "user_visible_behavior": "Patterns shown in the Screener and on charts are recognisable formations: detection rules and parameters are tuned against a labelled reference sample, with measured precision per type, instead of the initial values.",
+    "depends_on": [
+      "chart-patterns-detect",
+      "chart-patterns-ui",
+      "screener-precomputed"
+    ],
+    "status": "not_started",
+    "verification": [
+      "patterns:review-sample exports detected and near-miss cases with charts and a CSV for labelling (Admin/CLI only)",
+      "patterns:calibration-report gives precision per type, miss rate and frequency for a labelled CSV",
+      "Validator-identified rule fixes implemented with tests (handle cap, post-breakout invalidation for flag/cup, consistent session metadata, prior-move lookback incl. t1)",
+      "Precision >= 80% per type on the reviewed sample or the type documented as low confidence; parameter table, CONSTRAINTS and tests updated; .\\init.ps1 and CI pass"
+    ],
+    "evidence": [],
+    "notes": "Added 2026-10-12 at user request, to develop later. Spec: docs/specs/chart-patterns-calibration.md. Motivation: 97 of 178 local detections were double tops with the initial parameters. Not backtesting (out of scope)."
+  },
+  {
+    "id": "alerts-patterns",
+    "area": "backend",
+    "title": "Alerts when a chartist pattern appears or is confirmed on the Watchlist",
+    "user_visible_behavior": "A Registered User can choose pattern types and be notified in the app when one appears, or is confirmed by a breakout, on an Instrument of their Watchlist.",
+    "depends_on": [
+      "alerts-engine",
+      "alerts-ui",
+      "chart-patterns-detect"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Appears/confirmed events notify once per as-of; persisting patterns do not notify again; disappearance never notifies",
+      "Unknown types/events 422; ownership and limits as alerts-engine",
+      "Watchlist alert form gets pattern chips and the event choice; notifications render pattern label/status and link to the chart; es/en",
+      ".\\init.ps1 and CI pass"
+    ],
+    "evidence": [],
+    "notes": "Added 2026-10-12 at user request, to develop after alerts-ui. Spec: docs/specs/alerts-patterns.md. Saved Screener alerts already cover pattern filters through screener_new_candidates."
   }
 ]
