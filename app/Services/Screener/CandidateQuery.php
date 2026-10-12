@@ -89,9 +89,13 @@ class CandidateQuery
     /**
      * Build the `instrument_id => previous close` map in one bounded query.
      *
-     * For every instrument it selects the bar whose date is the max date
-     * strictly below that instrument's own max date (a correlated subquery, so
-     * the query count stays constant regardless of the universe size). An
+     * The previous close is the close of each instrument's second most recent
+     * bar by date. It is read with one correlated subquery **per instrument**
+     * (`order by date desc limit 1 offset 1`), which walks the unique
+     * `(instrument_id, date)` index backwards and touches two entries, so the
+     * cost grows with the number of instruments, not with their bar history.
+     * (The previous form evaluated two subqueries per stored bar: ~4 s for
+     * 503 instruments and 252k bars in production, 6 ms with this one.) An
      * instrument with fewer than two bars is simply absent from the map.
      *
      * @param  list<int>  $instrumentIds
@@ -103,14 +107,21 @@ class CandidateQuery
             return collect();
         }
 
-        return DB::table('daily_bars as b')
-            ->whereIn('b.instrument_id', $instrumentIds)
-            ->whereRaw(
-                'b.date = (select max(b2.date) from daily_bars as b2 where b2.instrument_id = b.instrument_id'
-                .' and b2.date < (select max(b3.date) from daily_bars as b3 where b3.instrument_id = b.instrument_id))'
+        return DB::table('instruments as i')
+            ->whereIn('i.id', $instrumentIds)
+            ->select('i.id')
+            ->selectSub(
+                fn ($query) => $query->from('daily_bars as b')
+                    ->select('b.close')
+                    ->whereColumn('b.instrument_id', 'i.id')
+                    ->orderByDesc('b.date')
+                    ->offset(1)
+                    ->limit(1),
+                'previous_close',
             )
-            ->pluck('close', 'instrument_id')
-            ->map(fn ($close): float => (float) $close);
+            ->get()
+            ->filter(fn (object $row): bool => $row->previous_close !== null)
+            ->mapWithKeys(fn (object $row): array => [(int) $row->id => (float) $row->previous_close]);
     }
 
     /**
