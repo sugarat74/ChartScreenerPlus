@@ -520,6 +520,38 @@ class ScreenerApiTest extends TestCase
         $this->assertEqualsWithDelta(20.0, $candidate['change_percent'], 1e-9);
     }
 
+    public function test_offset_pages_through_the_ranked_list(): void
+    {
+        $universe = $this->universe();
+
+        foreach (['AAA' => 5.0, 'BBB' => 4.0, 'CCC' => 3.0, 'DDD' => 2.0, 'EEE' => 1.0] as $ticker => $rvol) {
+            $instrument = $this->member($universe, $ticker);
+            $this->bars($instrument, 100, 101);
+            $this->snapshot($instrument, ['rvol' => $rvol]);
+        }
+
+        $tickers = fn (string $query): array => array_column($this->getJson('/api/screener'.$query)->assertOk()->json('candidates'), 'ticker');
+
+        $this->assertSame(['AAA', 'BBB'], $tickers('?limit=2'));
+        $this->assertSame(['CCC', 'DDD'], $tickers('?limit=2&offset=2'));
+        $this->assertSame(['EEE'], $tickers('?limit=2&offset=4'));
+        $this->assertSame([], $tickers('?limit=2&offset=10'));
+
+        $this->getJson('/api/screener?limit=2&offset=2')
+            ->assertJsonPath('meta.limit', 2)
+            ->assertJsonPath('meta.offset', 2)
+            ->assertJsonPath('meta.returned', 2)
+            ->assertJsonPath('meta.total', 5);
+
+        // Like `limit`, a bad offset is clamped silently, never a 422.
+        foreach (['-3', 'abc', ''] as $bad) {
+            $this->getJson('/api/screener?limit=2&offset='.$bad)
+                ->assertOk()
+                ->assertJsonPath('meta.offset', 0)
+                ->assertJsonPath('candidates.0.ticker', 'AAA');
+        }
+    }
+
     public function test_limit_is_bounded_and_clamped(): void
     {
         $universe = $this->universe();
@@ -622,7 +654,7 @@ class ScreenerApiTest extends TestCase
             array_keys($payload['candidates'][0]),
         );
 
-        $this->assertSame(['limit', 'returned', 'total'], array_keys($payload['meta']));
+        $this->assertSame(['limit', 'offset', 'returned', 'total'], array_keys($payload['meta']));
         $this->assertSame(['golden_cross'], $payload['candidates'][0]['signals']);
     }
 

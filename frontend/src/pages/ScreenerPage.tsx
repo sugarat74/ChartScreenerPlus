@@ -14,6 +14,7 @@ import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
 import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
 import ScreenerFilterPanel from '../components/screener/ScreenerFilterPanel.tsx'
+import ScreenerPagination from '../components/screener/ScreenerPagination.tsx'
 import ScreenerSortControl from '../components/screener/ScreenerSortControl.tsx'
 import Interpolate from '../i18n/Interpolate.tsx'
 import type { Translate } from '../i18n/translate.ts'
@@ -28,9 +29,18 @@ import {
   patchScreenerFilters,
   screenerFiltersKey,
 } from '../lib/screenerFilters.ts'
+import {
+  parseScreenerPagination,
+  patchScreenerPagination,
+  resetScreenerPage,
+  screenerOffset,
+  screenerPageCount,
+  screenerPageRange,
+} from '../lib/screenerPagination.ts'
 
 interface ScreenerData {
   candidates: ScreenerCandidate[]
+  offset: number
   returned: number
   total: number
   universeName: string
@@ -56,7 +66,10 @@ export default function ScreenerPage() {
 
   // The URL is the single source of truth for the filter state.
   const filters = useMemo(() => parseScreenerFilters(searchParams), [searchParams])
-  const filtersKey = screenerFiltersKey(filters)
+  const pagination = useMemo(() => parseScreenerPagination(searchParams), [searchParams])
+  // The fetch key covers the filters and the page, so paging refetches too.
+  const filtersKey = `${screenerFiltersKey(filters)}|${pagination.page}|${pagination.limit}`
+  const resultsRef = useRef<HTMLDivElement | null>(null)
 
   const [status, setStatus] = useState<ScreenerStatus>('loading')
   const [data, setData] = useState<ScreenerData | null>(null)
@@ -69,9 +82,15 @@ export default function ScreenerPage() {
   // Latest filters without making the fetch effect depend on the memo object
   // identity (which changes whenever any search param changes).
   const filtersRef = useRef(filters)
+  const paginationRef = useRef(pagination)
+  // react-router recreates `setSearchParams` on every URL change; reading it
+  // through a ref keeps the fetch effect keyed on the query only.
+  const setSearchParamsRef = useRef(setSearchParams)
   useEffect(() => {
     filtersRef.current = filters
-  }, [filters])
+    paginationRef.current = pagination
+    setSearchParamsRef.current = setSearchParams
+  }, [filters, pagination, setSearchParams])
 
   useEffect(() => {
     // Suppress a duplicate identical query (the key is the canonical filters).
@@ -84,11 +103,26 @@ export default function ScreenerPage() {
     setStatus(dataRef.current === null ? 'loading' : 'refreshing')
     setError(null)
 
+    const page = paginationRef.current
     screenerApi
-      .search(filtersRef.current, controller.signal)
+      .search(filtersRef.current, controller.signal, { limit: page.limit, offset: screenerOffset(page) })
       .then((response) => {
+        if (controller.signal.aborted) {
+          return
+        }
+        // A page past the end (the list shrank, or a stale link): go to the
+        // last page that has candidates instead of showing an empty list;
+        // with no candidates at all, drop the page from the URL.
+        if (response.meta.returned === 0 && page.page > 1) {
+          const last = response.meta.total > 0 ? screenerPageCount(response.meta.total, page.limit) : 1
+          setSearchParamsRef.current((prev) => patchScreenerPagination(prev, { page: last }), { replace: true })
+          if (response.meta.total > 0) {
+            return
+          }
+        }
         const next: ScreenerData = {
           candidates: response.candidates,
+          offset: response.meta.offset,
           returned: response.meta.returned,
           total: response.meta.total,
           universeName: response.universe.name,
@@ -112,21 +146,33 @@ export default function ScreenerPage() {
     }
   }, [filtersKey, retryToken, tRef])
 
+  // Any filter or ranking change restarts at page 1 (the page size is kept).
   function update(patch: Partial<ScreenerFilters>) {
-    setSearchParams((prev) => patchScreenerFilters(prev, patch), { replace: true })
+    setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, patch)), { replace: true })
   }
 
   function applySavedFilters(patch: Partial<ScreenerFilters>) {
     // Applying a stored Screener writes the same owned keys as `update`, so the
     // fetch effect keyed on `screenerFiltersKey` restores the results.
-    setSearchParams((prev) => patchScreenerFilters(prev, patch), { replace: true })
+    setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, patch)), { replace: true })
   }
 
   function clearFilters() {
     // Only the criteria are cleared: the selected ranking must survive.
-    setSearchParams((prev) => patchScreenerFilters(prev, EMPTY_SCREENER_CRITERIA), {
+    setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, EMPTY_SCREENER_CRITERIA)), {
       replace: true,
     })
+  }
+
+  // Page changes are history entries (Back returns to the previous page);
+  // the view goes back to the top of the list.
+  function goToPage(page: number) {
+    setSearchParams((prev) => patchScreenerPagination(prev, { page }))
+    resultsRef.current?.scrollIntoView?.({ block: 'start' })
+  }
+
+  function changePageSize(limit: number) {
+    setSearchParams((prev) => patchScreenerPagination(prev, { limit }), { replace: true })
   }
 
   function retry() {
@@ -170,13 +216,14 @@ export default function ScreenerPage() {
 
       <SavedScreenersPanel filters={filters} onApply={applySavedFilters} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div ref={resultsRef} className="flex scroll-mt-4 flex-wrap items-center justify-between gap-3">
         {data !== null ? (
           <p className="font-mono text-xs text-on-surface-variant">
             <Interpolate
-              template={t('screener.showing')}
+              template={t('screener.showingRange')}
               values={{
-                returned: <strong className="font-bold text-on-surface">{data.returned}</strong>,
+                from: <strong className="font-bold text-on-surface">{screenerPageRange(data.offset, data.returned).from}</strong>,
+                to: <strong className="font-bold text-on-surface">{screenerPageRange(data.offset, data.returned).to}</strong>,
                 total: <strong className="font-bold text-on-surface">{data.total}</strong>,
               }}
             />
@@ -203,6 +250,17 @@ export default function ScreenerPage() {
         onRetry={retry}
         onClearFilters={clearFilters}
       />
+
+      {data !== null && data.total > 0 && status !== 'error' ? (
+        <ScreenerPagination
+          page={pagination.page}
+          limit={pagination.limit}
+          total={data.total}
+          busy={status === 'loading' || status === 'refreshing'}
+          onPageChange={goToPage}
+          onLimitChange={changePageSize}
+        />
+      ) : null}
     </section>
   )
 }

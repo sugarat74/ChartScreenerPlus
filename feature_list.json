@@ -1090,5 +1090,28 @@
     ],
     "evidence": [],
     "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-email-digest.md. Production sending blocked until the owner has a chartiko.com mailbox and an SMTP/API provider (DPA and data location to record in the privacy policy)."
+  },
+  {
+    "id": "screener-pagination",
+    "area": "frontend",
+    "title": "Page through the Candidate list with a chosen page size",
+    "user_visible_behavior": "Below the Candidate list, Visitors and Registered Users can go to the previous and next page, see 'Página N de M' and 'Mostrando from–to de total', and choose 25, 50, 100 or 200 candidates per page; the page and size live in the URL.",
+    "depends_on": [
+      "screener-api",
+      "screener-filters-ui",
+      "candidate-list-ranking"
+    ],
+    "status": "accepted",
+    "verification": [
+      "GET /api/screener accepts offset (silently clamped, never 422) and returns meta.offset; offset past the end returns an empty page with the real total",
+      "SPA keeps page and limit in the URL, sends limit + offset, restarts at page 1 on filter/sort/page-size changes, jumps to the last page for a stale page",
+      "Previous/next buttons disabled at the ends, page size selector, es/en strings, no overflow at 390 px",
+      ".\\init.ps1 and CI pass; real-browser check recorded"
+    ],
+    "evidence": [
+      "2026-10-12: user request (only the first 50 candidates were reachable). ScreenerApiTest offset test (pages, past the end, meta, bad offsets clamped) + meta shape; Vitest ScreenerPagination.test.tsx 6 tests (helpers, forward/back with range text, page size reset, stale page). Real browser (Edge/Playwright, local stack): es 1366 px and en 390 px 12/12 (nav, next page loads offset=50 and 51–100, 100 per page resets to page 1, previous, 0 px overflow, no JS errors).",
+      "2026-10-12 independent review: first pass requested changes (keyboard focus lost because buttons were disabled while loading; redundant refetch via setSearchParams deps; redirect race; zero-result page kept in URL; test gaps; optional meta.offset). All fixed in 8a67421 with 3 new tests (focus kept, ranking resets page, zero results drop page); re-review approved. Vitest 72, lint, browser QA 12/12 again, .\\init.ps1 exit 0 (Laravel 259 / 6 skipped). Nit left: a stale zero-result deep link fetches twice."
+    ],
+    "notes": "Small user-requested feature delivered via GitHub Flow without a separate spec (scope is this entry plus ARCHITECTURE.md Screener API pagination). Option C (precomputed screener table) will move paging into SQL."
   }
 ]

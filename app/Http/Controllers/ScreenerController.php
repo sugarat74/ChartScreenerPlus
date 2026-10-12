@@ -18,7 +18,8 @@ use Illuminate\Validation\ValidationException;
  * ordering happen server-side over the ~503 universe members (bounded), so the
  * SPA never re-implements ranking.
  *
- * `limit` is the only silently clamped param (it cannot change the result set);
+ * `limit` and `offset` are the only silently clamped params (they page through
+ * the result set without changing it);
  * every other param can change which rows or the order, so a bad value is a
  * `422` (see `CONSTRAINTS.md` -> Public API).
  */
@@ -79,13 +80,14 @@ class ScreenerController extends Controller
 
         $filters = $this->resolveFilters($request);
         $limit = $this->resolveLimit($request);
+        $offset = $this->resolveOffset($request);
 
         // Matching, payload and ranking live in `CandidateQuery`, shared with
         // the Alerts evaluator so both always agree on the Candidate list.
         $candidates = $query->candidates($universe, $filters);
 
         $total = count($candidates);
-        $page = array_slice($candidates, 0, $limit);
+        $page = array_slice($candidates, $offset, $limit);
 
         return response()->json([
             'universe' => [
@@ -96,6 +98,7 @@ class ScreenerController extends Controller
             'candidates' => $page,
             'meta' => [
                 'limit' => $limit,
+                'offset' => $offset,
                 'returned' => count($page),
                 'total' => $total,
             ],
@@ -336,6 +339,23 @@ class ScreenerController extends Controller
         }
 
         return $value;
+    }
+
+    /**
+     * Resolve `?offset` (rows to skip before the page) to a non-negative int.
+     *
+     * Like `limit` it pages through the ranked set without changing it, so a
+     * missing, non-numeric or negative value is silently `0` (never a `422`);
+     * an offset past the end simply returns an empty page with the real
+     * `meta.total`.
+     */
+    private function resolveOffset(Request $request): int
+    {
+        if (! is_numeric($request->query('offset'))) {
+            return 0;
+        }
+
+        return max((int) $request->query('offset'), 0);
     }
 
     /**
