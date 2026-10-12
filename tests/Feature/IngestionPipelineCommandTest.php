@@ -6,6 +6,7 @@ use App\Enums\IngestionRunStatus;
 use App\Models\IngestionRun;
 use App\Models\Instrument;
 use App\Models\Universe;
+use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Carbon;
@@ -179,9 +180,32 @@ class IngestionPipelineCommandTest extends TestCase
         $this->assertDatabaseCount('indicator_snapshots', 3);
         $this->assertDatabaseCount('signals', 1);
         $this->assertDatabaseCount('chart_patterns', 1);
+        // The Screener rows were rebuilt from the new data before the alerts.
+        $this->assertDatabaseHas('screener_rows', ['ticker' => 'AAA', 'date' => '2026-09-03', 'signal_count' => 1]);
 
         // One request per stage.
         Http::assertSentCount(4);
+    }
+
+    public function test_a_failed_screener_refresh_skips_alerts_and_fails_the_pipeline(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->fakeEngine();
+        $this->app->instance(ScreenerRowBuilder::class, new class extends ScreenerRowBuilder
+        {
+            public function refresh(): int
+            {
+                throw new \RuntimeException('refresh failed');
+            }
+        });
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Screener rows were not refreshed: refresh failed')
+            ->expectsOutputToContain('Alerts were not evaluated because the screener rows could not be refreshed.')
+            ->doesntExpectOutputToContain('Alerts as of')
+            ->expectsOutputToContain('EOD pipeline finished with errors.')
+            ->assertExitCode(1);
     }
 
     public function test_alerts_are_not_evaluated_when_signal_detection_fails(): void

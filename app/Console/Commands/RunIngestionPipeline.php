@@ -8,11 +8,12 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Run the full EOD pipeline in order: ingestion -> indicators -> signals -> patterns
- * -> alerts.
+ * -> screener rows -> alerts.
  *
  * This is a thin composition wrapper: it never reimplements any stage and
  * delegates to the `ingestion:run`, `indicators:compute`, `signals:detect`,
- * `patterns:detect` and `alerts:evaluate` commands via `$this->call()`, so each
+ * `patterns:detect`, `screener:refresh` and `alerts:evaluate` commands via
+ * `$this->call()`, so each
  * stage keeps its own
  * behavior and ledger.
  *
@@ -80,13 +81,18 @@ class RunIngestionPipeline extends Command
             $indicators = $this->call('indicators:compute', ['--universe' => $universe]);
             $signals = $this->call('signals:detect', ['--universe' => $universe]);
             $patterns = $this->call('patterns:detect', ['--universe' => $universe]);
-            $alerts = $signals === self::SUCCESS ? $this->call('alerts:evaluate') : self::FAILURE;
+            // The Screener and the alerts read the precomputed rows, so they are
+            // rebuilt from whatever the stages above stored.
+            $screener = $this->call('screener:refresh');
+            $alerts = $signals === self::SUCCESS && $screener === self::SUCCESS ? $this->call('alerts:evaluate') : self::FAILURE;
 
             if ($signals !== self::SUCCESS) {
                 $this->warn('Alerts were not evaluated because signal detection failed.');
+            } elseif ($screener !== self::SUCCESS) {
+                $this->warn('Alerts were not evaluated because the screener rows could not be refreshed.');
             }
 
-            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS || $alerts !== self::SUCCESS) {
+            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS || $screener !== self::SUCCESS || $alerts !== self::SUCCESS) {
                 $this->error('EOD pipeline finished with errors.');
 
                 return self::FAILURE;

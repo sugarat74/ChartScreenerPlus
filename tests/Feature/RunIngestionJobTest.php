@@ -5,10 +5,14 @@ namespace Tests\Feature;
 use App\Enums\IngestionRunItemStatus;
 use App\Enums\IngestionRunStatus;
 use App\Jobs\RunIngestionJob;
+use App\Models\DailyBar;
+use App\Models\IndicatorSnapshot;
 use App\Models\IngestionRun;
 use App\Models\Instrument;
+use App\Models\ScreenerRow;
 use App\Models\Universe;
 use App\Services\Ingestion\IngestionRunner;
+use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -125,6 +129,43 @@ class RunIngestionJobTest extends TestCase
         $this->assertSame(2, $finished->items()->count());
         $this->assertDatabaseCount('daily_bars', 5);
         Http::assertSentCount(2);
+    }
+
+    public function test_a_manual_run_refreshes_the_screener_rows(): void
+    {
+        $this->universeWith(['AAA']);
+        $runner = app(IngestionRunner::class);
+        [$run, $instrumentIds] = $this->prepareRun($runner);
+        IndicatorSnapshot::factory()->create(['instrument_id' => $instrumentIds[0], 'date' => '2026-09-01']);
+        Http::fake(['*/eod/AAA' => Http::response($this->bars('AAA', 2))]);
+
+        RunIngestionJob::dispatchSync($run->id, $instrumentIds);
+
+        // The latest close/date the Screener shows come from the new bars.
+        $row = ScreenerRow::query()->where('instrument_id', $instrumentIds[0])->sole();
+        $latest = DailyBar::query()->where('instrument_id', $instrumentIds[0])->orderByDesc('date')->firstOrFail();
+        $this->assertSame($latest->date->toDateString(), $row->date->toDateString());
+        $this->assertEqualsWithDelta((float) $latest->close, (float) $row->close, 1e-9);
+    }
+
+    public function test_a_failing_screener_refresh_never_fails_the_run(): void
+    {
+        $this->universeWith(['AAA']);
+        $this->app->instance(ScreenerRowBuilder::class, new class extends ScreenerRowBuilder
+        {
+            public function refresh(): int
+            {
+                throw new \RuntimeException('refresh failed');
+            }
+        });
+        $runner = app(IngestionRunner::class);
+        [$run, $instrumentIds] = $this->prepareRun($runner);
+        Http::fake(['*/eod/AAA' => Http::response($this->bars('AAA', 2))]);
+
+        RunIngestionJob::dispatchSync($run->id, $instrumentIds);
+
+        $this->assertSame(IngestionRunStatus::Completed, $run->fresh()->status);
+        $this->assertDatabaseCount('screener_rows', 0);
     }
 
     public function test_a_mixed_run_finishes_partial(): void

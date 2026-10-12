@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Instrument;
 use App\Models\Universe;
+use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -67,6 +68,9 @@ class Sp500UniverseSeeder extends Seeder
             // Add-only: keep existing memberships, attach any that are missing.
             $universe->instruments()->syncWithoutDetaching($instrumentIds);
         });
+
+        // Company, sector and active flags are copied into the Screener rows.
+        app(ScreenerRowBuilder::class)->refresh();
     }
 
     /**

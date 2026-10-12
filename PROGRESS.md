@@ -1,5 +1,11 @@
 # Progress Log
 
+## screener-precomputed (option C) — 2026-10-12
+
+- `screener_rows` precomputed by `screener:refresh` (pipeline before alerts, `RunIngestionJob`, deploy); `CandidateQuery` filters, ranks and pages in SQL. API contract unchanged.
+- Old vs new: 540 filter/sort/page checks on real data, 0 differences. Scale copy with 5,494 instruments: refresh 1.9 s, requests 11–19 ms.
+- Status `passing`; independent review, PR and production timing next.
+
 ## Screener pagination and Spanish "candidatos" — 2026-10-12
 
 - PR #17: Spanish copy now says "candidatos" instead of "Candidates" (catalog, index.html SEO/initial HTML, legal notice, marketing draft).

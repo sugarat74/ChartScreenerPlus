@@ -70,7 +70,7 @@ class AlertEvaluationTest extends TestCase
         $c = $this->member('CCC', 40);
         $alert = $this->screenerAlert($user, ['rsi_min' => 50]);
 
-        $this->artisan('alerts:evaluate')->expectsOutputToContain('0 notified, 1 baseline')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->expectsOutputToContain('0 notified, 1 baseline')->assertExitCode(0);
         $this->assertSame(0, $user->notifications()->count());
         $this->assertSame(['tickers' => ['AAA', 'BBB']], $alert->fresh()->last_state);
 
@@ -79,7 +79,7 @@ class AlertEvaluationTest extends TestCase
         IndicatorSnapshot::query()->where('instrument_id', $a->id)->update(['rsi14' => 30]);
         $this->newSession($c, '2026-10-02');
 
-        $this->artisan('alerts:evaluate')->expectsOutputToContain('1 notified')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->expectsOutputToContain('1 notified')->assertExitCode(0);
 
         $notification = $user->notifications()->sole();
         $this->assertSame('screener_new_candidates', $notification->data['kind']);
@@ -96,12 +96,12 @@ class AlertEvaluationTest extends TestCase
         $c = $this->member('CCC', 40);
         $this->screenerAlert($user, ['rsi_min' => 50]);
 
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
         IndicatorSnapshot::query()->where('instrument_id', $c->id)->update(['rsi14' => 60]);
         $this->newSession($c, '2026-10-02');
 
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
-        $this->artisan('alerts:evaluate')->expectsOutputToContain('1 already evaluated')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->expectsOutputToContain('1 already evaluated')->assertExitCode(0);
 
         $this->assertSame(1, $user->notifications()->count());
     }
@@ -115,13 +115,13 @@ class AlertEvaluationTest extends TestCase
         Signal::factory()->create(['instrument_id' => $msft->id, 'date' => '2026-10-01', 'type' => 'golden_cross']);
         $alert = $user->alerts()->create(['kind' => Alert::KIND_WATCHLIST, 'signal_types' => ['golden_cross', 'rsi_oversold']]);
 
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
         $this->assertSame(0, $user->notifications()->count());
 
         Signal::factory()->create(['instrument_id' => $nvda->id, 'date' => '2026-10-02', 'type' => 'golden_cross']);
         Signal::factory()->create(['instrument_id' => $nvda->id, 'date' => '2026-10-02', 'type' => 'rsi_overbought']);
         $this->newSession($nvda, '2026-10-02');
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
 
         $this->assertSame(
             [['ticker' => 'NVDA', 'name' => 'NVDA Corp', 'reason' => 'golden_cross']],
@@ -130,7 +130,7 @@ class AlertEvaluationTest extends TestCase
 
         // The signal persists on the next session: no new notification.
         $this->newSession($nvda, '2026-10-05');
-        $this->artisan('alerts:evaluate')->expectsOutputToContain('1 unchanged')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->expectsOutputToContain('1 unchanged')->assertExitCode(0);
         $this->assertSame(1, $user->notifications()->count());
         $this->assertSame(['signals' => ['MSFT' => ['golden_cross'], 'NVDA' => ['golden_cross']]], $alert->fresh()->last_state);
     }
@@ -145,10 +145,10 @@ class AlertEvaluationTest extends TestCase
         $owner->alerts()->create(['kind' => Alert::KIND_WATCHLIST, 'signal_types' => ['golden_cross']]);
         $other->alerts()->create(['kind' => Alert::KIND_WATCHLIST, 'signal_types' => ['golden_cross'], 'active' => false]);
 
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
         Signal::factory()->create(['instrument_id' => $nvda->id, 'date' => '2026-10-02', 'type' => 'golden_cross']);
         $this->newSession($nvda, '2026-10-02');
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
 
         $this->assertSame(1, $owner->notifications()->count());
         $this->assertSame(0, $other->notifications()->count());
@@ -164,10 +164,10 @@ class AlertEvaluationTest extends TestCase
         }
         $this->screenerAlert($user, ['rsi_min' => 50]);
 
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
         IndicatorSnapshot::query()->update(['rsi14' => 80]);
         $this->newSession($anchor, '2026-10-02');
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
 
         $data = $user->notifications()->sole()->data;
         $this->assertCount(2, $data['items']);
@@ -199,7 +199,7 @@ class AlertEvaluationTest extends TestCase
             }
         });
 
-        $this->artisan('alerts:evaluate')
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')
             ->expectsOutputToContain("Alert {$failing->id} failed: boom")
             ->expectsOutputToContain('1 baseline')
             ->assertExitCode(1);
@@ -213,7 +213,7 @@ class AlertEvaluationTest extends TestCase
         $nvda = $this->member('NVDA', 50);
         $user->watchlist()->attach($nvda->id);
         $alert = $user->alerts()->create(['kind' => Alert::KIND_WATCHLIST, 'signal_types' => ['golden_cross']]);
-        $this->artisan('alerts:evaluate')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->assertExitCode(0);
         $baseline = $alert->fresh()->last_state;
 
         Signal::factory()->create(['instrument_id' => $nvda->id, 'date' => '2026-10-02', 'type' => 'golden_cross']);
@@ -221,7 +221,7 @@ class AlertEvaluationTest extends TestCase
         // Make the notification insert fail inside the evaluator's transaction.
         DB::statement('DROP TABLE notifications');
 
-        $this->artisan('alerts:evaluate')->expectsOutputToContain('failed')->assertExitCode(1);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->expectsOutputToContain('failed')->assertExitCode(1);
 
         $this->assertSame($baseline, $alert->fresh()->last_state);
         $this->assertSame('2026-10-01', $alert->fresh()->last_evaluated_as_of->toDateString());
@@ -231,7 +231,7 @@ class AlertEvaluationTest extends TestCase
     {
         User::factory()->create()->alerts()->create(['kind' => Alert::KIND_WATCHLIST, 'signal_types' => ['golden_cross']]);
 
-        $this->artisan('alerts:evaluate')->expectsOutputToContain('No stored daily bars')->assertExitCode(0);
+        $this->refreshScreenerRows()->artisan('alerts:evaluate')->expectsOutputToContain('No stored daily bars')->assertExitCode(0);
     }
 
     public function test_deleting_a_saved_screener_deletes_its_alert(): void

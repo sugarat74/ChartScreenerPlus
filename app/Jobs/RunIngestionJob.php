@@ -43,6 +43,7 @@ class RunIngestionJob implements ShouldQueue
      */
     public function handle(IngestionRunner $runner): void
     {
+        // The runner also refreshes the precomputed Screener rows.
         $runner->process($this->runId, $this->instrumentIds);
     }
 }

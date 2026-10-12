@@ -61,6 +61,8 @@ class CopySqliteToPgsql extends Command
         // Alerts and their notifications postdate the one-time SQLite cut-over.
         'alerts',
         'notifications',
+        // Precomputed Screener rows, rebuilt by `screener:refresh`.
+        'screener_rows',
     ];
 
     private const CHUNK = 500;

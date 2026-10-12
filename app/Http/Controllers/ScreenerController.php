@@ -82,12 +82,10 @@ class ScreenerController extends Controller
         $limit = $this->resolveLimit($request);
         $offset = $this->resolveOffset($request);
 
-        // Matching, payload and ranking live in `CandidateQuery`, shared with
-        // the Alerts evaluator so both always agree on the Candidate list.
-        $candidates = $query->candidates($universe, $filters);
-
-        $total = count($candidates);
-        $page = array_slice($candidates, $offset, $limit);
+        // Matching, ranking and paging run in SQL over the precomputed rows in
+        // `CandidateQuery`, shared with the Alerts evaluator so both always
+        // agree on the Candidate list.
+        ['candidates' => $page, 'total' => $total] = $query->page($universe, $filters, $limit, $offset);
 
         return response()->json([
             'universe' => [
