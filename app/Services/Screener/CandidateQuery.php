@@ -91,12 +91,12 @@ class CandidateQuery
      *
      * The previous close is the close of each instrument's second most recent
      * bar by date. It is read with one correlated subquery **per instrument**
-     * (`order by date desc limit 1 offset 1`), which walks the unique
-     * `(instrument_id, date)` index backwards and touches two entries, so the
+     * (`order by date desc limit 1 offset 1`), which reads two entries of the
+     * unique `(instrument_id, date)` index backwards plus one table row, so the
      * cost grows with the number of instruments, not with their bar history.
-     * (The previous form evaluated two subqueries per stored bar: ~4 s for
-     * 503 instruments and 252k bars in production, 6 ms with this one.) An
-     * instrument with fewer than two bars is simply absent from the map.
+     * Never filter or join on `daily_bars` per stored bar here: that scales
+     * with the whole history. An instrument with fewer than two bars is simply
+     * absent from the map.
      *
      * @param  list<int>  $instrumentIds
      * @return Collection<int, float>
