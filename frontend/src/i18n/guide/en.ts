@@ -113,6 +113,7 @@ export const guideEn: GuideTexts = {
         {
           term: 'SMA 20, 50 and 200 (simple moving average)',
           summary: 'Average of the closes of the last 20, 50 or 200 sessions. It smooths the price to show the short (20), medium (50) and long (200) term trend.',
+          illustration: { kind: 'movingAverages', alt: 'Black price line and two horizontal simple moving average levels, blue and red, shown as current references.' },
           details: [
             'Common reading: price above the SMA 200 suggests a long-term uptrend; the SMA 50 above the SMA 200 too.',
             'On the chart they are drawn as horizontal lines at their current value.',
@@ -121,6 +122,7 @@ export const guideEn: GuideTexts = {
         {
           term: 'RSI 14 (Relative Strength Index)',
           summary: 'An oscillator from 0 to 100 comparing the strength of the gains and losses of the last 14 sessions (Wilder’s method).',
+          illustration: { kind: 'rsi', alt: 'Blue RSI oscillator crossing an upper area marked by a dashed red line.' },
           details: [
             '70 or more is usually read as overbought and 30 or less as oversold; they are zones to watch, not buy or sell orders.',
           ],
@@ -128,11 +130,13 @@ export const guideEn: GuideTexts = {
         {
           term: 'MACD 12/26/9',
           summary: 'Difference between the 12-session and 26-session exponential averages (MACD line), together with its 9-session exponential average (signal line). It measures the momentum of the trend.',
+          illustration: { kind: 'macd', alt: 'MACD histogram around zero and crossing blue MACD and red signal lines.' },
           details: ['When the MACD line crosses its signal line the "MACD bullish" or "MACD bearish" signals are generated.'],
         },
         {
           term: 'RVOL (relative volume)',
           summary: 'Volume of the latest session divided by the average volume of the previous 50 sessions.',
+          illustration: { kind: 'rvol', alt: 'Volume bars with a final red bar well above the dashed blue average.' },
           details: [
             '1× is normal volume; 2× or more shows unusual participation, which often comes with breakouts and news.',
           ],
@@ -140,14 +144,17 @@ export const guideEn: GuideTexts = {
         {
           term: 'Pivot',
           summary: 'The highest high of the 20 sessions before the latest one. Closing above it is a breakout.',
+          illustration: { kind: 'pivot', alt: 'Black price line ending above a horizontal blue pivot level.' },
           details: ['It appears on the chart as the "PIVOT" line when the "Pivot breakout + RVOL" signal is active.'],
         },
         {
           term: 'Volume',
           summary: 'Number of shares traded in each session, shown as bars below the price chart.',
+          illustration: { kind: 'volume', alt: 'Price line above a lower panel of green and red volume bars.' },
         },
       ],
       notes: [
+        'The illustrations are diagrams with fictional data. They explain the shape of each indicator; they do not show live quotes or current signals.',
         'Chartiko also computes the 21- and 55-session EMAs, the 14-session ADX and Bollinger Bands (20 sessions, 2 deviations) for future features; they are not shown or used in filters today.',
       ],
     },
@@ -183,25 +190,30 @@ export const guideEn: GuideTexts = {
         {
           term: 'Double bottom',
           summary: 'Two similar lows (up to 3% apart), 15 to 120 sessions apart, after a fall of at least 15% over the previous 60 sessions, with a rebound of at least 10% between them.',
+          illustration: { kind: 'doubleBottom', alt: 'Price with two similar bottoms and a rise above the intermediate peak level.' },
           details: ['Breakout level: the high between the two bottoms. Confirmed by a close above it; invalidated by a close more than 3% below the bottoms.'],
         },
         {
           term: 'Double top',
           summary: 'Two similar highs (up to 3% apart), 15 to 120 sessions apart, after a rise of at least 15% over the previous 60 sessions, with a drop of at least 10% between them.',
+          illustration: { kind: 'doubleTop', alt: 'Price with two similar tops and a fall below the intermediate trough level.' },
           details: ['Breakout level: the low between the two tops. Confirmed by a close below it; invalidated by a close more than 3% above the tops.'],
         },
         {
           term: 'Cup with handle',
           summary: 'A cup of 30 to 325 sessions, 12% to 35% deep, with its low between 20% and 80% of its length, no intermediate peaks above the lower rim and rims of similar height (within 5%), followed by a handle of 5 to 25 sessions that pulls back at most 12% and stays above the middle of the cup.',
+          illustration: { kind: 'cupWithHandle', alt: 'Price tracing a rounded base, a short handle and a rise above the handle high.' },
           details: ['Breakout level: the high of the handle. Confirmed by a close above it with relative volume of 1.5× or more.'],
         },
         {
           term: 'Bull flag',
           summary: 'A pole (a rise of at least 15% in 15 sessions or fewer) followed by a flag of 5 to 20 sessions that drifts without rising, on lower volume and without retracing more than half of the pole.',
+          illustration: { kind: 'bullFlag', alt: 'Price rising sharply, drifting down within a narrow channel and then breaking upward.' },
           details: ['Breakout level: the high of the flag. Confirmed by a close above it.'],
         },
       ],
       notes: [
+        'The illustrations use fictional data; they are not real detected patterns or price targets.',
         'The rules use initial parameters that will be calibrated over time. Always check the figure on the chart.',
       ],
     },

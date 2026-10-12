@@ -8,12 +8,18 @@
  */
 
 /** One explained item: a filter, an indicator, a signal, a pattern… */
+export type GuideIllustrationKind =
+  | 'movingAverages' | 'rsi' | 'macd' | 'rvol' | 'pivot' | 'volume'
+  | 'doubleTop' | 'doubleBottom' | 'cupWithHandle' | 'bullFlag'
+
 export type GuideEntry = {
   term: string
   /** What it is / what it measures. */
   summary: string
   /** Optional details: exact rule, how to read it, caveats. */
   details?: string[]
+  /** Accessible, schematic image for an indicator or chart pattern. */
+  illustration?: { kind: GuideIllustrationKind; alt: string }
 }
 
 export type GuideSection = {

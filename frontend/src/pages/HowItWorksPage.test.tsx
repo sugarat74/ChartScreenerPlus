@@ -49,6 +49,19 @@ describe('HowItWorksPage', () => {
     renderPage()
     expect(screen.getByRole('heading', { level: 1, name: 'How Chartiko works' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Contents' })).toBeTruthy()
+    expect(screen.getAllByRole('img')).toHaveLength(10)
+    expect(screen.getByRole('img', { name: /short handle and a rise above the handle high/i })).toBeTruthy()
+  })
+
+  it('shows a distinct accessible example for every listed indicator and chart pattern', () => {
+    renderPage()
+    const indicators = screen.getByRole('region', { name: 'Indicadores técnicos' })
+    const patterns = screen.getByRole('region', { name: 'Patrones chartistas' })
+    expect(within(indicators).getAllByRole('img')).toHaveLength(6)
+    expect(within(patterns).getAllByRole('img')).toHaveLength(4)
+    expect(within(indicators).getByRole('img', { name: /línea horizontal azul que representa el pivote/i })).toBeTruthy()
+    expect(within(patterns).getByRole('img', { name: /máximo del asa/i })).toBeTruthy()
+    expect(within(indicators).getByText(/datos ficticios/i)).toBeTruthy()
   })
 })
 
@@ -101,5 +114,15 @@ describe('manual stays consistent with the interface', () => {
       }))
     expect(shape('en')).toEqual(shape('es'))
     expect(GUIDE_TEXTS.en.faq).toHaveLength(GUIDE_TEXTS.es.faq.length)
+  })
+
+  it('both manuals illustrate each current indicator and pattern exactly once', () => {
+    const expected = ['movingAverages', 'rsi', 'macd', 'rvol', 'pivot', 'volume', 'doubleBottom', 'doubleTop', 'cupWithHandle', 'bullFlag']
+    for (const locale of ['es', 'en'] as const) {
+      const sections = GUIDE_TEXTS[locale].sections.filter((item) => item.id === 'indicadores' || item.id === 'patrones')
+      const illustrations = sections.flatMap((item) => (item.entries ?? []).map((entry) => entry.illustration))
+      expect(illustrations.map((item) => item?.kind)).toEqual(expected)
+      expect(illustrations.every((item) => Boolean(item?.alt))).toBe(true)
+    }
   })
 })

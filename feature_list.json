@@ -1203,5 +1203,22 @@
       "Independent accuracy review (PR #21): APPROVE, no factual errors; every indicator period, signal rule, pattern threshold, sort, page size and label checked against engine/app, CandidateQuery, ScreenerRowBuilder and the SPA. Precision nits applied (forming-pattern expiry, breakout direction, cup shape, 16:30 run start, 60-session prior move); added an end-of-day wording guard and a stricter sort-label test: 82 Vitest passed."
     ],
     "notes": "Replaces the former LandingPage explanation. /como-funciona stays noindex (RouteMetadata + deploy/nginx.conf); making it indexable is a separate decision."
+  },
+  {
+    "id": "how-it-works-visual-examples",
+    "area": "frontend",
+    "title": "Example images for indicators and chart patterns in the user manual",
+    "user_visible_behavior": "Each of the six current indicator entries and four supported Chartist Pattern entries in Cómo funciona has a distinct explanatory image with Spanish and English accessible text.",
+    "depends_on": ["how-it-works-manual"],
+    "status": "passing",
+    "verification": [
+      "Six current indicator entries and four supported pattern entries each render one distinct schematic SVG; other manual entries remain text-only",
+      "Spanish and English descriptions are complete, the images fit narrow layouts and fictional data is disclosed",
+      "HowItWorksPage tests, SPA lint/build and the standard init.ps1 gate pass; visual review covers the indicator and pattern sections"
+    ],
+    "evidence": [
+      "2026-10-12: adapted to origin/main after the how-it-works-manual merge; focused HowItWorksPage.test.tsx 12 passed. Full init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint, 84 Vitest tests and build, engine 67 passed. Desktop screenshot review covered all ten diagrams and captions; a narrow screenshot showed indicator cards stacked with images within their borders."
+    ],
+    "notes": "Spec: docs/specs/how-it-works-visual-examples.md. Inline SVGs use fictional data, no external images or packages. Independent acceptance remains pending."
   }
 ]
