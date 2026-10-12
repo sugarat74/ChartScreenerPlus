@@ -37,7 +37,7 @@ export const en: Messages = {
     screenerDescription:
       'Apply technical filters to the stock universe and review ranked Candidates in Chartiko.',
     howItWorksTitle: 'How Chartiko works | Chartiko',
-    howItWorksDescription: 'Learn how to filter stocks, review Candidates and explore their charts in Chartiko.',
+    howItWorksDescription: 'Chartiko manual: how to use the Screener and what its filters, indicators (SMA, RSI, MACD, RVOL), signals and chart patterns mean.',
     chartTitle: 'Stock charts | Chartiko',
     chartDescription: 'Explore prices, volume, indicators and Signals for instruments in Chartiko.',
     portalTitle: 'My Portal | Chartiko',
@@ -81,38 +81,6 @@ export const en: Messages = {
     columnPurpose: 'Purpose',
     columnDuration: 'Duration',
     columnCategory: 'Category',
-  },
-  landing: {
-    eyebrow: 'Technical stock analysis',
-    title: 'Find Candidates among hundreds of stocks.',
-    intro:
-      'Chartiko applies technical filters to the S&P 500 universe, ranks the results and lets you review each Candidate on an interactive chart.',
-    openScreener: 'Open the Screener',
-    workflowHeading: 'How Chartiko works',
-    step1Label: '01 / FILTER',
-    step1Title: 'Set technical criteria',
-    step1Body:
-      'Combine signals and indicators such as moving averages, RSI, MACD and volume to narrow down the list of stocks.',
-    step2Label: '02 / RANK',
-    step2Title: 'Review the Candidates',
-    step2Body:
-      'See which instruments match the filters and change the sort order to prioritise your review.',
-    step3Label: '03 / EXPLORE',
-    step3Title: 'Inspect the chart',
-    step3Body:
-      'Open an instrument to see its price history, volume, moving averages and Signal details.',
-    methodHeading: 'Signals built on clear rules',
-    methodBody:
-      'Chartiko computes results from daily data and deterministic technical rules. A Signal describes a detected condition, such as a moving-average cross, RSI or a Pivot breakout; it is neither a recommendation nor a return forecast. Available data and indicators depend on the history recorded for each instrument.',
-    faqHeading: 'Frequently asked questions',
-    faqMarketQ: 'Which market does it cover?',
-    faqMarketA: 'The Screener starts from the S&P 500 stock universe.',
-    faqSignalQ: 'What does a Signal mean?',
-    faqSignalA:
-      'It is a technical condition computed with reproducible rules over indicators; on its own it does not determine an investment decision.',
-    faqRealtimeQ: 'Does Chartiko offer real-time data?',
-    faqRealtimeA: 'No. Chartiko analyses daily data and does not offer intraday quotes.',
-    exploreScreener: 'Explore the Screener',
   },
   auth: {
     registerPrivacy:

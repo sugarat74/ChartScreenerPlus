@@ -40,7 +40,7 @@ export const es = {
     screenerDescription:
       'Aplica filtros técnicos al universo de acciones y consulta candidatos ordenados en Chartiko.',
     howItWorksTitle: 'Cómo funciona Chartiko | Chartiko',
-    howItWorksDescription: 'Conoce cómo filtrar acciones, revisar candidatos y explorar sus gráficos en Chartiko.',
+    howItWorksDescription: 'Manual de Chartiko: cómo usar el Screener y qué significan sus filtros, indicadores (SMA, RSI, MACD, RVOL), señales y patrones chartistas.',
     chartTitle: 'Gráficos de acciones | Chartiko',
     chartDescription: 'Explora precios, volumen, indicadores y Signals de los instrumentos en Chartiko.',
     portalTitle: 'Mi Portal | Chartiko',
@@ -84,38 +84,6 @@ export const es = {
     columnPurpose: 'Finalidad',
     columnDuration: 'Duración',
     columnCategory: 'Categoría',
-  },
-  landing: {
-    eyebrow: 'Análisis técnico de acciones',
-    title: 'Encuentra candidatos entre cientos de acciones.',
-    intro:
-      'Chartiko aplica filtros técnicos al universo del S&P 500, ordena los resultados y te permite revisar cada candidato en un gráfico interactivo.',
-    openScreener: 'Abrir el Screener',
-    workflowHeading: 'Cómo funciona Chartiko',
-    step1Label: '01 / FILTRA',
-    step1Title: 'Define criterios técnicos',
-    step1Body:
-      'Combina señales e indicadores como medias móviles, RSI, MACD y volumen para acotar la lista de acciones.',
-    step2Label: '02 / ORDENA',
-    step2Title: 'Revisa los candidatos',
-    step2Body:
-      'Consulta qué instrumentos cumplen los filtros y cambia el criterio de ordenación para priorizar la revisión.',
-    step3Label: '03 / EXPLORA',
-    step3Title: 'Inspecciona el gráfico',
-    step3Body:
-      'Abre un instrumento para ver su historial de precios, volumen, medias móviles e información de Signals.',
-    methodHeading: 'Señales basadas en reglas claras',
-    methodBody:
-      'Chartiko calcula resultados a partir de datos diarios y reglas técnicas deterministas. Una Signal describe una condición detectada, por ejemplo un cruce de medias, RSI o un breakout de Pivot; no es una recomendación ni una predicción de rentabilidad. Los datos y los indicadores disponibles dependen del historial registrado para cada instrumento.',
-    faqHeading: 'Preguntas frecuentes',
-    faqMarketQ: '¿Qué mercado cubre?',
-    faqMarketA: 'El Screener parte del universo de acciones del S&P 500.',
-    faqSignalQ: '¿Qué significa una Signal?',
-    faqSignalA:
-      'Es una condición técnica calculada mediante reglas reproducibles sobre indicadores; por sí sola no determina una decisión de inversión.',
-    faqRealtimeQ: '¿Chartiko ofrece datos en tiempo real?',
-    faqRealtimeA: 'No. Chartiko analiza datos diarios y no ofrece cotizaciones intradía.',
-    exploreScreener: 'Explorar el Screener',
   },
   auth: {
     registerPrivacy:

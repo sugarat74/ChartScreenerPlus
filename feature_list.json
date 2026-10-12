@@ -1178,5 +1178,30 @@
     ],
     "evidence": [],
     "notes": "Added 2026-10-12 at user request, to develop after alerts-ui. Spec: docs/specs/alerts-patterns.md. Saved Screener alerts already cover pattern filters through screener_new_candidates."
+  },
+  {
+    "id": "how-it-works-manual",
+    "area": "frontend",
+    "title": "Cómo funciona as a user manual",
+    "user_visible_behavior": "A visitor opens /como-funciona and reads a manual of the site in Spanish or English: how to start, which data is used and when it updates, how the candidate list is ranked and paged, what every Screener filter does, what each technical indicator (SMA, EMA, RSI, MACD, ADX, Bollinger, RVOL) is for, the exact rule behind every signal and chart pattern, how to read the chart, and what an account adds. A table of contents links to each section; an FAQ and a not-investment-advice notice close the page.",
+    "depends_on": [
+      "app-shell-navigation",
+      "chart-patterns-ui",
+      "screener-pagination"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Every signal and chart pattern is described under its on-screen name; sort options, page sizes and filter labels match the UI catalogs (Vitest)",
+      "Spanish and English manuals have the same structure; table-of-contents anchors resolve",
+      "Every threshold matches engine/app/signals, engine/app/patterns and CONSTRAINTS.md (independent review)",
+      "Browser QA es/en at 1366 and 390 px: no overflow, anchors land on their sections, no EOD wording",
+      ".\\init.ps1 and CI pass"
+    ],
+    "evidence": [
+      "2026-10-12: 81 Vitest passed (new HowItWorksPage tests), SPA lint and build pass; Playwright es/en 1366/390: 10 TOC anchors land, 41 entry cards, overflow 0, no page errors, no EOD wording.",
+      ".\\init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint, 81 Vitest, SPA build, engine 67 passed.",
+      "Independent accuracy review (PR #21): APPROVE, no factual errors; every indicator period, signal rule, pattern threshold, sort, page size and label checked against engine/app, CandidateQuery, ScreenerRowBuilder and the SPA. Precision nits applied (forming-pattern expiry, breakout direction, cup shape, 16:30 run start, 60-session prior move); added an end-of-day wording guard and a stricter sort-label test: 82 Vitest passed."
+    ],
+    "notes": "Replaces the former LandingPage explanation. /como-funciona stays noindex (RouteMetadata + deploy/nginx.conf); making it indexable is a separate decision."
   }
 ]

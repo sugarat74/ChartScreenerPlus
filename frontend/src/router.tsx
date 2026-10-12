@@ -6,7 +6,7 @@ import AdminLayout from './pages/admin/AdminLayout.tsx'
 import AdminSessionsPage from './pages/admin/AdminSessionsPage.tsx'
 import AdminUserDetailPage from './pages/admin/AdminUserDetailPage.tsx'
 import AdminUsersPage from './pages/admin/AdminUsersPage.tsx'
-import LandingPage from './pages/LandingPage.tsx'
+import HowItWorksPage from './pages/HowItWorksPage.tsx'
 import LegalPage from './pages/LegalPage.tsx'
 import InstrumentChartPage from './pages/InstrumentChartPage.tsx'
 import LegacyScreenerRedirect from './pages/LegacyScreenerRedirect.tsx'
@@ -31,7 +31,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <ScreenerPage /> },
       { path: 'screener', element: <LegacyScreenerRedirect /> },
-      { path: 'como-funciona', element: <LandingPage /> },
+      { path: 'como-funciona', element: <HowItWorksPage /> },
       { path: 'chart', element: <InstrumentChartPage /> },
       { path: 'instruments/:ticker', element: <InstrumentChartPage /> },
       {
