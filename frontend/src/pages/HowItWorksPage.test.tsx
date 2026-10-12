@@ -49,19 +49,24 @@ describe('HowItWorksPage', () => {
     renderPage()
     expect(screen.getByRole('heading', { level: 1, name: 'How Chartiko works' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Contents' })).toBeTruthy()
-    expect(screen.getAllByRole('img')).toHaveLength(10)
+    expect(screen.getAllByRole('img')).toHaveLength(19)
+    expect(screen.getByRole('img', { name: /blue MACD line crosses below the red signal line/i })).toBeTruthy()
     expect(screen.getByRole('img', { name: /short handle and a rise above the handle high/i })).toBeTruthy()
   })
 
-  it('shows a distinct accessible example for every listed indicator and chart pattern', () => {
+  it('shows an accessible example for every listed indicator, signal and chart pattern', () => {
     renderPage()
     const indicators = screen.getByRole('region', { name: 'Indicadores técnicos' })
+    const signals = screen.getByRole('region', { name: 'Señales técnicas' })
     const patterns = screen.getByRole('region', { name: 'Patrones chartistas' })
     expect(within(indicators).getAllByRole('img')).toHaveLength(6)
+    expect(within(signals).getAllByRole('img')).toHaveLength(9)
     expect(within(patterns).getAllByRole('img')).toHaveLength(4)
     expect(within(indicators).getByRole('img', { name: /línea horizontal azul que representa el pivote/i })).toBeTruthy()
+    expect(within(signals).getByRole('img', { name: /SMA 50 azul cruza de abajo arriba/i })).toBeTruthy()
     expect(within(patterns).getByRole('img', { name: /máximo del asa/i })).toBeTruthy()
     expect(within(indicators).getByText(/datos ficticios/i)).toBeTruthy()
+    expect(within(signals).getByText(/datos ficticios/i)).toBeTruthy()
   })
 })
 
@@ -123,6 +128,16 @@ describe('manual stays consistent with the interface', () => {
       const illustrations = sections.flatMap((item) => (item.entries ?? []).map((entry) => entry.illustration))
       expect(illustrations.map((item) => item?.kind)).toEqual(expected)
       expect(illustrations.every((item) => Boolean(item?.alt))).toBe(true)
+    }
+  })
+
+  it('both manuals illustrate all nine signals with distinct accessible diagrams', () => {
+    const expected = ['goldenCross', 'deathCross', 'bullishAlignment', 'bearishAlignment', 'pivotBreakoutRvol', 'rsiOverbought', 'rsiOversold', 'macdBullish', 'macdBearish']
+    for (const locale of ['es', 'en'] as const) {
+      const signals = GUIDE_TEXTS[locale].sections.find((section) => section.id === 'senales')!
+      expect(signals.entries?.map((entry) => entry.illustration?.kind)).toEqual(expected)
+      expect(signals.entries?.every((entry) => Boolean(entry.illustration?.alt))).toBe(true)
+      expect(signals.notes?.join(' ')).toMatch(locale === 'es' ? /datos ficticios/ : /fictional data/)
     }
   })
 })

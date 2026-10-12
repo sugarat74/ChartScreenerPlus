@@ -56,6 +56,68 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
           <rect key={index} x={25 + index * 19} y={top} width="12" height={135 - top} fill={index % 3 === 1 ? RED : GREEN} />
         ))}
       </>
+    case 'goldenCross':
+      return <>
+        <path d="M18 70 C75 73 126 76 184 78 S249 79 290 82" stroke={RED} strokeWidth="3" fill="none" />
+        <path d="M18 112 C75 107 119 99 168 95 S221 88 243 80 S273 61 290 51" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="249" cy="78" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'deathCross':
+      return <>
+        <path d="M18 84 C77 80 129 77 184 75 S250 73 290 70" stroke={RED} strokeWidth="3" fill="none" />
+        <path d="M18 41 C77 47 124 56 169 61 S222 68 245 74 S274 94 290 106" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="249" cy="74" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'bullishAlignment':
+      return <>
+        <path d="M18 72 C77 68 135 61 190 49 S258 37 290 32" stroke={GREEN} strokeWidth="3" fill="none" />
+        <path d="M18 91 C78 88 133 79 190 71 S255 61 290 54" stroke={BLUE} strokeWidth="3" fill="none" />
+        <path d="M18 114 C79 112 137 105 190 98 S258 89 290 82" stroke={RED} strokeWidth="3" fill="none" />
+        <circle cx="283" cy="33" r="4" fill={GREEN} /><circle cx="283" cy="55" r="4" fill={BLUE} /><circle cx="283" cy="83" r="4" fill={RED} />
+      </>
+    case 'bearishAlignment':
+      return <>
+        <path d="M18 72 C76 77 133 87 189 99 S255 112 290 121" stroke={GREEN} strokeWidth="3" fill="none" />
+        <path d="M18 57 C77 62 136 68 190 76 S257 87 290 94" stroke={BLUE} strokeWidth="3" fill="none" />
+        <path d="M18 38 C77 43 132 48 190 54 S256 64 290 70" stroke={RED} strokeWidth="3" fill="none" />
+        <circle cx="283" cy="119" r="4" fill={GREEN} /><circle cx="283" cy="93" r="4" fill={BLUE} /><circle cx="283" cy="69" r="4" fill={RED} />
+      </>
+    case 'pivotBreakoutRvol':
+      return <>
+        <path d="M18 60 H290" stroke={BLUE} strokeDasharray="6 5" strokeWidth="2" />
+        <path d="M18 74 L45 70 L70 79 L94 65 L119 71 L143 63 L167 74 L191 64 L215 69 L239 66 L263 56 L288 35" stroke={INK} strokeWidth="3" fill="none" />
+        <path d="M18 95 H290" stroke={INK} strokeWidth="1" />
+        {[123, 120, 125, 119, 122, 121, 124, 117, 122, 120, 123, 118, 99].map((top, index) => (
+          <rect key={index} x={26 + index * 20} y={top} width="11" height={135 - top} fill={index === 12 ? GREEN : INK} />
+        ))}
+        <circle cx="288" cy="35" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'rsiOverbought':
+      return <>
+        <path d="M18 54 H290 M18 112 H290" stroke={RED} strokeDasharray="5 5" strokeWidth="1.5" />
+        <path d="M18 98 L43 87 L68 97 L92 79 L117 86 L142 69 L167 78 L192 64 L217 70 L242 56 L266 44 L290 39" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="290" cy="39" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'rsiOversold':
+      return <>
+        <path d="M18 54 H290 M18 112 H290" stroke={RED} strokeDasharray="5 5" strokeWidth="1.5" />
+        <path d="M18 52 L43 63 L68 55 L92 73 L117 65 L142 83 L167 76 L192 94 L217 87 L242 104 L266 118 L290 123" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="290" cy="123" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'macdBullish':
+      return <>
+        <path d="M18 82 H290" stroke={INK} strokeWidth="1.5" />
+        <path d="M18 73 C77 76 117 78 170 80 S238 79 290 73" stroke={RED} strokeWidth="3" fill="none" />
+        <path d="M18 108 C76 105 118 98 167 93 S229 83 247 78 S273 67 290 58" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="247" cy="78" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'macdBearish':
+      return <>
+        <path d="M18 82 H290" stroke={INK} strokeWidth="1.5" />
+        <path d="M18 91 C77 87 119 84 172 81 S240 79 290 83" stroke={RED} strokeWidth="3" fill="none" />
+        <path d="M18 48 C77 55 118 64 167 68 S229 75 247 79 S273 91 290 103" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="247" cy="79" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
     case 'doubleTop':
       return <>
         <path d="M18 104 H290" stroke={BLUE} strokeDasharray="6 5" strokeWidth="2" />

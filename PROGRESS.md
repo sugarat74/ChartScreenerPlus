@@ -1,5 +1,11 @@
 # Progress Log
 
+## Cómo funciona technical Signal images — 2026-10-12
+
+- Added nine distinct schematic SVGs to the nine current technical Signal entries in the bilingual user manual: Golden Cross, Death Cross, both SMA alignments, Pivot Breakout + RVOL, both RSI thresholds and both MACD crosses. Each image has a localized accessible description and the section now discloses fictional data. Existing indicator and Chartist Pattern images remain unchanged.
+- Clean worktree based on `origin/main` kept the original worktree's pending harness hook separate. Baseline `init.ps1` passed before edits. Focused `HowItWorksPage.test.tsx` passed 13/13; post-change `init.ps1` passed (Laravel 268 passed / 6 skipped, SPA lint/tests/build, engine 67 passed with the existing Starlette warning). Signal cards were visually inspected in headless Edge at desktop and narrow single-column widths.
+- Feature `how-it-works-signal-images` is `passing` pending independent validation. Scope is public manual presentation only; no Signal calculations, API, route or market-data behavior changed.
+
 ## Cómo funciona visual examples — 2026-10-12
 
 - Added one accessible schematic SVG next to each of the six current indicator entries (SMA, RSI, MACD, RVOL, Pivot, Volume) and four Chartist Pattern entries in the accepted user manual. The bilingual guide catalogs own the image descriptions and fictional-data notes. The future-only EMA, ADX and Bollinger calculations remain a note, without images implying they appear in the UI.

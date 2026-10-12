@@ -1222,5 +1222,22 @@
       "2026-10-12 independent feature-validator verdict: accept. Re-ran focused HowItWorksPage.test.tsx: 12/12 passed. Reviewed all ten distinct SVGs in both locales, accessible labels, three SMA levels, fictional-data notes, responsive DESIGN fidelity, public wording and scoped security; no blocking findings."
     ],
     "notes": "Spec: docs/specs/how-it-works-visual-examples.md. Inline SVGs use fictional data, no external images or packages. Accepted after independent validation."
+  },
+  {
+    "id": "how-it-works-signal-images",
+    "area": "frontend",
+    "title": "Example images for technical Signals in the user manual",
+    "user_visible_behavior": "Every one of the nine current technical Signals in Cómo funciona has a distinct explanatory diagram with Spanish and English accessible text.",
+    "depends_on": ["how-it-works-manual", "how-it-works-visual-examples"],
+    "status": "passing",
+    "verification": [
+      "Nine current technical Signal entries each render one distinct SVG showing the corresponding rule; the ten existing indicator and Chartist Pattern images remain",
+      "Spanish and English descriptions are complete, images fit narrow layouts, and fictional data is disclosed",
+      "HowItWorksPage tests, SPA lint/build and the standard init.ps1 gate pass; visual review covers desktop and narrow Signal cards"
+    ],
+    "evidence": [
+      "2026-10-12: clean worktree baseline init.ps1 passed. Focused HowItWorksPage.test.tsx 13/13 passed. Post-change init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint/tests/build, engine 67 passed (existing Starlette warning). Headless Edge screenshots of the Signal section were reviewed at 1366 px desktop and 600 px narrow single-column widths."
+    ],
+    "notes": "Spec: docs/specs/how-it-works-signal-images.md. Inline SVGs use fictional data, no external images or packages. Independent acceptance remains pending."
   }
 ]
