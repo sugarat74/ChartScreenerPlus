@@ -16,7 +16,8 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
       return <>
         <path d="M18 121 L42 110 L63 116 L85 91 L106 101 L130 82 L151 91 L173 65 L197 77 L219 55 L241 67 L263 43 L289 39" stroke={INK} strokeWidth="3" fill="none" />
         <path d="M18 82 H290" stroke={BLUE} strokeWidth="3" fill="none" />
-        <path d="M18 105 H290" stroke={RED} strokeWidth="3" fill="none" />
+        <path d="M18 102 H290" stroke={RED} strokeWidth="3" fill="none" />
+        <path d="M18 119 H290" stroke={GREEN} strokeWidth="3" fill="none" />
         <circle cx="289" cy="39" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
     case 'rsi':

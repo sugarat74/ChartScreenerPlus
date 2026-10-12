@@ -113,7 +113,7 @@ export const guideEn: GuideTexts = {
         {
           term: 'SMA 20, 50 and 200 (simple moving average)',
           summary: 'Average of the closes of the last 20, 50 or 200 sessions. It smooths the price to show the short (20), medium (50) and long (200) term trend.',
-          illustration: { kind: 'movingAverages', alt: 'Black price line and two horizontal simple moving average levels, blue and red, shown as current references.' },
+          illustration: { kind: 'movingAverages', alt: 'Black price line and three horizontal simple moving average levels, blue, red and green, shown as current references.' },
           details: [
             'Common reading: price above the SMA 200 suggests a long-term uptrend; the SMA 50 above the SMA 200 too.',
             'On the chart they are drawn as horizontal lines at their current value.',

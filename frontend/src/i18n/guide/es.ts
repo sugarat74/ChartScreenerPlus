@@ -113,7 +113,7 @@ export const guideEs: GuideTexts = {
         {
           term: 'SMA 20, 50 y 200 (media móvil simple)',
           summary: 'Media de los cierres de las últimas 20, 50 o 200 sesiones. Suaviza el precio para ver la tendencia: corta (20), media (50) y larga (200).',
-          illustration: { kind: 'movingAverages', alt: 'Precio en negro y dos niveles horizontales de medias móviles simples, azul y rojo, como referencias actuales.' },
+          illustration: { kind: 'movingAverages', alt: 'Precio en negro y tres niveles horizontales de medias móviles simples, azul, rojo y verde, como referencias actuales.' },
           details: [
             'Lectura habitual: precio por encima de la SMA 200 sugiere tendencia de fondo alcista; la SMA 50 por encima de la SMA 200, también.',
             'En el gráfico se muestran como líneas horizontales en su valor actual.',
