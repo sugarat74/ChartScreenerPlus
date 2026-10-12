@@ -64,6 +64,12 @@ class ScrapeInstrument extends Command
             "Stored {$result['stored']} bars for {$ticker}; skipped {$result['skipped']} malformed rows."
         );
 
+        // The new bars change what the Screener shows; a failed refresh is a
+        // warning, the bars are stored either way.
+        if ($this->call('screener:refresh') !== self::SUCCESS) {
+            $this->warn('Bars stored, but the screener rows were not refreshed.');
+        }
+
         return self::SUCCESS;
     }
 }

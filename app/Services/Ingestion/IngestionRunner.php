@@ -7,6 +7,7 @@ use App\Enums\IngestionRunStatus;
 use App\Models\IngestionRun;
 use App\Models\Instrument;
 use App\Models\Universe;
+use App\Services\Screener\ScreenerRowBuilder;
 use RuntimeException;
 use Throwable;
 
@@ -26,7 +27,10 @@ use Throwable;
  */
 class IngestionRunner
 {
-    public function __construct(private readonly InstrumentIngestor $ingestor) {}
+    public function __construct(
+        private readonly InstrumentIngestor $ingestor,
+        private readonly ScreenerRowBuilder $screener,
+    ) {}
 
     /**
      * Resolve a universe and create its `queued` run.
@@ -148,6 +152,15 @@ class IngestionRunner
                 'failed' => $failed,
                 'finished_at' => now(),
             ])->save();
+
+            // New bars change the latest close/date the Screener shows, also
+            // for partial or failed runs. A failed refresh is reported but
+            // never changes the run's outcome.
+            try {
+                $this->screener->refresh();
+            } catch (Throwable $exception) {
+                report($exception);
+            }
         }
 
         return $run;

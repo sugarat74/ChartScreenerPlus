@@ -53,9 +53,15 @@ class ScreenerRowBuilder
                 );
             }
 
-            $ids = array_column($rows, 'instrument_id');
+            // Rows of instruments that no longer qualify (no bar or no
+            // snapshot any more) go; deleted instruments cascade by FK. The
+            // rule is a correlated check, so it never binds every id.
             ScreenerRow::query()
-                ->when($ids !== [], fn ($query) => $query->whereNotIn('instrument_id', $ids))
+                ->where(fn ($query) => $query
+                    ->whereNotExists(fn ($bars) => $bars->selectRaw('1')->from('daily_bars')
+                        ->whereColumn('daily_bars.instrument_id', 'screener_rows.instrument_id'))
+                    ->orWhereNotExists(fn ($snapshots) => $snapshots->selectRaw('1')->from('indicator_snapshots')
+                        ->whereColumn('indicator_snapshots.instrument_id', 'screener_rows.instrument_id')))
                 ->delete();
         });
 
@@ -86,7 +92,11 @@ class ScreenerRowBuilder
             'date' => $bar->date->format('Y-m-d'),
             'close' => $bar->close,
             'previous_close' => $previousClose,
-            'change_percent' => $this->changePercent($close, $previousClose),
+            // Bound as a 17-significant-digit string: Laravel binds PHP floats
+            // as strings with `precision=14`, which would collapse distinct
+            // values (10.000000000000009 vs 9.999999999999993) into ties and
+            // change the ranking against the per-request computation.
+            'change_percent' => $this->exact($this->changePercent($close, $previousClose)),
             'rvol' => $snapshot->rvol,
             'rsi14' => $snapshot->rsi14,
             'sma50' => $snapshot->sma50,
@@ -161,6 +171,14 @@ class ScreenerRowBuilder
         }
 
         return (($close - $previousClose) / $previousClose) * 100;
+    }
+
+    /**
+     * A float as a string that round-trips exactly (17 significant digits).
+     */
+    private function exact(?float $value): ?string
+    {
+        return $value === null ? null : sprintf('%.17g', $value);
     }
 
     /**

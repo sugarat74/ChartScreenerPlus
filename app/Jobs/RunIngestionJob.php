@@ -3,13 +3,11 @@
 namespace App\Jobs;
 
 use App\Services\Ingestion\IngestionRunner;
-use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Throwable;
 
 /**
  * The single execution unit of an ingestion run.
@@ -43,16 +41,9 @@ class RunIngestionJob implements ShouldQueue
     /**
      * Execute the run's lifecycle through the shared runner.
      */
-    public function handle(IngestionRunner $runner, ScreenerRowBuilder $screener): void
+    public function handle(IngestionRunner $runner): void
     {
+        // The runner also refreshes the precomputed Screener rows.
         $runner->process($this->runId, $this->instrumentIds);
-
-        // New bars change the latest close/date the Screener shows. A failed
-        // refresh is reported but never turns a finished run into a failure.
-        try {
-            $screener->refresh();
-        } catch (Throwable $exception) {
-            report($exception);
-        }
     }
 }

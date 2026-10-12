@@ -5,12 +5,14 @@ namespace Tests\Feature;
 use App\Enums\IngestionRunItemStatus;
 use App\Enums\IngestionRunStatus;
 use App\Jobs\RunIngestionJob;
+use App\Models\DailyBar;
 use App\Models\IndicatorSnapshot;
-use App\Services\Screener\ScreenerRowBuilder;
 use App\Models\IngestionRun;
 use App\Models\Instrument;
+use App\Models\ScreenerRow;
 use App\Models\Universe;
 use App\Services\Ingestion\IngestionRunner;
+use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -140,7 +142,30 @@ class RunIngestionJobTest extends TestCase
         RunIngestionJob::dispatchSync($run->id, $instrumentIds);
 
         // The latest close/date the Screener shows come from the new bars.
-        $this->assertDatabaseHas('screener_rows', ['instrument_id' => $instrumentIds[0]]);
+        $row = ScreenerRow::query()->where('instrument_id', $instrumentIds[0])->sole();
+        $latest = DailyBar::query()->where('instrument_id', $instrumentIds[0])->orderByDesc('date')->firstOrFail();
+        $this->assertSame($latest->date->toDateString(), $row->date->toDateString());
+        $this->assertEqualsWithDelta((float) $latest->close, (float) $row->close, 1e-9);
+    }
+
+    public function test_a_failing_screener_refresh_never_fails_the_run(): void
+    {
+        $this->universeWith(['AAA']);
+        $this->app->instance(ScreenerRowBuilder::class, new class extends ScreenerRowBuilder
+        {
+            public function refresh(): int
+            {
+                throw new \RuntimeException('refresh failed');
+            }
+        });
+        $runner = app(IngestionRunner::class);
+        [$run, $instrumentIds] = $this->prepareRun($runner);
+        Http::fake(['*/eod/AAA' => Http::response($this->bars('AAA', 2))]);
+
+        RunIngestionJob::dispatchSync($run->id, $instrumentIds);
+
+        $this->assertSame(IngestionRunStatus::Completed, $run->fresh()->status);
+        $this->assertDatabaseCount('screener_rows', 0);
     }
 
     public function test_a_mixed_run_finishes_partial(): void
@@ -209,7 +234,7 @@ class RunIngestionJobTest extends TestCase
             '*/eod/AAA' => Http::response($this->bars('AAA', 1)),
         ]);
 
-        (new RunIngestionJob($run->id, $instrumentIds))->handle($runner, app(ScreenerRowBuilder::class));
+        (new RunIngestionJob($run->id, $instrumentIds))->handle($runner);
 
         $finished = $run->fresh();
 

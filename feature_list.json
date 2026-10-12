@@ -1133,7 +1133,8 @@
       "Tests and docs updated; .\\init.ps1 and CI (SQLite + PostgreSQL) pass; production timing recorded"
     ],
     "evidence": [
-      "2026-10-12: old vs new comparison on the dev DB (494 instruments, with and without 178 patterns): 540 checks, 0 differences after recomputing change_percent from stored decimals; matrix time 21–23 s legacy vs 3.3 s new. Scale copy with 5,494 instruments: refresh 1.9 s, page queries 11–19 ms. Laravel suite 264 passed / 6 skipped incl. ScreenerRowBuilderTest (4), pipeline and RunIngestionJob refresh tests."
+      "2026-10-12: old vs new comparison on the dev DB (494 instruments, with and without 178 patterns): 540 checks, 0 differences after recomputing change_percent from stored decimals; matrix time 21–23 s legacy vs 3.3 s new. Scale copy with 5,494 instruments: refresh 1.9 s, page queries 11–19 ms. Laravel suite 264 passed / 6 skipped incl. ScreenerRowBuilderTest (4), pipeline and RunIngestionJob refresh tests.",
+      "2026-10-12 independent review round 1: request changes. Fixed: change_percent sort key bound with 17 significant digits (Laravel binds floats with 14, creating false ties; 31 adversarial mismatches on change sorts, now 0 of 784) plus regression test; refresh at the end of every ingestion run (IngestionRunner::process), after ingestion:scrape and the seeder; screener:refresh returns FAILURE on errors (pipeline skips alerts, tested); deploy refreshes after the PgBouncer check and after activation; stale rows deleted by a correlated rule; byte-order tie-break test; query bound <= 4. Laravel 268 passed / 6 skipped; old vs new 540/540 and 784/784 identical."
     ],
     "notes": "User request 2026-10-12 ('opción C') after the previous-close fix. Spec: docs/specs/screener-precomputed.md. Manual stage commands need `php artisan screener:refresh` afterwards (documented in deploy/README.md and CONSTRAINTS.md)."
   }

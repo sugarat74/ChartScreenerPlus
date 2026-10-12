@@ -32,10 +32,12 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    CI falla si falta el secret o cambia la clave. No uses `ssh-keyscan` sin verificación.
 5. HTTPS: `certbot --nginx -d www.chartiko.com`.
 6. Push a `main`: tests -> despliegue automático. Rollback manual: apuntar `current` a una release anterior.
-   El despliegue ejecuta `php artisan screener:refresh` tras `migrate` (filas precalculadas del Screener).
-   Si lanzas a mano `indicators:compute`, `signals:detect` o `patterns:detect`, ejecuta después
-   `php artisan screener:refresh`; tras un rollback a una release anterior a `screener-precomputed`,
-   la tabla `screener_rows` simplemente queda sin usar.
+   El despliegue ejecuta `php artisan screener:refresh` (filas precalculadas del Screener) tras la
+   comprobación de PgBouncer, antes de activar (si falla, la release no se activa), y otra vez tras activar
+   (no fatal). Las ingestas (`ingestion:run`, consultas de Admin, `ingestion:scrape`) refrescan solas; si
+   lanzas a mano `indicators:compute`, `signals:detect` o `patterns:detect`, ejecuta después
+   `php artisan screener:refresh`. Tras un rollback manual (cambiar `current` sin `deploy.sh`), ejecuta
+   también `php artisan screener:refresh`; una release anterior a `screener-precomputed` ignora la tabla.
 
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno

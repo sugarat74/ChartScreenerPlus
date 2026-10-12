@@ -35,9 +35,6 @@ php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-# The Screener reads precomputed rows: rebuild them for this release's code
-# (and right after the migration that creates the table).
-php artisan screener:refresh
 if [[ "$DB_DRIVER" == pgsql ]]; then
   # Before activation: the runtime (pooled) path must answer with the app role.
   # db:monitor queries the default connection itself (db:show would go direct).
@@ -45,6 +42,9 @@ if [[ "$DB_DRIVER" == pgsql ]]; then
     echo 'Database unreachable through PgBouncer; release not activated.' >&2; exit 1;
   }
 fi
+# The Screener reads precomputed rows: rebuild them for this release's code
+# before activation (a failure aborts the deploy; the old release keeps serving).
+php artisan screener:refresh
 bash "$REL/deploy/release-permissions.sh" "$REL"
 
 PREV=$(readlink -f $APP/current || true)
@@ -64,6 +64,10 @@ if ! curl -fsS --retry 15 --retry-delay 2 --retry-connrefused http://127.0.0.1:8
   fi
   exit 1
 fi
+
+# Again after activation: a pipeline run of the previous release may have
+# stored data meanwhile. Non-fatal: the next data update refreshes anyway.
+php artisan screener:refresh || echo 'Warning: post-activation screener refresh failed.' >&2
 
 # Keep the 5 most recent releases
 ls -1dt $APP/releases/* | tail -n +6 | xargs -r rm -rf

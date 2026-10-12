@@ -552,6 +552,50 @@ class ScreenerApiTest extends TestCase
         }
     }
 
+    public function test_equal_change_percentages_keep_their_exact_order(): void
+    {
+        $universe = $this->universe();
+
+        // Mathematically +10% each, but the floats differ in the last digits
+        // (0.77/0.7 > 10 > 3.3/3): the order must follow the exact values.
+        foreach (['AAA' => [3.0, 3.3], 'BBB' => [0.7, 0.77], 'CCC' => [10.0, 11.0]] as $ticker => [$previous, $latest]) {
+            $instrument = $this->member($universe, $ticker);
+            $this->bars($instrument, $previous, $latest);
+            $this->snapshot($instrument);
+        }
+
+        $desc = array_column($this->refreshScreenerRows()->getJson('/api/screener?sort=change_desc')->json('candidates'), 'ticker');
+        $asc = array_column($this->getJson('/api/screener?sort=change_asc')->json('candidates'), 'ticker');
+
+        $change = fn (float $previous, float $latest): float => (($latest - $previous) / $previous) * 100;
+        $expected = ['BBB' => $change(0.7, 0.77), 'CCC' => $change(10.0, 11.0), 'AAA' => $change(3.0, 3.3)];
+        // The three values really differ (10.000000000000009, 10, 9.9999999999999929).
+        $this->assertCount(3, array_unique(array_map(fn (float $value): string => sprintf('%.17g', $value), $expected)));
+        arsort($expected);
+        $this->assertSame(array_keys($expected), $desc);
+        asort($expected);
+        $this->assertSame(array_keys($expected), $asc);
+    }
+
+    public function test_ties_break_by_ticker_in_byte_order(): void
+    {
+        $universe = $this->universe();
+
+        // '.' (0x2E) sorts before 'A' (0x41) in byte order; a locale collation
+        // could ignore the punctuation. All sort keys are equal.
+        foreach (['BFA', 'BF.B', 'BF-C', 'BFB'] as $ticker) {
+            $instrument = $this->member($universe, $ticker);
+            $this->bars($instrument, 100, 100);
+            $this->snapshot($instrument, ['rvol' => 1.5, 'rsi14' => 50]);
+        }
+
+        $tickers = array_column($this->refreshScreenerRows()->getJson('/api/screener')->json('candidates'), 'ticker');
+        $expected = ['BFA', 'BF.B', 'BF-C', 'BFB'];
+        sort($expected, SORT_STRING);
+
+        $this->assertSame($expected, $tickers);
+    }
+
     public function test_limit_is_bounded_and_clamped(): void
     {
         $universe = $this->universe();
@@ -678,11 +722,11 @@ class ScreenerApiTest extends TestCase
 
         $this->getJson('/api/screener')->assertOk()->assertJsonPath('meta.returned', 20);
 
-        // The candidate set is loaded with eager `latestBar`/`latestSnapshot`/
-        // `signals` queries plus one bulk previous-close query, so the count is
-        // constant. A query per instrument (20 members) would blow this bound.
-        $this->assertLessThan(
-            20,
+        // Universe lookup, one count and one page select over the precomputed
+        // rows: constant whatever the universe size. Any per-instrument query
+        // (20 members) would blow this bound.
+        $this->assertLessThanOrEqual(
+            4,
             $queries,
             "The screener issued {$queries} queries for 20 members (N+1 regression?).",
         );
@@ -693,9 +737,9 @@ class ScreenerApiTest extends TestCase
         $this->universe();
 
         for ($attempt = 0; $attempt < 60; $attempt++) {
-            $this->refreshScreenerRows()->getJson('/api/screener')->assertOk();
+            $this->getJson('/api/screener')->assertOk();
         }
 
-        $this->refreshScreenerRows()->getJson('/api/screener')->assertStatus(429);
+        $this->getJson('/api/screener')->assertStatus(429);
     }
 }
