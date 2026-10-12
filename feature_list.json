@@ -1210,7 +1210,7 @@
     "title": "Example images for indicators and chart patterns in the user manual",
     "user_visible_behavior": "Each of the six current indicator entries and four supported Chartist Pattern entries in Cómo funciona has a distinct explanatory image with Spanish and English accessible text.",
     "depends_on": ["how-it-works-manual"],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Six current indicator entries and four supported pattern entries each render one distinct schematic SVG; other manual entries remain text-only",
       "Spanish and English descriptions are complete, the images fit narrow layouts and fictional data is disclosed",
@@ -1218,8 +1218,9 @@
     ],
     "evidence": [
       "2026-10-12: adapted to origin/main after the how-it-works-manual merge; focused HowItWorksPage.test.tsx 12 passed. Full init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint, 84 Vitest tests and build, engine 67 passed. Desktop screenshot review covered all ten diagrams and captions; a narrow screenshot showed indicator cards stacked with images within their borders.",
-      "2026-10-12: PR #22 merged as 8542e7a after SQLite/PostgreSQL checks passed; main CI/deploy run 38289157071 activated the VPS release. Live /, /como-funciona and /up returned 200; /como-funciona served the expected index-Bvug7vJR.js bundle; production screenshot displayed the new indicator diagrams and three SMA levels."
+      "2026-10-12: PR #22 merged as 8542e7a after SQLite/PostgreSQL checks passed; main CI/deploy run 38289157071 activated the VPS release. Live /, /como-funciona and /up returned 200; /como-funciona served the expected index-Bvug7vJR.js bundle; production screenshot displayed the new indicator diagrams and three SMA levels.",
+      "2026-10-12 independent feature-validator verdict: accept. Re-ran focused HowItWorksPage.test.tsx: 12/12 passed. Reviewed all ten distinct SVGs in both locales, accessible labels, three SMA levels, fictional-data notes, responsive DESIGN fidelity, public wording and scoped security; no blocking findings."
     ],
-    "notes": "Spec: docs/specs/how-it-works-visual-examples.md. Inline SVGs use fictional data, no external images or packages. Independent acceptance remains pending."
+    "notes": "Spec: docs/specs/how-it-works-visual-examples.md. Inline SVGs use fictional data, no external images or packages. Accepted after independent validation."
   }
 ]
