@@ -426,7 +426,7 @@ export type ScreenerResponse = {
   universe: { slug: string; name: string }
   sort: string
   candidates: ScreenerCandidate[]
-  meta: { limit: number; returned: number; total: number }
+  meta: { limit: number; offset?: number; returned: number; total: number }
 }
 
 /**
@@ -472,8 +472,19 @@ function screenerQueryString(filters: ScreenerFilters): string {
  * aborts an in-flight request.
  */
 export const screenerApi = {
-  async search(filters: ScreenerFilters, signal?: AbortSignal): Promise<ScreenerResponse> {
-    const query = screenerQueryString(filters)
+  async search(
+    filters: ScreenerFilters,
+    signal?: AbortSignal,
+    page: { limit?: number; offset?: number } = {},
+  ): Promise<ScreenerResponse> {
+    const params = new URLSearchParams(screenerQueryString(filters))
+    if (page.limit !== undefined) {
+      params.set('limit', String(page.limit))
+    }
+    if (page.offset !== undefined && page.offset > 0) {
+      params.set('offset', String(page.offset))
+    }
+    const query = params.toString()
     return request<ScreenerResponse>(`/api/screener${query ? `?${query}` : ''}`, { signal })
   },
 }

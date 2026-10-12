@@ -1,5 +1,10 @@
 # Progress Log
 
+## Screener pagination and Spanish "candidatos" — 2026-10-12
+
+- PR #17: Spanish copy now says "candidatos" instead of "Candidates" (catalog, index.html SEO/initial HTML, legal notice, marketing draft).
+- `screener-pagination` (`passing`): `?offset` on `GET /api/screener` (+ `meta.offset`), `page`/`limit` in the SPA URL, Anterior/Siguiente, `Página N de M`, `Mostrando from–to de total`, 25/50/100/200 per page. Browser QA 12/12.
+
 ## Screener latency fix (option A) — 2026-10-12
 
 - Production profiling: `GET /api/screener` took ~4.5 s; 95% was the previous-close query in `CandidateQuery::previousCloseByInstrument()`, which evaluated two correlated subqueries per stored bar (252,595 rows, ~2M buffer hits, EXPLAIN ANALYZE 4,068 ms).
