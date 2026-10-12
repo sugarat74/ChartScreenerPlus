@@ -1199,7 +1199,8 @@
     ],
     "evidence": [
       "2026-10-12: 81 Vitest passed (new HowItWorksPage tests), SPA lint and build pass; Playwright es/en 1366/390: 10 TOC anchors land, 41 entry cards, overflow 0, no page errors, no EOD wording.",
-      ".\\init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint, 81 Vitest, SPA build, engine 67 passed."
+      ".\\init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint, 81 Vitest, SPA build, engine 67 passed.",
+      "Independent accuracy review (PR #21): APPROVE, no factual errors; every indicator period, signal rule, pattern threshold, sort, page size and label checked against engine/app, CandidateQuery, ScreenerRowBuilder and the SPA. Precision nits applied (forming-pattern expiry, breakout direction, cup shape, 16:30 run start, 60-session prior move); added an end-of-day wording guard and a stricter sort-label test: 82 Vitest passed."
     ],
     "notes": "Replaces the former LandingPage explanation. /como-funciona stays noindex (RouteMetadata + deploy/nginx.conf); making it indexable is a separate decision."
   }

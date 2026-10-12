@@ -35,7 +35,7 @@ export const guideEn: GuideTexts = {
       title: 'What data Chartiko uses',
       paragraphs: [
         'The universe is the S&P 500 (about 500 US stocks). Chartiko works with daily data: one candle per stock and session, with open, high, low, close and volume.',
-        'Data is updated once a day, every US market trading day, about 30 minutes after the session closes (4:30 pm New York time). Indicators, signals, patterns and the list are then recalculated. There are no real-time or intraday quotes.',
+        'Data is updated once a day, every US market trading day, starting at 4:30 pm New York time, about 30 minutes after the session closes. Indicators, signals, patterns and the list are then recalculated. There are no real-time or intraday quotes.',
         'The date of the latest session is shown on each stock’s page. If a stock has little history (for example fewer than 200 sessions for the SMA 200), that indicator stays empty instead of showing an invented value, and filters that need it leave the stock out.',
       ],
     },
@@ -46,7 +46,7 @@ export const guideEn: GuideTexts = {
         'Each row is a candidate: a stock that meets every active filter. With no filters you see the whole universe, ranked. Above the table you can read "Showing X–Y of Z candidates".',
       ],
       entries: [
-        { term: 'Symbol / Company', summary: 'Ticker, company name and exchange (NYSE or NASDAQ). Click the symbol to open its chart.' },
+        { term: 'Symbol / Company', summary: 'Ticker, company name and exchange (for example NYSE or NASDAQ). Click the symbol to open its chart.' },
         { term: 'Close', summary: 'Closing price of the latest available session.' },
         { term: 'Chg %', summary: 'Percentage change between the latest close and the previous session’s close. Empty when the stock has a single session.' },
         { term: 'RVOL', summary: 'Relative volume of the latest session (see "Technical indicators"). 2.0× means twice the average volume.' },
@@ -176,23 +176,23 @@ export const guideEn: GuideTexts = {
       id: 'patrones',
       title: 'Chart patterns',
       paragraphs: [
-        'Patterns are geometric price formations that Chartiko detects automatically with fixed rules on local highs and lows (a high or low is confirmed when 5 sessions surround it on each side, so a pattern appears at the earliest 5 sessions after its last point).',
-        '"Forming" means the figure is complete but has not broken its level yet. "Confirmed" means a close went beyond the breakout level within the last 10 sessions. After that, or if the price invalidates the figure, the pattern is no longer shown. Chartiko only shows the breakout level: it never computes price targets.',
+        'Patterns are geometric price formations that Chartiko detects automatically with fixed rules on local highs and lows (a high or low is confirmed when 5 sessions surround it on each side, so a pattern appears at the earliest 5 sessions after its last local high or low).',
+        '"Forming" means the figure is complete but has not broken its level yet. "Confirmed" means a close broke through the breakout level (above it; below it for a double top) within the last 10 sessions. After that, or if the price invalidates the figure, the pattern is no longer shown. A forming pattern also expires if it does not break out in time: 60 sessions after the second bottom or top, a handle longer than 25 sessions or a flag longer than 20. Chartiko only shows the breakout level: it never computes price targets.',
       ],
       entries: [
         {
           term: 'Double bottom',
-          summary: 'Two similar lows (up to 3% apart), 15 to 120 sessions apart, after a fall of at least 15%, with a rebound of at least 10% between them.',
+          summary: 'Two similar lows (up to 3% apart), 15 to 120 sessions apart, after a fall of at least 15% over the previous 60 sessions, with a rebound of at least 10% between them.',
           details: ['Breakout level: the high between the two bottoms. Confirmed by a close above it; invalidated by a close more than 3% below the bottoms.'],
         },
         {
           term: 'Double top',
-          summary: 'Two similar highs (up to 3% apart), 15 to 120 sessions apart, after a rise of at least 15%, with a drop of at least 10% between them.',
+          summary: 'Two similar highs (up to 3% apart), 15 to 120 sessions apart, after a rise of at least 15% over the previous 60 sessions, with a drop of at least 10% between them.',
           details: ['Breakout level: the low between the two tops. Confirmed by a close below it; invalidated by a close more than 3% above the tops.'],
         },
         {
           term: 'Cup with handle',
-          summary: 'A rounded cup of 30 to 325 sessions, 12% to 35% deep, with its low in the central part and rims of similar height (within 5%), followed by a handle of 5 to 25 sessions that pulls back at most 12% and stays above the middle of the cup.',
+          summary: 'A cup of 30 to 325 sessions, 12% to 35% deep, with its low between 20% and 80% of its length, no intermediate peaks above the lower rim and rims of similar height (within 5%), followed by a handle of 5 to 25 sessions that pulls back at most 12% and stays above the middle of the cup.',
           details: ['Breakout level: the high of the handle. Confirmed by a close above it with relative volume of 1.5× or more.'],
         },
         {
@@ -242,7 +242,7 @@ export const guideEn: GuideTexts = {
     },
     {
       question: 'How often is the data updated?',
-      answer: 'Once a day, every US market trading day, about 30 minutes after the close (4:30 pm New York time). There is no real-time or intraday data.',
+      answer: 'Once a day, every US market trading day, starting at 4:30 pm New York time, about 30 minutes after the close. There is no real-time or intraday data.',
     },
     {
       question: 'What is the difference between a signal and a pattern?',

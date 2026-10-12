@@ -2,7 +2,8 @@
  * Shape of the "Cómo funciona" user manual (how-it-works-manual). Every rule,
  * threshold and label must match the code and the on-screen texts: indicator
  * periods (CONSTRAINTS.md -> Indicators), signal rules (-> Signals), pattern
- * parameters (docs/specs/chart-patterns-detect.md) and UI labels in
+ * parameters (engine/app/patterns/rules.py, engine/app/signals/rules.py;
+ * chart-patterns-calibration will change them) and UI labels in
  * `frontend/src/i18n/messages/*.ts`. Update this text whenever those change.
  */
 

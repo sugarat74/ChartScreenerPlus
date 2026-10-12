@@ -10,6 +10,8 @@ import { SCREENER_PAGE_SIZES } from '../lib/screenerPagination.ts'
 import { SCREENER_PATTERN_TYPES, SCREENER_SIGNAL_TYPES } from '../lib/screenerFilters.ts'
 import HowItWorksPage from './HowItWorksPage.tsx'
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 function renderPage() {
   return render(
     <I18nProvider>
@@ -68,9 +70,11 @@ describe('manual stays consistent with the interface', () => {
 
     it(`${locale}: sort options, page sizes and filter labels match the interface`, () => {
       const listNotes = (section('listado').notes ?? []).join(' ')
+      // Either the full label is quoted, or «Base» is followed by its qualifier ("«RSI» mayor o menor").
       for (const label of Object.values(messages.sorts)) {
-        const base = label.replace(/\s*\(.*\)$/, '')
-        expect(listNotes, label).toContain(base)
+        const [, base, qualifier] = label.match(/^(.*?)\s*\((.*)\)$/) ?? [label, label, '']
+        const shorthand = new RegExp(`${escapeRegExp(base)}[»"]\\s+(?:\\S+\\s+(?:o|or)\\s+)?${escapeRegExp(qualifier)}`)
+        expect(listNotes.includes(label) || shorthand.test(listNotes), label).toBe(true)
       }
       for (const size of SCREENER_PAGE_SIZES) {
         expect(listNotes).toContain(String(size))
@@ -81,6 +85,10 @@ describe('manual stays consistent with the interface', () => {
       }
     })
   }
+
+  it('never uses end-of-day wording in the public copy', () => {
+    expect(JSON.stringify(GUIDE_TEXTS)).not.toMatch(/\bEOD\b|end[- ]of[- ]day|fin de d[ií]a/i)
+  })
 
   it('Spanish and English manuals have the same structure', () => {
     const shape = (locale: 'es' | 'en') =>

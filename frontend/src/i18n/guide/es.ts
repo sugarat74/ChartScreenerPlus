@@ -35,7 +35,7 @@ export const guideEs: GuideTexts = {
       title: 'Qué datos usa Chartiko',
       paragraphs: [
         'El universo es el S&P 500 (unas 500 acciones de EE. UU.). Chartiko trabaja con datos diarios: una vela por valor y sesión, con apertura, máximo, mínimo, cierre y volumen.',
-        'Los datos se actualizan una vez al día, cada día hábil del mercado estadounidense, unos 30 minutos después del cierre de la sesión (16:30, hora de Nueva York). Después se recalculan los indicadores, las señales, los patrones y el listado. No hay cotizaciones en tiempo real ni intradía.',
+        'Los datos se actualizan una vez al día, cada día hábil del mercado estadounidense, a partir de las 16:30 (hora de Nueva York), unos 30 minutos después del cierre de la sesión. Después se recalculan los indicadores, las señales, los patrones y el listado. No hay cotizaciones en tiempo real ni intradía.',
         'La fecha de la última sesión aparece en la ficha de cada valor. Si un valor tiene poco historial (por ejemplo, menos de 200 sesiones para la SMA 200), ese indicador queda vacío en lugar de mostrar un valor inventado, y los filtros que lo necesitan no lo incluyen.',
       ],
     },
@@ -46,7 +46,7 @@ export const guideEs: GuideTexts = {
         'Cada fila es un candidato: un valor que cumple todos los filtros activos. Sin filtros, ves todo el universo ordenado. Encima de la tabla se indica «Mostrando X–Y de Z candidatos».',
       ],
       entries: [
-        { term: 'Símbolo / Empresa', summary: 'Ticker, nombre de la empresa y bolsa (NYSE o NASDAQ). Pulsa el símbolo para abrir su gráfico.' },
+        { term: 'Símbolo / Empresa', summary: 'Ticker, nombre de la empresa y bolsa (por ejemplo, NYSE o NASDAQ). Pulsa el símbolo para abrir su gráfico.' },
         { term: 'Cierre', summary: 'Precio de cierre de la última sesión disponible.' },
         { term: 'Var %', summary: 'Variación porcentual entre el último cierre y el cierre de la sesión anterior. Queda vacía si el valor tiene una sola sesión.' },
         { term: 'RVOL', summary: 'Volumen relativo de la última sesión (ver «Indicadores técnicos»). Un 2,0× significa el doble del volumen medio.' },
@@ -176,23 +176,23 @@ export const guideEs: GuideTexts = {
       id: 'patrones',
       title: 'Patrones chartistas',
       paragraphs: [
-        'Los patrones son formaciones geométricas del precio que Chartiko detecta automáticamente con reglas fijas sobre los máximos y mínimos locales (un máximo o mínimo se confirma cuando lo rodean 5 sesiones a cada lado, así que un patrón aparece como pronto 5 sesiones después de su último punto).',
-        '«En formación» significa que la figura está completa pero aún no ha roto su nivel. «Confirmado» significa que un cierre ha superado el nivel de ruptura en las últimas 10 sesiones. Pasado ese plazo, o si el precio invalida la figura, el patrón deja de mostrarse. Chartiko solo muestra el nivel de ruptura: nunca calcula objetivos de precio.',
+        'Los patrones son formaciones geométricas del precio que Chartiko detecta automáticamente con reglas fijas sobre los máximos y mínimos locales (un máximo o mínimo se confirma cuando lo rodean 5 sesiones a cada lado, así que un patrón aparece como pronto 5 sesiones después de su último máximo o mínimo local).',
+        '«En formación» significa que la figura está completa pero aún no ha roto su nivel. «Confirmado» significa que un cierre ha roto el nivel de ruptura (por encima; por debajo en el doble techo) en las últimas 10 sesiones. Pasado ese plazo, o si el precio invalida la figura, el patrón deja de mostrarse. Un patrón en formación también caduca si no rompe a tiempo: 60 sesiones desde el segundo suelo o techo, un asa de más de 25 sesiones o una bandera de más de 20. Chartiko solo muestra el nivel de ruptura: nunca calcula objetivos de precio.',
       ],
       entries: [
         {
           term: 'Doble suelo',
-          summary: 'Dos mínimos parecidos (diferencia de hasta un 3 %), separados entre 15 y 120 sesiones, tras una caída de al menos un 15 %, con un rebote intermedio de al menos un 10 %.',
+          summary: 'Dos mínimos parecidos (diferencia de hasta un 3 %), separados entre 15 y 120 sesiones, tras una caída de al menos un 15 % en las 60 sesiones previas, con un rebote intermedio de al menos un 10 %.',
           details: ['Nivel de ruptura: el máximo entre los dos suelos. Se confirma con un cierre por encima; se invalida con un cierre más de un 3 % por debajo de los suelos.'],
         },
         {
           term: 'Doble techo',
-          summary: 'Dos máximos parecidos (hasta un 3 % de diferencia), separados entre 15 y 120 sesiones, tras una subida de al menos un 15 %, con una caída intermedia de al menos un 10 %.',
+          summary: 'Dos máximos parecidos (hasta un 3 % de diferencia), separados entre 15 y 120 sesiones, tras una subida de al menos un 15 % en las 60 sesiones previas, con una caída intermedia de al menos un 10 %.',
           details: ['Nivel de ruptura: el mínimo entre los dos techos. Se confirma con un cierre por debajo; se invalida con un cierre más de un 3 % por encima de los techos.'],
         },
         {
           term: 'Taza con asa',
-          summary: 'Una taza redondeada de 30 a 325 sesiones, con una profundidad de entre el 12 % y el 35 %, el fondo en su parte central y bordes de altura parecida (hasta un 5 %), seguida de un asa de 5 a 25 sesiones que retrocede como mucho un 12 % y no baja de la mitad de la taza.',
+          summary: 'Una taza de 30 a 325 sesiones, con una profundidad de entre el 12 % y el 35 %, el fondo entre el 20 % y el 80 % de su duración, sin picos intermedios por encima del borde más bajo y bordes de altura parecida (hasta un 5 %), seguida de un asa de 5 a 25 sesiones que retrocede como mucho un 12 % y no baja de la mitad de la taza.',
           details: ['Nivel de ruptura: el máximo del asa. Se confirma con un cierre por encima y un volumen relativo de 1,5× o más.'],
         },
         {
@@ -242,7 +242,7 @@ export const guideEs: GuideTexts = {
     },
     {
       question: '¿Con qué frecuencia se actualizan los datos?',
-      answer: 'Una vez al día, cada día hábil del mercado de EE. UU., unos 30 minutos después del cierre (16:30 hora de Nueva York). No hay datos en tiempo real ni intradía.',
+      answer: 'Una vez al día, cada día hábil del mercado de EE. UU., a partir de las 16:30 (hora de Nueva York), unos 30 minutos después del cierre. No hay datos en tiempo real ni intradía.',
     },
     {
       question: '¿Qué diferencia hay entre una señal y un patrón?',
