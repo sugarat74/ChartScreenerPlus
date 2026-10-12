@@ -197,7 +197,7 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 
 - `GET /api/screener` and the alerts **MUST** read Candidates from `screener_rows` through `App\Services\Screener\CandidateQuery` and filter, rank and page in SQL; per-request filtering or ranking in PHP over the whole universe **MUST NOT** come back. Reason: request cost must not grow with the number of instruments.
 - `screener_rows` **MUST** be rebuilt by `screener:refresh` after every data change: it runs in `ingestion:pipeline` before `alerts:evaluate`, at the end of every ingestion run (`IngestionRunner::process`), after `ingestion:scrape`, after the universe seeder and in `deploy/deploy.sh`; anyone running `indicators:compute`, `signals:detect` or `patterns:detect` by hand **MUST** run `php artisan screener:refresh` afterwards. Any new command that writes bars, snapshots, signals, patterns or instrument metadata **MUST** refresh too. Reason: the Screener only shows what the rows hold.
-- Floats used as SQL sort keys (`change_percent`) **MUST** be bound with full precision (`sprintf('%.17g')`), not as PHP floats. Reason: Laravel binds floats as 14-digit strings, which creates false ties and changes the ranking.
+- Floats used as SQL sort keys (`change_percent`) **MUST** be bound with full precision (`sprintf('%.17H')`, locale-independent), not as PHP floats. Reason: Laravel binds floats as 14-digit strings, which creates false ties and changes the ranking.
 - The Candidate JSON **MUST** stay identical to the per-request computation (same values, order and `meta`); `change_percent` is recomputed from the stored decimals in the payload. Reason: precomputing is an implementation detail, not a contract change.
 
 ## Public API

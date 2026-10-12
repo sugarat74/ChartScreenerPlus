@@ -178,7 +178,7 @@ class ScreenerRowBuilder
      */
     private function exact(?float $value): ?string
     {
-        return $value === null ? null : sprintf('%.17g', $value);
+        return $value === null ? null : sprintf('%.17H', $value);
     }
 
     /**
