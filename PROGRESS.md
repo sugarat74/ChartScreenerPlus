@@ -2,9 +2,9 @@
 
 ## Cómo funciona user manual — 2026-10-12
 
-- At the user's request, `/como-funciona` is now a full user manual (`how-it-works-manual`, `passing`): getting started, data and update time, candidate list (ranking, sorting, paging), every filter, the indicators and what each is for, the exact rule of each of the 9 signals and 5 chart patterns, the chart, the account, FAQ and disclaimer, with a table of contents. es/en texts in `frontend/src/i18n/guide/`.
+- At the user's request, `/como-funciona` is now a full user manual (`how-it-works-manual`): getting started, data and update time, candidate list (ranking, sorting, paging), every filter, the indicators and what each is for, the exact rule of each of the 9 signals and 5 chart patterns, the chart, the account, FAQ and disclaimer, with a table of contents. es/en texts in `frontend/src/i18n/guide/`.
 - Vitest checks that signal/pattern names, sort options, page sizes and filter labels match the UI catalogs and that both languages share one structure. Browser QA es/en at 1366/390 px passed.
-- `/como-funciona` remains noindex; independent accuracy review, PR and deploy next.
+- Independent accuracy review approved (no factual errors); its precision nits were applied. Status `accepted`. `/como-funciona` remains noindex.
 
 ## Backlog: pattern calibration and pattern alerts — 2026-10-12
 

@@ -1189,7 +1189,7 @@
       "chart-patterns-ui",
       "screener-pagination"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Every signal and chart pattern is described under its on-screen name; sort options, page sizes and filter labels match the UI catalogs (Vitest)",
       "Spanish and English manuals have the same structure; table-of-contents anchors resolve",
