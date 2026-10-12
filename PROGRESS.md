@@ -6,6 +6,12 @@
 - Rewritten as one correlated subquery per instrument (`order by date desc limit 1 offset 1` on the unique `(instrument_id, date)` index): 6 ms in production; old vs new previous closes compared for all 503 instruments, 0 mismatches. New test for out-of-order/gapped bars. `.\init.ps1` exit 0 (Laravel 258 / 6 skipped, frontend 63, engine 67).
 - Next for scaling to thousands of instruments: precomputed screener table with SQL filtering and pagination (option C, to specify).
 
+## Compact Saved Screeners section — 2026-10-12
+
+- At the user's request, the Screener's Saved Screeners card is now a compact native disclosure, closed by default for Registered Users. Its summary shows the saved count; opening it exposes the unchanged save, apply and delete actions. A Visitor sees only a small sign-in link in that position.
+- The Screener API, authorization, URL filter state and Portal are unchanged. Updated DESIGN.md, ARCHITECTURE.md and the accepted `saved-screeners` backlog entry to describe the current presentation; historical implementation evidence remains.
+- Baseline `init.ps1` passed before changes. After the edit, `init.ps1` passed: Laravel 257 passed / 6 skipped (2326 assertions), SPA lint, 63 Vitest tests, production build (162 modules), and engine 67 passed with the existing Starlette warning. The built CSS includes the native disclosure marker and open-state styles. Deployment follows through the standard GitHub workflow.
+
 ## Screener homepage and Cómo funciona tab — 2026-10-11
 
 - At the user's request, `/` now opens the anonymous Screener with a concise introduction and a link to `/como-funciona`. The former landing explanation lives at `/como-funciona` and is available as a tab. Current product links use `/`; legacy `/screener` URLs redirect client-side to `/` while retaining query filters and hash.

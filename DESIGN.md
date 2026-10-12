@@ -108,7 +108,7 @@ None. The prototype already provides the visual language; no image generation wa
 - Sticky top header with brand, language selector and session controls.
 - A horizontal tab bar for the main surfaces (Screener, Cómo funciona, Admin, Portal). The Screener is the homepage; Cómo funciona contains the product explanation. Open an Instrument chart from a Candidate or Watchlist entry.
 - Content constrained to a `max-w-7xl` centred column with generous vertical rhythm.
-- Screener: filters/inline criteria at the top, ranked table below.
+- Screener: filters/inline criteria at the top, then a compact Saved Screeners disclosure (closed by default for signed-in users), then the ranked table. Visitors see a small sign-in link in that position.
 - Admin: telemetry tiles + log stream, side by side on desktop.
 
 ## Shapes
