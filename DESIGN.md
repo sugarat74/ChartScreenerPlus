@@ -132,6 +132,7 @@ None. The prototype already provides the visual language; no image generation wa
 
 - **Screener:** filter panel + ranked Candidate table. Primary MVP surface.
 - **Chart:** interactive candlestick chart with indicators, Signal reference levels and metadata.
+- **Experimental forecast:** a compact bordered panel follows the chart's technical context. It has the yellow action, an experimental badge, a horizon selector, a minimum-probability field and a plain-language unavailable state. Guests see a sign-in link. The three class probabilities and dates use the existing dense data style.
 - **Admin:** ingestion control, telemetry tiles and run log stream.
 - **Portal (Mi Portal & Seguimientos):** Saved Screeners and Watchlist for Registered Users.
 - **Copilot IA:** present in the prototype only; out of MVP scope.

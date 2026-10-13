@@ -628,6 +628,48 @@ export const instrumentApi = {
   },
 }
 
+export type Forecast = {
+  ticker: string
+  as_of_date: string
+  target_date: string
+  horizon: number
+  reference_close: number
+  probabilities: { up: number; down: number; flat: number }
+  signal: 'up' | 'down' | null
+  minimum_probability: number
+  model_version: string
+  experimental: true
+}
+
+export type ForecastReportGroup = {
+  source: string
+  horizon: number
+  model_version: string
+  question_version: string
+  sample: number
+  pending: number
+  coverage: number | null
+  directional_accuracy: number | null
+  covered_accuracy: number | null
+  brier: number | null
+  calibration: { bucket: number; count: number; mean_confidence: number; accuracy: number }[]
+}
+
+export const forecastApi = {
+  async predict(ticker: string, horizon: number, minimumProbability: number): Promise<Forecast> {
+    await ensureCsrfCookie()
+    const payload = await request<{ forecast: Forecast }>(`/api/instruments/${encodeURIComponent(ticker)}/forecast`, {
+      method: 'POST',
+      body: JSON.stringify({ horizon, minimum_probability: minimumProbability }),
+    })
+    return payload.forecast
+  },
+  async report(minimumProbability = 60): Promise<ForecastReportGroup[]> {
+    const payload = await request<{ groups: ForecastReportGroup[] }>(`/api/admin/forecasts/report?minimum_probability=${minimumProbability}`)
+    return payload.groups
+  },
+}
+
 /** One owned watchlist entry (same field set as the instrument-detail metadata). */
 export type WatchlistEntry = {
   ticker: string

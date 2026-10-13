@@ -1,0 +1,19 @@
+# Pronóstico Jev: operación del experimento
+
+La función es experimental y solo está disponible mediante `POST /api/instruments/{ticker}/forecast` con sesión Sanctum. El gráfico y sus datos públicos no requieren cuenta. El cuerpo exige `horizon` (`1` o `5` sesiones) y `minimum_probability` (`0` a `100`). El porcentaje es un umbral de presentación y no modifica las probabilidades guardadas. La API limita las solicitudes a 10 por minuto y usuario.
+
+## Activación
+
+La integración queda desactivada por defecto en código. La persona responsable del proyecto confirmó el 13 de octubre de 2026 que tiene autorización para enviar velas e indicadores de sus fuentes de mercado a TypeSafe AI. Para activarla en un entorno concreto se requieren `TYPESAFE_API_KEY`, `JEV_MODEL` con una versión concreta (por ejemplo `jev-1.13.0`), `JEV_MARKET_DATA_RIGHTS_VERIFIED=true` y `JEV_ENABLED=true`. No guardar la clave en Git, en el navegador ni en logs.
+
+El 13 de octubre de 2026, PR #27 instaló `TYPESAFE_API_KEY` desde el secreto cifrado del entorno GitHub `production` en el `.env` compartido del VPS y fijó `JEV_MODEL=jev-1.13.0`, `JEV_MARKET_DATA_RIGHTS_VERIFIED=true` y `JEV_ENABLED=true`. La integración respondió correctamente a una llamada sintética directa y a otra mediante el adaptador Laravel local. Estos resultados comprueban credencial y contrato; aún no prueban pronósticos sobre datos reales ni el endpoint en producción, porque esta feature sigue sin desplegarse.
+
+Se envían como máximo 252 Daily Bars, el Indicator Snapshot de la fecha de referencia y Signals fechados exactamente en esa sesión. No se envían datos de usuario. Se exigen al menos 50 barras, RSI 14 y SMA 50. El modelo responde con las tres clases `up`, `down` y `flat`; una respuesta incompleta o inválida devuelve indisponibilidad. El modelo y la versión de la pregunta identifican un experimento: cambiar la pregunta exige incrementar `question_version` y no reescribir registros anteriores.
+
+## Resultados y revisión
+
+`php artisan forecast:resolve` compara las barras almacenadas hasta la fecha objetivo y resuelve los casos vencidos. La pipeline diaria ejecuta este comando tras la ingestión. El resultado de un caso pendiente nunca se incluye en la exactitud. `GET /api/admin/forecasts/report?minimum_probability=60` agrupa por origen, plazo, modelo y versión de pregunta; devuelve muestra, pendientes, cobertura, acierto, Brier multiclase y calibración por tramos de 20 puntos. El panel Admin muestra el resumen y los tramos de calibración.
+
+La evaluación histórica se lanza expresamente con `php artisan forecast:backfill TICKER 2026-01-01 2026-03-31 --horizon=1 --limit=20`. Puede generar llamadas de pago; el límite máximo por ejecución es 100. Solo se admiten años cubiertos por el calendario NYSE comprometido en `config/ingestion.php`; si el horizonte cruza a un año sin cobertura, ese caso se omite con un estado explícito. El comando usa únicamente barras e indicadores disponibles en cada corte, reutiliza cualquier pronóstico ya existente y después ejecuta la resolución. Los Signals antiguos no están archivados por el detector actual; en los cortes históricos sin Signal retenido se envía una lista vacía. Por ello se informa por separado de `historical` y `prospective`, y la evaluación prospectiva es la referencia principal para decisiones posteriores.
+
+Los registros de pronóstico no contienen identidad del solicitante. La política de conservación del conjunto experimental y la evaluación de calibración frente a una referencia simple deben decidirse antes de tratar estos porcentajes como fiables o ampliar su uso comercial.

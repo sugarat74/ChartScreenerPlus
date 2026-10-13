@@ -15,6 +15,7 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import PatternPanel from '../components/chart/PatternPanel.tsx'
+import ForecastPanel from '../components/chart/ForecastPanel.tsx'
 import SignalLevelsPanel from '../components/chart/SignalLevelsPanel.tsx'
 // `lightweight-charts` is a large dependency: load the canvas chunk only when
 // the chart is actually rendered so the Screener bundle stays lean.
@@ -355,6 +356,7 @@ export default function InstrumentChartPage() {
 
           <SignalLevelsPanel signals={current.signals} />
           <PatternPanel patterns={current.patterns ?? []} />
+          <ForecastPanel key={current.instrument.ticker} ticker={current.instrument.ticker} />
         </>
       ) : null}
     </section>

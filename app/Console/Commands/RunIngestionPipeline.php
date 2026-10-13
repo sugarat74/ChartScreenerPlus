@@ -85,6 +85,7 @@ class RunIngestionPipeline extends Command
             // rebuilt from whatever the stages above stored.
             $screener = $this->call('screener:refresh');
             $alerts = $signals === self::SUCCESS && $screener === self::SUCCESS ? $this->call('alerts:evaluate') : self::FAILURE;
+            $forecasts = $this->call('forecast:resolve');
 
             if ($signals !== self::SUCCESS) {
                 $this->warn('Alerts were not evaluated because signal detection failed.');
@@ -92,7 +93,7 @@ class RunIngestionPipeline extends Command
                 $this->warn('Alerts were not evaluated because the screener rows could not be refreshed.');
             }
 
-            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS || $screener !== self::SUCCESS || $alerts !== self::SUCCESS) {
+            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS || $screener !== self::SUCCESS || $alerts !== self::SUCCESS || $forecasts !== self::SUCCESS) {
                 $this->error('EOD pipeline finished with errors.');
 
                 return self::FAILURE;
