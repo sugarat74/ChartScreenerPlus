@@ -63,6 +63,8 @@ class CopySqliteToPgsql extends Command
         'notifications',
         // Precomputed Screener rows, rebuilt by `screener:refresh`.
         'screener_rows',
+        // Experimental forecasts postdate the one-time SQLite cut-over.
+        'forecast_predictions',
     ];
 
     private const CHUNK = 500;
