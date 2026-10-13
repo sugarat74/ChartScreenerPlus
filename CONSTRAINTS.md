@@ -165,6 +165,12 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - Notifications **MUST** be in-app only (database channel); email is a separate, opt-in feature (`alerts-email-digest`). They **MUST** be deleted after `config('alerts.notification_retention_days')` days, and the privacy policy **MUST** state that retention. Reason: data minimization and the published privacy text.
 - The Screener result for an alert **MUST** come from `App\Services\Screener\CandidateQuery`, the same code as `GET /api/screener`. Reason: an alert must never disagree with what the user sees.
 
+## Experimental Jev Forecasts
+
+- `POST /api/instruments/{ticker}/forecast` **MUST** require a Sanctum session, validate the supported horizon and minimum probability, and apply a per-user rate limit; the chart data endpoint **MUST** remain public. The Admin evaluation report **MUST** enforce the Admin role server-side.
+- The provider key **MUST** stay in server configuration. Only stored market bars, indicators and same-date Signals through the reference close **MAY** leave the server; user identity and owned resources **MUST NOT** be sent. Missing inputs, calendar coverage or a valid provider response **MUST** return unavailable without fabricated probabilities.
+- Predictions **MUST** be deduplicated and versioned by Instrument, reference date, horizon, model and question. The user's threshold **MUST NOT** change stored probabilities. Outcomes **MUST** use the close on the recorded target session and **MUST NOT** count pending cases as failures. Historical backfill **MUST** be explicit and limited to years covered by the committed NYSE holiday calendar.
+
 ## Operations And Scheduling
 
 - `config/app.php` **MUST** keep `timezone = 'UTC'`. The daily EOD event **MUST** get its timezone from `config('ingestion.timezone')` via the event's `->timezone()` (default `America/New_York`). Reason: changing the app-wide timezone would ripple into `now()`, stored timestamps and tests; applying the market timezone only to the event keeps the wall-clock time DST-aware while everything else stays UTC.

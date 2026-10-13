@@ -1246,14 +1246,18 @@
     "title": "Experimental Jev direction forecast for Registered Users",
     "user_visible_behavior": "A signed-in user can view experimental up, down and flat closing-price probabilities for a chosen horizon on an Instrument chart, set a minimum probability for highlighting a direction, and the system records outcomes to measure efficacy.",
     "depends_on": ["auth-registration-login", "chart-interactive", "indicators-compute", "signals-detect"],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Guests receive 401 from the forecast API; authenticated accounts can use it without a paid-plan check; the public chart remains accessible",
       "Forecasts use only stored data available by the reference close, are versioned and deduplicated, and do not fabricate probabilities on provider or data failures",
       "Outcomes are resolved after the target session; Admin metrics show sample size, directional accuracy, coverage and calibration by horizon and version",
       "Spanish and English chart UI explains the experimental result and threshold; offline fixtures, auth tests, frontend tests and init.ps1 pass"
     ],
-    "evidence": [],
-    "notes": "Spec proposal: specs/pronostico-jev/{spec,design,tasks}.md (2026-10-13). Awaiting user review and confirmation of proposed 1/5-session horizons. Jev provider key and market-data transfer rights must be checked before live calls. Paid-plan gating remains future scope."
+    "evidence": [
+      "2026-10-13: approved 1/5-session horizons and market-data transfer permission. ForecastFeatureTest 6/6 passed (37 assertions); ForecastPanel.test.tsx 3/3 passed. Post-change init.ps1 exit 0: Laravel 274 passed / 6 skipped, SPA lint 88 tests/build, Python engine 67 passed. Offline provider fixtures passed.",
+      "2026-10-13: PR #27 configured the VPS key, pinned model and rights flag via encrypted GitHub production secret; main deployment run 38423910408 passed. Synthetic direct and Laravel JevClient calls to TypeSafe succeeded. Forecast feature code remains local and has not yet been deployed.",
+      "2026-10-13: independent validator accept after five revisions: target-date settlement with gap, covered-year calendar guard, stale-response protection, Admin accuracy/confidence metrics, and architecture/constraints documentation. Focused Laravel 8/8 (47 assertions), SPA panel 4/4; full init.ps1 exit 0: Laravel 276 passed / 6 skipped (2446 assertions), SPA lint/build and 89 tests, Python engine 67 passed; git diff --check clean."
+    ],
+    "notes": "Implementation independently accepted; deployment pending. Provider disabled by default in code, with production credential and flags configured. Historical backfill is opt-in and lacks old Signals because the current detector retains only its active set. Paid-plan gating remains future scope."
   }
 ]
