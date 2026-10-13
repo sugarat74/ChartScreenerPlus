@@ -1239,5 +1239,21 @@
       "2026-10-12: clean worktree baseline init.ps1 passed. Focused HowItWorksPage.test.tsx 13/13 passed. Post-change init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint/tests/build, engine 67 passed (existing Starlette warning). Headless Edge screenshots of the Signal section were reviewed at 1366 px desktop and 600 px narrow single-column widths."
     ],
     "notes": "Spec: docs/specs/how-it-works-signal-images.md. Inline SVGs use fictional data, no external images or packages. Independent acceptance remains pending."
+  },
+  {
+    "id": "pronostico-jev",
+    "area": "ai",
+    "title": "Experimental Jev direction forecast for Registered Users",
+    "user_visible_behavior": "A signed-in user can view experimental up, down and flat closing-price probabilities for a chosen horizon on an Instrument chart, set a minimum probability for highlighting a direction, and the system records outcomes to measure efficacy.",
+    "depends_on": ["auth-registration-login", "chart-interactive", "indicators-compute", "signals-detect"],
+    "status": "not_started",
+    "verification": [
+      "Guests receive 401 from the forecast API; authenticated accounts can use it without a paid-plan check; the public chart remains accessible",
+      "Forecasts use only stored data available by the reference close, are versioned and deduplicated, and do not fabricate probabilities on provider or data failures",
+      "Outcomes are resolved after the target session; Admin metrics show sample size, directional accuracy, coverage and calibration by horizon and version",
+      "Spanish and English chart UI explains the experimental result and threshold; offline fixtures, auth tests, frontend tests and init.ps1 pass"
+    ],
+    "evidence": [],
+    "notes": "Spec proposal: specs/pronostico-jev/{spec,design,tasks}.md (2026-10-13). Awaiting user review and confirmation of proposed 1/5-session horizons. Jev provider key and market-data transfer rights must be checked before live calls. Paid-plan gating remains future scope."
   }
 ]
