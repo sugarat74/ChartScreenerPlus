@@ -1,5 +1,11 @@
 # Progress Log
 
+## Pronóstico Jev spec proposal — 2026-10-13
+
+- Prepared the three-part `specs/pronostico-jev/` proposal for an experimental Jev forecast available only to authenticated accounts. The user confirmed that the percentage they enter is a minimum probability threshold. The proposed initial horizons are 1 and 5 trading sessions, pending confirmation; no application code or provider calls were added.
+- The proposal fixes a close-to-close `up` / `down` / `flat` event, immutable versioned forecasts, no future-data leakage, server-side Sanctum enforcement, explicit unavailable states, outcome resolution and Admin efficacy metrics. Payment gating is deferred. Implementation is `not_started` and awaits review of the spec.
+- Open before implementation: initial horizons, minimum data requirements, per-account limits, TypeSafe AI credentials and permission to send market data to the provider. The original worktree's unrelated harness hook remains separate.
+
 ## Cómo funciona technical Signal images — 2026-10-12
 
 - Added nine distinct schematic SVGs to the nine current technical Signal entries in the bilingual user manual: Golden Cross, Death Cross, both SMA alignments, Pivot Breakout + RVOL, both RSI thresholds and both MACD crosses. Each image has a localized accessible description and the section now discloses fictional data. Existing indicator and Chartist Pattern images remain unchanged.
