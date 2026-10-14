@@ -1267,7 +1267,7 @@
     "title": "Admin Jev historical direction backtesting",
     "user_visible_behavior": "An Admin selects stocks and a count of recent historical bars, starts an explicit one-session Jev evaluation, and sees progress, per-bar outcomes, skipped cases and aggregate directional accuracy.",
     "depends_on": ["pronostico-jev"],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Guest and Registered User cannot list, start or inspect Backtesting runs; Admin can",
       "Completed reference cases have a stored next-session close and each Jev input excludes later market data; missing target closes are skipped without a provider call",
@@ -1275,8 +1275,9 @@
       "Spanish and English Admin tab and standard init.ps1 gate pass"
     ],
     "evidence": [
-      "2026-10-14: baseline init.ps1 passed before edits (276 Laravel passed/6 skipped, 89 SPA, engine 67). Initial post-change init.ps1 passed (Laravel 280/6 skipped, SPA 91, engine 67); PR #30 SQLite and PostgreSQL checks passed. Independent review returned revise for unpinned model/question and dispatch failure recovery. Both were repaired; focused Laravel 6/6 (46 assertions) and SPA page 2/2 passed. After repair init.ps1 exit 0: Laravel 282 passed/6 skipped (2492 assertions), SPA lint/build and 91 tests, engine 67 passed. Provider calls used only fakes; no paid historical run started."
+      "2026-10-14: baseline init.ps1 passed before edits (276 Laravel passed/6 skipped, 89 SPA, engine 67). Initial post-change init.ps1 passed (Laravel 280/6 skipped, SPA 91, engine 67); PR #30 SQLite and PostgreSQL checks passed. Independent review returned revise for unpinned model/question and dispatch failure recovery. Both were repaired; focused Laravel 6/6 (46 assertions) and SPA page 2/2 passed. After repair init.ps1 exit 0: Laravel 282 passed/6 skipped (2492 assertions), SPA lint/build and 91 tests, engine 67 passed. Provider calls used only fakes; no paid historical run started.",
+      "2026-10-14: independent revalidation accept after version pinning and partial dispatch recovery; validator reran focused Laravel 6/6 (46 assertions), SPA 2/2 and git diff --check. No blocking findings."
     ],
-    "notes": "User-requested 2026-10-14. Historical direction-class evaluation only; 1–5 tickers, 1–100 recent reference bars each, one-session horizon. Provider calls require explicit Admin confirmation and may incur cost. Local branch feature/jev-backtesting; independent validation and deployment pending."
+    "notes": "User-requested 2026-10-14. Historical direction-class evaluation only; 1–5 tickers, 1–100 recent reference bars each, one-session horizon. Provider calls require explicit Admin confirmation and may incur cost. Independently accepted; production deployment pending."
   }
 ]
