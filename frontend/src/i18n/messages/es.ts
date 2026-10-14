@@ -7,11 +7,12 @@
 export const es = {
   backtesting: {
     nav: 'Backtesting', title: 'Prueba histórica de Jev',
-    description: 'Selecciona hasta 5 acciones y entre 1 y 100 barras recientes por acción. Cada barra se evalúa con los datos conocidos en su cierre y se compara con el cierre de la siguiente sesión. No se simulan operaciones ni rentabilidad.',
-    tickers: 'Tickers separados por coma', bars: 'Barras por acción', start: 'Iniciar prueba',
+    description: 'Selecciona hasta 100 acciones y entre 1 y 100 barras recientes por acción. Cada barra se evalúa con los datos conocidos en su cierre y se compara con el cierre de la siguiente sesión. No se simulan operaciones ni rentabilidad.',
+    tickers: 'Tickers separados por coma o salto de línea', selectedCount: '{count} de 100 acciones', bars: 'Barras por acción', start: 'Iniciar prueba',
     confirm: 'Esta prueba puede generar hasta {count} llamadas de pago a Jev. ¿Iniciarla?',
     costNote: 'Los pronósticos ya guardados se reutilizan. Las llamadas nuevas pueden tener coste. La prueba se ejecuta en segundo plano.',
-    invalidSelection: 'Introduce de 1 a 5 tickers distintos y entre 1 y 100 barras.',
+    invalidSelection: 'Introduce de 1 a 100 tickers distintos y entre 1 y 100 barras.',
+    previousPage: 'Anterior', nextPage: 'Siguiente', pageCount: 'Página {page} de {last}',
     runs: 'Ejecuciones', progress: 'Procesados', correct: 'Aciertos', accuracy: 'Porcentaje de acierto', skipped: 'Omitidos',
     denominator: 'El porcentaje usa solo casos con pronóstico y cierre posterior. Los casos omitidos no cuentan como aciertos ni fallos.',
     ticker: 'Acción', reference: 'Fecha inicial', target: 'Fecha objetivo',

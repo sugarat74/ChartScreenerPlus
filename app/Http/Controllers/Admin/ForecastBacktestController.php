@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -21,11 +22,13 @@ class ForecastBacktestController extends Controller
         return response()->json(['runs' => ForecastBacktestRun::query()->latest('id')->limit(20)->get()->map(fn ($run) => $this->payload($run))]);
     }
 
-    public function show(ForecastBacktestRun $run): JsonResponse
+    public function show(Request $request, ForecastBacktestRun $run): JsonResponse
     {
-        $run->load(['cases' => fn ($query) => $query->with('instrument')->orderBy('instrument_id')->orderBy('as_of_date')]);
+        $validated = $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
+        $cases = $run->cases()->with('instrument')->orderBy('instrument_id')->orderBy('as_of_date')
+            ->paginate(100, ['*'], 'page', $validated['page'] ?? 1);
         $payload = $this->payload($run);
-        $payload['cases'] = $run->cases->map(fn ($case) => [
+        $payload['cases'] = $cases->getCollection()->map(fn ($case) => [
             'ticker' => $case->instrument->ticker,
             'as_of_date' => $case->as_of_date->format('Y-m-d'),
             'target_date' => $case->target_date?->format('Y-m-d'),
@@ -35,6 +38,9 @@ class ForecastBacktestController extends Controller
             'probabilities' => $case->probabilities,
             'reason' => $case->reason,
         ])->all();
+        $payload['case_page'] = [
+            'current' => $cases->currentPage(), 'last' => $cases->lastPage(), 'total' => $cases->total(),
+        ];
 
         return response()->json(['run' => $payload]);
     }
@@ -42,7 +48,7 @@ class ForecastBacktestController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'tickers' => ['required', 'array', 'min:1', 'max:5'],
+            'tickers' => ['required', 'array', 'min:1', 'max:100'],
             'tickers.*' => ['required', 'string', 'regex:/^[A-Za-z][A-Za-z0-9.\-]{0,14}$/'],
             'bars' => ['required', 'integer', 'between:1,100'],
         ]);
@@ -79,18 +85,30 @@ class ForecastBacktestController extends Controller
                     'question_version' => $question,
                     'status' => 'queued',
                 ]);
+                $pendingCases = [];
+                $now = now();
                 foreach ($tickers as $ticker) {
                     // The newest stored bar has no known next close. Select the
                     // previous N bars and check each actual target in the job.
                     $bars = $instruments[$ticker]->dailyBars()->orderByDesc('date')
                         ->limit($validated['bars'] + 1)->get()->slice(1);
                     foreach ($bars as $bar) {
-                        $run->cases()->create([
+                        $pendingCases[] = [
+                            'run_id' => $run->id,
                             'instrument_id' => $instruments[$ticker]->id,
                             'as_of_date' => $bar->date->format('Y-m-d'),
                             'status' => 'queued',
-                        ]);
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                        if (count($pendingCases) === 500) {
+                            DB::table('forecast_backtest_cases')->insert($pendingCases);
+                            $pendingCases = [];
+                        }
                     }
+                }
+                if ($pendingCases !== []) {
+                    DB::table('forecast_backtest_cases')->insert($pendingCases);
                 }
                 $run->update(['total' => $run->cases()->count()]);
 
@@ -101,17 +119,28 @@ class ForecastBacktestController extends Controller
             } else {
                 $caseIds = $run->cases()->pluck('id');
                 try {
-                    foreach ($caseIds as $caseId) {
-                        RunForecastBacktestCase::dispatch($caseId);
+                    if ($caseIds->count() <= 100) {
+                        foreach ($caseIds as $caseId) {
+                            RunForecastBacktestCase::dispatch($caseId);
+                        }
+                    } else {
+                        foreach ($caseIds->chunk(100) as $chunk) {
+                            Queue::bulk($chunk->map(fn ($caseId) => new RunForecastBacktestCase($caseId))->all());
+                        }
                     }
                 } catch (Throwable $exception) {
                     Log::error('Forecast backtest queue dispatch failed', ['run_id' => $run->id, 'type' => get_class($exception)]);
-                    // Already dispatched cases may still execute. Mark every
-                    // queued case terminal; their jobs then become no-ops.
-                    foreach ($caseIds as $caseId) {
-                        (new RunForecastBacktestCase($caseId))->markDispatchFailed();
-                    }
-                    $run->update(['status' => 'failed']);
+                    // The run lock serializes this bulk transition with case
+                    // completion. Already queued jobs become no-ops.
+                    DB::transaction(function () use ($run): void {
+                        $locked = ForecastBacktestRun::query()->lockForUpdate()->findOrFail($run->id);
+                        $skipped = $locked->cases()->where('status', 'queued')->update([
+                            'status' => 'skipped', 'reason' => 'dispatch_failed', 'updated_at' => now(),
+                        ]);
+                        $locked->skipped += $skipped;
+                        $locked->status = 'failed';
+                        $locked->save();
+                    });
                 }
             }
 

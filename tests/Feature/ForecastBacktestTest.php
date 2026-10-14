@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class ForecastBacktestTest extends TestCase
@@ -101,6 +102,40 @@ class ForecastBacktestTest extends TestCase
         $this->assertDatabaseCount('forecast_backtest_runs', 0);
     }
 
+    public function test_admin_can_select_100_stocks_and_page_through_200_cases(): void
+    {
+        $tickers = [];
+        foreach (range(1, 100) as $number) {
+            $ticker = sprintf('T%03d', $number);
+            $tickers[] = $ticker;
+            $instrument = Instrument::factory()->create(['ticker' => $ticker]);
+            foreach (['2026-01-05', '2026-01-06', '2026-01-07'] as $date) {
+                DailyBar::factory()->create(['instrument_id' => $instrument->id, 'date' => $date]);
+            }
+        }
+        config()->set('forecast.enabled', true);
+        config()->set('forecast.rights_verified', true);
+        config()->set('forecast.api_key', 'fixture-key');
+        config()->set('forecast.model', 'jev-1.13.0');
+        Queue::fake();
+        $this->actingAs($this->admin());
+
+        $this->postJson('/api/admin/forecasts/backtests', ['tickers' => [...$tickers, 'OVERLIMIT'], 'bars' => 2])
+            ->assertUnprocessable();
+        $response = $this->postJson('/api/admin/forecasts/backtests', ['tickers' => $tickers, 'bars' => 2])
+            ->assertStatus(202)->assertJsonPath('run.total', 200);
+        Queue::assertPushed(RunForecastBacktestCase::class, 200);
+        $runId = $response->json('run.id');
+        $this->getJson("/api/admin/forecasts/backtests/{$runId}")
+            ->assertOk()->assertJsonCount(100, 'run.cases')
+            ->assertJsonPath('run.case_page.current', 1)
+            ->assertJsonPath('run.case_page.last', 2)
+            ->assertJsonPath('run.case_page.total', 200);
+        $this->getJson("/api/admin/forecasts/backtests/{$runId}?page=2")
+            ->assertOk()->assertJsonCount(100, 'run.cases')
+            ->assertJsonPath('run.case_page.current', 2);
+    }
+
     public function test_missing_next_session_is_skipped_without_a_provider_call(): void
     {
         $instrument = $this->instrument();
@@ -177,5 +212,36 @@ class ForecastBacktestTest extends TestCase
         Bus::fake([RunForecastBacktestCase::class]);
         $this->postJson('/api/admin/forecasts/backtests', ['tickers' => ['TEST'], 'bars' => 2])
             ->assertStatus(202)->assertJsonPath('run.status', 'queued');
+    }
+
+    public function test_large_run_recovers_from_failure_after_a_bulk_queue_insert(): void
+    {
+        foreach (['TESTA', 'TESTB'] as $ticker) {
+            $instrument = Instrument::factory()->create(['ticker' => $ticker]);
+            $date = Carbon::parse('2026-01-05');
+            for ($i = 0; $i < 101; $i++) {
+                DailyBar::factory()->create(['instrument_id' => $instrument->id, 'date' => $date->format('Y-m-d')]);
+                $date->addWeekday();
+            }
+        }
+        config()->set('forecast.enabled', true);
+        config()->set('forecast.rights_verified', true);
+        config()->set('forecast.api_key', 'fixture-key');
+        config()->set('forecast.model', 'jev-1.13.0');
+        $this->actingAs($this->admin());
+        $batches = 0;
+        Queue::shouldReceive('bulk')->twice()->andReturnUsing(function () use (&$batches): void {
+            if (++$batches === 2) {
+                throw new \RuntimeException('queue unavailable');
+            }
+        });
+        $response = $this->postJson('/api/admin/forecasts/backtests', [
+            'tickers' => ['TESTA', 'TESTB'], 'bars' => 100,
+        ])->assertStatus(202)->assertJsonPath('run.status', 'failed')
+            ->assertJsonPath('run.skipped', 200);
+        $this->assertDatabaseCount('forecast_backtest_cases', 200);
+        $this->assertDatabaseMissing('forecast_backtest_cases', [
+            'run_id' => $response->json('run.id'), 'status' => 'queued',
+        ]);
     }
 }

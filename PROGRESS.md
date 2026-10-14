@@ -1,5 +1,10 @@
 # Progress Log
 
+## Admin Backtesting capacity — 2026-10-14
+
+- Extending Admin selection from 5 to 100 distinct tickers while retaining 1–100 bars per ticker (30 default). The UI accepts comma/newline input, shows the selected count and estimated maximum provider calls, and pages results 100 cases at a time. The API validates the 100-ticker cap, inserts cases in batches and bulk-enqueues large runs. Work is isolated in `feature/jev-backtesting-100-tickers`; the original local main's unrelated pending changes remain untouched.
+- Baseline `.\init.ps1` passed before edits: Laravel 282 passed / 6 skipped (2492 assertions), SPA lint/build and 91 tests, engine 67 passed. Focused Laravel Backtesting tests passed 8/8 (64 assertions), including 100 accepted stocks, 101 rejected, 200 paginated cases and recovery after partial bulk queue dispatch. Focused SPA tests passed 4/4, including 100/101 selection and pagination. Final `.\init.ps1` passed: Laravel 284 passed / 6 skipped (2510 assertions), SPA lint/build and 93 tests, engine 67 passed. No real Jev calls or paid historical run have been made. Feature is `passing` pending independent validation and deployment.
+
 ## Admin Jev Backtesting — 2026-10-14
 
 - Implementing user-requested historical one-session evaluation in an Admin-only Backtesting tab. Admin chooses 1–5 tickers and 1–100 recent reference bars each (30 default); per-case queue jobs reuse the time-cut Jev forecast service, require a stored next-session close and store predicted/actual class or an explicit skipped reason. A run ledger shows progress, per-bar outcomes and `correct / completed` directional accuracy, with a cost confirmation before dispatch. Historical Signals remain limited to the active retained set; this is not a returns/strategy backtest.
