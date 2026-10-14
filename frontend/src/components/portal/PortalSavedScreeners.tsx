@@ -16,6 +16,8 @@ import {
   patchScreenerFilters,
 } from '../../lib/screenerFilters.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
+import ScreenerAlertToggle from './ScreenerAlertToggle.tsx'
+import type { PortalAlerts } from './usePortalAlerts.ts'
 
 
 const PRIMARY_BUTTON_CLASS =
@@ -24,7 +26,11 @@ const PRIMARY_BUTTON_CLASS =
 const SECONDARY_BUTTON_CLASS =
   'rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
 
-export default function PortalSavedScreeners() {
+/**
+ * `alerts` is the Portal's alert list: each row carries its "notify me of new
+ * candidates" toggle, and deleting a Screener drops its (cascaded) alert.
+ */
+export default function PortalSavedScreeners({ alerts }: { alerts: PortalAlerts }) {
   const { user } = useAuth()
   const { t, formatDecimal } = useI18n()
   const tRef = useTranslateRef()
@@ -87,6 +93,8 @@ export default function PortalSavedScreeners() {
 
     try {
       await savedScreenersApi.remove(id)
+      // The API cascades the Screener's alert; mirror that locally.
+      alerts.drop((alert) => alert.saved_screener?.id === id)
       // Reload the caller-scoped API list after the protected mutation rather
       // than maintaining a shared cache or assuming ownership client-side.
       reload()
@@ -105,7 +113,7 @@ export default function PortalSavedScreeners() {
   }
 
   return (
-    <section className="flex flex-col gap-4" aria-labelledby="portal-screeners-heading">
+    <section className="flex min-w-0 flex-col gap-4" aria-labelledby="portal-screeners-heading">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="portal-screeners-heading" className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
@@ -166,6 +174,13 @@ export default function PortalSavedScreeners() {
                     <th scope="row" className="px-4 py-3 text-left font-normal">
                       <p className="font-mono text-sm font-bold text-on-surface">{screener.name}</p>
                       <p className="mt-0.5 max-w-2xl text-xs text-on-surface-variant">{describeSavedFilters(screener.filters, t, formatDecimal)}</p>
+                      <ScreenerAlertToggle
+                        screener={screener}
+                        alert={alerts.alerts.find((alert) => alert.kind === 'screener_new_candidates' && alert.saved_screener?.id === screener.id)}
+                        disabled={alerts.loading || alerts.error !== null}
+                        onSaved={alerts.upsert}
+                        onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}
+                      />
                     </th>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-wrap justify-end gap-2">

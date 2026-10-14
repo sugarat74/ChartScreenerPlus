@@ -1061,15 +1061,20 @@
       "app-shell-navigation",
       "app-multilanguage"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Saved Screener toggle and Watchlist signal form create, pause and delete alerts through the API",
       "Header bell shows an accessible unread count; inbox paginates, links tickers and marks read",
       "Visitors see no bell; limits and errors shown inline; no EOD wording; es/en; 390 px OK",
       "Real-browser check recorded; .\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-ui.md."
+    "evidence": [
+      "2026-10-14 Vitest: 17 files / 117 tests passed (new: NotificationBell 6, NotificationsPage 9, WatchlistAlertForm 4, PortalAlerts 5); frontend lint/typecheck clean",
+      "2026-10-14 .\\init.ps1 exit 0: Laravel 286 passed / 6 skipped (2520 assertions), SPA lint + 117 tests + build, engine 67 passed",
+      "2026-10-14 Playwright + Edge on local stack (Laravel :8125, Vite :5185, QA sqlite): 30/30 checks. Screener toggle POST then PATCH active=false/true; Watchlist alert golden_cross+pivot_breakout_rvol; alerts:evaluate baseline then new as-of 2026-10-13 -> 2 notified (re-run: 2 already evaluated); bell 'Notificaciones, 2 sin leer'; inbox newest first with date/kind/screener name and 5 ticker links (/instruments/NVDA opened); mark all read clears; English inbox/portal; 390 px no overflow, bell reachable; Visitor no bell, /portal/notificaciones -> /login, API 401; 22 unread -> badge 9+; pagination 20 + 4; 11th alert shows 422 inline; screener delete removes toggle; empty inbox explains daily evaluation without EOD wording",
+      "2026-10-14 independent validator ACCEPT: re-ran .\\init.ps1 exit 0 (Laravel 286/6 skipped, 117 Vitest, engine 67); own SQLite stack (PHP :8127, Vite :5187) and Playwright+Edge covered every spec scenario (toggle POST/PATCH/DELETE, Watchlist alert, bell 2 and 20 -> 9+, inbox order/links/mark read/pagination/retry, 422 limit, empty state, Visitor no bell + /login + API 401, English, 390 px); ownership enforced by the API (other user alert PATCH/DELETE 404, foreign screener 422, foreign notification read has no effect); no backend diff; worktree left unchanged."
+    ],
+    "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-ui.md. Implemented and independently accepted 2026-10-14. Unread count is shared via UnreadNotificationsProvider and refreshes on navigation (no polling)."
   },
   {
     "id": "alerts-email-digest",
@@ -1239,6 +1244,67 @@
       "2026-10-12: clean worktree baseline init.ps1 passed. Focused HowItWorksPage.test.tsx 13/13 passed. Post-change init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint/tests/build, engine 67 passed (existing Starlette warning). Headless Edge screenshots of the Signal section were reviewed at 1366 px desktop and 600 px narrow single-column widths."
     ],
     "notes": "Spec: docs/specs/how-it-works-signal-images.md. Inline SVGs use fictional data, no external images or packages. Independent acceptance remains pending."
+  },
+  {
+    "id": "pronostico-jev",
+    "area": "ai",
+    "title": "Experimental Jev direction forecast for Registered Users",
+    "user_visible_behavior": "A signed-in user can view experimental up, down and flat closing-price probabilities for a chosen horizon on an Instrument chart, set a minimum probability for highlighting a direction, and the system records outcomes to measure efficacy.",
+    "depends_on": ["auth-registration-login", "chart-interactive", "indicators-compute", "signals-detect"],
+    "status": "accepted",
+    "verification": [
+      "Guests receive 401 from the forecast API; authenticated accounts can use it without a paid-plan check; the public chart remains accessible",
+      "Forecasts use only stored data available by the reference close, are versioned and deduplicated, and do not fabricate probabilities on provider or data failures",
+      "Outcomes are resolved after the target session; Admin metrics show sample size, directional accuracy, coverage and calibration by horizon and version",
+      "Spanish and English chart UI explains the experimental result and threshold; offline fixtures, auth tests, frontend tests and init.ps1 pass"
+    ],
+    "evidence": [
+      "2026-10-13: approved 1/5-session horizons and market-data transfer permission. ForecastFeatureTest 6/6 passed (37 assertions); ForecastPanel.test.tsx 3/3 passed. Post-change init.ps1 exit 0: Laravel 274 passed / 6 skipped, SPA lint 88 tests/build, Python engine 67 passed. Offline provider fixtures passed.",
+      "2026-10-13: PR #27 configured the VPS key, pinned model and rights flag via encrypted GitHub production secret; main deployment run 38423910408 passed. Synthetic direct and Laravel JevClient calls to TypeSafe succeeded. Forecast feature code remains local and has not yet been deployed.",
+      "2026-10-13: independent validator accept after five revisions: target-date settlement with gap, covered-year calendar guard, stale-response protection, Admin accuracy/confidence metrics, and architecture/constraints documentation. Focused Laravel 8/8 (47 assertions), SPA panel 4/4; full init.ps1 exit 0: Laravel 276 passed / 6 skipped (2446 assertions), SPA lint/build and 89 tests, Python engine 67 passed; git diff --check clean.",
+      "2026-10-13: PR #28 merged as 9db2b11 after SQLite and PostgreSQL checks passed; main CI/deploy run 38427453514 passed and applied forecast_predictions migration. Live HTTPS: /up, / and /instruments/AAPL returned 200; guest forecast POST and Admin report GET returned 401. No authenticated production forecast was run."
+    ],
+    "notes": "Implementation independently accepted and deployed. Provider disabled by default in code, with production credential and flags enabled privately on the VPS. Historical backfill is opt-in and lacks old Signals because the current detector retains only its active set. Paid-plan gating remains future scope; real market-data forecast and efficacy remain unverified."
+  },
+  {
+    "id": "jev-backtesting-admin",
+    "area": "ai",
+    "title": "Admin Jev historical direction backtesting",
+    "user_visible_behavior": "An Admin selects stocks and a count of recent historical bars, starts an explicit one-session Jev evaluation, and sees progress, per-bar outcomes, skipped cases and aggregate directional accuracy.",
+    "depends_on": ["pronostico-jev"],
+    "status": "accepted",
+    "verification": [
+      "Guest and Registered User cannot list, start or inspect Backtesting runs; Admin can",
+      "Completed reference cases have a stored next-session close and each Jev input excludes later market data; missing target closes are skipped without a provider call",
+      "Runs are bounded, execute through the queue, record per-bar results and count skipped cases outside the accuracy denominator",
+      "Spanish and English Admin tab and standard init.ps1 gate pass"
+    ],
+    "evidence": [
+      "2026-10-14: baseline init.ps1 passed before edits (276 Laravel passed/6 skipped, 89 SPA, engine 67). Initial post-change init.ps1 passed (Laravel 280/6 skipped, SPA 91, engine 67); PR #30 SQLite and PostgreSQL checks passed. Independent review returned revise for unpinned model/question and dispatch failure recovery. Both were repaired; focused Laravel 6/6 (46 assertions) and SPA page 2/2 passed. After repair init.ps1 exit 0: Laravel 282 passed/6 skipped (2492 assertions), SPA lint/build and 91 tests, engine 67 passed. Provider calls used only fakes; no paid historical run started.",
+      "2026-10-14: independent revalidation accept after version pinning and partial dispatch recovery; validator reran focused Laravel 6/6 (46 assertions), SPA 2/2 and git diff --check. No blocking findings.",
+      "2026-10-14: PR #30 merged at fc9a2868c7; main CI/deploy run 38521483529 passed SQLite, PostgreSQL and production activation. New backtest tables migration completed. Production /up and /admin/backtesting returned 200; guest GET and POST backtest API returned 401. Real paid historical evaluation not run."
+    ],
+    "notes": "Initial release requested 2026-10-14. Historical direction-class evaluation only, one-session horizon. Provider calls require explicit Admin confirmation and may incur cost. Independently accepted and deployed to production; selection capacity is extended by jev-backtesting-100-tickers."
+  },
+  {
+    "id": "jev-backtesting-100-tickers",
+    "area": "ai",
+    "title": "Configurable selection of up to 100 Backtesting stocks",
+    "user_visible_behavior": "An Admin can choose any number from 1 to 100 distinct stocks, with 1 to 100 historical bars per stock, and navigate large case results in pages.",
+    "depends_on": ["jev-backtesting-admin"],
+    "status": "accepted",
+    "verification": [
+      "Admin can start a run with 100 distinct known stocks and 101 are rejected server-side",
+      "Large runs keep the shared worker responsive to ingestion, prevent concurrent paid runs, and paginate details without changing aggregate accuracy",
+      "Spanish and English UI validate the range and confirm the maximum provider calls",
+      "Standard init.ps1 gate passes"
+    ],
+    "evidence": [
+      "2026-10-14: baseline init.ps1 passed (Laravel 282/6 skipped, SPA 91, engine 67). First implementation passed Laravel 284/6 skipped and SPA 93. Independent review returned revise for default-queue starvation and short start lock at 10,000-case scale. Repaired with one-case coordinator chain, longer cache lock and partial unique database index. Focused Laravel Backtesting tests 10/10 (74 assertions), SPA page tests 4/4; final init.ps1 passed Laravel 286/6 skipped (2520 assertions), SPA lint/build and 93 tests, engine 67. Provider calls used fakes only; no paid historical run started.",
+      "2026-10-14: independent revalidation accept after bounded coordinator queue and active-run database index. Reviewer reran focused Laravel 10/10 (74 assertions), SPA 4/4 and diff check. PR #32 CI passed SQLite and PostgreSQL, including the partial-index migration.",
+      "2026-10-14: PR #32 merged as 65b94142a3; main CI/deploy run 38561965104 passed SQLite, PostgreSQL and production activation. Partial unique-index migration completed on VPS. Production /up and /admin/backtesting returned 200; guest GET and POST backtest API returned 401. No paid historical Jev evaluation started."
+    ],
+    "notes": "Requested 2026-10-14. Explicit paid-provider confirmation remains required. Independently accepted and deployed to production."
   },
   {
     "id": "harness-session-context",

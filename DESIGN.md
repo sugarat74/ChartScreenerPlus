@@ -68,6 +68,8 @@ components:
 
 Chartiko is a professional but opinionated trading terminal: warm paper-like backgrounds, sharp black 2px borders, hard offset shadows instead of blur, and one loud yellow accent. It should feel like a printed financial newspaper crossed with a quantitative terminal — deliberately not a glossy SaaS dashboard.
 
+The Admin subnavigation includes a Backtesting tab for explicit Jev historical runs. Its setup, progress, aggregate accuracy and per-bar results use the existing bordered cards, compact mono tables and yellow action button; the confirmation states the maximum number of provider calls before starting.
+
 The Chartiko mark combines an angular C and a chart stroke, with an ink square and hard yellow offset shadow. `frontend/public/favicon.svg` is shared by the header and browser icon. Wordmark: CHARTIKO. EOD labels are restricted to Admin; public surfaces use neutral analysis/data labels and retain session dates.
 
 ## Existing Design Assets
@@ -132,8 +134,10 @@ None. The prototype already provides the visual language; no image generation wa
 
 - **Screener:** filter panel + ranked Candidate table. Primary MVP surface.
 - **Chart:** interactive candlestick chart with indicators, Signal reference levels and metadata.
+- **Experimental forecast:** a compact bordered panel follows the chart's technical context. It has the yellow action, an experimental badge, a horizon selector, a minimum-probability field and a plain-language unavailable state. Guests see a sign-in link. The three class probabilities and dates use the existing dense data style.
 - **Admin:** ingestion control, telemetry tiles and run log stream.
-- **Portal (Mi Portal & Seguimientos):** Saved Screeners and Watchlist for Registered Users.
+- **Portal (Mi Portal & Seguimientos):** Saved Screeners and Watchlist for Registered Users. Each Saved Screener row carries a small square switch "Avisarme de nuevos candidatos" with an off/active/paused status chip; the Watchlist column ends with an "Alertas de mi Watchlist" card (Signal-type checkboxes, yellow save, pause/delete).
+- **Notifications:** an icon-only bell in the header (signed-in users only) with a red bordered count badge capped at "9+"; the inbox `/portal/notificaciones` lists cards newest first (New/Read chip, data date, kind title, ticker chips linking to charts) with "Marcar todas como leídas" and Anterior/Siguiente paging.
 - **Copilot IA:** present in the prototype only; out of MVP scope.
 
 ## Responsive Baseline
@@ -155,7 +159,7 @@ None. The prototype already provides the visual language; no image generation wa
 - Do use mono for all numbers and status/log text.
 - Don't introduce soft shadows, gradients, glassmorphism or rounded-full cards.
 - Don't add new brand colors or decorative illustrations.
-- Don't surface out-of-scope features (AI, alerts, plans) as if they were available.
+- Don't surface out-of-scope features (AI, plans, real-time or push notifications) as if they were available. In-app alerts are available and evaluated once a day.
 
 ## Open Design Questions
 

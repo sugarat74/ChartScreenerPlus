@@ -6,6 +6,9 @@ use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\ForecastController;
+use App\Http\Controllers\Admin\ForecastReportController;
+use App\Http\Controllers\Admin\ForecastBacktestController;
 use App\Http\Controllers\InstrumentController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\NotificationController;
@@ -37,6 +40,7 @@ Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throt
 Route::get('/legal', [LegalController::class, 'show'])->middleware('throttle:60,1,legal');
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/instruments/{ticker}/forecast', [ForecastController::class, 'store'])->middleware('throttle:'.config('forecast.requests_per_minute').',1,forecast');
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -67,6 +71,10 @@ Route::middleware('auth:sanctum')->group(function () {
 // forbids authenticated non-admins (403). Later admin features extend this
 // group; `/api/admin/ping` is only a guard probe, not product behavior.
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/forecasts/report', [ForecastReportController::class, 'index']);
+    Route::get('/forecasts/backtests', [ForecastBacktestController::class, 'index']);
+    Route::post('/forecasts/backtests', [ForecastBacktestController::class, 'store']);
+    Route::get('/forecasts/backtests/{run}', [ForecastBacktestController::class, 'show'])->whereNumber('run');
     Route::get('/ping', fn () => response()->json(['ok' => true]));
 
     // Admin ingestion panel: trigger a run, follow it and retry only its

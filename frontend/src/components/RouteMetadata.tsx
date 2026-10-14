@@ -8,6 +8,7 @@ const ROUTE_METADATA: Record<string, { title: MessageKey; description: MessageKe
   '/como-funciona': { title: 'meta.howItWorksTitle', description: 'meta.howItWorksDescription' },
   '/chart': { title: 'meta.chartTitle', description: 'meta.chartDescription' },
   '/portal': { title: 'meta.portalTitle', description: 'meta.portalDescription' },
+  '/portal/notificaciones': { title: 'meta.notificationsTitle', description: 'meta.notificationsDescription' },
   '/admin': { title: 'meta.adminTitle', description: 'meta.adminDescription' },
   '/login': { title: 'meta.loginTitle', description: 'meta.loginDescription' },
   '/register': { title: 'meta.registerTitle', description: 'meta.registerDescription' },

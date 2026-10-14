@@ -20,7 +20,7 @@ export const NAV_ITEMS = [
   { path: '/', labelKey: 'nav.screener' },
   { path: '/como-funciona', labelKey: 'nav.howItWorks' },
   { path: '/admin', labelKey: 'nav.admin', adminOnly: true, nested: true },
-  { path: '/portal', labelKey: 'nav.portal' },
+  { path: '/portal', labelKey: 'nav.portal', nested: true },
 ] satisfies readonly NavItem[]
 
 export const DEFAULT_ROUTE: string = NAV_ITEMS[0].path
@@ -36,6 +36,9 @@ export const REGISTER_ROUTE = '/register'
 export const PRIVACY_ROUTE = '/privacidad'
 export const LEGAL_NOTICE_ROUTE = '/aviso-legal'
 export const COOKIES_ROUTE = '/cookies'
+
+/** Private alert-notification inbox (alerts-ui); reached from the header bell. */
+export const NOTIFICATIONS_ROUTE = '/portal/notificaciones'
 
 /**
  * react-router nested routes must be relative; `NAV_ITEMS`/auth routes store

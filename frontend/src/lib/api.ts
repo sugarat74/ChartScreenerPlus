@@ -628,6 +628,94 @@ export const instrumentApi = {
   },
 }
 
+export type Forecast = {
+  ticker: string
+  as_of_date: string
+  target_date: string
+  horizon: number
+  reference_close: number
+  probabilities: { up: number; down: number; flat: number }
+  signal: 'up' | 'down' | null
+  minimum_probability: number
+  model_version: string
+  experimental: true
+}
+
+export type ForecastReportGroup = {
+  source: string
+  horizon: number
+  model_version: string
+  question_version: string
+  sample: number
+  pending: number
+  coverage: number | null
+  directional_accuracy: number | null
+  covered_accuracy: number | null
+  brier: number | null
+  calibration: { bucket: number; count: number; mean_confidence: number; accuracy: number }[]
+}
+
+export const forecastApi = {
+  async predict(ticker: string, horizon: number, minimumProbability: number): Promise<Forecast> {
+    await ensureCsrfCookie()
+    const payload = await request<{ forecast: Forecast }>(`/api/instruments/${encodeURIComponent(ticker)}/forecast`, {
+      method: 'POST',
+      body: JSON.stringify({ horizon, minimum_probability: minimumProbability }),
+    })
+    return payload.forecast
+  },
+  async report(minimumProbability = 60): Promise<ForecastReportGroup[]> {
+    const payload = await request<{ groups: ForecastReportGroup[] }>(`/api/admin/forecasts/report?minimum_probability=${minimumProbability}`)
+    return payload.groups
+  },
+}
+
+export type ForecastBacktestCase = {
+  ticker: string
+  as_of_date: string
+  target_date: string | null
+  status: 'queued' | 'completed' | 'skipped'
+  predicted_class: 'up' | 'down' | 'flat' | null
+  observed_class: 'up' | 'down' | 'flat' | null
+  probabilities: { up: number; down: number; flat: number } | null
+  reason: string | null
+}
+
+export type ForecastBacktestRun = {
+  id: number
+  tickers: string[]
+  bars_requested: number
+  model_version: string
+  question_version: string
+  status: 'queued' | 'running' | 'completed' | 'failed'
+  total: number
+  processed: number
+  correct: number
+  skipped: number
+  accuracy: number | null
+  created_at: string
+  cases?: ForecastBacktestCase[]
+  case_page?: { current: number; last: number; total: number }
+}
+
+export const forecastBacktestApi = {
+  async list(): Promise<ForecastBacktestRun[]> {
+    const payload = await request<{ runs: ForecastBacktestRun[] }>('/api/admin/forecasts/backtests')
+    return payload.runs
+  },
+  async get(id: number, page = 1): Promise<ForecastBacktestRun> {
+    const payload = await request<{ run: ForecastBacktestRun }>(`/api/admin/forecasts/backtests/${id}?page=${page}`)
+    return payload.run
+  },
+  async start(tickers: string[], bars: number): Promise<ForecastBacktestRun> {
+    await ensureCsrfCookie()
+    const payload = await request<{ run: ForecastBacktestRun }>('/api/admin/forecasts/backtests', {
+      method: 'POST', body: JSON.stringify({ tickers, bars }),
+    })
+    return payload.run
+  },
+}
+
 /** One owned watchlist entry (same field set as the instrument-detail metadata). */
 export type WatchlistEntry = {
   ticker: string
@@ -662,6 +750,108 @@ export const watchlistApi = {
   async remove(ticker: string): Promise<void> {
     await ensureCsrfCookie()
     await request<void>(`/api/watchlist/${encodeURIComponent(ticker)}`, { method: 'DELETE' })
+  },
+}
+
+/** The two Alert kinds `alerts-engine` evaluates once per daily run. */
+export type AlertKind = 'screener_new_candidates' | 'watchlist_signal'
+
+/** One caller-owned Alert rule (`GET /api/alerts`). */
+export type Alert = {
+  id: number
+  kind: AlertKind
+  saved_screener: { id: number; name: string } | null
+  signal_types: ScreenerSignalType[] | null
+  active: boolean
+  last_evaluated_as_of: string | null
+  created_at: string | null
+}
+
+export type CreateAlertPayload =
+  | { kind: 'screener_new_candidates'; saved_screener_id: number }
+  | { kind: 'watchlist_signal'; signal_types: ScreenerSignalType[] }
+
+export type UpdateAlertPayload = { active?: boolean; signal_types?: ScreenerSignalType[] }
+
+/**
+ * Authenticated Alerts client (`docs/specs/alerts-engine.md`). Every call is
+ * scoped server-side to the session user: another user's id is a `404`, a
+ * guest a `401`, the per-user limit and duplicates a localized `422`.
+ */
+export const alertsApi = {
+  async list(): Promise<Alert[]> {
+    const payload = await request<{ alerts: Alert[] }>('/api/alerts')
+    return payload.alerts
+  },
+
+  async create(data: CreateAlertPayload): Promise<Alert> {
+    await ensureCsrfCookie()
+    const payload = await request<{ alert: Alert }>('/api/alerts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    return payload.alert
+  },
+
+  /** Pause/resume (`active`) or change the Watchlist Signal types. */
+  async update(id: number, data: UpdateAlertPayload): Promise<Alert> {
+    await ensureCsrfCookie()
+    const payload = await request<{ alert: Alert }>(`/api/alerts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+    return payload.alert
+  },
+
+  async remove(id: number): Promise<void> {
+    await ensureCsrfCookie()
+    await request<void>(`/api/alerts/${id}`, { method: 'DELETE' })
+  },
+}
+
+/**
+ * One notification item. `reason` is `new_candidate` for Screener alerts or
+ * the Signal type that appeared for Watchlist alerts.
+ */
+export type NotificationItem = {
+  ticker: string
+  name: string | null
+  reason: string
+}
+
+/** One in-app notification; the SPA renders its text from this neutral data. */
+export type AppNotification = {
+  id: string
+  kind: AlertKind | null
+  as_of: string | null
+  saved_screener: { id: number; name: string | null } | null
+  items: NotificationItem[]
+  /** Items beyond the server-side cap, summarized as a count. */
+  more: number
+  read_at: string | null
+  created_at: string | null
+}
+
+export type NotificationsPage = {
+  data: AppNotification[]
+  meta: { current_page: number; last_page: number; per_page: number; total: number }
+  unread_count: number
+}
+
+/** Authenticated notifications inbox client; always scoped to the session user. */
+export const notificationsApi = {
+  /** Newest first, 20 per page, with the caller's total `unread_count`. */
+  async list(page = 1): Promise<NotificationsPage> {
+    return request<NotificationsPage>(`/api/notifications?page=${page}`)
+  },
+
+  /** Mark some (`ids`) or all of the caller's notifications read (`204`). */
+  async markRead(target: { ids: string[] } | { all: true }): Promise<void> {
+    await ensureCsrfCookie()
+    await request<void>('/api/notifications/read', {
+      method: 'POST',
+      body: JSON.stringify(target),
+    })
   },
 }
 
