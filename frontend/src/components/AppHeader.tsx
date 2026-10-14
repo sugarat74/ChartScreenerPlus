@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import { DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
 import LanguageSelector from './LanguageSelector.tsx'
+import NotificationBell from './NotificationBell.tsx'
 
 /** Sticky product chrome: brand, language, session controls and route-backed tabs. */
 export default function AppHeader() {
@@ -65,6 +66,8 @@ export default function AppHeader() {
             </div>
           ) : user ? (
             <>
+              {/* Only signed-in users have notifications; Visitors never see the bell. */}
+              <NotificationBell />
               <div className="flex items-center gap-2 rounded-full border-2 border-outline bg-surface-bright py-1 pr-2.5 pl-1 shadow-[2px_2px_0px_#1a1a1a]">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary font-headline text-xs font-bold uppercase text-on-primary">
                   {user.name.charAt(0)}

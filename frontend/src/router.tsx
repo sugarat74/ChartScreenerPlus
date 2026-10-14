@@ -13,6 +13,7 @@ import InstrumentChartPage from './pages/InstrumentChartPage.tsx'
 import LegacyScreenerRedirect from './pages/LegacyScreenerRedirect.tsx'
 import LoginPage from './pages/LoginPage.tsx'
 import NotFoundPage from './pages/NotFoundPage.tsx'
+import NotificationsPage from './pages/NotificationsPage.tsx'
 import PortalPage from './pages/PortalPage.tsx'
 import RegisterPage from './pages/RegisterPage.tsx'
 import ScreenerPage from './pages/ScreenerPage.tsx'
@@ -20,6 +21,7 @@ import {
   COOKIES_ROUTE,
   LEGAL_NOTICE_ROUTE,
   LOGIN_ROUTE,
+  NOTIFICATIONS_ROUTE,
   PRIVACY_ROUTE,
   REGISTER_ROUTE,
   routeSegment,
@@ -50,6 +52,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: 'portal', element: <PortalPage /> },
+      { path: routeSegment(NOTIFICATIONS_ROUTE), element: <NotificationsPage /> },
       { path: routeSegment(LOGIN_ROUTE), element: <LoginPage /> },
       { path: routeSegment(REGISTER_ROUTE), element: <RegisterPage /> },
       { path: routeSegment(PRIVACY_ROUTE), element: <LegalPage kind="privacy" /> },
