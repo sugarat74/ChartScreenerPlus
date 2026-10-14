@@ -1296,8 +1296,9 @@
     ],
     "evidence": [
       "2026-10-14: baseline init.ps1 passed (Laravel 282/6 skipped, SPA 91, engine 67). First implementation passed Laravel 284/6 skipped and SPA 93. Independent review returned revise for default-queue starvation and short start lock at 10,000-case scale. Repaired with one-case coordinator chain, longer cache lock and partial unique database index. Focused Laravel Backtesting tests 10/10 (74 assertions), SPA page tests 4/4; final init.ps1 passed Laravel 286/6 skipped (2520 assertions), SPA lint/build and 93 tests, engine 67. Provider calls used fakes only; no paid historical run started.",
-      "2026-10-14: independent revalidation accept after bounded coordinator queue and active-run database index. Reviewer reran focused Laravel 10/10 (74 assertions), SPA 4/4 and diff check. PR #32 CI passed SQLite and PostgreSQL, including the partial-index migration."
+      "2026-10-14: independent revalidation accept after bounded coordinator queue and active-run database index. Reviewer reran focused Laravel 10/10 (74 assertions), SPA 4/4 and diff check. PR #32 CI passed SQLite and PostgreSQL, including the partial-index migration.",
+      "2026-10-14: PR #32 merged as 65b94142a3; main CI/deploy run 38561965104 passed SQLite, PostgreSQL and production activation. Partial unique-index migration completed on VPS. Production /up and /admin/backtesting returned 200; guest GET and POST backtest API returned 401. No paid historical Jev evaluation started."
     ],
-    "notes": "Requested 2026-10-14. Explicit paid-provider confirmation remains required. Independently accepted; production deployment pending."
+    "notes": "Requested 2026-10-14. Explicit paid-provider confirmation remains required. Independently accepted and deployed to production."
   }
 ]
