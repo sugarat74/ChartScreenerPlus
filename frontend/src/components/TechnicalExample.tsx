@@ -10,6 +10,12 @@ const BLUE = '#0055ff'
 const RED = '#e63b2e'
 const GREEN = '#059669'
 
+// Pivot breakout + RVOL: one close and one volume bar per session, sharing x centres.
+// Only the last close is above the pivot (y=60); y=61 is the earlier high that sets the level.
+const PIVOT_BREAKOUT_CLOSES = [74, 70, 79, 65, 71, 61, 74, 64, 69, 66, 66, 35]
+const PIVOT_BREAKOUT_VOLUME_TOPS = [123, 120, 125, 119, 122, 121, 124, 117, 122, 120, 123, 99]
+const barX = (index: number) => 24 + index * 24
+
 function Drawing({ kind }: Pick<Props, 'kind'>) {
   switch (kind) {
     case 'movingAverages':
@@ -45,8 +51,8 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
     case 'pivot':
       return <>
         <path d="M18 61 H290" stroke={BLUE} strokeDasharray="6 5" strokeWidth="2" />
-        <path d="M18 119 L42 108 L65 114 L87 86 L109 98 L132 74 L155 87 L176 63 L198 78 L220 69 L242 81 L264 58 L290 37" stroke={INK} strokeWidth="3" fill="none" />
-        <circle cx="264" cy="58" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+        <path d="M18 119 L42 108 L65 114 L87 86 L109 98 L132 74 L155 87 L176 63 L198 78 L220 69 L242 81 L264 72 L290 37" stroke={INK} strokeWidth="3" fill="none" />
+        <circle cx="290" cy="37" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
     case 'volume':
       return <>
@@ -59,14 +65,14 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
     case 'goldenCross':
       return <>
         <path d="M18 70 C75 73 126 76 184 78 S249 79 290 82" stroke={RED} strokeWidth="3" fill="none" />
-        <path d="M18 112 C75 107 119 99 168 95 S221 88 243 80 S273 61 290 51" stroke={BLUE} strokeWidth="3" fill="none" />
-        <circle cx="249" cy="78" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+        <path d="M18 112 C75 108 130 101 190 96 S250 90 268 84 S283 70 290 62" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="276" cy="81" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
     case 'deathCross':
       return <>
         <path d="M18 84 C77 80 129 77 184 75 S250 73 290 70" stroke={RED} strokeWidth="3" fill="none" />
-        <path d="M18 41 C77 47 124 56 169 61 S222 68 245 74 S274 94 290 106" stroke={BLUE} strokeWidth="3" fill="none" />
-        <circle cx="249" cy="74" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+        <path d="M18 41 C77 46 130 54 190 60 S250 66 268 71 S283 86 290 94" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="270" cy="71" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
     case 'bullishAlignment':
       return <>
@@ -85,10 +91,10 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
     case 'pivotBreakoutRvol':
       return <>
         <path d="M18 60 H290" stroke={BLUE} strokeDasharray="6 5" strokeWidth="2" />
-        <path d="M18 74 L45 70 L70 79 L94 65 L119 71 L143 63 L167 74 L191 64 L215 69 L239 66 L263 56 L288 35" stroke={INK} strokeWidth="3" fill="none" />
+        <path d={PIVOT_BREAKOUT_CLOSES.map((y, index) => `${index ? 'L' : 'M'}${barX(index)} ${y}`).join(' ')} stroke={INK} strokeWidth="3" fill="none" />
         <path d="M18 95 H290" stroke={INK} strokeWidth="1" />
-        {[123, 120, 125, 119, 122, 121, 124, 117, 122, 120, 123, 118, 99].map((top, index) => (
-          <rect key={index} x={26 + index * 20} y={top} width="11" height={135 - top} fill={index === 12 ? GREEN : INK} />
+        {PIVOT_BREAKOUT_VOLUME_TOPS.map((top, index) => (
+          <rect key={index} x={barX(index) - 5.5} y={top} width="11" height={135 - top} fill={index === PIVOT_BREAKOUT_VOLUME_TOPS.length - 1 ? GREEN : INK} />
         ))}
         <circle cx="288" cy="35" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
@@ -108,15 +114,15 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
       return <>
         <path d="M18 82 H290" stroke={INK} strokeWidth="1.5" />
         <path d="M18 73 C77 76 117 78 170 80 S238 79 290 73" stroke={RED} strokeWidth="3" fill="none" />
-        <path d="M18 108 C76 105 118 98 167 93 S229 83 247 78 S273 67 290 58" stroke={BLUE} strokeWidth="3" fill="none" />
-        <circle cx="247" cy="78" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+        <path d="M18 112 C76 109 130 102 190 96 S250 88 266 81 S283 66 290 60" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="277" cy="75" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
     case 'macdBearish':
       return <>
         <path d="M18 82 H290" stroke={INK} strokeWidth="1.5" />
-        <path d="M18 91 C77 87 119 84 172 81 S240 79 290 83" stroke={RED} strokeWidth="3" fill="none" />
-        <path d="M18 48 C77 55 118 64 167 68 S229 75 247 79 S273 91 290 103" stroke={BLUE} strokeWidth="3" fill="none" />
-        <circle cx="247" cy="79" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+        <path d="M18 88 C77 84 119 80 172 77 S240 74 290 76" stroke={RED} strokeWidth="3" fill="none" />
+        <path d="M18 48 C77 54 130 61 190 66 S250 70 266 74 S283 88 290 96" stroke={BLUE} strokeWidth="3" fill="none" />
+        <circle cx="271" cy="75" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
     case 'doubleTop':
       return <>

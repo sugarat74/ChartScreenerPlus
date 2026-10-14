@@ -1234,16 +1234,18 @@
     "title": "Example images for technical Signals in the user manual",
     "user_visible_behavior": "Every one of the nine current technical Signals in Cómo funciona has a distinct explanatory diagram with Spanish and English accessible text.",
     "depends_on": ["how-it-works-manual", "how-it-works-visual-examples"],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Nine current technical Signal entries each render one distinct SVG showing the corresponding rule; the ten existing indicator and Chartist Pattern images remain",
       "Spanish and English descriptions are complete, images fit narrow layouts, and fictional data is disclosed",
       "HowItWorksPage tests, SPA lint/build and the standard init.ps1 gate pass; visual review covers desktop and narrow Signal cards"
     ],
     "evidence": [
-      "2026-10-12: clean worktree baseline init.ps1 passed. Focused HowItWorksPage.test.tsx 13/13 passed. Post-change init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint/tests/build, engine 67 passed (existing Starlette warning). Headless Edge screenshots of the Signal section were reviewed at 1366 px desktop and 600 px narrow single-column widths."
+      "2026-10-12: clean worktree baseline init.ps1 passed. Focused HowItWorksPage.test.tsx 13/13 passed. Post-change init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint/tests/build, engine 67 passed (existing Starlette warning). Headless Edge screenshots of the Signal section were reviewed at 1366 px desktop and 600 px narrow single-column widths.",
+      "2026-10-14 repair after validator revise: pivot and Pivot breakout + RVOL diagrams now keep every earlier close below the pivot, so only the last close breaks out, under the marker. Breakout volume bars share x centres with the closes, and the green last bar is 2.66x the mean of the earlier bars. Golden/death and MACD crosses were moved to the last ~20 px, and the MACD bearish cross no longer sits on the zero line. New TechnicalExample.test.tsx (3 tests) reads coordinates from the rendered SVG. init.ps1 exit 0: Laravel 286 passed / 6 skipped (2520 assertions), SPA lint, 120 tests and build, engine 67 passed. Playwright + Edge vite preview at 390 and 1366 px: no horizontal overflow, and the #senales and #indicadores diagrams were reviewed.",
+      "2026-10-14 independent validator: first pass REVISE (pivot breakout diagram broke out on the next-to-last, low-volume bar; live in production), then ACCEPT after repair. Validator re-ran init.ps1 exit 0 (Laravel 286/6 skipped, 120 Vitest, engine 67); measured every cross on the rendered SVGs (one strict crossing each, at its marker); confirmed the 3 new tests fail on the old drawing; es/en at 390 and 1366 px without overflow, no EOD wording, 0 page errors."
     ],
-    "notes": "Spec: docs/specs/how-it-works-signal-images.md. Inline SVGs use fictional data, no external images or packages. Independent acceptance remains pending."
+    "notes": "Spec: docs/specs/how-it-works-signal-images.md. Inline SVGs use fictional data, no external images or packages. Independently accepted 2026-10-14 after one repair."
   },
   {
     "id": "pronostico-jev",
@@ -1312,7 +1314,7 @@
     "title": "Read-only session-start context hook",
     "user_visible_behavior": "A development agent runs one PowerShell command at session start to see Git state, latest recorded verification, dependency-ready work, validation queue, blocked work and open risks.",
     "depends_on": [],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "PowerShell 5.1 script reads repository state without writing files or accessing the network",
       "Selects the first implementation-ready unfinished feature in list order, keeps passing features separate and requires accepted dependencies",
@@ -1320,8 +1322,10 @@
       "AGENTS.md startup workflow invokes the hook and retains init.ps1 as the full verification gate"
     ],
     "evidence": [
-      "2026-10-12: init.ps1 baseline passed (Laravel 268 passed / 6 skipped, SPA lint, 72 Vitest tests and build, engine 67 passed); script run against the live repository selected admin-ops-mcp and identified alerts-email-digest and alerts-patterns as blocked by alerts-ui; isolated fixture selected ready-work, separated needs-review (passing) and blocked its dependent feature."
+      "2026-10-12: init.ps1 baseline passed (Laravel 268 passed / 6 skipped, SPA lint, 72 Vitest tests and build, engine 67 passed); script run against the live repository selected admin-ops-mcp and identified alerts-email-digest and alerts-patterns as blocked by alerts-ui; isolated fixture selected ready-work, separated needs-review (passing) and blocked its dependent feature.",
+      "2026-10-14 repair after validator revise: missing/null depends_on treated as [] (fixture selected no-deps-key, then null-deps; ghost dependency stays blocked); git calls use --no-optional-locks (.git\\index LastWriteTime unchanged after a run with a touched tracked file); passing features always listed for validation with unaccepted deps annotated; blocked and risk lists show '... and N more'. UTF-8 accents/CRLF fixture output correct; live run exit 0; init.ps1 exit 0.",
+      "2026-10-14 independent validator: first pass REVISE (null/missing depends_on reported blocked, git status rewrote .git\\index, passing features with unaccepted deps hidden from the validation queue, capped lists without remainder), then ACCEPT after repair: re-ran its own fixture (UTF-8/CRLF/ñ ids, 12 features, 5 risks, dirty tree, touched tracked file), .git\\index timestamp unchanged (plain git status control rewrote it), live run with git status --porcelain=v2 --ignored identical before and after, init.ps1 exit 0 (Laravel 286/6 skipped, 120 Vitest, engine 67)."
     ],
-    "notes": "Harness maintenance requested by the user. The hook is invoked by the AGENTS.md startup workflow; it is a read-only PowerShell entry point, not a product feature. Independent validation is still needed before accepted."
+    "notes": "Harness maintenance requested by the user. The hook is invoked by the AGENTS.md startup workflow; it is a read-only PowerShell entry point, not a product feature. Independently accepted 2026-10-14 after one repair."
   }
 ]
