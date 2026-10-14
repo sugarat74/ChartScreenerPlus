@@ -1290,13 +1290,13 @@
     "status": "passing",
     "verification": [
       "Admin can start a run with 100 distinct known stocks and 101 are rejected server-side",
-      "Large runs enqueue efficiently and details paginate without changing aggregate accuracy",
+      "Large runs keep the shared worker responsive to ingestion, prevent concurrent paid runs, and paginate details without changing aggregate accuracy",
       "Spanish and English UI validate the range and confirm the maximum provider calls",
       "Standard init.ps1 gate passes"
     ],
     "evidence": [
-      "2026-10-14: baseline init.ps1 passed (Laravel 282/6 skipped, SPA 91, engine 67). Focused Laravel Backtesting tests 8/8 (64 assertions) and SPA page tests 4/4 passed. Final init.ps1 passed: Laravel 284/6 skipped (2510 assertions), SPA lint/build and 93 tests, engine 67. Provider calls used fakes only; no paid historical run started."
+      "2026-10-14: baseline init.ps1 passed (Laravel 282/6 skipped, SPA 91, engine 67). First implementation passed Laravel 284/6 skipped and SPA 93. Independent review returned revise for default-queue starvation and short start lock at 10,000-case scale. Repaired with one-case coordinator chain, longer cache lock and partial unique database index. Focused Laravel Backtesting tests 10/10 (74 assertions), SPA page tests 4/4; final init.ps1 passed Laravel 286/6 skipped (2520 assertions), SPA lint/build and 93 tests, engine 67. Provider calls used fakes only; no paid historical run started."
     ],
-    "notes": "Requested 2026-10-14. Explicit paid-provider confirmation remains required. Implementation self-verified; independent validation and deployment pending."
+    "notes": "Requested 2026-10-14. Explicit paid-provider confirmation remains required. Implementation self-verified after reviewer-requested repairs; independent revalidation and deployment pending."
   }
 ]
