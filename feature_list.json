@@ -1061,15 +1061,20 @@
       "app-shell-navigation",
       "app-multilanguage"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Saved Screener toggle and Watchlist signal form create, pause and delete alerts through the API",
       "Header bell shows an accessible unread count; inbox paginates, links tickers and marks read",
       "Visitors see no bell; limits and errors shown inline; no EOD wording; es/en; 390 px OK",
       "Real-browser check recorded; .\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-ui.md."
+    "evidence": [
+      "2026-10-14 Vitest: 17 files / 117 tests passed (new: NotificationBell 6, NotificationsPage 9, WatchlistAlertForm 4, PortalAlerts 5); frontend lint/typecheck clean",
+      "2026-10-14 .\\init.ps1 exit 0: Laravel 286 passed / 6 skipped (2520 assertions), SPA lint + 117 tests + build, engine 67 passed",
+      "2026-10-14 Playwright + Edge on local stack (Laravel :8125, Vite :5185, QA sqlite): 30/30 checks. Screener toggle POST then PATCH active=false/true; Watchlist alert golden_cross+pivot_breakout_rvol; alerts:evaluate baseline then new as-of 2026-10-13 -> 2 notified (re-run: 2 already evaluated); bell 'Notificaciones, 2 sin leer'; inbox newest first with date/kind/screener name and 5 ticker links (/instruments/NVDA opened); mark all read clears; English inbox/portal; 390 px no overflow, bell reachable; Visitor no bell, /portal/notificaciones -> /login, API 401; 22 unread -> badge 9+; pagination 20 + 4; 11th alert shows 422 inline; screener delete removes toggle; empty inbox explains daily evaluation without EOD wording",
+      "2026-10-14 independent validator ACCEPT: re-ran .\\init.ps1 exit 0 (Laravel 286/6 skipped, 117 Vitest, engine 67); own SQLite stack (PHP :8127, Vite :5187) and Playwright+Edge covered every spec scenario (toggle POST/PATCH/DELETE, Watchlist alert, bell 2 and 20 -> 9+, inbox order/links/mark read/pagination/retry, 422 limit, empty state, Visitor no bell + /login + API 401, English, 390 px); ownership enforced by the API (other user alert PATCH/DELETE 404, foreign screener 422, foreign notification read has no effect); no backend diff; worktree left unchanged."
+    ],
+    "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-ui.md. Implemented and independently accepted 2026-10-14. Unread count is shared via UnreadNotificationsProvider and refreshes on navigation (no polling)."
   },
   {
     "id": "alerts-email-digest",

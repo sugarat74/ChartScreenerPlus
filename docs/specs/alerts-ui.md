@@ -5,7 +5,7 @@
 - `id`: `alerts-ui`
 - `area`: `frontend`
 - `depends_on`: `alerts-engine`, `user-portal`, `app-shell-navigation`, `app-multilanguage`
-- `status`: `not_started` (planned 2026-10-10)
+- `status`: `accepted` (planned 2026-10-10, accepted 2026-10-14)
 - `source`: `feature_list.json`
 
 ## Goal
@@ -32,7 +32,7 @@ so I can open the relevant charts straight away.
 
 ### Scenario 1: Enable an alert on a Saved Screener
 Given I have a Saved Screener "Breakouts",
-When I toggle "Avisarme de nuevos Candidates" in the Portal,
+When I toggle "Avisarme de nuevos candidatos" in the Portal,
 Then `POST /api/alerts` is sent with that screener and the toggle shows "activa"; toggling off pauses it (`PATCH active=false`); deleting the screener removes the toggle.
 
 ### Scenario 2: Watchlist signal alert

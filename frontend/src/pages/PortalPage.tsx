@@ -5,6 +5,8 @@
  * but the API is the enforcement point — every request runs through
  * `auth:sanctum` and is scoped server-side to the session user. Only listing
  * and removal live here; adding Watchlist entries happens from the chart page.
+ * The Alerts controls (alerts-ui) live next to what they watch: a toggle per
+ * Saved Screener and a Signal-type form under the Watchlist.
  */
 
 import { useEffect, useState } from 'react'
@@ -12,11 +14,13 @@ import { Link, useNavigate } from 'react-router'
 import RequireAuth from '../auth/RequireAuth.tsx'
 import { useAuth } from '../auth/useAuth.ts'
 import PortalSavedScreeners from '../components/portal/PortalSavedScreeners.tsx'
+import { usePortalAlerts } from '../components/portal/usePortalAlerts.ts'
+import WatchlistAlertForm from '../components/portal/WatchlistAlertForm.tsx'
 import WatchlistTable from '../components/watchlist/WatchlistTable.tsx'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, watchlistApi } from '../lib/api.ts'
 import type { WatchlistEntry } from '../lib/api.ts'
-import { LOGIN_ROUTE } from '../nav.ts'
+import { LOGIN_ROUTE, NOTIFICATIONS_ROUTE } from '../nav.ts'
 
 const ACTION_LINK_CLASS =
   'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
@@ -188,36 +192,79 @@ function WatchlistPanel() {
 }
 
 export default function PortalPage() {
-  const { t } = useI18n()
-
   return (
     <RequireAuth>
-      <section className="flex flex-col gap-6">
-        <header className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
-              {t('portal.badge')}
-            </span>
-            <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-              {t('portal.session')}
-            </span>
-          </div>
-
-          <div>
-            <h1 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">
-              {t('portal.title')}
-            </h1>
-            <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
-              {t('portal.intro')}
-            </p>
-          </div>
-        </header>
-
-        <div className="grid gap-8 xl:grid-cols-2 xl:items-start">
-          <PortalSavedScreeners />
-          <WatchlistPanel />
-        </div>
-      </section>
+      <PortalContent />
     </RequireAuth>
+  )
+}
+
+function PortalContent() {
+  const { t } = useI18n()
+  const alerts = usePortalAlerts()
+  const watchlistAlert = alerts.alerts.find((alert) => alert.kind === 'watchlist_signal')
+  const alertsUnavailable = alerts.loading || alerts.error !== null
+
+  return (
+    <section className="flex flex-col gap-6">
+      <header className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+            {t('portal.badge')}
+          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
+            {t('portal.session')}
+          </span>
+        </div>
+
+        <div>
+          <h1 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">
+            {t('portal.title')}
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">
+            {t('portal.intro')}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to={NOTIFICATIONS_ROUTE} className={ACTION_LINK_CLASS}>
+            {t('portal.notificationsLink')}
+          </Link>
+          <p className="max-w-2xl text-xs text-on-surface-variant">{t('alerts.sectionIntro')}</p>
+        </div>
+      </header>
+
+      {alerts.error !== null ? (
+        <div
+          role="alert"
+          className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-4 shadow-[2px_2px_0px_#1a1a1a]"
+        >
+          <div>
+            <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">
+              {t('alerts.loadError')}
+            </p>
+            <p className="mt-1 font-mono text-xs text-on-secondary-container">{alerts.error}</p>
+          </div>
+          <button type="button" onClick={alerts.reload} className={ACTION_LINK_CLASS}>
+            {t('common.retry')}
+          </button>
+        </div>
+      ) : null}
+
+      <div className="grid gap-8 xl:grid-cols-2 xl:items-start">
+        <PortalSavedScreeners alerts={alerts} />
+        <div className="flex min-w-0 flex-col gap-6">
+          <WatchlistPanel />
+          <WatchlistAlertForm
+            // Remount once the list has loaded so the form starts from the saved types.
+            key={alerts.loading ? 'loading' : 'ready'}
+            alert={watchlistAlert}
+            disabled={alertsUnavailable}
+            onSaved={alerts.upsert}
+            onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}
+          />
+        </div>
+      </div>
+    </section>
   )
 }
