@@ -1276,8 +1276,9 @@
     ],
     "evidence": [
       "2026-10-14: baseline init.ps1 passed before edits (276 Laravel passed/6 skipped, 89 SPA, engine 67). Initial post-change init.ps1 passed (Laravel 280/6 skipped, SPA 91, engine 67); PR #30 SQLite and PostgreSQL checks passed. Independent review returned revise for unpinned model/question and dispatch failure recovery. Both were repaired; focused Laravel 6/6 (46 assertions) and SPA page 2/2 passed. After repair init.ps1 exit 0: Laravel 282 passed/6 skipped (2492 assertions), SPA lint/build and 91 tests, engine 67 passed. Provider calls used only fakes; no paid historical run started.",
-      "2026-10-14: independent revalidation accept after version pinning and partial dispatch recovery; validator reran focused Laravel 6/6 (46 assertions), SPA 2/2 and git diff --check. No blocking findings."
+      "2026-10-14: independent revalidation accept after version pinning and partial dispatch recovery; validator reran focused Laravel 6/6 (46 assertions), SPA 2/2 and git diff --check. No blocking findings.",
+      "2026-10-14: PR #30 merged at fc9a2868c7; main CI/deploy run 38521483529 passed SQLite, PostgreSQL and production activation. New backtest tables migration completed. Production /up and /admin/backtesting returned 200; guest GET and POST backtest API returned 401. Real paid historical evaluation not run."
     ],
-    "notes": "User-requested 2026-10-14. Historical direction-class evaluation only; 1–5 tickers, 1–100 recent reference bars each, one-session horizon. Provider calls require explicit Admin confirmation and may incur cost. Independently accepted; production deployment pending."
+    "notes": "User-requested 2026-10-14. Historical direction-class evaluation only; 1–5 tickers, 1–100 recent reference bars each, one-session horizon. Provider calls require explicit Admin confirmation and may incur cost. Independently accepted and deployed to production."
   }
 ]
