@@ -1239,5 +1239,23 @@
       "2026-10-12: clean worktree baseline init.ps1 passed. Focused HowItWorksPage.test.tsx 13/13 passed. Post-change init.ps1 exit 0: Laravel 268 passed / 6 skipped, SPA lint/tests/build, engine 67 passed (existing Starlette warning). Headless Edge screenshots of the Signal section were reviewed at 1366 px desktop and 600 px narrow single-column widths."
     ],
     "notes": "Spec: docs/specs/how-it-works-signal-images.md. Inline SVGs use fictional data, no external images or packages. Independent acceptance remains pending."
+  },
+  {
+    "id": "harness-session-context",
+    "area": "harness",
+    "title": "Read-only session-start context hook",
+    "user_visible_behavior": "A development agent runs one PowerShell command at session start to see Git state, latest recorded verification, dependency-ready work, validation queue, blocked work and open risks.",
+    "depends_on": [],
+    "status": "passing",
+    "verification": [
+      "PowerShell 5.1 script reads repository state without writing files or accessing the network",
+      "Selects the first implementation-ready unfinished feature in list order, keeps passing features separate and requires accepted dependencies",
+      "Shows Git state, latest progress and verification evidence, blocked dependencies and the current blocking risk titles",
+      "AGENTS.md startup workflow invokes the hook and retains init.ps1 as the full verification gate"
+    ],
+    "evidence": [
+      "2026-10-12: init.ps1 baseline passed (Laravel 268 passed / 6 skipped, SPA lint, 72 Vitest tests and build, engine 67 passed); script run against the live repository selected admin-ops-mcp and identified alerts-email-digest and alerts-patterns as blocked by alerts-ui; isolated fixture selected ready-work, separated needs-review (passing) and blocked its dependent feature."
+    ],
+    "notes": "Harness maintenance requested by the user. The hook is invoked by the AGENTS.md startup workflow; it is a read-only PowerShell entry point, not a product feature. Independent validation is still needed before accepted."
   }
 ]

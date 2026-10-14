@@ -23,10 +23,11 @@ Target stack: **Laravel** (API, auth, admin) + **Python engine** (scraping, indi
 
 ## Commands
 
-There is no product build/test/lint path yet; the stack is pre-bootstrap.
+Run the read-only session-start context hook before choosing work; `init.ps1` remains the full startup and verification gate.
 
 ```powershell
-.\init.ps1                 # standard startup and verification path (informational for now)
+.\scripts\harness-context.ps1  # branch, progress, ready features, blockers and open risks
+.\init.ps1                     # standard startup and verification gate
 ```
 
 `alphapulse/` is the reference prototype only. Its commands exist but must not be wired into product work:
@@ -36,7 +37,7 @@ cd alphapulse; npm install; npm run dev    # Express + Vite on :3000
 npm run lint                               # tsc --noEmit
 ```
 
-As each bootstrap feature lands, wire its real commands into `init.ps1`; the script already documents the expected shape (`php artisan test`, `pytest`, `npm run test`).
+`init.ps1` runs the Laravel, SPA and engine checks. The context hook only reads repository state and never replaces those checks.
 
 ## Read First
 
@@ -65,8 +66,8 @@ Explicitly out of scope (do not build without an explicit request): intraday/rea
 Before writing code:
 
 1. Confirm the working directory with `Get-Location` (should be `C:\laragon\www\ChartScreenPlus`).
-2. Read `PROGRESS.md` for current verified state and the next step.
-3. Read `feature_list.json` and pick the first ready unfinished feature in list order.
+2. Run `.\scripts\harness-context.ps1` to see the current branch, local changes, recorded verification, dependency-ready work and open risks.
+3. Read `PROGRESS.md` and `feature_list.json` for the full evidence and pick the first ready unfinished feature in list order, unless the user requested a specific task. A `passing` feature needs independent validation; dependencies are ready only when `accepted`.
 4. Run `.\init.ps1`.
 5. If baseline verification fails, fix the baseline before starting new feature work.
 
@@ -89,7 +90,7 @@ Before writing code:
 - `PROGRESS.md` — current verified state and lightweight session log.
 - `init.ps1` — standard Windows (PowerShell) startup and verification path. `init.sh` is the optional cross-platform/Git Bash equivalent.
 
-> Harness status: created. The application stack is pre-bootstrap, so `init.ps1` is informational until the first bootstrap features complete. See `PROGRESS.md` for the current verified state.
+> Harness status: active. Use `scripts/harness-context.ps1` for a quick session summary and `init.ps1` for the full verification path. See `PROGRESS.md` for the current verified state.
 
 ## Definition Of Done
 
