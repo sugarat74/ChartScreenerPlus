@@ -1287,7 +1287,7 @@
     "title": "Configurable selection of up to 100 Backtesting stocks",
     "user_visible_behavior": "An Admin can choose any number from 1 to 100 distinct stocks, with 1 to 100 historical bars per stock, and navigate large case results in pages.",
     "depends_on": ["jev-backtesting-admin"],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Admin can start a run with 100 distinct known stocks and 101 are rejected server-side",
       "Large runs keep the shared worker responsive to ingestion, prevent concurrent paid runs, and paginate details without changing aggregate accuracy",
@@ -1295,8 +1295,9 @@
       "Standard init.ps1 gate passes"
     ],
     "evidence": [
-      "2026-10-14: baseline init.ps1 passed (Laravel 282/6 skipped, SPA 91, engine 67). First implementation passed Laravel 284/6 skipped and SPA 93. Independent review returned revise for default-queue starvation and short start lock at 10,000-case scale. Repaired with one-case coordinator chain, longer cache lock and partial unique database index. Focused Laravel Backtesting tests 10/10 (74 assertions), SPA page tests 4/4; final init.ps1 passed Laravel 286/6 skipped (2520 assertions), SPA lint/build and 93 tests, engine 67. Provider calls used fakes only; no paid historical run started."
+      "2026-10-14: baseline init.ps1 passed (Laravel 282/6 skipped, SPA 91, engine 67). First implementation passed Laravel 284/6 skipped and SPA 93. Independent review returned revise for default-queue starvation and short start lock at 10,000-case scale. Repaired with one-case coordinator chain, longer cache lock and partial unique database index. Focused Laravel Backtesting tests 10/10 (74 assertions), SPA page tests 4/4; final init.ps1 passed Laravel 286/6 skipped (2520 assertions), SPA lint/build and 93 tests, engine 67. Provider calls used fakes only; no paid historical run started.",
+      "2026-10-14: independent revalidation accept after bounded coordinator queue and active-run database index. Reviewer reran focused Laravel 10/10 (74 assertions), SPA 4/4 and diff check. PR #32 CI passed SQLite and PostgreSQL, including the partial-index migration."
     ],
-    "notes": "Requested 2026-10-14. Explicit paid-provider confirmation remains required. Implementation self-verified after reviewer-requested repairs; independent revalidation and deployment pending."
+    "notes": "Requested 2026-10-14. Explicit paid-provider confirmation remains required. Independently accepted; production deployment pending."
   }
 ]
