@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ForecastBacktestCase;
+use App\Models\ForecastBacktestRun;
 use App\Models\ForecastPrediction;
 use App\Services\Forecast\ForecastService;
 use App\Services\Forecast\ForecastStateBuilder;
@@ -29,7 +30,7 @@ class RunForecastBacktestCase implements ShouldQueue
     public function handle(ForecastService $service, ForecastStateBuilder $builder): void
     {
         $case = ForecastBacktestCase::query()->with('instrument')->find($this->caseId);
-        if ($case === null || $case->status !== 'queued') {
+        if ($case === null || $case->status !== 'queued' || $case->run->status === 'failed') {
             return;
         }
         $case->run()->where('status', 'queued')->update(['status' => 'running']);
@@ -75,21 +76,23 @@ class RunForecastBacktestCase implements ShouldQueue
         $this->finish('skipped', ['reason' => 'worker_failed']);
     }
 
-    public function markDispatchFailed(): void
-    {
-        $this->finish('skipped', ['reason' => 'dispatch_failed']);
-    }
-
     /** @param array<string, mixed> $fields */
     private function finish(string $status, array $fields): void
     {
-        DB::transaction(function () use ($status, $fields): void {
+        $runId = ForecastBacktestCase::query()->whereKey($this->caseId)->value('run_id');
+        if ($runId === null) {
+            return;
+        }
+        DB::transaction(function () use ($status, $fields, $runId): void {
+            $run = ForecastBacktestRun::query()->lockForUpdate()->find($runId);
+            if ($run === null || $run->status === 'failed') {
+                return;
+            }
             $case = ForecastBacktestCase::query()->lockForUpdate()->find($this->caseId);
             if ($case === null || $case->status !== 'queued') {
                 return;
             }
             $case->update($fields + ['status' => $status]);
-            $run = $case->run()->lockForUpdate()->firstOrFail();
             $run->processed += (int) ($status === 'completed');
             $run->skipped += (int) ($status === 'skipped');
             $run->correct += (int) ($status === 'completed' && $fields['predicted_class'] === $fields['observed_class']);

@@ -36,8 +36,39 @@ it('requires explicit confirmation and sends selected tickers and bar count', as
 
 it('rejects duplicate ticker selection before calling the API', async () => {
   render(<I18nProvider><AdminBacktestingPage /></I18nProvider>)
-  fireEvent.change(screen.getByLabelText('Tickers separados por coma'), { target: { value: 'AAPL, aapl' } })
+  fireEvent.change(screen.getByLabelText('Tickers separados por coma o salto de línea'), { target: { value: 'AAPL, aapl' } })
   fireEvent.click(screen.getByRole('button', { name: 'Iniciar prueba' }))
   expect(await screen.findByRole('alert')).toBeTruthy()
   expect(forecastBacktestApi.start).not.toHaveBeenCalled()
+})
+
+it('allows 100 stocks and rejects 101 before making paid calls', async () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(false)
+  render(<I18nProvider><AdminBacktestingPage /></I18nProvider>)
+  const tickers = Array.from({ length: 100 }, (_, index) => `T${index + 1}`)
+  const input = screen.getByLabelText('Tickers separados por coma o salto de línea')
+  fireEvent.change(input, { target: { value: tickers.join('\n') } })
+  expect(screen.getByText('100 de 100 acciones')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Iniciar prueba' }))
+  expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('3000 llamadas'))
+  fireEvent.change(input, { target: { value: [...tickers, 'T101'].join('\n') } })
+  fireEvent.click(screen.getByRole('button', { name: 'Iniciar prueba' }))
+  expect(await screen.findByRole('alert')).toBeTruthy()
+  expect(forecastBacktestApi.start).not.toHaveBeenCalled()
+})
+
+it('loads large run details one page at a time', async () => {
+  const summary = {
+    id: 7, tickers: ['AAPL'], bars_requested: 100, model_version: 'jev-1.13.0', question_version: 'close-direction-v1',
+    status: 'completed' as const, total: 200, processed: 200, correct: 100, skipped: 0, accuracy: 0.5, created_at: '2026-10-14',
+  }
+  vi.mocked(forecastBacktestApi.list).mockResolvedValue([summary])
+  vi.mocked(forecastBacktestApi.get).mockImplementation(async (_id, page) => ({
+    ...summary, cases: [], case_page: { current: page ?? 1, last: 2, total: 200 },
+  }))
+  render(<I18nProvider><AdminBacktestingPage /></I18nProvider>)
+  expect(await screen.findByText('Página 1 de 2')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
+  await waitFor(() => expect(forecastBacktestApi.get).toHaveBeenCalledWith(7, 2))
+  expect(await screen.findByText('Página 2 de 2')).toBeTruthy()
 })

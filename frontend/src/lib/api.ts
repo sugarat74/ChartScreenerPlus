@@ -695,6 +695,7 @@ export type ForecastBacktestRun = {
   accuracy: number | null
   created_at: string
   cases?: ForecastBacktestCase[]
+  case_page?: { current: number; last: number; total: number }
 }
 
 export const forecastBacktestApi = {
@@ -702,8 +703,8 @@ export const forecastBacktestApi = {
     const payload = await request<{ runs: ForecastBacktestRun[] }>('/api/admin/forecasts/backtests')
     return payload.runs
   },
-  async get(id: number): Promise<ForecastBacktestRun> {
-    const payload = await request<{ run: ForecastBacktestRun }>(`/api/admin/forecasts/backtests/${id}`)
+  async get(id: number, page = 1): Promise<ForecastBacktestRun> {
+    const payload = await request<{ run: ForecastBacktestRun }>(`/api/admin/forecasts/backtests/${id}?page=${page}`)
     return payload.run
   },
   async start(tickers: string[], bars: number): Promise<ForecastBacktestRun> {
