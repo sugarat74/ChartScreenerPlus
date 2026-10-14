@@ -358,6 +358,18 @@ export const es = {
     resume: 'Reanudar',
     remove: 'Eliminar alerta',
     removed: 'Alerta eliminada.',
+    patternTitle: 'Mis alertas de patrones',
+    patternIntro:
+      'Elige qué patrones chartistas te interesan: te avisaremos cuando aparezcan o se confirmen en un instrumento que sigues.',
+    patternHint:
+      'Los patrones se detectan automáticamente con reglas geométricas. Información orientativa, no una recomendación.',
+    patternTypesLegend: 'Patrones',
+    patternEventsLegend: 'Avisarme',
+    patternEvents: {
+      appears: 'Cuando aparece',
+      confirmed: 'Cuando se confirma (ruptura)',
+    },
+    patternNoneSelected: 'Selecciona al menos un patrón y un aviso para guardar.',
   },
   notifications: {
     bellAria: 'Notificaciones, {count} sin leer',
@@ -380,6 +392,13 @@ export const es = {
     kindScreener: 'Nuevos candidatos en «{name}»',
     kindScreenerUnnamed: 'Nuevos candidatos en un Screener guardado',
     kindWatchlist: 'Nuevas señales en tu Watchlist',
+    kindWatchlistPattern: 'Patrones en tu Watchlist',
+    patternEvent: {
+      appears: 'aparece',
+      confirmed: 'confirmado',
+    },
+    patternAlreadyConfirmed: 'ya confirmado',
+    breakoutLevel: 'Ruptura {price}',
     asOf: 'Datos del {date}',
     reasonNewCandidate: 'Nuevo candidato',
     more: 'y {count} más',

@@ -62,7 +62,7 @@ A Registered User's persisted filter definition, which can be re-applied at any 
 
 ### Alert (Alerta)
 
-A Registered User's rule evaluated after each daily data update: **new Candidates** entering one of their Saved Screeners, or chosen **Signal types appearing** on their Watchlist Instruments. The first evaluation only records a baseline; later ones notify additions. Never real-time.
+A Registered User's rule evaluated after each daily data update: **new Candidates** entering one of their Saved Screeners, chosen **Signal types appearing** on their Watchlist Instruments, or chosen **Chartist Pattern types appearing or being confirmed** (breakout) on their Watchlist Instruments. The first evaluation only records a baseline; later ones notify additions. Never real-time.
 
 ### Notification
 

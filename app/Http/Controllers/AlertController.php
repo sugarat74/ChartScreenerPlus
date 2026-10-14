@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alert;
+use App\Models\ChartPattern;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -52,23 +53,41 @@ class AlertController extends Controller
     {
         $user = $request->user();
 
+        $kind = $request->input('kind');
+        $isPattern = $kind === Alert::KIND_WATCHLIST_PATTERN;
+
         $validated = $request->validate([
             'kind' => ['required', 'string', Rule::in(Alert::KINDS)],
             'saved_screener_id' => [
-                Rule::requiredIf($request->input('kind') === Alert::KIND_SCREENER),
-                Rule::prohibitedIf($request->input('kind') === Alert::KIND_WATCHLIST),
+                Rule::requiredIf($kind === Alert::KIND_SCREENER),
+                Rule::prohibitedIf(in_array($kind, [Alert::KIND_WATCHLIST, Alert::KIND_WATCHLIST_PATTERN], true)),
                 'nullable',
                 'integer',
                 Rule::exists('saved_screeners', 'id')->where('user_id', $user->id),
             ],
             'signal_types' => [
-                Rule::requiredIf($request->input('kind') === Alert::KIND_WATCHLIST),
-                Rule::prohibitedIf($request->input('kind') === Alert::KIND_SCREENER),
+                Rule::requiredIf($kind === Alert::KIND_WATCHLIST),
+                Rule::prohibitedIf(in_array($kind, [Alert::KIND_SCREENER, Alert::KIND_WATCHLIST_PATTERN], true)),
                 'nullable',
                 'array',
                 'min:1',
             ],
             'signal_types.*' => ['required', 'string', Rule::in(self::SIGNAL_TYPES)],
+            'pattern_types' => [
+                Rule::requiredIf($isPattern),
+                Rule::prohibitedIf(in_array($kind, [Alert::KIND_SCREENER, Alert::KIND_WATCHLIST], true)),
+                'nullable',
+                'array',
+                'min:1',
+            ],
+            'pattern_types.*' => ['required', 'string', Rule::in(ChartPattern::TYPES)],
+            'pattern_events' => [
+                'sometimes',
+                Rule::prohibitedIf(in_array($kind, [Alert::KIND_SCREENER, Alert::KIND_WATCHLIST], true)),
+                'array',
+                'min:1',
+            ],
+            'pattern_events.*' => ['required', 'string', Rule::in(Alert::PATTERN_EVENTS)],
         ]);
 
         try {
@@ -76,7 +95,7 @@ class AlertController extends Controller
             // the user's row, so parallel requests cannot exceed the limit or
             // create a second Watchlist alert; a race on the unique
             // (user, saved screener) index still ends as the duplicate 422.
-            $alert = DB::transaction(function () use ($user, $validated): Alert {
+            $alert = DB::transaction(function () use ($user, $validated, $isPattern): Alert {
                 User::query()->whereKey($user->id)->lockForUpdate()->first();
 
                 if ($user->alerts()->count() >= (int) config('alerts.max_per_user')) {
@@ -87,7 +106,8 @@ class AlertController extends Controller
 
                 $duplicate = $validated['kind'] === Alert::KIND_SCREENER
                     ? $user->alerts()->where('saved_screener_id', $validated['saved_screener_id'])->exists()
-                    : $user->alerts()->where('kind', Alert::KIND_WATCHLIST)->exists();
+                    // One alert per user for each Watchlist kind (signals, patterns).
+                    : $user->alerts()->where('kind', $validated['kind'])->exists();
 
                 if ($duplicate) {
                     throw ValidationException::withMessages([
@@ -99,6 +119,10 @@ class AlertController extends Controller
                     'kind' => $validated['kind'],
                     'saved_screener_id' => $validated['saved_screener_id'] ?? null,
                     'signal_types' => isset($validated['signal_types']) ? $this->canonicalTypes($validated['signal_types']) : null,
+                    'pattern_types' => $isPattern ? $this->canonical($validated['pattern_types'], ChartPattern::TYPES) : null,
+                    'pattern_events' => $isPattern
+                        ? $this->canonical($validated['pattern_events'] ?? ['confirmed'], Alert::PATTERN_EVENTS)
+                        : null,
                     'active' => true,
                 ]);
             });
@@ -123,11 +147,25 @@ class AlertController extends Controller
             'active' => ['sometimes', 'boolean'],
             'signal_types' => [
                 'sometimes',
-                Rule::prohibitedIf($owned->kind === Alert::KIND_SCREENER),
+                Rule::prohibitedIf($owned->kind !== Alert::KIND_WATCHLIST),
                 'array',
                 'min:1',
             ],
             'signal_types.*' => ['required', 'string', Rule::in(self::SIGNAL_TYPES)],
+            'pattern_types' => [
+                'sometimes',
+                Rule::prohibitedIf($owned->kind !== Alert::KIND_WATCHLIST_PATTERN),
+                'array',
+                'min:1',
+            ],
+            'pattern_types.*' => ['required', 'string', Rule::in(ChartPattern::TYPES)],
+            'pattern_events' => [
+                'sometimes',
+                Rule::prohibitedIf($owned->kind !== Alert::KIND_WATCHLIST_PATTERN),
+                'array',
+                'min:1',
+            ],
+            'pattern_events.*' => ['required', 'string', Rule::in(Alert::PATTERN_EVENTS)],
         ]);
 
         $resetBaseline = false;
@@ -143,6 +181,16 @@ class AlertController extends Controller
             $types = $this->canonicalTypes($validated['signal_types']);
             $resetBaseline = $resetBaseline || $types !== $owned->signal_types;
             $owned->signal_types = $types;
+        }
+
+        // Changing the pattern types or events to a different canonical set
+        // starts a fresh baseline, like the Signal types above.
+        foreach (['pattern_types' => ChartPattern::TYPES, 'pattern_events' => Alert::PATTERN_EVENTS] as $field => $vocabulary) {
+            if (array_key_exists($field, $validated)) {
+                $values = $this->canonical($validated[$field], $vocabulary);
+                $resetBaseline = $resetBaseline || $values !== $owned->{$field};
+                $owned->{$field} = $values;
+            }
         }
 
         if ($resetBaseline) {
@@ -178,7 +226,19 @@ class AlertController extends Controller
      */
     private function canonicalTypes(array $types): array
     {
-        return array_values(array_filter(self::SIGNAL_TYPES, fn (string $type): bool => in_array($type, $types, true)));
+        return $this->canonical($types, self::SIGNAL_TYPES);
+    }
+
+    /**
+     * Deduplicate `$values` into the order of `$vocabulary`.
+     *
+     * @param  list<string>  $values
+     * @param  list<string>  $vocabulary
+     * @return list<string>
+     */
+    private function canonical(array $values, array $vocabulary): array
+    {
+        return array_values(array_filter($vocabulary, fn (string $value): bool => in_array($value, $values, true)));
     }
 
     /**
@@ -193,6 +253,8 @@ class AlertController extends Controller
                 ? null
                 : ['id' => $alert->savedScreener->id, 'name' => $alert->savedScreener->name],
             'signal_types' => $alert->signal_types,
+            'pattern_types' => $alert->pattern_types,
+            'pattern_events' => $alert->pattern_events,
             'active' => $alert->active,
             'last_evaluated_as_of' => $alert->last_evaluated_as_of?->toDateString(),
             'created_at' => $alert->created_at?->toIso8601String(),

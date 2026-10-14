@@ -355,6 +355,18 @@ export const en: Messages = {
     resume: 'Resume',
     remove: 'Delete alert',
     removed: 'Alert deleted.',
+    patternTitle: 'My pattern alerts',
+    patternIntro:
+      'Choose the chart patterns you care about: we will let you know when one appears or is confirmed on an instrument you follow.',
+    patternHint:
+      'Patterns are detected automatically with geometric rules. For information only, not a recommendation.',
+    patternTypesLegend: 'Patterns',
+    patternEventsLegend: 'Notify me',
+    patternEvents: {
+      appears: 'When it appears',
+      confirmed: 'When it is confirmed (breakout)',
+    },
+    patternNoneSelected: 'Select at least one pattern and one event to save.',
   },
   notifications: {
     bellAria: 'Notifications, {count} unread',
@@ -377,6 +389,13 @@ export const en: Messages = {
     kindScreener: 'New candidates in “{name}”',
     kindScreenerUnnamed: 'New candidates in a saved Screener',
     kindWatchlist: 'New signals on your Watchlist',
+    kindWatchlistPattern: 'Patterns on your Watchlist',
+    patternEvent: {
+      appears: 'appears',
+      confirmed: 'confirmed',
+    },
+    patternAlreadyConfirmed: 'already confirmed',
+    breakoutLevel: 'Breakout {price}',
     asOf: 'Data as of {date}',
     reasonNewCandidate: 'New candidate',
     more: 'and {count} more',

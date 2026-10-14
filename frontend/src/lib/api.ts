@@ -753,8 +753,17 @@ export const watchlistApi = {
   },
 }
 
-/** The two Alert kinds `alerts-engine` evaluates once per daily run. */
-export type AlertKind = 'screener_new_candidates' | 'watchlist_signal'
+/**
+ * The Alert kinds evaluated once per daily run (`alerts-engine`, plus
+ * `watchlist_pattern` from `alerts-patterns`).
+ */
+export type AlertKind = 'screener_new_candidates' | 'watchlist_signal' | 'watchlist_pattern'
+
+/** What a `watchlist_pattern` alert notifies: a new pattern instance, or its breakout. */
+export type AlertPatternEvent = 'appears' | 'confirmed'
+
+/** Canonical order of the pattern events (matches the API). */
+export const ALERT_PATTERN_EVENTS: readonly AlertPatternEvent[] = ['appears', 'confirmed']
 
 /** One caller-owned Alert rule (`GET /api/alerts`). */
 export type Alert = {
@@ -762,6 +771,10 @@ export type Alert = {
   kind: AlertKind
   saved_screener: { id: number; name: string } | null
   signal_types: ScreenerSignalType[] | null
+  /** Chosen pattern types; null unless `kind` is `watchlist_pattern`. */
+  pattern_types: ScreenerPatternType[] | null
+  /** Chosen pattern events; null unless `kind` is `watchlist_pattern`. */
+  pattern_events: AlertPatternEvent[] | null
   active: boolean
   last_evaluated_as_of: string | null
   created_at: string | null
@@ -770,8 +783,14 @@ export type Alert = {
 export type CreateAlertPayload =
   | { kind: 'screener_new_candidates'; saved_screener_id: number }
   | { kind: 'watchlist_signal'; signal_types: ScreenerSignalType[] }
+  | { kind: 'watchlist_pattern'; pattern_types: ScreenerPatternType[]; pattern_events?: AlertPatternEvent[] }
 
-export type UpdateAlertPayload = { active?: boolean; signal_types?: ScreenerSignalType[] }
+export type UpdateAlertPayload = {
+  active?: boolean
+  signal_types?: ScreenerSignalType[]
+  pattern_types?: ScreenerPatternType[]
+  pattern_events?: AlertPatternEvent[]
+}
 
 /**
  * Authenticated Alerts client (`docs/specs/alerts-engine.md`). Every call is
@@ -810,13 +829,17 @@ export const alertsApi = {
 }
 
 /**
- * One notification item. `reason` is `new_candidate` for Screener alerts or
- * the Signal type that appeared for Watchlist alerts.
+ * One notification item. `reason` is `new_candidate` for Screener alerts, the
+ * Signal type that appeared for Watchlist signal alerts, or
+ * `pattern:<type>:<appears|confirmed>` for Watchlist pattern alerts, which
+ * also carry the pattern `status` and `breakout_level`.
  */
 export type NotificationItem = {
   ticker: string
   name: string | null
   reason: string
+  status?: 'forming' | 'confirmed'
+  breakout_level?: number
 }
 
 /** One in-app notification; the SPA renders its text from this neutral data. */

@@ -12,7 +12,7 @@
 - **Screener Result (Candidate list):** the ranked Instruments returned when a Screener is applied.
 - **Watchlist Entry:** a follow relationship between a Registered User and an Instrument.
 - **Ingestion Run (EOD Run):** one execution of the pipeline (scrape -> store Daily Bars -> compute Snapshots -> recompute Signals).
-- **Alert:** a Registered User's rule (new Candidates in a Saved Screener, or chosen Signal types appearing on Watchlist Instruments), evaluated once per daily data update.
+- **Alert:** a Registered User's rule (new Candidates in a Saved Screener, chosen Signal types appearing on Watchlist Instruments, or chosen Chartist Pattern types appearing or being confirmed on Watchlist Instruments), evaluated once per daily data update.
 - **Notification:** what an Alert produces when it finds additions; owned by the user, kept 90 days.
 - **User:** Visitor (anonymous), Registered User, or Admin.
 

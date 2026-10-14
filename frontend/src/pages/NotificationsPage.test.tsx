@@ -137,6 +137,41 @@ it('renders English labels', async () => {
   expect(screen.getByRole('link', { name: 'Open the NVDA chart: New candidate' })).toBeTruthy()
 })
 
+const patternNotification: AppNotification = {
+  id: '33333333-3333-4333-8333-333333333333', kind: 'watchlist_pattern', as_of: '2026-10-14',
+  saved_screener: null,
+  items: [
+    { ticker: 'NVDA', name: 'NVIDIA', reason: 'pattern:double_bottom:confirmed', status: 'confirmed', breakout_level: 123.45 },
+    { ticker: 'AAPL', name: 'Apple', reason: 'pattern:bull_flag:appears', status: 'confirmed', breakout_level: 1234.5 },
+    { ticker: 'MSFT', name: 'Microsoft', reason: 'pattern:triangle:appears', status: 'forming', breakout_level: 10 },
+  ],
+  more: 0, read_at: null, created_at: '2026-10-14T22:00:00+00:00',
+}
+
+it('renders a pattern notification with its title, pattern, event and breakout level linking to the chart', async () => {
+  vi.mocked(notificationsApi.list).mockResolvedValue(payload([patternNotification], 1))
+  show()
+  expect(await screen.findByRole('heading', { level: 2, name: 'Patrones en tu Watchlist' })).toBeTruthy()
+  const link = screen.getByRole('link', { name: 'Abrir el gráfico de NVDA: Doble suelo · confirmado · Ruptura 123,45' })
+  expect(link.getAttribute('href')).toBe('/instruments/NVDA')
+  expect(within(link).getByText('Doble suelo · confirmado · Ruptura 123,45')).toBeTruthy()
+  // An `appears` item already confirmed says so; unknown types fall back to the raw value.
+  expect(screen.getByRole('link', { name: 'Abrir el gráfico de AAPL: Bandera alcista · aparece · ya confirmado · Ruptura 1234,50' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Abrir el gráfico de MSFT: triangle · aparece · Ruptura 10,00' })).toBeTruthy()
+  expect(document.body.textContent).not.toMatch(/EOD|end-of-day|fin de día|\$/i)
+  fireEvent.click(link)
+  expect(await screen.findByText('chart page')).toBeTruthy()
+})
+
+it('renders a pattern notification in English', async () => {
+  window.localStorage.setItem(LOCALE_STORAGE_KEY, 'en')
+  vi.mocked(notificationsApi.list).mockResolvedValue(payload([patternNotification], 1))
+  show()
+  expect(await screen.findByText('Patterns on your Watchlist')).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Open the NVDA chart: Double bottom · confirmed · Breakout 123.45' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Open the AAPL chart: Bull flag · appears · already confirmed · Breakout 1,234.50' })).toBeTruthy()
+})
+
 it('sends a Visitor to sign in without requesting notifications', async () => {
   show(false)
   expect(await screen.findByText('login page')).toBeTruthy()
