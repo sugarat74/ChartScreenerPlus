@@ -22,6 +22,7 @@
 | View interactive chart of a Candidate | yes | yes | yes |
 | Request an experimental Jev forecast | no | yes | yes |
 | View forecast evaluation metrics | no | no | yes |
+| Start and inspect Jev Backtesting runs | no | no | yes |
 | Save / apply Saved Screeners | no | yes (own) | yes |
 | Maintain Watchlist | no | yes (own) | yes |
 | Trigger / re-run Ingestion Runs | no | no | yes |

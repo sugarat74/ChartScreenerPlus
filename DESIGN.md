@@ -68,6 +68,8 @@ components:
 
 Chartiko is a professional but opinionated trading terminal: warm paper-like backgrounds, sharp black 2px borders, hard offset shadows instead of blur, and one loud yellow accent. It should feel like a printed financial newspaper crossed with a quantitative terminal — deliberately not a glossy SaaS dashboard.
 
+The Admin subnavigation includes a Backtesting tab for explicit Jev historical runs. Its setup, progress, aggregate accuracy and per-bar results use the existing bordered cards, compact mono tables and yellow action button; the confirmation states the maximum number of provider calls before starting.
+
 The Chartiko mark combines an angular C and a chart stroke, with an ink square and hard yellow offset shadow. `frontend/public/favicon.svg` is shared by the header and browser icon. Wordmark: CHARTIKO. EOD labels are restricted to Admin; public surfaces use neutral analysis/data labels and retain session dates.
 
 ## Existing Design Assets

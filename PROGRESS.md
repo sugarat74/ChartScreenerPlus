@@ -1,5 +1,10 @@
 # Progress Log
 
+## Admin Jev Backtesting — 2026-10-14
+
+- Implementing user-requested historical one-session evaluation in an Admin-only Backtesting tab. Admin chooses 1–5 tickers and 1–100 recent reference bars each (30 default); per-case queue jobs reuse the time-cut Jev forecast service, require a stored next-session close and store predicted/actual class or an explicit skipped reason. A run ledger shows progress, per-bar outcomes and `correct / completed` directional accuracy, with a cost confirmation before dispatch. Historical Signals remain limited to the active retained set; this is not a returns/strategy backtest.
+- Isolated worktree `feature/jev-backtesting` based on `origin/main`; original main's pending harness-hook changes were left untouched. Baseline `.\init.ps1` passed before edits: Laravel 276 passed / 6 skipped, SPA lint and 89 tests/build, engine 67 passed. Initial post-change `.\init.ps1` passed: Laravel 280 passed / 6 skipped, SPA lint, 91 tests/build, engine 67 passed. PR #30 SQLite and PostgreSQL checks passed. Independent review returned `revise` for version mixing and stuck runs on queue dispatch failure; both were repaired with focused Laravel regressions 6/6 (46 assertions). After repair `.\init.ps1` passed: Laravel 282 passed / 6 skipped (2492 assertions), SPA lint, 91 tests/build, engine 67 passed. Independent revalidation returned `accept` after rerunning focused checks and reviewing docs/diff. No live Jev calls or paid historical run were started. Feature is `accepted`; deployment pending.
+
 ## Pronóstico Jev implementation — 2026-10-13
 
 - Independent validator returned `accept` after repairs to target-date outcome settlement, calendar coverage, stale UI requests, Admin calibration metrics and durable architecture rules. Focused tests passed (Laravel 8/8, 47 assertions; SPA panel 4/4). Full `.\init.ps1` exited 0: Laravel 276 passed / 6 skipped (2446 assertions), SPA lint/build and 89 tests, engine 67 passed; `git diff --check` clean. Feature state is `accepted`.

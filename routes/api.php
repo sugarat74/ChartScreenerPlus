@@ -8,6 +8,7 @@ use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\Admin\ForecastReportController;
+use App\Http\Controllers\Admin\ForecastBacktestController;
 use App\Http\Controllers\InstrumentController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\NotificationController;
@@ -71,6 +72,9 @@ Route::middleware('auth:sanctum')->group(function () {
 // group; `/api/admin/ping` is only a guard probe, not product behavior.
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/forecasts/report', [ForecastReportController::class, 'index']);
+    Route::get('/forecasts/backtests', [ForecastBacktestController::class, 'index']);
+    Route::post('/forecasts/backtests', [ForecastBacktestController::class, 'store']);
+    Route::get('/forecasts/backtests/{run}', [ForecastBacktestController::class, 'show'])->whereNumber('run');
     Route::get('/ping', fn () => response()->json(['ok' => true]));
 
     // Admin ingestion panel: trigger a run, follow it and retry only its

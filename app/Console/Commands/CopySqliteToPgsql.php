@@ -65,6 +65,8 @@ class CopySqliteToPgsql extends Command
         'screener_rows',
         // Experimental forecasts postdate the one-time SQLite cut-over.
         'forecast_predictions',
+        'forecast_backtest_runs',
+        'forecast_backtest_cases',
     ];
 
     private const CHUNK = 500;

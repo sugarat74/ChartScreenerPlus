@@ -2,6 +2,22 @@ import type { Messages } from './es.ts'
 
 /** English catalog. Typed as `Messages`, so it must match the Spanish shape. */
 export const en: Messages = {
+  backtesting: {
+    nav: 'Backtesting', title: 'Jev historical test',
+    description: 'Select up to 5 stocks and 1 to 100 recent bars per stock. Each bar is evaluated from data known at its close and compared with the next session close. This does not simulate trades or returns.',
+    tickers: 'Comma-separated tickers', bars: 'Bars per stock', start: 'Start test',
+    confirm: 'This test may make up to {count} paid Jev calls. Start it?',
+    costNote: 'Saved forecasts are reused. New calls may incur a cost. The test runs in the background.',
+    invalidSelection: 'Enter 1 to 5 different tickers and 1 to 100 bars.',
+    runs: 'Runs', progress: 'Processed', correct: 'Correct', accuracy: 'Accuracy', skipped: 'Skipped',
+    denominator: 'Accuracy uses only cases with a forecast and subsequent close. Skipped cases count as neither hits nor misses.',
+    ticker: 'Stock', reference: 'Reference date', target: 'Target date',
+    predicted: 'Prediction', observed: 'Actual outcome', result: 'Evaluation', hit: 'Hit', miss: 'Miss', queued: 'Queued', omitted: 'Skipped',
+    missingTarget: 'Target close missing', insufficientData: 'Insufficient history or indicators',
+    calendarUnavailable: 'Calendar unavailable', providerUnavailable: 'Jev unavailable', internalError: 'Execution error',
+    versionChanged: 'Experiment version changed', dispatchFailed: 'Queue dispatch failed',
+    statusQueued: 'Queued', statusRunning: 'Running', statusCompleted: 'Completed', statusFailed: 'Failed',
+  },
   forecast: {
     title: 'Jev forecast',
     experimental: 'Experimental',
