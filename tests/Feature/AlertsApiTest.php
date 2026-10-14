@@ -156,6 +156,124 @@ class AlertsApiTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('signal_types');
     }
 
+    public function test_a_user_creates_a_pattern_alert_with_canonical_lists_and_default_events(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/alerts', ['kind' => 'watchlist_pattern', 'pattern_types' => ['bull_flag', 'double_top', 'bull_flag']])
+            ->assertCreated()
+            ->assertJsonPath('alert.kind', 'watchlist_pattern')
+            ->assertJsonPath('alert.pattern_types', ['double_top', 'bull_flag'])
+            ->assertJsonPath('alert.pattern_events', ['confirmed'])
+            ->assertJsonPath('alert.signal_types', null)
+            ->assertJsonPath('alert.saved_screener', null)
+            ->assertJsonPath('alert.active', true);
+
+        $other = User::factory()->create();
+        $this->actingAs($other)
+            ->postJson('/api/alerts', ['kind' => 'watchlist_pattern', 'pattern_types' => ['double_bottom'], 'pattern_events' => ['confirmed', 'appears']])
+            ->assertCreated()
+            ->assertJsonPath('alert.pattern_events', ['appears', 'confirmed']);
+
+        // A user may hold one signal alert and one pattern alert at once.
+        $this->actingAs($user)->postJson('/api/alerts', ['kind' => 'watchlist_signal', 'signal_types' => ['golden_cross']])
+            ->assertCreated()
+            ->assertJsonPath('alert.pattern_types', null)
+            ->assertJsonPath('alert.pattern_events', null);
+
+        $this->actingAs($user)->getJson('/api/alerts')->assertOk()->assertJsonCount(2, 'alerts');
+    }
+
+    public function test_pattern_alert_validation_duplicates_and_limit(): void
+    {
+        $user = User::factory()->create();
+        $screenerId = $this->screenerOf($user);
+        $post = fn (array $data, string $locale = 'es') => $this->actingAs($user)->postJson('/api/alerts', $data, ['Accept-Language' => $locale]);
+
+        $this->assertStringContainsString('tipos de patrón', $post(['kind' => 'watchlist_pattern'])
+            ->assertUnprocessable()->assertJsonValidationErrors('pattern_types')->json('errors.pattern_types.0'));
+        $this->assertStringContainsString('pattern types', $post(['kind' => 'watchlist_pattern'], 'en')
+            ->assertUnprocessable()->json('errors.pattern_types.0'));
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => []])->assertUnprocessable()->assertJsonValidationErrors('pattern_types');
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => ['triangle']])->assertUnprocessable()->assertJsonValidationErrors('pattern_types.0');
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => ['double_top'], 'pattern_events' => []])->assertUnprocessable()->assertJsonValidationErrors('pattern_events');
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => ['double_top'], 'pattern_events' => ['disappears']])
+            ->assertUnprocessable()->assertJsonValidationErrors('pattern_events.0');
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => ['double_top'], 'signal_types' => ['golden_cross']])
+            ->assertUnprocessable()->assertJsonValidationErrors('signal_types');
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => ['double_top'], 'saved_screener_id' => $screenerId])
+            ->assertUnprocessable()->assertJsonValidationErrors('saved_screener_id');
+        $post(['kind' => 'watchlist_signal', 'signal_types' => ['golden_cross'], 'pattern_types' => ['double_top']])
+            ->assertUnprocessable()->assertJsonValidationErrors('pattern_types');
+        $post(['kind' => 'screener_new_candidates', 'saved_screener_id' => $screenerId, 'pattern_events' => ['appears']])
+            ->assertUnprocessable()->assertJsonValidationErrors('pattern_events');
+        $this->assertSame(0, $user->alerts()->count());
+
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => ['double_top']])->assertCreated();
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => ['bull_flag']], 'es')
+            ->assertUnprocessable()->assertJsonPath('errors.kind.0', 'Ya tienes esta alerta.');
+        $post(['kind' => 'watchlist_pattern', 'pattern_types' => ['bull_flag']], 'en')
+            ->assertUnprocessable()->assertJsonPath('errors.kind.0', 'You already have this alert.');
+
+        config(['alerts.max_per_user' => 1]);
+        $post(['kind' => 'watchlist_signal', 'signal_types' => ['golden_cross']], 'en')
+            ->assertUnprocessable()->assertJsonPath('errors.kind.0', 'You can have at most 1 alerts.');
+    }
+
+    public function test_pattern_alert_updates_reset_the_baseline_only_on_a_different_set(): void
+    {
+        $user = User::factory()->create();
+        $alert = Alert::factory()->for($user)->watchlistPattern(['double_top', 'bull_flag'], ['confirmed'])->create();
+        $baseline = ['patterns' => ['NVDA' => ['double_top' => ['start' => '2026-08-03', 'status' => 'forming']]]];
+        $seed = fn () => $alert->refresh()->forceFill(['last_state' => $baseline, 'last_evaluated_as_of' => '2026-10-01'])->save();
+        $seed();
+
+        // Same sets in another order: canonical, so nothing resets.
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['pattern_types' => ['bull_flag', 'double_top'], 'pattern_events' => ['confirmed']])
+            ->assertOk()->assertJsonPath('alert.pattern_types', ['double_top', 'bull_flag']);
+        $this->assertSame($baseline, $alert->fresh()->last_state);
+
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['pattern_types' => ['double_bottom']])
+            ->assertOk()->assertJsonPath('alert.pattern_types', ['double_bottom']);
+        $this->assertNull($alert->fresh()->last_state);
+        $this->assertNull($alert->fresh()->last_evaluated_as_of);
+
+        $seed();
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['pattern_events' => ['appears', 'confirmed']])
+            ->assertOk()->assertJsonPath('alert.pattern_events', ['appears', 'confirmed']);
+        $this->assertNull($alert->fresh()->last_state);
+
+        $seed();
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['active' => false])->assertOk()->assertJsonPath('alert.active', false);
+        $this->assertSame($baseline, $alert->fresh()->last_state);
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['active' => true])->assertOk();
+        $this->assertNull($alert->fresh()->last_state);
+
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['pattern_types' => ['triangle']])->assertUnprocessable()->assertJsonValidationErrors('pattern_types.0');
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['pattern_types' => []])->assertUnprocessable()->assertJsonValidationErrors('pattern_types');
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['pattern_events' => ['disappears']])->assertUnprocessable()->assertJsonValidationErrors('pattern_events.0');
+        $this->actingAs($user)->patchJson("/api/alerts/{$alert->id}", ['signal_types' => ['golden_cross']])->assertUnprocessable()->assertJsonValidationErrors('signal_types');
+
+        // Pattern fields are prohibited on the other kinds.
+        $signalAlert = Alert::factory()->for($user)->create();
+        $this->actingAs($user)->patchJson("/api/alerts/{$signalAlert->id}", ['pattern_types' => ['double_top']])->assertUnprocessable()->assertJsonValidationErrors('pattern_types');
+        $this->actingAs($user)->patchJson("/api/alerts/{$signalAlert->id}", ['pattern_events' => ['appears']])->assertUnprocessable()->assertJsonValidationErrors('pattern_events');
+    }
+
+    public function test_pattern_alerts_are_owner_scoped(): void
+    {
+        $user = User::factory()->create();
+        $foreign = Alert::factory()->watchlistPattern()->create();
+
+        $this->actingAs($user)->patchJson("/api/alerts/{$foreign->id}", ['pattern_types' => ['bull_flag']])->assertNotFound();
+        $this->actingAs($user)->deleteJson("/api/alerts/{$foreign->id}")->assertNotFound();
+        $this->assertSame(['double_bottom'], $foreign->fresh()->pattern_types);
+
+        $this->app['auth']->forgetGuards();
+        $this->postJson('/api/alerts', ['kind' => 'watchlist_pattern', 'pattern_types' => ['bull_flag']])->assertUnauthorized();
+    }
+
     public function test_notifications_are_listed_newest_first_and_marked_read(): void
     {
         $user = User::factory()->create();

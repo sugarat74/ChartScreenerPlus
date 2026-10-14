@@ -14,8 +14,8 @@ import { useAuth } from '../auth/useAuth.ts'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import type { Translate } from '../i18n/translate.ts'
 import { ApiError, apiErrorMessage, notificationsApi } from '../lib/api.ts'
-import type { AppNotification, NotificationsPage as NotificationsPayload } from '../lib/api.ts'
-import { signalLabel } from '../lib/screenerFilters.ts'
+import type { AppNotification, NotificationItem, NotificationsPage as NotificationsPayload } from '../lib/api.ts'
+import { patternLabel, signalLabel } from '../lib/screenerFilters.ts'
 import { LOGIN_ROUTE } from '../nav.ts'
 import { useUnreadNotifications } from '../notifications/useUnreadNotifications.ts'
 
@@ -29,12 +29,41 @@ function notificationTitle(notification: AppNotification, t: Translate): string 
   if (notification.kind === 'watchlist_signal') {
     return t('notifications.kindWatchlist')
   }
+  if (notification.kind === 'watchlist_pattern') {
+    return t('notifications.kindWatchlistPattern')
+  }
   const name = notification.saved_screener?.name
   return name ? t('notifications.kindScreener', { name }) : t('notifications.kindScreenerUnnamed')
 }
 
-function reasonLabel(reason: string, t: Translate): string {
-  return reason === 'new_candidate' ? t('notifications.reasonNewCandidate') : signalLabel(reason, t)
+const PATTERN_REASON_PREFIX = 'pattern:'
+
+/**
+ * `pattern:<type>:<event>` items (alerts-patterns): pattern label, event,
+ * "already confirmed" when an `appears` item is confirmed, and the breakout
+ * level. Unknown types or events fall back to the raw value.
+ */
+function patternReasonLabel(item: NotificationItem, t: Translate, formatPrice: (value: number | null) => string): string {
+  const [type = '', event = ''] = item.reason.slice(PATTERN_REASON_PREFIX.length).split(':')
+  const parts = [patternLabel(type, t)]
+  parts.push(event === 'appears' || event === 'confirmed' ? t(`notifications.patternEvent.${event}` as const) : event)
+  if (event === 'appears' && item.status === 'confirmed') {
+    parts.push(t('notifications.patternAlreadyConfirmed'))
+  }
+  if (typeof item.breakout_level === 'number') {
+    parts.push(t('notifications.breakoutLevel', { price: formatPrice(item.breakout_level) }))
+  }
+  return parts.filter((part) => part !== '').join(' · ')
+}
+
+function reasonLabel(item: NotificationItem, t: Translate, formatPrice: (value: number | null) => string): string {
+  if (item.reason === 'new_candidate') {
+    return t('notifications.reasonNewCandidate')
+  }
+  if (item.reason.startsWith(PATTERN_REASON_PREFIX)) {
+    return patternReasonLabel(item, t, formatPrice)
+  }
+  return signalLabel(item.reason, t)
 }
 
 export default function NotificationsPage() {
@@ -47,7 +76,7 @@ export default function NotificationsPage() {
 
 function NotificationsInbox() {
   const { user } = useAuth()
-  const { t, formatMarketDate } = useI18n()
+  const { t, formatMarketDate, formatPrice } = useI18n()
   const tRef = useTranslateRef()
   const navigate = useNavigate()
   const { count: unreadCount, setCount } = useUnreadNotifications()
@@ -250,19 +279,22 @@ function NotificationsInbox() {
                   ) : null}
                 </div>
                 <ul className="flex flex-wrap gap-2">
-                  {notification.items.map((item) => (
-                    <li key={`${item.ticker}-${item.reason}`}>
-                      <Link
-                        to={`/instruments/${encodeURIComponent(item.ticker)}`}
-                        aria-label={`${t('notifications.openChartAria', { ticker: item.ticker })}: ${reasonLabel(item.reason, t)}`}
-                        title={item.name ?? undefined}
-                        className="flex items-center gap-1.5 rounded-[4px] border-2 border-outline bg-surface-container-lowest px-2 py-1 shadow-[1px_1px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
-                      >
-                        <span className="font-mono text-xs font-bold text-on-surface">{item.ticker}</span>
-                        <span className="text-[11px] text-on-surface-variant">{reasonLabel(item.reason, t)}</span>
-                      </Link>
-                    </li>
-                  ))}
+                  {notification.items.map((item) => {
+                    const label = reasonLabel(item, t, formatPrice)
+                    return (
+                      <li key={`${item.ticker}-${item.reason}`} className="min-w-0 max-w-full">
+                        <Link
+                          to={`/instruments/${encodeURIComponent(item.ticker)}`}
+                          aria-label={`${t('notifications.openChartAria', { ticker: item.ticker })}: ${label}`}
+                          title={item.name ?? undefined}
+                          className="flex items-center gap-1.5 rounded-[4px] border-2 border-outline bg-surface-container-lowest px-2 py-1 shadow-[1px_1px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+                        >
+                          <span className="font-mono text-xs font-bold text-on-surface">{item.ticker}</span>
+                          <span className="min-w-0 break-words text-[11px] text-on-surface-variant">{label}</span>
+                        </Link>
+                      </li>
+                    )
+                  })}
                   {notification.more > 0 ? (
                     <li className="flex items-center px-1 font-mono text-[11px] text-on-surface-variant">
                       {t('notifications.more', { count: notification.more })}

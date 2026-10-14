@@ -205,6 +205,13 @@ return [
         'ticker' => 'ticker',
         'filters' => 'filters',
         'universe' => 'universe',
+        'pattern_types' => 'pattern types',
+        'pattern_types.*' => 'pattern type',
+        'pattern_events' => 'pattern events',
+        'pattern_events.*' => 'pattern event',
+        'signal_types' => 'signal types',
+        'signal_types.*' => 'signal type',
+        'saved_screener_id' => 'saved Screener',
     ],
 
 ];

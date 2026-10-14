@@ -198,6 +198,13 @@ return [
         'ticker' => 'símbolo',
         'filters' => 'filtros',
         'universe' => 'universo',
+        'pattern_types' => 'tipos de patrón',
+        'pattern_types.*' => 'tipo de patrón',
+        'pattern_events' => 'eventos de patrón',
+        'pattern_events.*' => 'evento de patrón',
+        'signal_types' => 'tipos de señal',
+        'signal_types.*' => 'tipo de señal',
+        'saved_screener_id' => 'Screener guardado',
     ],
 
 ];

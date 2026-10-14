@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * can never be written. Evaluation state (`last_state`,
  * `last_evaluated_as_of`) is written only by the evaluator.
  */
-#[Fillable(['kind', 'saved_screener_id', 'signal_types', 'active'])]
+#[Fillable(['kind', 'saved_screener_id', 'signal_types', 'pattern_types', 'pattern_events', 'active'])]
 class Alert extends Model
 {
     /** @use HasFactory<AlertFactory> */
@@ -29,7 +29,13 @@ class Alert extends Model
     /** Chosen Signal types appearing on the user's Watchlist Instruments. */
     public const KIND_WATCHLIST = 'watchlist_signal';
 
-    public const KINDS = [self::KIND_SCREENER, self::KIND_WATCHLIST];
+    /** Chosen chartist pattern types appearing or confirmed on the Watchlist (alerts-patterns). */
+    public const KIND_WATCHLIST_PATTERN = 'watchlist_pattern';
+
+    public const KINDS = [self::KIND_SCREENER, self::KIND_WATCHLIST, self::KIND_WATCHLIST_PATTERN];
+
+    /** The pattern events a `watchlist_pattern` alert can notify, in canonical order. */
+    public const PATTERN_EVENTS = ['appears', 'confirmed'];
 
     /**
      * Get the attributes that should be cast.
@@ -40,6 +46,8 @@ class Alert extends Model
     {
         return [
             'signal_types' => 'array',
+            'pattern_types' => 'array',
+            'pattern_events' => 'array',
             'active' => 'boolean',
             'last_evaluated_as_of' => 'date',
             'last_state' => 'array',

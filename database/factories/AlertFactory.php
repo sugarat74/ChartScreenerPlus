@@ -26,4 +26,20 @@ class AlertFactory extends Factory
             'active' => true,
         ];
     }
+
+    /**
+     * A Watchlist pattern alert (alerts-patterns).
+     *
+     * @param  list<string>  $types
+     * @param  list<string>  $events
+     */
+    public function watchlistPattern(array $types = ['double_bottom'], array $events = ['confirmed']): static
+    {
+        return $this->state(fn (): array => [
+            'kind' => Alert::KIND_WATCHLIST_PATTERN,
+            'signal_types' => null,
+            'pattern_types' => $types,
+            'pattern_events' => $events,
+        ]);
+    }
 }

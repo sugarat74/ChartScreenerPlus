@@ -1174,15 +1174,22 @@
       "alerts-ui",
       "chart-patterns-detect"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Appears/confirmed events notify once per as-of; persisting patterns do not notify again; disappearance never notifies",
       "Unknown types/events 422; ownership and limits as alerts-engine",
       "Watchlist alert form gets pattern chips and the event choice; notifications render pattern label/status and link to the chart; es/en",
       ".\\init.ps1 and CI pass"
     ],
-    "evidence": [],
-    "notes": "Added 2026-10-12 at user request, to develop after alerts-ui. Spec: docs/specs/alerts-patterns.md. Saved Screener alerts already cover pattern filters through screener_new_candidates."
+    "evidence": [
+      "2026-10-14 implementer: new kind watchlist_pattern (migration 2026_10_14_000003 adds alerts.pattern_types/pattern_events JSON; up/down/up OK on SQLite; no local PostgreSQL, relies on CI test-pgsql). AlertEvaluator uses an explicit match on kind; pattern state {patterns: {TICKER: {type: {start, status}}}}, identity type + start_date, appears/confirmed/merge rules per spec; items add status and breakout_level",
+      "PHP: AlertPatternEvaluationTest 7 tests + AlertsApiTest 4 new tests; alert filter 29 passed (278 assertions); AlertEvaluationTest and existing AlertsApiTest tests unchanged and green",
+      "Vitest 128 passed (8 new: WatchlistPatternAlertForm 5, NotificationsPage 2, PortalAlerts 1); lint and build clean",
+      ".\\init.ps1 exit 0: Laravel 297 passed / 6 skipped (2691 assertions), SPA lint + 128 tests + build, engine 67 passed",
+      "Playwright + Edge, local stack (Laravel :8131, Vite :5195, throwaway QA sqlite) 36/36: Visitor redirect and 401; Portal pattern card create/duplicate 422 inline/pause/resume/delete/recreate, disabled save, es/en, 390 px 0 px overflow; alerts:evaluate baseline then '1 notified' then '1 already evaluated'; inbox 'Patrones en tu Watchlist' with MSFT appears, NVDA double bottom confirmed (Ruptura 123,45), NVDA bull flag appears, AAPL disappearance and unfollowed TSLA silent; link opens /instruments/NVDA with the pattern drawn; English; inbox 390 px; reappearance with new start notifies (day 3)",
+      "2026-10-14 independent validator ACCEPT: init.ps1 exit 0 (Laravel 297/6 skipped, 128 Vitest, engine 67); upgrade path from base 1514730 (old-kind alerts evaluated, then migrate, then new code) left existing alert rows and notification data byte-identical, migration down/up kept rows; 7 as-of dates with alerts:evaluate twice each (baseline silent, forming->confirmed once, persistence silent, new start_date and reappearance notify, disappearance silent, unchosen types and unfollowed instruments ignored, newly followed ticker notifies, idempotent re-runs); real HTTP 401/404/422 (duplicate, limit, unknown types/events, cross-kind fields) localized es/en; Playwright+Edge Portal card states, inbox chips and chart link, es/en, 390 px, Visitor redirect. Follow-up applied: Spanish/English attribute names for signal_types and saved_screener_id."
+    ],
+    "notes": "Added 2026-10-12 at user request, to develop after alerts-ui. Spec rewritten 2026-10-14 as a full implementation spec (new kind watchlist_pattern; backend + frontend): docs/specs/alerts-patterns.md. Saved Screener alerts already cover pattern filters through screener_new_candidates."
   },
   {
     "id": "how-it-works-manual",

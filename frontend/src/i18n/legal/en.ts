@@ -33,7 +33,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'Alerts and notifications',
         paragraphs: [
-          'If you create alerts we store their settings (the Saved Screener or the signal types you choose for your Watchlist) and, after each daily data update, the notifications listing the instruments that triggered them.',
+          'If you create alerts we store their settings (the Saved Screener or the signal or pattern types you choose for your Watchlist) and, after each daily data update, the notifications listing the instruments that triggered them.',
         ],
         items: [
           'Purpose: to let you know inside Chartiko about the changes you asked to follow.',

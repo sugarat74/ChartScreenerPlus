@@ -16,6 +16,7 @@ import { useAuth } from '../auth/useAuth.ts'
 import PortalSavedScreeners from '../components/portal/PortalSavedScreeners.tsx'
 import { usePortalAlerts } from '../components/portal/usePortalAlerts.ts'
 import WatchlistAlertForm from '../components/portal/WatchlistAlertForm.tsx'
+import WatchlistPatternAlertForm from '../components/portal/WatchlistPatternAlertForm.tsx'
 import WatchlistTable from '../components/watchlist/WatchlistTable.tsx'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, watchlistApi } from '../lib/api.ts'
@@ -203,6 +204,7 @@ function PortalContent() {
   const { t } = useI18n()
   const alerts = usePortalAlerts()
   const watchlistAlert = alerts.alerts.find((alert) => alert.kind === 'watchlist_signal')
+  const patternAlert = alerts.alerts.find((alert) => alert.kind === 'watchlist_pattern')
   const alertsUnavailable = alerts.loading || alerts.error !== null
 
   return (
@@ -259,6 +261,14 @@ function PortalContent() {
             // Remount once the list has loaded so the form starts from the saved types.
             key={alerts.loading ? 'loading' : 'ready'}
             alert={watchlistAlert}
+            disabled={alertsUnavailable}
+            onSaved={alerts.upsert}
+            onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}
+          />
+          <WatchlistPatternAlertForm
+            // Remount once the list has loaded so the form starts from the saved choice.
+            key={alerts.loading ? 'pattern-loading' : 'pattern-ready'}
+            alert={patternAlert}
             disabled={alertsUnavailable}
             onSaved={alerts.upsert}
             onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}

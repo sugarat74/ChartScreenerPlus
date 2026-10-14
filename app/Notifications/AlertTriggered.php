@@ -15,7 +15,10 @@ use Illuminate\Notifications\Notification;
 class AlertTriggered extends Notification
 {
     /**
-     * @param  list<array{ticker: string, name: string|null, reason: string}>  $items
+     * Pattern alerts (`watchlist_pattern`) add `status` and `breakout_level`
+     * to each item and use `reason` = `pattern:<type>:<appears|confirmed>`.
+     *
+     * @param  list<array{ticker: string, name: string|null, reason: string, status?: string, breakout_level?: float}>  $items
      */
     public function __construct(
         public readonly int $alertId,

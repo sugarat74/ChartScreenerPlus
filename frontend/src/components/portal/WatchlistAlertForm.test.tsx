@@ -14,7 +14,7 @@ vi.mock('../../lib/api.ts', async (importOriginal) => {
 })
 
 const existing: Alert = {
-  id: 5, kind: 'watchlist_signal', saved_screener: null, signal_types: ['golden_cross', 'rsi_oversold'],
+  id: 5, kind: 'watchlist_signal', saved_screener: null, signal_types: ['golden_cross', 'rsi_oversold'], pattern_types: null, pattern_events: null,
   active: true, last_evaluated_as_of: null, created_at: null,
 }
 
