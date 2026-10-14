@@ -1,5 +1,11 @@
 # Progress Log
 
+## Harness session context repair — 2026-10-14
+
+- Repair of `harness-session-context` after the validator returned `revise`. In `scripts/harness-context.ps1`, a missing or null `depends_on` no longer reports a feature as blocked with an empty list. Both Git calls now use `--no-optional-locks`, so the hook no longer rewrites `.git\index`. A `passing` feature always appears under "Awaiting independent validation", with any unaccepted deps noted, and is never listed as ready. Blocked features and risks now end with "... and N more" when more than 3 exist.
+- Verification: an external temporary fixture (UTF-8 accents, CRLF, dirty tree, a tracked file with a touched mtime) gave the expected output. `no-deps-key` was ready, then `null-deps` once the first was accepted. `ghost` stayed blocked, `passing-blocked` was queued with its deps, there were 5 blocked with "... and 2 more", 5 risks with "... and 2 more", and `.git\index` was unchanged (a plain `git status` control did rewrite it). The old script misreported the same fixture. The live run passed with exit 0 and `init.ps1` exit 0 (Laravel 286 passed / 6 skipped, 120 Vitest tests, engine 67 passed). Fixtures were deleted afterwards.
+- Independent revalidation: ACCEPT (fixture cases, `.git\index` unchanged, live run and `init.ps1` re-run by the validator). Status `accepted`.
+
 ## How-it-works Signal images repair — 2026-10-14
 
 - Repair of `how-it-works-signal-images` after the validator returned `revise`. In `TechnicalExample.tsx`, the `pivotBreakoutRvol` diagram (and the live indicator diagram `pivot`, which had the same defect) showed the next-to-last close already above the pivot. Now only the last close is above the pivot and carries the marker. An earlier high at y=61 sets the level. Breakout volume bars are aligned one-to-one with the closes, and the highlighted last bar is ≥ 2× the mean of the earlier bars. Optional nits applied: golden/death and MACD crosses now land in the last session region, and the MACD bearish cross is off the zero line. Alt texts, routes, engine and API are unchanged.

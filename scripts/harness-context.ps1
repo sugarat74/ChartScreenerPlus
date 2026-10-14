@@ -32,13 +32,16 @@ $blocked = @()
 foreach ($feature in $features) {
     if ($feature.status -eq 'accepted') { continue }
 
-    $unacceptedDependencies = @($feature.depends_on | Where-Object {
+    # A missing or null depends_on pipes a single $null under PS 5.1; drop empty entries first.
+    $dependencies = @($feature.depends_on | Where-Object { $null -ne $_ -and [string]$_ -ne '' })
+    $unacceptedDependencies = @($dependencies | Where-Object {
         -not $byId.ContainsKey([string]$_) -or $byId[[string]$_].status -ne 'accepted'
     })
-    if ($unacceptedDependencies.Count -gt 0) {
+    if ($feature.status -eq 'passing') {
+        # Always visible in the validation queue, even with unaccepted dependencies; never "ready".
+        $awaitingValidation += [pscustomobject]@{ id = $feature.id; dependencies = $unacceptedDependencies }
+    } elseif ($unacceptedDependencies.Count -gt 0) {
         $blocked += [pscustomobject]@{ id = $feature.id; dependencies = $unacceptedDependencies }
-    } elseif ($feature.status -eq 'passing') {
-        $awaitingValidation += $feature
     } else {
         $ready += $feature
     }
@@ -62,10 +65,11 @@ foreach ($line in $progressLines) {
 $branch = '(not a Git repository)'
 $changes = @()
 if ((Test-Path -LiteralPath (Join-Path $root '.git')) -and (Get-Command git -ErrorAction SilentlyContinue)) {
-    $branchResult = & git -C $root branch --show-current 2>$null
+    # --no-optional-locks keeps "git status" from refreshing/rewriting .git\index (read-only hook).
+    $branchResult = & git -C $root --no-optional-locks branch --show-current 2>$null
     if ($LASTEXITCODE -eq 0) {
         $branch = if ($branchResult) { [string]$branchResult } else { '(detached HEAD)' }
-        $changes = @(& git -C $root status --short --untracked-files=normal 2>$null)
+        $changes = @(& git -C $root --no-optional-locks status --short --untracked-files=normal 2>$null)
     }
 }
 
@@ -81,7 +85,10 @@ if ($verificationHeading) {
 }
 
 if ($awaitingValidation.Count -gt 0) {
-    Write-Output "Awaiting independent validation: $((@($awaitingValidation | ForEach-Object { $_.id }) -join ', '))"
+    $queue = @($awaitingValidation | ForEach-Object {
+        if ($_.dependencies.Count -gt 0) { "$($_.id) (unaccepted deps: $($_.dependencies -join ', '))" } else { [string]$_.id }
+    })
+    Write-Output "Awaiting independent validation: $($queue -join ', ')"
 } else {
     Write-Output 'Awaiting independent validation: none'
 }
@@ -95,6 +102,7 @@ if ($blocked.Count -gt 0) {
     foreach ($item in ($blocked | Select-Object -First 3)) {
         Write-Output "  $($item.id): waiting for $($item.dependencies -join ', ')"
     }
+    if ($blocked.Count -gt 3) { Write-Output "  ... and $($blocked.Count - 3) more" }
 }
 
 if (Test-Path -LiteralPath $risksPath -PathType Leaf) {
@@ -111,6 +119,8 @@ if (Test-Path -LiteralPath $risksPath -PathType Leaf) {
         }
     }
     if ($riskTitles.Count -gt 0) {
-        Write-Output "Open risks (docs/risks-and-open-questions.md): $($($riskTitles | Select-Object -First 3) -join '; ')"
+        $riskSummary = @($riskTitles | Select-Object -First 3) -join '; '
+        if ($riskTitles.Count -gt 3) { $riskSummary += "; ... and $($riskTitles.Count - 3) more" }
+        Write-Output "Open risks (docs/risks-and-open-questions.md): $riskSummary"
     }
 }

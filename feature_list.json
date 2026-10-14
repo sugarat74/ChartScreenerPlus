@@ -1314,7 +1314,7 @@
     "title": "Read-only session-start context hook",
     "user_visible_behavior": "A development agent runs one PowerShell command at session start to see Git state, latest recorded verification, dependency-ready work, validation queue, blocked work and open risks.",
     "depends_on": [],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "PowerShell 5.1 script reads repository state without writing files or accessing the network",
       "Selects the first implementation-ready unfinished feature in list order, keeps passing features separate and requires accepted dependencies",
@@ -1322,8 +1322,10 @@
       "AGENTS.md startup workflow invokes the hook and retains init.ps1 as the full verification gate"
     ],
     "evidence": [
-      "2026-10-12: init.ps1 baseline passed (Laravel 268 passed / 6 skipped, SPA lint, 72 Vitest tests and build, engine 67 passed); script run against the live repository selected admin-ops-mcp and identified alerts-email-digest and alerts-patterns as blocked by alerts-ui; isolated fixture selected ready-work, separated needs-review (passing) and blocked its dependent feature."
+      "2026-10-12: init.ps1 baseline passed (Laravel 268 passed / 6 skipped, SPA lint, 72 Vitest tests and build, engine 67 passed); script run against the live repository selected admin-ops-mcp and identified alerts-email-digest and alerts-patterns as blocked by alerts-ui; isolated fixture selected ready-work, separated needs-review (passing) and blocked its dependent feature.",
+      "2026-10-14 repair after validator revise: missing/null depends_on treated as [] (fixture selected no-deps-key, then null-deps; ghost dependency stays blocked); git calls use --no-optional-locks (.git\\index LastWriteTime unchanged after a run with a touched tracked file); passing features always listed for validation with unaccepted deps annotated; blocked and risk lists show '... and N more'. UTF-8 accents/CRLF fixture output correct; live run exit 0; init.ps1 exit 0.",
+      "2026-10-14 independent validator: first pass REVISE (null/missing depends_on reported blocked, git status rewrote .git\\index, passing features with unaccepted deps hidden from the validation queue, capped lists without remainder), then ACCEPT after repair: re-ran its own fixture (UTF-8/CRLF/ñ ids, 12 features, 5 risks, dirty tree, touched tracked file), .git\\index timestamp unchanged (plain git status control rewrote it), live run with git status --porcelain=v2 --ignored identical before and after, init.ps1 exit 0 (Laravel 286/6 skipped, 120 Vitest, engine 67)."
     ],
-    "notes": "Harness maintenance requested by the user. The hook is invoked by the AGENTS.md startup workflow; it is a read-only PowerShell entry point, not a product feature. Independent validation is still needed before accepted."
+    "notes": "Harness maintenance requested by the user. The hook is invoked by the AGENTS.md startup workflow; it is a read-only PowerShell entry point, not a product feature. Independently accepted 2026-10-14 after one repair."
   }
 ]
