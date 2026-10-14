@@ -20,11 +20,11 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); window.localStorage.clear() }
 it('requires explicit confirmation and sends selected tickers and bar count', async () => {
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   vi.mocked(forecastBacktestApi.start).mockResolvedValue({
-    id: 1, tickers: ['AAPL', 'MSFT'], bars_requested: 30, status: 'queued',
+    id: 1, tickers: ['AAPL', 'MSFT'], bars_requested: 30, model_version: 'jev-1.13.0', question_version: 'close-direction-v1', status: 'queued',
     total: 60, processed: 0, correct: 0, skipped: 0, accuracy: null, created_at: '2026-10-14',
   })
   vi.mocked(forecastBacktestApi.get).mockResolvedValue({
-    id: 1, tickers: ['AAPL', 'MSFT'], bars_requested: 30, status: 'queued',
+    id: 1, tickers: ['AAPL', 'MSFT'], bars_requested: 30, model_version: 'jev-1.13.0', question_version: 'close-direction-v1', status: 'queued',
     total: 60, processed: 0, correct: 0, skipped: 0, accuracy: null, created_at: '2026-10-14', cases: [],
   })
   render(<I18nProvider><AdminBacktestingPage /></I18nProvider>)

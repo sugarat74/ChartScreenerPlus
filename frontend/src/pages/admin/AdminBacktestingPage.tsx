@@ -15,6 +15,12 @@ const reasonKey: Record<string, MessageKey> = {
   busy: 'backtesting.providerUnavailable',
   internal_error: 'backtesting.internalError',
   worker_failed: 'backtesting.internalError',
+  version_changed: 'backtesting.versionChanged',
+  dispatch_failed: 'backtesting.dispatchFailed',
+}
+const statusKey: Record<ForecastBacktestRun['status'], MessageKey> = {
+  queued: 'backtesting.statusQueued', running: 'backtesting.statusRunning',
+  completed: 'backtesting.statusCompleted', failed: 'backtesting.statusFailed',
 }
 
 export default function AdminBacktestingPage() {
@@ -44,7 +50,7 @@ export default function AdminBacktestingPage() {
       void forecastBacktestApi.get(selectedId).then((result) => {
         if (!active) return
         setRun(result)
-        if (result.status === 'completed') {
+        if (result.status === 'completed' || result.status === 'failed') {
           window.clearInterval(timer)
           void forecastBacktestApi.list().then((list) => { if (active) setRuns(list) })
         }
@@ -78,6 +84,7 @@ export default function AdminBacktestingPage() {
   }
 
   const accuracy = run?.accuracy === null || run === null ? '—' : `${(run.accuracy * 100).toFixed(1)}%`
+  const statusLabel = (status: ForecastBacktestRun['status']) => t(statusKey[status])
 
   return <div className="flex flex-col gap-5">
     <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
@@ -90,7 +97,7 @@ export default function AdminBacktestingPage() {
         <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="backtest-bars">{t('backtesting.bars')}
           <input id="backtest-bars" className="w-28 rounded border-2 border-outline bg-surface-bright p-2 font-mono text-sm" type="number" min="1" max="100" value={bars} onChange={(event) => setBars(Number(event.target.value))} required />
         </label>
-        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase shadow-[2px_2px_0px_#1a1a1a] disabled:opacity-50" type="submit" disabled={starting || runs.some((item) => item.status !== 'completed')}>
+        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase shadow-[2px_2px_0px_#1a1a1a] disabled:opacity-50" type="submit" disabled={starting || runs.some((item) => item.status === 'queued' || item.status === 'running')}>
           {starting ? t('common.loading') : t('backtesting.start')}
         </button>
       </form>
@@ -100,10 +107,11 @@ export default function AdminBacktestingPage() {
     {runs.length > 0 ? <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
       <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="backtest-run">{t('backtesting.runs')}
         <select id="backtest-run" className="mt-1 rounded border-2 border-outline bg-surface-bright p-2 font-mono text-sm" value={selectedId ?? ''} onChange={(event) => setSelectedId(Number(event.target.value))}>
-          {runs.map((item) => <option key={item.id} value={item.id}>#{item.id} · {item.tickers.join(', ')} · {item.bars_requested} · {item.status}</option>)}
+          {runs.map((item) => <option key={item.id} value={item.id}>#{item.id} · {item.tickers.join(', ')} · {item.bars_requested} · {statusLabel(item.status)}</option>)}
         </select>
       </label>
       {run ? <>
+        <p className="mt-3 font-mono text-xs">{run.model_version} · {run.question_version} · {statusLabel(run.status)}</p>
         <div className="mt-4 flex flex-wrap gap-4 font-mono text-sm">
           <span>{t('backtesting.progress')}: {run.processed + run.skipped}/{run.total}</span>
           <span>{t('backtesting.correct')}: {run.correct}/{run.processed}</span>

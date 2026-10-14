@@ -18,6 +18,8 @@ export const es = {
     predicted: 'Predicción', observed: 'Resultado real', result: 'Evaluación', hit: 'Acierto', miss: 'Fallo', queued: 'Pendiente', omitted: 'Omitido',
     missingTarget: 'Falta el cierre objetivo', insufficientData: 'Historial o indicadores insuficientes',
     calendarUnavailable: 'Calendario no disponible', providerUnavailable: 'Jev no disponible', internalError: 'Error de ejecución',
+    versionChanged: 'Versión del experimento cambiada', dispatchFailed: 'Fallo al iniciar la cola',
+    statusQueued: 'En cola', statusRunning: 'En curso', statusCompleted: 'Completada', statusFailed: 'Fallida',
   },
   forecast: {
     title: 'Pronóstico Jev',

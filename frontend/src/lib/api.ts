@@ -685,7 +685,9 @@ export type ForecastBacktestRun = {
   id: number
   tickers: string[]
   bars_requested: number
-  status: 'queued' | 'running' | 'completed'
+  model_version: string
+  question_version: string
+  status: 'queued' | 'running' | 'completed' | 'failed'
   total: number
   processed: number
   correct: number

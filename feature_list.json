@@ -1275,7 +1275,7 @@
       "Spanish and English Admin tab and standard init.ps1 gate pass"
     ],
     "evidence": [
-      "2026-10-14: baseline init.ps1 passed before edits (276 Laravel passed/6 skipped, 89 SPA, engine 67). Focused ForecastBacktestTest 4/4 (30 assertions) and AdminBacktestingPage tests 2/2 passed. Post-change init.ps1 exit 0: Laravel 280 passed/6 skipped (2476 assertions), SPA lint/build and 91 tests, engine 67 passed. Provider calls used only fakes; no paid historical run started."
+      "2026-10-14: baseline init.ps1 passed before edits (276 Laravel passed/6 skipped, 89 SPA, engine 67). Initial post-change init.ps1 passed (Laravel 280/6 skipped, SPA 91, engine 67); PR #30 SQLite and PostgreSQL checks passed. Independent review returned revise for unpinned model/question and dispatch failure recovery. Both were repaired; focused Laravel 6/6 (46 assertions) and SPA page 2/2 passed. After repair init.ps1 exit 0: Laravel 282 passed/6 skipped (2492 assertions), SPA lint/build and 91 tests, engine 67 passed. Provider calls used only fakes; no paid historical run started."
     ],
     "notes": "User-requested 2026-10-14. Historical direction-class evaluation only; 1–5 tickers, 1–100 recent reference bars each, one-session horizon. Provider calls require explicit Admin confirmation and may incur cost. Local branch feature/jev-backtesting; independent validation and deployment pending."
   }

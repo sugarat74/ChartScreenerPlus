@@ -10,7 +10,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ForecastBacktestController extends Controller
 {
@@ -52,7 +54,11 @@ class ForecastBacktestController extends Controller
         if ($instruments->count() !== count($tickers)) {
             throw ValidationException::withMessages(['tickers' => [__('forecast.backtest_unknown_ticker')]]);
         }
-        if (! config('forecast.enabled') || ! config('forecast.rights_verified') || ! config('forecast.api_key')) {
+        $model = config('forecast.model');
+        $question = config('forecast.question_version');
+        if (! config('forecast.enabled') || ! config('forecast.rights_verified') || ! config('forecast.api_key')
+            || ! is_string($model) || ! preg_match('/^jev-[0-9][a-zA-Z0-9.\-]*$/', $model)
+            || ! is_string($question) || $question === '') {
             return response()->json(['message' => __('forecast.provider_not_configured')], 503);
         }
 
@@ -64,11 +70,13 @@ class ForecastBacktestController extends Controller
             if (ForecastBacktestRun::query()->whereIn('status', ['queued', 'running'])->exists()) {
                 throw ValidationException::withMessages(['bars' => [__('forecast.backtest_active')]]);
             }
-            $run = DB::transaction(function () use ($request, $tickers, $instruments, $validated): ForecastBacktestRun {
+            $run = DB::transaction(function () use ($request, $tickers, $instruments, $validated, $model, $question): ForecastBacktestRun {
                 $run = ForecastBacktestRun::create([
                     'requested_by' => $request->user()->id,
                     'tickers' => $tickers,
                     'bars_requested' => $validated['bars'],
+                    'model_version' => $model,
+                    'question_version' => $question,
                     'status' => 'queued',
                 ]);
                 foreach ($tickers as $ticker) {
@@ -91,8 +99,19 @@ class ForecastBacktestController extends Controller
             if ($run->total === 0) {
                 $run->update(['status' => 'completed']);
             } else {
-                foreach ($run->cases()->pluck('id') as $caseId) {
-                    RunForecastBacktestCase::dispatch($caseId);
+                $caseIds = $run->cases()->pluck('id');
+                try {
+                    foreach ($caseIds as $caseId) {
+                        RunForecastBacktestCase::dispatch($caseId);
+                    }
+                } catch (Throwable $exception) {
+                    Log::error('Forecast backtest queue dispatch failed', ['run_id' => $run->id, 'type' => get_class($exception)]);
+                    // Already dispatched cases may still execute. Mark every
+                    // queued case terminal; their jobs then become no-ops.
+                    foreach ($caseIds as $caseId) {
+                        (new RunForecastBacktestCase($caseId))->markDispatchFailed();
+                    }
+                    $run->update(['status' => 'failed']);
                 }
             }
 
@@ -106,6 +125,7 @@ class ForecastBacktestController extends Controller
     {
         return [
             'id' => $run->id, 'tickers' => $run->tickers, 'bars_requested' => $run->bars_requested,
+            'model_version' => $run->model_version, 'question_version' => $run->question_version,
             'status' => $run->status, 'total' => $run->total, 'processed' => $run->processed,
             'correct' => $run->correct, 'skipped' => $run->skipped,
             'accuracy' => $run->processed ? $run->correct / $run->processed : null,

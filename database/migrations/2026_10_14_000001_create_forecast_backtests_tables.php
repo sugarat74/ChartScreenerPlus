@@ -13,6 +13,8 @@ return new class extends Migration
             $table->foreignId('requested_by')->constrained('users')->cascadeOnDelete();
             $table->json('tickers');
             $table->unsignedSmallInteger('bars_requested');
+            $table->string('model_version', 80);
+            $table->string('question_version', 80);
             $table->string('status', 16)->default('queued');
             $table->unsignedInteger('total')->default(0);
             $table->unsignedInteger('processed')->default(0);

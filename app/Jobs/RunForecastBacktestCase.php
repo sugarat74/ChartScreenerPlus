@@ -34,6 +34,11 @@ class RunForecastBacktestCase implements ShouldQueue
         }
         $case->run()->where('status', 'queued')->update(['status' => 'running']);
         try {
+            if (config('forecast.model') !== $case->run->model_version
+                || config('forecast.question_version') !== $case->run->question_version) {
+                $this->finish('skipped', ['reason' => 'version_changed']);
+                return;
+            }
             $date = $case->as_of_date->format('Y-m-d');
             $targetDate = $builder->targetDate($date, 1);
             $targetBar = $case->instrument->dailyBars()->whereDate('date', $targetDate)->first();
@@ -68,6 +73,11 @@ class RunForecastBacktestCase implements ShouldQueue
     public function failed(?Throwable $exception): void
     {
         $this->finish('skipped', ['reason' => 'worker_failed']);
+    }
+
+    public function markDispatchFailed(): void
+    {
+        $this->finish('skipped', ['reason' => 'dispatch_failed']);
     }
 
     /** @param array<string, mixed> $fields */

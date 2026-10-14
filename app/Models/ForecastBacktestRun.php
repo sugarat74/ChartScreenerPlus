@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['requested_by', 'tickers', 'bars_requested', 'status', 'total', 'processed', 'correct', 'skipped'])]
+#[Fillable(['requested_by', 'tickers', 'bars_requested', 'model_version', 'question_version', 'status', 'total', 'processed', 'correct', 'skipped'])]
 class ForecastBacktestRun extends Model
 {
     protected function casts(): array

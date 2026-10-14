@@ -15,6 +15,8 @@ export const en: Messages = {
     predicted: 'Prediction', observed: 'Actual outcome', result: 'Evaluation', hit: 'Hit', miss: 'Miss', queued: 'Queued', omitted: 'Skipped',
     missingTarget: 'Target close missing', insufficientData: 'Insufficient history or indicators',
     calendarUnavailable: 'Calendar unavailable', providerUnavailable: 'Jev unavailable', internalError: 'Execution error',
+    versionChanged: 'Experiment version changed', dispatchFailed: 'Queue dispatch failed',
+    statusQueued: 'Queued', statusRunning: 'Running', statusCompleted: 'Completed', statusFailed: 'Failed',
   },
   forecast: {
     title: 'Jev forecast',

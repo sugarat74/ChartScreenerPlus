@@ -129,4 +129,53 @@ class ForecastBacktestTest extends TestCase
         Http::assertSentCount(1);
         $this->assertDatabaseHas('forecast_backtest_cases', ['run_id' => $runId, 'reason' => 'missing_target_bar']);
     }
+
+    public function test_model_change_between_jobs_skips_remaining_cases_without_mixing_versions(): void
+    {
+        $this->instrument();
+        config()->set('forecast.enabled', true);
+        config()->set('forecast.rights_verified', true);
+        config()->set('forecast.api_key', 'fixture-key');
+        config()->set('forecast.model', 'jev-1.13.0');
+        Bus::fake([RunForecastBacktestCase::class]);
+        $this->actingAs($this->admin());
+        $runId = $this->postJson('/api/admin/forecasts/backtests', ['tickers' => ['TEST'], 'bars' => 2])
+            ->assertStatus(202)->assertJsonPath('run.model_version', 'jev-1.13.0')->json('run.id');
+        $caseIds = ForecastBacktestCase::query()->where('run_id', $runId)->orderBy('id')->pluck('id');
+        Http::fake(['api.typesafe.ai/*' => Http::response([
+            'model' => 'jev-1.13.0',
+            'answers' => ['direction' => ['type' => 'choice', 'choice' => 'up', 'probabilities' => ['up' => .7, 'down' => .2, 'flat' => .1]]],
+        ])]);
+        app()->call([new RunForecastBacktestCase($caseIds[0]), 'handle']);
+        config()->set('forecast.model', 'jev-1.14.0');
+        app()->call([new RunForecastBacktestCase($caseIds[1]), 'handle']);
+        $this->getJson("/api/admin/forecasts/backtests/{$runId}")
+            ->assertOk()->assertJsonPath('run.model_version', 'jev-1.13.0')
+            ->assertJsonPath('run.processed', 1)->assertJsonPath('run.skipped', 1)
+            ->assertJsonPath('run.status', 'completed');
+        $this->assertDatabaseHas('forecast_backtest_cases', ['id' => $caseIds[1], 'reason' => 'version_changed']);
+        Http::assertSentCount(1);
+    }
+
+    public function test_queue_dispatch_failure_terminates_run_and_allows_a_new_one(): void
+    {
+        $this->instrument();
+        config()->set('forecast.enabled', true);
+        config()->set('forecast.rights_verified', true);
+        config()->set('forecast.api_key', 'fixture-key');
+        config()->set('forecast.model', 'jev-1.13.0');
+        $this->actingAs($this->admin());
+        $dispatches = 0;
+        Bus::shouldReceive('dispatch')->twice()->andReturnUsing(function () use (&$dispatches): void {
+            if (++$dispatches === 2) {
+                throw new \RuntimeException('queue unavailable');
+            }
+        });
+        $first = $this->postJson('/api/admin/forecasts/backtests', ['tickers' => ['TEST'], 'bars' => 2]);
+        $first->assertStatus(202)->assertJsonPath('run.status', 'failed')->assertJsonPath('run.skipped', 2);
+        $this->assertDatabaseHas('forecast_backtest_cases', ['run_id' => $first->json('run.id'), 'reason' => 'dispatch_failed']);
+        Bus::fake([RunForecastBacktestCase::class]);
+        $this->postJson('/api/admin/forecasts/backtests', ['tickers' => ['TEST'], 'bars' => 2])
+            ->assertStatus(202)->assertJsonPath('run.status', 'queued');
+    }
 }
