@@ -670,6 +670,49 @@ export const forecastApi = {
   },
 }
 
+export type ForecastBacktestCase = {
+  ticker: string
+  as_of_date: string
+  target_date: string | null
+  status: 'queued' | 'completed' | 'skipped'
+  predicted_class: 'up' | 'down' | 'flat' | null
+  observed_class: 'up' | 'down' | 'flat' | null
+  probabilities: { up: number; down: number; flat: number } | null
+  reason: string | null
+}
+
+export type ForecastBacktestRun = {
+  id: number
+  tickers: string[]
+  bars_requested: number
+  status: 'queued' | 'running' | 'completed'
+  total: number
+  processed: number
+  correct: number
+  skipped: number
+  accuracy: number | null
+  created_at: string
+  cases?: ForecastBacktestCase[]
+}
+
+export const forecastBacktestApi = {
+  async list(): Promise<ForecastBacktestRun[]> {
+    const payload = await request<{ runs: ForecastBacktestRun[] }>('/api/admin/forecasts/backtests')
+    return payload.runs
+  },
+  async get(id: number): Promise<ForecastBacktestRun> {
+    const payload = await request<{ run: ForecastBacktestRun }>(`/api/admin/forecasts/backtests/${id}`)
+    return payload.run
+  },
+  async start(tickers: string[], bars: number): Promise<ForecastBacktestRun> {
+    await ensureCsrfCookie()
+    const payload = await request<{ run: ForecastBacktestRun }>('/api/admin/forecasts/backtests', {
+      method: 'POST', body: JSON.stringify({ tickers, bars }),
+    })
+    return payload.run
+  },
+}
+
 /** One owned watchlist entry (same field set as the instrument-detail metadata). */
 export type WatchlistEntry = {
   ticker: string

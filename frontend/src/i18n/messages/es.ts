@@ -5,6 +5,20 @@
  * user-authored names are data, never catalog entries.
  */
 export const es = {
+  backtesting: {
+    nav: 'Backtesting', title: 'Prueba histórica de Jev',
+    description: 'Selecciona hasta 5 acciones y entre 1 y 100 barras recientes por acción. Cada barra se evalúa con los datos conocidos en su cierre y se compara con el cierre de la siguiente sesión. No se simulan operaciones ni rentabilidad.',
+    tickers: 'Tickers separados por coma', bars: 'Barras por acción', start: 'Iniciar prueba',
+    confirm: 'Esta prueba puede generar hasta {count} llamadas de pago a Jev. ¿Iniciarla?',
+    costNote: 'Los pronósticos ya guardados se reutilizan. Las llamadas nuevas pueden tener coste. La prueba se ejecuta en segundo plano.',
+    invalidSelection: 'Introduce de 1 a 5 tickers distintos y entre 1 y 100 barras.',
+    runs: 'Ejecuciones', progress: 'Procesados', correct: 'Aciertos', accuracy: 'Porcentaje de acierto', skipped: 'Omitidos',
+    denominator: 'El porcentaje usa solo casos con pronóstico y cierre posterior. Los casos omitidos no cuentan como aciertos ni fallos.',
+    ticker: 'Acción', reference: 'Fecha inicial', target: 'Fecha objetivo',
+    predicted: 'Predicción', observed: 'Resultado real', result: 'Evaluación', hit: 'Acierto', miss: 'Fallo', queued: 'Pendiente', omitted: 'Omitido',
+    missingTarget: 'Falta el cierre objetivo', insufficientData: 'Historial o indicadores insuficientes',
+    calendarUnavailable: 'Calendario no disponible', providerUnavailable: 'Jev no disponible', internalError: 'Error de ejecución',
+  },
   forecast: {
     title: 'Pronóstico Jev',
     experimental: 'Experimental',

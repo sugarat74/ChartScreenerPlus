@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import AppLayout from './layouts/AppLayout.tsx'
 import AdminPage from './pages/AdminPage.tsx'
+import AdminBacktestingPage from './pages/admin/AdminBacktestingPage.tsx'
 import AdminActivityPage from './pages/admin/AdminActivityPage.tsx'
 import AdminLayout from './pages/admin/AdminLayout.tsx'
 import AdminSessionsPage from './pages/admin/AdminSessionsPage.tsx'
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { index: true, element: <AdminPage /> },
+          { path: 'backtesting', element: <AdminBacktestingPage /> },
           { path: 'users', element: <AdminUsersPage /> },
           { path: 'users/:userId', element: <AdminUserDetailPage /> },
           { path: 'sessions', element: <AdminSessionsPage /> },
