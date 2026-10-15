@@ -14,6 +14,7 @@
 - **Ingestion Run (EOD Run):** one execution of the pipeline (scrape -> store Daily Bars -> compute Snapshots -> recompute Signals).
 - **Alert:** a Registered User's rule (new Candidates in a Saved Screener, chosen Signal types appearing on Watchlist Instruments, or chosen Chartist Pattern types appearing or being confirmed on Watchlist Instruments), evaluated once per daily data update.
 - **Notification:** what an Alert produces when it finds additions; owned by the user, kept 90 days.
+- **Company Card (Ficha IA):** an AI-generated, unverified sheet for one Instrument (sector/industry, description, key metrics with periods, qualitative 3-month outlook). Shared system data per Instrument, language and schema version; no owner. Each attempted generation leaves a Company Card Generation log row (requesting account, status, token counts; no text), kept 90 days.
 - **User:** Visitor (anonymous), Registered User, or Admin.
 
 ## Relationships
@@ -24,6 +25,7 @@
 - A **Screener** belongs to a **Universe** and references zero or one owner (Registered User) when saved.
 - A **Registered User** owns many **Saved Screeners**, many **Watchlist Entries**, up to 10 **Alerts** and their **Notifications**; deleting a Saved Screener deletes its Alert.
 - An **Ingestion Run** processes a whole **Universe** and produces Daily Bars, Snapshots and Signals.
+- An **Instrument** has many **Company Cards**, at most one per language and schema version.
 
 ## States and Lifecycles
 
@@ -41,6 +43,9 @@ Recomputed on every Ingestion Run. A Signal is not edited by users; it is derive
 
 **Chart Pattern**
 `forming -> confirmed`, recomputed on every run like Signals; it disappears when invalidated or 10 sessions after its breakout.
+
+**Company Card**
+`absent -> fresh -> stale -> fresh`. Generated on a Registered User's request; *fresh* while younger than the freshness window (7 days) and made with the current model and prompt version; a *stale* card is still shown until a successful regeneration replaces it (a failed one keeps it).
 
 ## Important Scenarios
 

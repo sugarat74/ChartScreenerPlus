@@ -64,6 +64,18 @@ export const legalEs: LegalTexts = {
         ],
       },
       {
+        heading: 'Funciones de IA',
+        paragraphs: [
+          'Si eres usuario registrado y pides generar una ficha de empresa con IA, el servidor envía a un proveedor externo de IA la identidad del instrumento (ticker, nombre de la empresa, sector y bolsa) y, solo si está habilitado, datos técnicos de mercado de Chartiko. No se envía ningún dato de tu cuenta (ni nombre, ni email, ni Watchlist, ni Screeners guardados). El proveedor se indicará aquí cuando se active la función; mientras no se active, no se envía nada. La ficha generada se comparte con todos los usuarios y no contiene datos personales.',
+          'Para controlar el coste y evitar abusos registramos cada generación solicitada: tu identificador de cuenta, el instrumento, la fecha, el resultado y el número de tokens consumidos, sin el texto enviado ni recibido.',
+        ],
+        items: [
+          'Finalidad: generar la ficha que pides, limitar el uso diario y prevenir abusos.',
+          'Base jurídica: ejecución de las condiciones de uso para generar la ficha (art. 6.1.b RGPD) e interés legítimo en controlar costes y prevenir abusos para el registro (art. 6.1.f RGPD).',
+          'Conservación: el registro de generaciones se borra automáticamente a los {aiCardLogDays} días.',
+        ],
+      },
+      {
         heading: 'Copias de seguridad',
         paragraphs: [
           'Hacemos una copia diaria de la base de datos para poder recuperar el servicio ante fallos. Se guarda con acceso restringido.',
@@ -141,6 +153,7 @@ export const legalEs: LegalTexts = {
         heading: 'No es asesoramiento de inversión',
         paragraphs: [
           'La información de Chartiko (Screener, candidatos, Signals y gráficos) se genera automáticamente a partir de datos de mercado e indicadores técnicos y tiene carácter exclusivamente informativo y educativo. No constituye asesoramiento en materia de inversión, recomendación personalizada ni oferta de compra o venta de instrumentos financieros.',
+          'Las fichas de empresa generadas con IA pueden contener errores o cifras desactualizadas y no están verificadas.',
           'Los datos pueden contener errores o retrasos. Las rentabilidades pasadas no garantizan resultados futuros e invertir conlleva riesgo de pérdida. Consulta a un profesional autorizado antes de tomar decisiones de inversión.',
         ],
       },

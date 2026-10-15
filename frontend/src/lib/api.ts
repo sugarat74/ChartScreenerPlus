@@ -73,12 +73,15 @@ export function isTerminalRunStatus(status: IngestionRunStatus): boolean {
 export class ApiError extends Error {
   readonly status: number
   readonly errors: ValidationErrors
+  /** Stable reason `code` from the JSON body, when the endpoint sends one. */
+  readonly code: string | null
 
-  constructor(status: number, message: string, errors: ValidationErrors = {}) {
+  constructor(status: number, message: string, errors: ValidationErrors = {}, code: string | null = null) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.errors = errors
+    this.code = code
   }
 }
 
@@ -129,7 +132,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const message =
       typeof payload?.message === 'string' ? payload.message : `Error ${response.status}`
     const errors = (payload?.errors ?? {}) as ValidationErrors
-    throw new ApiError(response.status, message, errors)
+    const code = typeof payload?.code === 'string' ? payload.code : null
+    throw new ApiError(response.status, message, errors, code)
   }
 
   return payload as T
@@ -641,6 +645,75 @@ export type Forecast = {
   experimental: true
 }
 
+/** Metric keys of `company-card-v1`, in display order. Units are fixed by key. */
+export const COMPANY_CARD_METRICS = [
+  'pe_ttm',
+  'pe_forward',
+  'roic_percent',
+  'ebitda_millions',
+  'ebitda_margin_percent',
+  'revenue_growth_yoy_percent',
+  'net_debt_to_ebitda',
+  'market_cap_millions',
+  'dividend_yield_percent',
+] as const
+
+export type CompanyCardMetricKey = (typeof COMPANY_CARD_METRICS)[number]
+
+export type CompanyCardMetric = { value: number | null; currency: string | null; period: string | null }
+
+/** Validated `company-card-v1` content (AI-generated, unverified). */
+export type CompanyCardContent = {
+  company: { name: string; ticker: string; sector: string | null; industry: string | null; description: string | null }
+  metrics: Record<CompanyCardMetricKey, CompanyCardMetric>
+  outlook: {
+    horizon_months: 3
+    stance: 'bullish' | 'neutral' | 'bearish'
+    summary: string
+    macro_context: string
+    sector_context: string
+    drivers: string[]
+    risks: string[]
+    confidence: 'low' | 'medium' | 'high'
+  }
+  data_as_of: string | null
+  limitations: string
+  sources: string[]
+}
+
+export type CompanyCard = {
+  ticker: string
+  locale: string
+  schema_version: string
+  model: string
+  /** ISO-8601 UTC instant. */
+  generated_at: string
+  /** False once older than the freshness window or made by another model/prompt. */
+  fresh: boolean
+  context_mode: 'identity' | 'identity+technical'
+  context_as_of_date: string | null
+  content: CompanyCardContent
+}
+
+/**
+ * AI Company Card (Registered Users only). `get` reads the stored card for the
+ * active language (plus whether generation is switched on) and never triggers
+ * generation; `generate` reuses a fresh
+ * card or asks the provider once. Errors carry a localized message; the
+ * stable `code` stays in the JSON body.
+ */
+export const companyCardApi = {
+  async get(ticker: string): Promise<{ card: CompanyCard | null; available: boolean }> {
+    return request<{ card: CompanyCard | null; available: boolean }>(`/api/instruments/${encodeURIComponent(ticker)}/company-card`)
+  },
+  async generate(ticker: string): Promise<{ card: CompanyCard; reused: boolean }> {
+    await ensureCsrfCookie()
+    return request<{ card: CompanyCard; reused: boolean }>(`/api/instruments/${encodeURIComponent(ticker)}/company-card`, {
+      method: 'POST',
+    })
+  },
+}
+
 export type ForecastReportGroup = {
   source: string
   horizon: number
@@ -901,6 +974,8 @@ export type LegalInfo = {
     backup_days: number
     server_log_days: number
     notification_days: number
+    /** Absent from older deployments. */
+    ai_card_log_days?: number
   }
 }
 

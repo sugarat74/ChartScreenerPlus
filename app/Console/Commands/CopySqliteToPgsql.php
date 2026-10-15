@@ -67,6 +67,9 @@ class CopySqliteToPgsql extends Command
         'forecast_predictions',
         'forecast_backtest_runs',
         'forecast_backtest_cases',
+        // AI Company Cards and their generation log postdate the cut-over.
+        'ai_company_cards',
+        'ai_company_card_generations',
     ];
 
     private const CHUNK = 500;

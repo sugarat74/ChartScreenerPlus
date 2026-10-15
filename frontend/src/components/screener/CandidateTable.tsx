@@ -1,7 +1,10 @@
 /**
- * Fixed-column Candidate table using the API's default ranking. The only
- * interactive element is the ticker link into the instrument chart; there are
- * no watchlist actions. Styling is DESIGN.md tokens only.
+ * Fixed-column Candidate table using the API's default ranking. The
+ * interactive elements are the ticker link into the instrument chart and a
+ * small "AI card" link to the same chart's Company Card panel
+ * (`#ai-company-card`); both only navigate, so the Screener stays anonymous
+ * (no `useAuth`) and nothing is generated from here. There are no watchlist
+ * actions. Styling is DESIGN.md tokens only.
  */
 
 import { Link } from 'react-router'
@@ -66,6 +69,13 @@ export default function CandidateTable({ candidates }: { candidates: ScreenerCan
                   <p className="max-w-56 truncate text-xs text-on-surface-variant">
                     {candidate.company}
                   </p>
+                  <Link
+                    to={`/instruments/${encodeURIComponent(candidate.ticker)}#ai-company-card`}
+                    aria-label={t('companyCard.candidateLinkAria', { ticker: candidate.ticker })}
+                    className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant underline underline-offset-2 hover:text-on-surface focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+                  >
+                    {t('companyCard.candidateLink')}
+                  </Link>
                 </th>
 
                 <td className="px-4 py-2 text-right font-mono text-xs text-on-surface">
