@@ -5,18 +5,20 @@
  * The page itself stays anonymous — it never calls `useAuth`, never redirects
  * and never prompts for login. The auth-aware elements (the watchlist toggle
  * in the header, the forecast panel and the AI Company Card panel) read the
- * session inside the component and offer a Visitor only a plain sign-in link
- * (never a redirect), so the chart remains browseable. A `#ai-company-card`
- * hash (the Candidate row "AI card" link) scrolls to that panel once the
- * chart is ready. The page consumes the frozen
+ * already bootstrapped session inside the component: the watchlist toggle
+ * offers a Visitor a plain sign-in link, while the forecast and Company Card
+ * panels render nothing for a Visitor or while auth is loading (never a
+ * redirect or prompt), so the chart remains browseable. The Company Card
+ * panel itself handles the `#ai-company-card` deep-link scroll (the Candidate
+ * row "AI card" link). The page consumes the frozen
  * `GET /api/instruments/{ticker}?limit=252` payload and owns loading / ready /
  * insufficient-history / empty / not-found / error states; the chart itself is
  * presentational.
  */
 
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router'
-import CompanyCardPanel, { COMPANY_CARD_ANCHOR } from '../components/chart/CompanyCardPanel.tsx'
+import { Link, useParams } from 'react-router'
+import CompanyCardPanel from '../components/chart/CompanyCardPanel.tsx'
 import PatternPanel from '../components/chart/PatternPanel.tsx'
 import ForecastPanel from '../components/chart/ForecastPanel.tsx'
 import SignalLevelsPanel from '../components/chart/SignalLevelsPanel.tsx'
@@ -173,7 +175,6 @@ export default function InstrumentChartPage() {
 
   const [result, setResult] = useState<LoadedResult | null>(null)
   const [retryToken, setRetryToken] = useState(0)
-  const { hash } = useLocation()
 
   useEffect(() => {
     // `/chart` has no ticker: guidance only, never a request.
@@ -229,17 +230,6 @@ export default function InstrumentChartPage() {
   const needsHistory = current !== null && insufficientHistory(current.bars, current.snapshot)
 
   const heading = current?.instrument.ticker ?? normalizedTicker ?? t('nav.chart')
-  const panelsReady = current !== null && current.bars.length > 0
-
-  // Entry from a Candidate row: bring the AI card panel into view once the
-  // chart (and therefore the panel) has rendered. Navigation only; nothing is
-  // generated until the user asks.
-  useEffect(() => {
-    if (!panelsReady || hash !== `#${COMPANY_CARD_ANCHOR}`) {
-      return
-    }
-    document.getElementById(COMPANY_CARD_ANCHOR)?.scrollIntoView({ block: 'start' })
-  }, [panelsReady, hash])
 
   return (
     <section className="flex flex-col gap-6">

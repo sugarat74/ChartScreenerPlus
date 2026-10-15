@@ -20,17 +20,38 @@ const auth = {
   login: vi.fn(), register: vi.fn(), logout: vi.fn(),
 }
 
-function show(signedIn: boolean) {
-  return render(<AuthContext.Provider value={{ ...auth, user: signedIn ? auth.user : null }}><I18nProvider><MemoryRouter><ForecastPanel ticker="TEST" /></MemoryRouter></I18nProvider></AuthContext.Provider>)
+function tree(signedIn: boolean, status: 'loading' | 'ready' = 'ready') {
+  return <AuthContext.Provider value={{ ...auth, status, user: signedIn ? auth.user : null }}><I18nProvider><MemoryRouter><ForecastPanel ticker="TEST" /></MemoryRouter></I18nProvider></AuthContext.Provider>
+}
+
+function show(signedIn: boolean, status: 'loading' | 'ready' = 'ready') {
+  return render(tree(signedIn, status))
 }
 
 beforeEach(() => window.localStorage.setItem(LOCALE_STORAGE_KEY, 'es'))
 afterEach(() => { cleanup(); vi.clearAllMocks(); window.localStorage.clear() })
 
-it('invites a guest without calling the provider', () => {
-  show(false)
-  expect(screen.getByRole('link', { name: /inicia sesión/i })).toBeTruthy()
+it('renders nothing for a Visitor: no panel, no sign-in prompt, no request', () => {
+  const { container } = show(false)
+  expect(container.innerHTML).toBe('')
+  expect(screen.queryByText('Pronóstico Jev')).toBeNull()
+  expect(screen.queryByRole('link')).toBeNull()
   expect(forecastApi.predict).not.toHaveBeenCalled()
+})
+
+it('renders nothing while auth is loading (no flash)', () => {
+  const { container } = show(false, 'loading')
+  expect(container.innerHTML).toBe('')
+  expect(forecastApi.predict).not.toHaveBeenCalled()
+})
+
+it('disappears on sign-out and comes back on sign-in without remounting', () => {
+  const { container, rerender } = show(true)
+  expect(screen.getByRole('button', { name: 'Analizar' })).toBeTruthy()
+  rerender(tree(false))
+  expect(container.innerHTML).toBe('')
+  rerender(tree(true))
+  expect(screen.getByRole('button', { name: 'Analizar' })).toBeTruthy()
 })
 
 it('shows the original three probabilities and applies the chosen minimum', async () => {

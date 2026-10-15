@@ -1,8 +1,12 @@
 /**
  * AI Company Card panel on the chart page (docs/specs/ai-company-card.md).
  *
- * Auth-aware like `ForecastPanel`: it reads the session itself and offers a
- * Visitor only a sign-in link (the page stays anonymous). For a Registered
+ * Signed-in only, like `ForecastPanel`: it reads the already bootstrapped
+ * session itself and renders nothing (no request, no sign-in prompt) for a
+ * Visitor or while auth is loading; the page stays anonymous
+ * (docs/specs/premium-panels-auth-only.md). It owns the `#ai-company-card`
+ * deep-link scroll, done once when it first renders signed in, so it works
+ * whichever of the chart data or the session resolves first. For a Registered
  * User, opening the panel only reads the stored card (`GET`); the provider is
  * called only when the user presses generate. Errors never auto-retry. The
  * card is always labelled as AI-generated, unverified and not advice; the
@@ -10,12 +14,11 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
-import { useAuth } from '../../auth/useAuth.ts'
+import { useLocation } from 'react-router'
+import { useSignedIn } from '../../auth/useSignedIn.ts'
 import { useI18n, useTranslateRef } from '../../i18n/useI18n.ts'
 import { ApiError, COMPANY_CARD_METRICS, apiErrorMessage, companyCardApi } from '../../lib/api.ts'
 import type { CompanyCard, CompanyCardMetric, CompanyCardMetricKey } from '../../lib/api.ts'
-import { LOGIN_ROUTE } from '../../nav.ts'
 
 export const COMPANY_CARD_ANCHOR = 'ai-company-card'
 
@@ -39,7 +42,8 @@ function SubHeading({ children }: { children: string }) {
 }
 
 export default function CompanyCardPanel({ ticker }: { ticker: string }) {
-  const { user, status: authStatus } = useAuth()
+  const signedIn = useSignedIn()
+  const { hash } = useLocation()
   const { t, locale, formatDecimal, formatDateTime, formatMarketDate } = useI18n()
   const tRef = useTranslateRef()
   const [reloadToken, setReloadToken] = useState(0)
@@ -47,13 +51,24 @@ export default function CompanyCardPanel({ ticker }: { ticker: string }) {
   // stale response never renders and a key change shows loading again.
   const [loaded, setLoaded] = useState<{ key: string; state: LoadState } | null>(null)
   const [action, setAction] = useState<ActionState | null>(null)
-  const signedIn = user !== null
   const requestKey = `${ticker}|${locale}|${reloadToken}`
   const currentKey = useRef(requestKey)
+  const sectionRef = useRef<HTMLElement>(null)
+  const scrolled = useRef(false)
 
   useEffect(() => {
     currentKey.current = requestKey
   }, [requestKey])
+
+  // Entry from a Candidate row: bring the panel into view once, when it first
+  // renders for a signed-in user. Navigation only; nothing is generated.
+  useEffect(() => {
+    if (!signedIn || scrolled.current || hash !== `#${COMPANY_CARD_ANCHOR}`) {
+      return
+    }
+    scrolled.current = true
+    sectionRef.current?.scrollIntoView({ block: 'start' })
+  }, [signedIn, hash])
 
   // Read the stored card for this ticker and language; never generates.
   useEffect(() => {
@@ -110,12 +125,17 @@ export default function CompanyCardPanel({ ticker }: { ticker: string }) {
     return `${formatDecimal(metric.value)}%`
   }
 
+  if (!signedIn) {
+    return null
+  }
+
   const card = load.status === 'ready' ? load.card : null
   const available = load.status === 'ready' && load.available
   const content = card?.content ?? null
 
   return (
     <section
+      ref={sectionRef}
       id={COMPANY_CARD_ANCHOR}
       aria-labelledby="ai-company-card-title"
       className="scroll-mt-24 rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]"
@@ -136,19 +156,13 @@ export default function CompanyCardPanel({ ticker }: { ticker: string }) {
         {t('companyCard.warning')}
       </p>
 
-      {authStatus === 'ready' && !signedIn ? (
-        <Link className="mt-4 inline-block font-bold underline" to={LOGIN_ROUTE}>
-          {t('companyCard.signIn')}
-        </Link>
-      ) : null}
-
-      {signedIn && load.status === 'loading' ? (
+      {load.status === 'loading' ? (
         <p role="status" className="mt-4 font-mono text-xs uppercase tracking-wider text-on-surface-variant">
           {t('companyCard.loading')}
         </p>
       ) : null}
 
-      {signedIn && load.status === 'error' ? (
+      {load.status === 'error' ? (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <p role="alert" className="text-sm text-secondary">{load.message}</p>
           <button type="button" className={BUTTON_CLASS} onClick={() => setReloadToken((token) => token + 1)}>
@@ -157,7 +171,7 @@ export default function CompanyCardPanel({ ticker }: { ticker: string }) {
         </div>
       ) : null}
 
-      {signedIn && load.status === 'ready' ? (
+      {load.status === 'ready' ? (
         <div className="mt-4 flex flex-col gap-3">
           {card === null ? (
             <p className="text-sm text-on-surface">{t('companyCard.empty', { ticker })}</p>
@@ -183,7 +197,7 @@ export default function CompanyCardPanel({ ticker }: { ticker: string }) {
         </div>
       ) : null}
 
-      {signedIn && card !== null && content !== null ? (
+      {card !== null && content !== null ? (
         <article className="mt-4 flex min-w-0 flex-col gap-4 border-t-2 border-outline pt-4 text-sm break-words">
           <div className="flex flex-col gap-1">
             <h3 className="font-headline text-base font-black text-on-surface">
