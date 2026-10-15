@@ -140,21 +140,21 @@ class CompanyCardSchema
                 'ticker' => strtoupper(trim($ticker)),
                 'sector' => self::nullableString($company['sector'], 120),
                 'industry' => self::nullableString($company['industry'], 120),
-                'description' => self::nullableString($company['description'], 600),
+                'description' => self::nullableProse($company['description'], 600),
             ],
             'metrics' => $metrics,
             'outlook' => [
                 'horizon_months' => 3,
                 'stance' => self::enum($outlook['stance'], self::STANCES),
-                'summary' => self::string($outlook['summary'], 700),
-                'macro_context' => self::string($outlook['macro_context'], 500),
-                'sector_context' => self::string($outlook['sector_context'], 500),
+                'summary' => self::prose($outlook['summary'], 700),
+                'macro_context' => self::prose($outlook['macro_context'], 500),
+                'sector_context' => self::prose($outlook['sector_context'], 500),
                 'drivers' => self::list($outlook['drivers'], 1, 5),
                 'risks' => self::list($outlook['risks'], 1, 5),
                 'confidence' => self::enum($outlook['confidence'], self::CONFIDENCE),
             ],
             'data_as_of' => self::nullableString($data['data_as_of'], 40),
-            'limitations' => self::string($data['limitations'], 400),
+            'limitations' => self::prose($data['limitations'], 400),
             'sources' => self::list($data['sources'], 0, 5),
         ];
     }
@@ -240,6 +240,57 @@ class CompanyCardSchema
         return $clean;
     }
 
+    /**
+     * Free text: models overshoot length limits by a few words, so an
+     * over-long value is shortened at a sentence end (or a word, with an
+     * ellipsis) instead of rejecting the whole card. Identifiers and other
+     * short fields keep the strict `string()` check.
+     */
+    private static function prose(mixed $value, int $max): string
+    {
+        if (! is_string($value)) {
+            throw new InvalidCompanyCard('string expected');
+        }
+        $clean = self::clean($value);
+        if ($clean === '') {
+            throw new InvalidCompanyCard('string length');
+        }
+
+        return self::fit($clean, $max);
+    }
+
+    private static function nullableProse(mixed $value, int $max): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (! is_string($value)) {
+            throw new InvalidCompanyCard('string or null expected');
+        }
+        $clean = self::clean($value);
+
+        return $clean === '' ? null : self::fit($clean, $max);
+    }
+
+    private static function fit(string $text, int $max): string
+    {
+        if (mb_strlen($text) <= $max) {
+            return $text;
+        }
+        $head = mb_substr($text, 0, $max);
+        // Prefer the last full sentence when it keeps most of the text.
+        if (preg_match('/^(.*[.!?])(?:\s|$)/us', $head, $match) === 1 && mb_strlen($match[1]) >= (int) ($max * 0.6)) {
+            return $match[1];
+        }
+        $cut = mb_substr($text, 0, $max - 1);
+        $space = mb_strrpos($cut, ' ');
+        if ($space !== false && $space >= (int) ($max * 0.6)) {
+            $cut = mb_substr($cut, 0, $space);
+        }
+
+        return rtrim($cut, " ,;:-").'…';
+    }
+
     private static function nullableString(mixed $value, int $max): ?string
     {
         if ($value === null) {
@@ -277,7 +328,7 @@ class CompanyCardSchema
             throw new InvalidCompanyCard('list size');
         }
 
-        return array_map(fn (mixed $item): string => self::string($item, 200), $value);
+        return array_map(fn (mixed $item): string => self::prose($item, 200), $value);
     }
 
     /** Trim and replace control characters (including newlines) with spaces. */

@@ -97,9 +97,6 @@ class CompanyCardSchemaTest extends TestCase
             'empty name' => [function (array $c) { $c['company']['name'] = ' ';
 
                 return $c; }],
-            'long description' => [function (array $c) { $c['company']['description'] = str_repeat('a', 601);
-
-                return $c; }],
             'horizon not 3' => [function (array $c) { $c['outlook']['horizon_months'] = 6;
 
                 return $c; }],
@@ -112,16 +109,10 @@ class CompanyCardSchemaTest extends TestCase
             'bad confidence' => [function (array $c) { $c['outlook']['confidence'] = 'certain';
 
                 return $c; }],
-            'long summary' => [function (array $c) { $c['outlook']['summary'] = str_repeat('a', 701);
-
-                return $c; }],
             'no drivers' => [function (array $c) { $c['outlook']['drivers'] = [];
 
                 return $c; }],
             'six risks' => [function (array $c) { $c['outlook']['risks'] = array_fill(0, 6, 'risk');
-
-                return $c; }],
-            'long risk item' => [function (array $c) { $c['outlook']['risks'] = [str_repeat('a', 201)];
 
                 return $c; }],
             'drivers as object' => [function (array $c) { $c['outlook']['drivers'] = ['a' => 'x'];
@@ -133,13 +124,30 @@ class CompanyCardSchemaTest extends TestCase
             'non-string source' => [function (array $c) { $c['sources'] = [['url' => 'x']];
 
                 return $c; }],
-            'long limitations' => [function (array $c) { $c['limitations'] = str_repeat('a', 401);
-
-                return $c; }],
             'data_as_of number' => [function (array $c) { $c['data_as_of'] = 2025;
 
                 return $c; }],
         ];
+    }
+
+    public function test_overlong_free_text_is_shortened_not_rejected(): void
+    {
+        $card = AiCompanyCardFactory::content('NVDA');
+        $sentence = 'La demanda de servicios mantiene el crecimiento del grupo en el trimestre. ';
+        $card['outlook']['summary'] = str_repeat($sentence, 12);
+        $card['limitations'] = str_repeat('palabra ', 80);
+        $card['company']['description'] = str_repeat('b', 650);
+        $card['outlook']['risks'] = [str_repeat('riesgo ', 40)];
+
+        $content = CompanyCardSchema::validate($card, 'NVDA');
+
+        $this->assertLessThanOrEqual(700, mb_strlen($content['outlook']['summary']));
+        $this->assertStringEndsWith('trimestre.', $content['outlook']['summary']);
+        $this->assertLessThanOrEqual(400, mb_strlen($content['limitations']));
+        $this->assertStringEndsWith('palabra…', $content['limitations']);
+        $this->assertSame(600, mb_strlen($content['company']['description']));
+        $this->assertStringEndsWith('…', $content['company']['description']);
+        $this->assertLessThanOrEqual(200, mb_strlen($content['outlook']['risks'][0]));
     }
 
     /** @param callable(array<string, mixed>): array<string, mixed> $mutate */

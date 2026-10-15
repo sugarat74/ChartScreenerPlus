@@ -29,7 +29,7 @@ return [
 
     // Synchronous call: keep it below nginx's default 60 s read timeout.
     'timeout_seconds' => (int) env('AI_TIMEOUT_SECONDS', 40),
-    'max_tokens' => (int) env('AI_MAX_TOKENS', 1800),
+    'max_tokens' => (int) env('AI_MAX_TOKENS', 8000),
     // `max_tokens`, or `max_completion_tokens` for newer OpenAI models.
     'max_tokens_param' => env('AI_MAX_TOKENS_PARAM', 'max_tokens'),
     // `null` (or an empty value) omits the parameter.
@@ -47,5 +47,5 @@ return [
 
     // Bump when the schema or the prompt changes (CONSTRAINTS.md).
     'schema_version' => 'company-card-v1',
-    'prompt_version' => 'company-card-prompt-v1',
+    'prompt_version' => 'company-card-prompt-v2',
 ];
