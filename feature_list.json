@@ -1334,5 +1334,23 @@
       "2026-10-14 independent validator: first pass REVISE (null/missing depends_on reported blocked, git status rewrote .git\\index, passing features with unaccepted deps hidden from the validation queue, capped lists without remainder), then ACCEPT after repair: re-ran its own fixture (UTF-8/CRLF/ñ ids, 12 features, 5 risks, dirty tree, touched tracked file), .git\\index timestamp unchanged (plain git status control rewrote it), live run with git status --porcelain=v2 --ignored identical before and after, init.ps1 exit 0 (Laravel 286/6 skipped, 120 Vitest, engine 67)."
     ],
     "notes": "Harness maintenance requested by the user. The hook is invoked by the AGENTS.md startup workflow; it is a read-only PowerShell entry point, not a product feature. Independently accepted 2026-10-14 after one repair."
+  },
+  {
+    "id": "ai-company-card",
+    "area": "ai",
+    "title": "AI-generated company card per Candidate",
+    "user_visible_behavior": "From any Candidate row or the instrument chart, a Registered User opens a structured AI company card in their language: sector and industry, a short business description, key financial metrics (P/E, ROIC, EBITDA and others, each with its period or a dash when unknown) and a qualitative three-month outlook from macro and sector context, clearly labelled as AI-generated, unverified and not investment advice. Cards are generated on demand by an OpenAI-compatible provider, shared and reused while fresh; Visitors see a sign-in link.",
+    "depends_on": ["auth-registration-login", "instrument-detail-api", "chart-interactive", "candidate-list-ranking", "chart-patterns-detect", "app-multilanguage", "legal-compliance-eu", "pronostico-jev"],
+    "status": "not_started",
+    "verification": [
+      "Guest gets 401 on read and generate without a provider call; unknown ticker is a JSON 404; a Visitor sees a sign-in link on the chart and the Screener stays anonymous",
+      "Generation is opt-in (AI_CARD_ENABLED plus base URL, key and model), sends only instrument identity and, when AI_CARD_MARKET_DATA_RIGHTS_VERIFIED is true, stored technical context; never user data",
+      "Requests use Chat Completions with json_schema strict output and a json_object fallback; the response is validated server-side and invalid, truncated, refused or mismatched-ticker output never becomes a card",
+      "A fresh card per Instrument, locale and schema version is reused for every user without a provider call; concurrent requests make one call; per-minute, per-user daily and global daily limits are enforced and every attempt is logged without prompt or response content",
+      "Spanish and English card shows metric periods, dashes for unknown values, generation date, model and the AI/not-advice disclaimer, with no price target or buy/sell wording; privacy and legal texts disclose the processing",
+      "All provider tests use Http::fake; standard init.ps1 gate passes"
+    ],
+    "evidence": [],
+    "notes": "Requested by the user on 2026-10-15; explicit scope decision bringing an AI company card in scope (not an AI Copilot chat; no news or web browsing). Spec: docs/specs/ai-company-card.md, including the AGENTS.md, CONSTRAINTS.md and CONTEXT.md wording changes. Figures come from the model and are unverified; a verified fundamentals data provider and an Admin generation-log view are follow-ups."
   }
 ]
