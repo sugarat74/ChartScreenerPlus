@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\CompanyCardController;
 use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\Admin\ForecastReportController;
 use App\Http\Controllers\Admin\ForecastBacktestController;
@@ -41,6 +42,12 @@ Route::get('/legal', [LegalController::class, 'show'])->middleware('throttle:60,
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/instruments/{ticker}/forecast', [ForecastController::class, 'store'])->middleware('throttle:'.config('forecast.requests_per_minute').',1,forecast');
+
+    // AI Company Card (ai-company-card): GET only reads the stored card for the
+    // request locale and never calls the provider; POST reuses a fresh card or
+    // generates one under per-user and global daily caps.
+    Route::get('/instruments/{ticker}/company-card', [CompanyCardController::class, 'show'])->middleware('throttle:60,1,ai-card-read');
+    Route::post('/instruments/{ticker}/company-card', [CompanyCardController::class, 'store'])->middleware('throttle:'.config('ai_card.requests_per_minute').',1,ai-card');
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 

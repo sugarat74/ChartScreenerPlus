@@ -27,7 +27,7 @@ class LegalInfoTest extends TestCase
             ->assertOk()
             ->assertJsonPath('published', false)
             ->assertJsonPath('owner', null)
-            ->assertJsonStructure(['updated_at', 'retention' => ['sign_in_activity_days', 'session_minutes', 'backup_days', 'server_log_days', 'notification_days']]);
+            ->assertJsonStructure(['updated_at', 'retention' => ['sign_in_activity_days', 'session_minutes', 'backup_days', 'server_log_days', 'notification_days', 'ai_card_log_days']]);
     }
 
     public function test_any_missing_required_field_keeps_it_unpublished_and_leaks_nothing(): void
@@ -65,6 +65,7 @@ class LegalInfoTest extends TestCase
             'legal.backup_retention_days' => 7,
             'legal.server_log_retention_days' => 10,
             'alerts.notification_retention_days' => 30,
+            'ai_card.log_retention_days' => 60,
             'legal.updated_at' => '2026-10-10',
         ]);
 
@@ -75,7 +76,8 @@ class LegalInfoTest extends TestCase
             ->assertJsonPath('retention.session_minutes', 30)
             ->assertJsonPath('retention.backup_days', 7)
             ->assertJsonPath('retention.server_log_days', 10)
-            ->assertJsonPath('retention.notification_days', 30);
+            ->assertJsonPath('retention.notification_days', 30)
+            ->assertJsonPath('retention.ai_card_log_days', 60);
     }
 
     public function test_endpoint_is_public_and_needs_no_session(): void

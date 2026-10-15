@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AiCompanyCardGeneration;
 use App\Models\LoginEvent;
 use App\Services\Market\MarketCalendar;
 use Illuminate\Foundation\Inspiring;
@@ -51,11 +52,13 @@ Schedule::command('ingestion:pipeline', ['--universe' => config('ingestion.unive
 | Sign-in activity (email, IP, user agent) older than
 | config('admin.activity_retention_days') (90) is deleted daily, and so are
 | in-app alert notifications older than
-| config('alerts.notification_retention_days') (90).
+| config('alerts.notification_retention_days') (90). The AI Company Card
+| generation log (account id, Instrument, status, token counts; no prompt or
+| response text) is pruned after config('ai_card.log_retention_days') (90).
 |
 */
 
-Schedule::command('model:prune', ['--model' => [LoginEvent::class]])
+Schedule::command('model:prune', ['--model' => [LoginEvent::class, AiCompanyCardGeneration::class]])
     ->name('prune-login-events')
     ->dailyAt('03:15')
     ->withoutOverlapping();

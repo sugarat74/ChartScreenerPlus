@@ -8,7 +8,7 @@ Responsive web application with three surfaces:
 - **User surface:** portal with Saved Screeners and Watchlist.
 - **Admin surface:** ingestion control, telemetry/logs and universe management.
 
-The AI Copilot surface exists in the mockup but is out of MVP scope.
+The AI Copilot (chat) surface exists in the mockup but is out of MVP scope. The AI Company Card (`ai-company-card`, 2026-10-15) is in scope: Laravel calls an OpenAI-compatible Chat Completions provider through `App\Services\Ai\OpenAiCompatibleClient` (disabled by default; see `docs/ai-company-card-operations.md`).
 
 ## Candidate Stack
 

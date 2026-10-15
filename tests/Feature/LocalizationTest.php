@@ -254,7 +254,7 @@ class LocalizationTest extends TestCase
     private function catalog(string $locale): array
     {
         $lines = [];
-        foreach (['auth', 'pagination', 'passwords', 'validation', 'messages'] as $file) {
+        foreach (['auth', 'pagination', 'passwords', 'validation', 'messages', 'company_card'] as $file) {
             $path = lang_path("{$locale}/{$file}.php");
             $this->assertFileExists($path);
             foreach (Arr::dot(require $path) as $key => $line) {

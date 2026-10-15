@@ -64,6 +64,18 @@ export const legalEn: LegalTexts = {
         ],
       },
       {
+        heading: 'AI features',
+        paragraphs: [
+          'If you are a registered user and ask for an AI company card, the server sends an external AI provider the instrument identity (ticker, company name, sector and exchange) and, only when enabled, Chartiko technical market data. None of your account data is sent (no name, email, Watchlist or Saved Screeners). The provider will be named here when the feature is switched on; until then nothing is sent. The generated card is shared with every user and contains no personal data.',
+          'To control cost and prevent abuse we record each generation you request: your account identifier, the instrument, the date, the outcome and the number of tokens used, without the text sent or received.',
+        ],
+        items: [
+          'Purpose: to generate the card you ask for, limit daily use and prevent abuse.',
+          'Legal basis: performance of the terms of use to generate the card (Art. 6(1)(b) GDPR) and legitimate interest in controlling cost and preventing abuse for the log (Art. 6(1)(f) GDPR).',
+          'Retention: the generation log is deleted automatically after {aiCardLogDays} days.',
+        ],
+      },
+      {
         heading: 'Backups',
         paragraphs: [
           'We make a daily copy of the database so the service can be restored after a failure. It is stored with restricted access.',
@@ -141,6 +153,7 @@ export const legalEn: LegalTexts = {
         heading: 'Not investment advice',
         paragraphs: [
           'Chartiko information (Screener, Candidates, Signals and charts) is generated automatically from market data and technical indicators and is for information and educational purposes only. It is not investment advice, a personal recommendation or an offer to buy or sell financial instruments.',
+          'AI-generated company cards may contain errors or outdated figures and are not verified.',
           'Data may contain errors or delays. Past performance does not guarantee future results and investing involves the risk of loss. Consult an authorised professional before making investment decisions.',
         ],
       },

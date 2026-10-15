@@ -24,7 +24,7 @@ function legalInfo(published: boolean): LegalInfo {
     published,
     owner: published ? OWNER : null,
     updated_at: '2026-10-10',
-    retention: { sign_in_activity_days: 90, session_minutes: 120, backup_days: 14, server_log_days: 14, notification_days: 90 },
+    retention: { sign_in_activity_days: 90, session_minutes: 120, backup_days: 14, server_log_days: 14, notification_days: 90, ai_card_log_days: 90 },
   }
 }
 

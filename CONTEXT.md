@@ -82,7 +82,11 @@ The Python service responsible for scraping, indicator computation and signal de
 
 ### Copiloto IA (AI Copilot)
 
-A natural-language refinement surface backed by an LLM. Shown in the mockup; **out of MVP scope**.
+A natural-language refinement surface backed by an LLM. Shown in the mockup; **out of MVP scope**. Distinct from the Company Card.
+
+### Company Card (Ficha IA)
+
+A structured sheet for one Instrument generated on demand by an external LLM: sector and industry, business description, key financial metrics with their period, and a qualitative three-month outlook from macro and sector context. Shared per Instrument and language, refreshed after a freshness window. Its figures are AI-generated and unverified; it never contains price targets or buy/sell advice. It is not the Copilot.
 
 ### Admin (Operator)
 

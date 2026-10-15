@@ -26,11 +26,11 @@ Manual browsing of quote websites and charting tools, one ticker at a time, comb
 - Intraday or real-time quotes.
 - Order execution or broker integration.
 - Advanced backtesting / historical strategy performance analytics.
-- Fundamental data or news.
+- Verified fundamental data feeds or news (the AI Company Card shows unverified, model-written figures).
 - Automatic email / Telegram / push alerts and notifications.
 - Non-US markets (IBEX and others).
 - Native mobile/desktop apps (responsive web only).
-- AI Copilot (deferred to a later phase).
+- AI Copilot (chat or free-text AI; deferred to a later phase). The AI Company Card (`ai-company-card`, since 2026-10-15) is in scope: an on-demand, structured, unverified sheet per Instrument for Registered Users, without chat, news, price targets or ratings.
 - Paid plans, subscriptions or licensing.
 
 ## MVP Slice

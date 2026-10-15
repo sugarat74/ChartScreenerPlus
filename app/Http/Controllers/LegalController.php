@@ -30,6 +30,7 @@ class LegalController extends Controller
                 'backup_days' => (int) config('legal.backup_retention_days'),
                 'server_log_days' => (int) config('legal.server_log_retention_days'),
                 'notification_days' => (int) config('alerts.notification_retention_days'),
+                'ai_card_log_days' => (int) config('ai_card.log_retention_days'),
             ],
         ]);
     }

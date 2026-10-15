@@ -21,6 +21,7 @@
 | Browse Screener and results | yes | yes | yes |
 | View interactive chart of a Candidate | yes | yes | yes |
 | Request an experimental Jev forecast | no | yes | yes |
+| Read / generate an AI Company Card | no | yes | yes |
 | View forecast evaluation metrics | no | no | yes |
 | Start and inspect Jev Backtesting runs | no | no | yes |
 | Save / apply Saved Screeners | no | yes (own) | yes |
@@ -38,6 +39,7 @@
 - **Saved Screener storage and endpoints (implemented):** a Saved Screener is a row in the `saved_screeners` table (`user_id`, `name`, `filters` json, unique `(user_id, name)`, cascade FK to `users`); ownership is `user_id` and rows are created through `$request->user()->savedScreeners()`. The endpoints are `GET /api/screeners` (list), `POST /api/screeners {name, filters}` (save) and `DELETE /api/screeners/{screener}` (delete). All three are `auth:sanctum` and every query is scoped server-side to `$request->user()->savedScreeners()`; no endpoint accepts a `user_id`, so a cross-user read is an empty list and a cross-user delete is a `404`. `name` is unique per user; `filters` is the canonical seven-key screener definition (including `sort`).
 - Registered Users never own or edit Instruments, Daily Bars, Snapshots, Signals or Ingestion Runs; those are system/Admin-owned.
 - **Experimental forecasts:** `POST /api/instruments/{ticker}/forecast` requires `auth:sanctum`, validates the horizon and minimum probability, and limits requests per account. Forecast records are shared by Instrument/date/model/question rather than owned by a requesting user; they contain no account identity. `GET /api/admin/forecasts/report` additionally requires the Admin role. The chart remains public and offers Visitors a sign-in link for this feature.
+- **AI Company Cards:** `GET`/`POST /api/instruments/{ticker}/company-card` require `auth:sanctum` (a Visitor gets `401` and the chart offers a sign-in link). Cards are shared rows per Instrument/language/schema version with no account identity; any Registered User reads and may (re)generate them within the per-user and global daily caps. The generation log `ai_company_card_generations` keeps the requesting `user_id` (set to `null` when the account is deleted) for caps and abuse prevention, with no prompt or response text, and is pruned after 90 days. Admins have no special path and no UI for it yet.
 - Admin actions are global (affect all users' Candidates on the next run).
 
 - **Alerts and notifications (implemented by `alerts-engine`):** `alerts` rows are owned by `user_id` (not fillable; created through `$request->user()->alerts()`), notifications by their notifiable user. `GET/POST /api/alerts`, `PATCH/DELETE /api/alerts/{id}`, `GET /api/notifications`, `POST /api/notifications/read` are `auth:sanctum` and always scoped to the caller: a foreign alert id is a `404`, foreign notification ids are ignored. Admins have no access to other users' alerts or notifications.
