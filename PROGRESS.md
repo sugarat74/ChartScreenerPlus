@@ -1,5 +1,12 @@
 # Progress Log
 
+## AI company card: real provider check — 2026-10-15
+
+- First real calls against the owner's OpenAI-compatible provider (DevExpert Inference, `https://inference.devexpert.io/v1`, model `chat`) from a throwaway local SQLite DB; key read from a local file and never printed or committed. `GET /v1/models` lists `chat` and `chat-pro`.
+- Findings and fixes: (1) `chat` reasons before answering and used 2.5–5.8k completion tokens, so the 1800 default truncated the JSON; `AI_MAX_TOKENS` default is now 8000. (2) The model overshot free-text caps by a few words (summary 711–767/700, limitations 485/400) and the whole card was rejected; free-text fields are now shortened at a sentence end or word (ellipsis) while identifiers, periods, enums, numbers and structure stay strict. (3) The prompt asked for null when a figure "may be outdated", so every metric came back null; `company-card-prompt-v2` asks for the latest reliable figure with its period, null only when unknown, and states per-field length limits.
+- Result: AAPL (es) and MSFT (en) cards validated and stored in 16–18 s with json_schema. The model still returns most metrics as null (1 of 9): honest, but a verified fundamentals feed remains the way to fill them. `chat-pro` exceeded the 40 s timeout and is not suitable for synchronous generation.
+- `init.ps1` exit 0: Laravel 380 passed / 6 skipped, Vitest 138, engine 67. Production is still disabled until the owner sets the env on the VPS.
+
 ## AI company card — 2026-10-15
 
 - `ai-company-card` is `accepted`, with the spec's defaults: Registered Users only, 7-day freshness, 10 generations per user and 200 overall per UTC day, 5 POST/min, `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=false`, and the feature **disabled** (`AI_CARD_ENABLED=false`, no provider or model chosen). Registered Users see "Las fichas de empresa con IA aún no están disponibles" until it is enabled.

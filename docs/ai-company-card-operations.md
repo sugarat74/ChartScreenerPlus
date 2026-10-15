@@ -24,7 +24,7 @@ AI_MODEL=<id exacto del modelo>
 # Opcionales (valores por defecto entre paréntesis)
 AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=false       # (false)
 AI_TIMEOUT_SECONDS=40                           # (40) por debajo de los 60 s de nginx
-AI_MAX_TOKENS=1800                              # (1800)
+AI_MAX_TOKENS=8000                              # (8000) los modelos que razonan gastan tokens antes del JSON
 AI_MAX_TOKENS_PARAM=max_tokens                  # o max_completion_tokens en modelos OpenAI recientes
 AI_TEMPERATURE=0.2                              # null para no enviarla (modelos que no la aceptan)
 AI_RESPONSE_FORMAT=json_schema                  # o json_object si el proveedor no admite json_schema

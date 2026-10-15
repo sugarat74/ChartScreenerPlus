@@ -146,7 +146,7 @@ class CompanyCardFeatureTest extends TestCase
                 && $body['response_format']['type'] === 'json_schema'
                 && $body['response_format']['json_schema']['strict'] === true
                 && $body['response_format']['json_schema']['name'] === 'company_card_v1'
-                && $body['max_tokens'] === 1800
+                && $body['max_tokens'] === config('ai_card.max_tokens')
                 && $body['temperature'] === 0.2
                 && ! str_contains($raw, 'first-user@example.test')
                 && ! str_contains($raw, '"user_id"')
@@ -253,7 +253,7 @@ class CompanyCardFeatureTest extends TestCase
 
         Http::assertSentCount(1);
         Http::assertSent(fn (Request $request): bool => $request['response_format'] === ['type' => 'json_object']
-            && $request['max_completion_tokens'] === 1800
+            && $request['max_completion_tokens'] === config('ai_card.max_tokens')
             && ! array_key_exists('max_tokens', $request->data())
             && ! array_key_exists('temperature', $request->data()));
     }
