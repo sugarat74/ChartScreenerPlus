@@ -20,6 +20,8 @@ Chartiko DEBE permitir consultar el pronóstico únicamente con una sesión aute
 
 **Escenario:** DADO un Visitor en el gráfico / CUANDO solicita un pronóstico por la interfaz o la API / ENTONCES ve la invitación a iniciar sesión y la API devuelve 401 sin consultar Jev.
 
+> Sustituido el 2026-10-15 por `premium-panels-auth-only` (`docs/specs/premium-panels-auth-only.md`): el panel no se muestra a un Visitor (sin invitación); la API sigue devolviendo 401.
+
 **Escenario:** DADO un Registered User autenticado / CUANDO solicita un pronóstico válido / ENTONCES puede recibirlo sin una comprobación de suscripción.
 
 ### R2. Pregunta y plazo verificables

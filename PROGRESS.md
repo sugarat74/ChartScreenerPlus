@@ -1,5 +1,12 @@
 # Progress Log
 
+## Premium panels for signed-in users only — 2026-10-15
+
+- Implemented `premium-panels-auth-only` (spec `docs/specs/premium-panels-auth-only.md`, branch `feat/premium-panels-auth-only`): Visitors no longer see the Jev forecast panel, the AI Company Card panel or the Candidate-row "Ficha IA" link, and get no sign-in prompt for them; signed-in users see them as before. New `frontend/src/auth/useSignedIn.ts` reads the bootstrapped session without fetching or throwing; both panels return `null` for a Visitor or while auth loads; `CandidateTable` gained `showCompanyCardLink` (default `false`), set by `CandidateResults`; the `#ai-company-card` scroll moved from the chart page into `CompanyCardPanel` (once, whichever of chart or session resolves first). `forecast.signIn` and `companyCard.signIn` removed. No backend change.
+- Docs: CONSTRAINTS (Screener affordances and chart panels wording), ARCHITECTURE, DESIGN, `docs/user-and-access-model.md`, superseded notes in `docs/specs/ai-company-card.md` and `specs/pronostico-jev/`.
+- Verification: Vitest 154 (16 new/changed cases incl. Visitor, loading, no provider, deep-link scroll), lint and build clean, `init.ps1` exit 0 (Laravel 380 / 6 skipped, engine 67). Edge QA on a local stack with a throwaway DB: 43/43 (es/en, 390 px, delayed `/api/user` without flash, sign-out/sign-in, no `/forecast` or `/company-card` requests for Visitors, guest API 401).
+- Note: on short pages the deep link scrolls to the page end rather than putting the card at the top (same as before). Independent validator ACCEPT (own stack and Edge run: Visitor sees no panels, links or prompts and sends no /forecast or /company-card requests, no flash while the session loads, signed-in unchanged, guest API 401). Status `accepted`. Planned next: `company-fundamentals-sec` (spec `docs/specs/company-fundamentals-sec.md`).
+
 ## AI company card: real provider check — 2026-10-15
 
 - First real calls against the owner's OpenAI-compatible provider (DevExpert Inference, `https://inference.devexpert.io/v1`, model `chat`) from a throwaway local SQLite DB; key read from a local file and never printed or committed. `GET /v1/models` lists `chat` and `chat-pro`.

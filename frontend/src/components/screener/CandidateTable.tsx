@@ -1,13 +1,15 @@
 /**
  * Fixed-column Candidate table using the API's default ranking. The
- * interactive elements are the ticker link into the instrument chart and a
- * small "AI card" link to the same chart's Company Card panel
- * (`#ai-company-card`); both only navigate, so the Screener stays anonymous
- * (no `useAuth`) and nothing is generated from here. There are no watchlist
- * actions. Styling is DESIGN.md tokens only.
+ * interactive elements are the ticker link into the instrument chart and,
+ * only when `showCompanyCardLink` is true (signed-in users, decided by
+ * `CandidateResults`), a small "AI card" link to the same chart's Company Card
+ * panel (`#ai-company-card`). Both only navigate; the table itself stays
+ * presentational (no auth read) and nothing is generated from here. There are
+ * no watchlist actions. Styling is DESIGN.md tokens only.
  */
 
 import { Link } from 'react-router'
+import { COMPANY_CARD_ANCHOR } from '../chart/CompanyCardPanel.tsx'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerCandidate } from '../../lib/api.ts'
 import { patternLabel, signalLabel } from '../../lib/screenerFilters.ts'
@@ -20,7 +22,13 @@ function changeColorClass(value: number | null): string {
   return value > 0 ? 'text-gain' : 'text-secondary'
 }
 
-export default function CandidateTable({ candidates }: { candidates: ScreenerCandidate[] }) {
+interface CandidateTableProps {
+  candidates: ScreenerCandidate[]
+  /** Show the per-row "AI card" link; default `false` (Visitors). */
+  showCompanyCardLink?: boolean
+}
+
+export default function CandidateTable({ candidates, showCompanyCardLink = false }: CandidateTableProps) {
   const { t, formatPrice, formatChangePercent, formatMultiple, formatNumber } = useI18n()
 
   return (
@@ -69,13 +77,15 @@ export default function CandidateTable({ candidates }: { candidates: ScreenerCan
                   <p className="max-w-56 truncate text-xs text-on-surface-variant">
                     {candidate.company}
                   </p>
-                  <Link
-                    to={`/instruments/${encodeURIComponent(candidate.ticker)}#ai-company-card`}
-                    aria-label={t('companyCard.candidateLinkAria', { ticker: candidate.ticker })}
-                    className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant underline underline-offset-2 hover:text-on-surface focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
-                  >
-                    {t('companyCard.candidateLink')}
-                  </Link>
+                  {showCompanyCardLink ? (
+                    <Link
+                      to={`/instruments/${encodeURIComponent(candidate.ticker)}#${COMPANY_CARD_ANCHOR}`}
+                      aria-label={t('companyCard.candidateLinkAria', { ticker: candidate.ticker })}
+                      className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant underline underline-offset-2 hover:text-on-surface focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+                    >
+                      {t('companyCard.candidateLink')}
+                    </Link>
+                  ) : null}
                 </th>
 
                 <td className="px-4 py-2 text-right font-mono text-xs text-on-surface">

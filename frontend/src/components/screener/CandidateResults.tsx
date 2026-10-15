@@ -4,8 +4,12 @@
  * filters are active), error (with a manual retry) or the Candidate table.
  *
  * Empty is a valid `200 candidates: []`, never an error. There is no auto-retry.
+ * The per-row "AI card" link is shown only to signed-in users: the session is
+ * read from the already bootstrapped `AuthContext` via `useSignedIn` (no
+ * fetch, redirect or prompt), so the Screener page stays anonymous.
  */
 
+import { useSignedIn } from '../../auth/useSignedIn.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerCandidate } from '../../lib/api.ts'
 import CandidateTable from './CandidateTable.tsx'
@@ -112,6 +116,7 @@ export default function CandidateResults({
   onClearFilters,
 }: CandidateResultsProps) {
   const { t } = useI18n()
+  const signedIn = useSignedIn()
 
   if (status === 'error') {
     return <ErrorPanel message={error ?? t('common.unknownError')} onRetry={onRetry} />
@@ -131,7 +136,7 @@ export default function CandidateResults({
       {candidates.length === 0 ? (
         <EmptyPanel hasFilters={hasFilters} onClearFilters={onClearFilters} />
       ) : (
-        <CandidateTable candidates={candidates} />
+        <CandidateTable candidates={candidates} showCompanyCardLink={signedIn} />
       )}
     </div>
   )

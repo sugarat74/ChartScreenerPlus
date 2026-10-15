@@ -33,6 +33,7 @@ so I can decide whether it deserves a closer look without leaving Chartiko, know
 ## Users And Permissions
 
 - Visitor: sees the card panel's title, a one-line explanation and a sign-in **link** (`LOGIN_ROUTE`) on the chart; the Candidate row link is visible to everyone. API: `401`, never a provider call.
+  > Superseded 2026-10-15 by `premium-panels-auth-only` (`docs/specs/premium-panels-auth-only.md`): Visitors see no panel and no row link.
 - Registered User: reads any stored card and requests generation, within the limits below. Cards are shared system data (no owner, no identity inside the card).
 - Admin: same as a Registered User; no special path in this feature.
 
@@ -40,6 +41,7 @@ so I can decide whether it deserves a closer look without leaving Chartiko, know
 
 1. **Visibility:** Registered Users only, like Jev (`docs/user-and-access-model.md:23`, `routes/api.php:42-43`). Cost control.
 2. **Entry points:** (a) a small `Ficha IA` / `AI card` link on each `CandidateTable` row to `/instruments/{ticker}#ai-company-card`; it navigates only, so the Screener stays anonymous and calls no `useAuth` (`CONSTRAINTS.md:48`); (b) a `CompanyCardPanel` on the chart page after `ForecastPanel` (`InstrumentChartPage.tsx:357-359`). When the hash is present, the page scrolls to the panel after the `ready` state.
+   > Superseded 2026-10-15 by `premium-panels-auth-only` (`docs/specs/premium-panels-auth-only.md`): Visitors see no panel and no row link. The row link is signed-in only and the panel itself performs the hash scroll.
 3. **On demand, never on page view:** opening the panel only **reads** the stored card (`GET`, database only). The provider is called only when the user presses `Generar ficha` / `Generate card` (`POST`) and no fresh card exists.
 4. **Cache key and freshness:** one row per `(instrument_id, locale, schema_version)`. A card is *fresh* when `generated_at >= now - AI_CARD_FRESHNESS_DAYS` (default 7) **and** its `model` and `prompt_version` equal the current config. A stale card is still shown (with its date and a `stale` flag) until a successful regeneration replaces it; a failed regeneration keeps it.
 5. **Concurrency:** `Cache::lock('ai-card:'.sha256(key), timeout+15)->block(timeout+10)`; after acquiring the lock the service re-reads the row, so a second concurrent request returns the card the first one produced without a second call (Jev uses a non-blocking lock and `busy`, `ForecastService.php:32-36`; blocking is better here because generation is slow). Lock wait timeout → `503 busy`.
@@ -77,6 +79,8 @@ Then exactly one Chat Completions request is sent (with `response_format.type = 
 Given a Visitor on `/instruments/NVDA`
 When the page renders and when the API is called directly
 Then the panel shows a sign-in link and no generate button; `GET` and `POST` return `401`; no provider request and no log row exist.
+
+> Superseded 2026-10-15 by `premium-panels-auth-only` (`docs/specs/premium-panels-auth-only.md`): Visitors see no panel and no row link.
 
 ### Scenario 3: invalid or unsafe output
 Given the provider returns content that is not JSON, misses a key, has an extra key, a wrong ticker, `finish_reason: "length"`, a non-null `refusal`, or `horizon_months: 6`

@@ -3,11 +3,13 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext } from '../../auth/context.ts'
+import type { AuthContextValue } from '../../auth/context.ts'
 import { I18nProvider } from '../../i18n/I18nProvider.tsx'
 import { LOCALE_STORAGE_KEY } from '../../i18n/locales.ts'
 import { MESSAGES } from '../../i18n/messages/index.ts'
 import { ApiError, companyCardApi } from '../../lib/api.ts'
 import type { CompanyCard, ScreenerCandidate } from '../../lib/api.ts'
+import CandidateResults from '../screener/CandidateResults.tsx'
 import CandidateTable from '../screener/CandidateTable.tsx'
 import CompanyCardPanel from './CompanyCardPanel.tsx'
 
@@ -22,17 +24,23 @@ const auth = {
   login: vi.fn(), register: vi.fn(), logout: vi.fn(),
 }
 
-function show(signedIn: boolean) {
-  return render(
-    <AuthContext.Provider value={{ ...auth, user: signedIn ? auth.user : null }}>
+function tree(signedIn: boolean, status: 'loading' | 'ready' = 'ready', entry = '/instruments/NVDA') {
+  return (
+    <AuthContext.Provider value={{ ...auth, status, user: signedIn ? auth.user : null }}>
       <I18nProvider>
-        <MemoryRouter>
+        <MemoryRouter initialEntries={[entry]}>
           <CompanyCardPanel ticker="NVDA" />
         </MemoryRouter>
       </I18nProvider>
-    </AuthContext.Provider>,
+    </AuthContext.Provider>
   )
 }
+
+function show(signedIn: boolean, status: 'loading' | 'ready' = 'ready', entry = '/instruments/NVDA') {
+  return render(tree(signedIn, status, entry))
+}
+
+const DEEP_LINK = '/instruments/NVDA#ai-company-card'
 
 function card(overrides: Partial<CompanyCard> = {}): CompanyCard {
   const metric = (value: number | null, period: string | null, currency: string | null = null) => ({ value, currency, period })
@@ -80,13 +88,30 @@ beforeEach(() => window.localStorage.setItem(LOCALE_STORAGE_KEY, 'es'))
 afterEach(() => { cleanup(); vi.clearAllMocks(); window.localStorage.clear() })
 
 describe('CompanyCardPanel', () => {
-  it('offers a Visitor only a sign-in link and never calls the API', () => {
-    show(false)
-    expect(screen.getByRole('link', { name: 'Inicia sesión para ver la ficha IA' })).toBeTruthy()
-    expect(screen.queryByRole('button')).toBeNull()
-    expect(screen.getByTestId('company-card-warning').textContent).toContain('Generado por IA · no verificado · no es asesoramiento de inversión')
+  it('renders nothing for a Visitor: no section, no sign-in prompt, no request', () => {
+    const { container } = show(false)
+    expect(container.innerHTML).toBe('')
+    expect(document.getElementById('ai-company-card')).toBeNull()
+    expect(screen.queryByRole('link')).toBeNull()
     expect(companyCardApi.get).not.toHaveBeenCalled()
     expect(companyCardApi.generate).not.toHaveBeenCalled()
+  })
+
+  it('renders nothing while auth is loading (no flash) and makes no request', () => {
+    const { container } = show(false, 'loading')
+    expect(container.innerHTML).toBe('')
+    expect(companyCardApi.get).not.toHaveBeenCalled()
+  })
+
+  it('shows the labelled panel for a signed-in user and hides it on sign-out without a reload', async () => {
+    vi.mocked(companyCardApi.get).mockResolvedValue({ card: null, available: true })
+    const { container, rerender } = show(true)
+    expect(screen.getByTestId('company-card-warning').textContent).toContain('Generado por IA · no verificado · no es asesoramiento de inversión')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Generar ficha' })).toBeTruthy())
+    rerender(tree(false))
+    expect(container.innerHTML).toBe('')
+    rerender(tree(true))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Generar ficha' })).toBeTruthy())
   })
 
   it('shows loading, then a clear not-available state without a generate button', async () => {
@@ -193,6 +218,45 @@ describe('CompanyCardPanel', () => {
   })
 })
 
+describe('CompanyCardPanel deep link', () => {
+  const scroll = vi.fn()
+
+  beforeEach(() => {
+    scroll.mockClear()
+    Element.prototype.scrollIntoView = scroll
+    vi.mocked(companyCardApi.get).mockResolvedValue({ card: null, available: true })
+  })
+
+  it('scrolls to the panel once for a signed-in user opening #ai-company-card', async () => {
+    const { rerender } = show(true, 'ready', DEEP_LINK)
+    expect(scroll).toHaveBeenCalledTimes(1)
+    expect(scroll).toHaveBeenCalledWith({ block: 'start' })
+    expect(scroll.mock.contexts[0]).toBe(document.getElementById('ai-company-card'))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Generar ficha' })).toBeTruthy())
+    rerender(tree(true, 'ready', DEEP_LINK))
+    expect(scroll).toHaveBeenCalledTimes(1)
+  })
+
+  it('scrolls when the session resolves after the panel mounted', async () => {
+    const { rerender } = show(false, 'loading', DEEP_LINK)
+    expect(scroll).not.toHaveBeenCalled()
+    rerender(tree(true, 'ready', DEEP_LINK))
+    expect(scroll).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(companyCardApi.get).toHaveBeenCalledWith('NVDA'))
+  })
+
+  it('never scrolls or renders for a Visitor with the hash', () => {
+    const { container } = show(false, 'ready', DEEP_LINK)
+    expect(container.innerHTML).toBe('')
+    expect(scroll).not.toHaveBeenCalled()
+  })
+
+  it('does not scroll without the hash', () => {
+    show(true)
+    expect(scroll).not.toHaveBeenCalled()
+  })
+})
+
 describe('companyCard catalog', () => {
   it('has no price target, rating or buy/sell wording in any language', () => {
     for (const messages of Object.values(MESSAGES)) {
@@ -203,11 +267,23 @@ describe('companyCard catalog', () => {
 })
 
 describe('CandidateTable AI card link', () => {
-  it('links each Candidate to its chart Company Card anchor', () => {
-    const candidate: ScreenerCandidate = {
-      ticker: 'NVDA', company: 'NVIDIA', sector: 'Tech', exchange: 'NASDAQ', active: true,
-      date: '2026-10-02', close: 100, change_percent: 1, rvol: 1.2, rsi14: 55, signals: [], patterns: [],
-    }
+  const candidate: ScreenerCandidate = {
+    ticker: 'NVDA', company: 'NVIDIA', sector: 'Tech', exchange: 'NASDAQ', active: true,
+    date: '2026-10-02', close: 100, change_percent: 1, rvol: 1.2, rsi14: 55, signals: [], patterns: [],
+  }
+
+  function results(value: AuthContextValue | null) {
+    const content = (
+      <I18nProvider>
+        <MemoryRouter>
+          <CandidateResults status="ready" candidates={[candidate]} hasFilters={false} error={null} onRetry={() => {}} onClearFilters={() => {}} />
+        </MemoryRouter>
+      </I18nProvider>
+    )
+    return render(value === null ? content : <AuthContext.Provider value={value}>{content}</AuthContext.Provider>)
+  }
+
+  it('hides the link by default (presentational table, Visitors)', () => {
     render(
       <I18nProvider>
         <MemoryRouter>
@@ -215,6 +291,25 @@ describe('CandidateTable AI card link', () => {
         </MemoryRouter>
       </I18nProvider>,
     )
+    expect(screen.getByRole('link', { name: 'NVDA' })).toBeTruthy()
+    expect(screen.getByText('NASDAQ')).toBeTruthy()
+    expect(screen.getByText('NVIDIA')).toBeTruthy()
+    expect(screen.queryByText('Ficha IA')).toBeNull()
+  })
+
+  it.each([
+    ['no AuthProvider', null],
+    ['auth loading', { ...auth, status: 'loading' as const, user: null }],
+    ['Visitor', { ...auth, user: null }],
+  ])('CandidateResults shows no AI card link for %s', (_label, value) => {
+    results(value)
+    expect(screen.getByRole('link', { name: 'NVDA' })).toBeTruthy()
+    expect(screen.queryByText('Ficha IA')).toBeNull()
+    expect(screen.queryByText(/inicia sesión/i)).toBeNull()
+  })
+
+  it('CandidateResults links each Candidate to its chart Company Card anchor for a signed-in user', () => {
+    results(auth)
     const link = screen.getByRole('link', { name: 'Ficha IA de NVDA' })
     expect(link.getAttribute('href')).toBe('/instruments/NVDA#ai-company-card')
     expect(link.textContent).toBe('Ficha IA')
