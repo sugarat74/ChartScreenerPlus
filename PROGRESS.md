@@ -1,5 +1,20 @@
 # Progress Log
 
+## Spec: Admin operations MCP — 2026-10-16
+
+- At the user's request, wrote `docs/specs/admin-ops-mcp.md` with the `feature-spec` skill; `admin-ops-mcp` stays `not_started` (all deps accepted).
+- Key decisions:
+  - `laravel/mcp ^1.0`: Packagist v1.0.2 supports Laravel 13.
+  - Endpoint `/api/mcp/admin`: Nginx only forwards `/api` and `/sanctum` to PHP, so no Nginx change.
+  - Bearer-only: session cookies are rejected.
+  - Sanctum personal access tokens (`User` needs `HasApiTokens`) with `mcp:read`/`mcp:write`, mandatory expiry ≤ 90 days (30 by default) and at most 5 per Admin; created and revoked from a new `/admin/mcp` page.
+  - 9 read + 3 write tools. Write tools require `confirm: true` and a separate ability, keep REST validation, and refuse ending the token owner's own sessions.
+  - Admin controller logic is extracted into shared services first, with the REST API unchanged.
+  - `mcp_audit_events` with allowlisted arguments and 90-day pruning.
+  - Rate limits 60/min, 6 writes/min.
+  - The `health` tool reads a new non-secret backup status file, because the backup directory is root-only.
+- Planning only: no code or deploy changes; `init.ps1` not rerun. The spec is at the upper size bound; the fallback split is the SPA token page (artisan command instead). Root-key retirement stays an operator follow-up after production smoke.
+
 ## Premium panels for signed-in users only — 2026-10-15
 
 - Implemented `premium-panels-auth-only` (spec `docs/specs/premium-panels-auth-only.md`, branch `feat/premium-panels-auth-only`): Visitors no longer see the Jev forecast panel, the AI Company Card panel or the Candidate-row "Ficha IA" link, and get no sign-in prompt for them; signed-in users see them as before. New `frontend/src/auth/useSignedIn.ts` reads the bootstrapped session without fetching or throwing; both panels return `null` for a Visitor or while auth loads; `CandidateTable` gained `showCompanyCardLink` (default `false`), set by `CandidateResults`; the `#ai-company-card` scroll moved from the chart page into `CompanyCardPanel` (once, whichever of chart or session resolves first). `forecast.signIn` and `companyCard.signIn` removed. No backend change.
