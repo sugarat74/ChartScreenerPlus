@@ -66,7 +66,9 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Funciones de IA',
         paragraphs: [
-          'Si eres usuario registrado y pides generar una ficha de empresa con IA, el servidor envía a un proveedor externo de IA la identidad del instrumento (ticker, nombre de la empresa, sector y bolsa) y, solo si está habilitado, datos técnicos de mercado de Chartiko. No se envía ningún dato de tu cuenta (ni nombre, ni email, ni Watchlist, ni Screeners guardados). El proveedor se indicará aquí cuando se active la función; mientras no se active, no se envía nada. La ficha generada se comparte con todos los usuarios y no contiene datos personales.',
+          'Si eres usuario registrado y pides generar una ficha de empresa con IA, el servidor envía a DevExpert Inference (inference.devexpert.io), el proveedor externo de IA, la identidad del instrumento (ticker, nombre de la empresa, sector y bolsa) y datos técnicos públicos de mercado de Chartiko (último cierre y variación, indicadores, Signals y patrones). La ficha generada se comparte con todos los usuarios y no contiene datos personales.',
+          'Si eres usuario registrado y pides un pronóstico experimental, el servidor envía a TypeSafe AI (typesafe.ai), proveedor del modelo Jev, el histórico de precios diarios del instrumento, sus indicadores y sus Signals. El pronóstico se guarda por instrumento y fecha, no por usuario.',
+          'En ninguno de los dos casos se envía ningún dato de tu cuenta (ni nombre, ni email, ni dirección IP, ni Watchlist, ni Screeners guardados): los proveedores solo reciben datos de mercado.',
           'Para controlar el coste y evitar abusos registramos cada generación solicitada: tu identificador de cuenta, el instrumento, la fecha, el resultado y el número de tokens consumidos, sin el texto enviado ni recibido.',
         ],
         items: [

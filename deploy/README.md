@@ -25,6 +25,9 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
 4. GitHub > Settings > Environments > `production`: restringe las ramas de despliegue a `main`.
    Secrets de Actions: `VPS_HOST` (IP), `VPS_SSH_KEY` (clave de deploy) y
    `VPS_SSH_KNOWN_HOSTS` (línea known_hosts con la clave pública del VPS).
+   Claves de proveedores (entorno `production`): `TYPESAFE_API_KEY` (Jev) y `AI_API_KEY`
+   (ficha IA). En cada despliegue se instalan en `shared/.env` mediante
+   `configure-jev-env.py` y `configure-ai-env.py`, sin imprimirlas. Si falta alguna, el despliegue falla.
    Obtén la clave desde la consola del proveedor con
    `cat /etc/ssh/ssh_host_ed25519_key.pub` y contrasta su huella con
    `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` por ese canal independiente.

@@ -919,7 +919,7 @@
       "Docs explain how to issue/revoke a token and connect Claude Code (claude mcp add --transport http ...), and record that the temporary root SSH key can be retired once operations move to this server; .\\init.ps1 and CI (SQLite + PostgreSQL) pass"
     ],
     "evidence": [],
-    "notes": "Added to the backlog on 2026-10-08 at user request, to be done later. Motivation: day-to-day production operation currently relies on a temporary root SSH key; an authorized, audited MCP over the Admin API removes that need. Out of scope: product-facing/Copilot MCP (screener/instrument tools for end users, AI Copilot is outside the MVP), database or shell access, role management. Related open risk: retire the temporary root key and disable sshd PasswordAuthentication once this exists. No spec or product code added yet."
+    "notes": "Added to the backlog on 2026-10-08 at user request, to be done later. Motivation: day-to-day production operation currently relies on a temporary root SSH key; an authorized, audited MCP over the Admin API removes that need. Out of scope: product-facing/Copilot MCP (screener/instrument tools for end users, AI Copilot is outside the MVP), database or shell access, role management. Related open risk: retire the temporary root key and disable sshd PasswordAuthentication once this exists. Spec: docs/specs/admin-ops-mcp.md (2026-10-16): laravel/mcp ^1.0 at /api/mcp/admin (bearer-only, no Nginx change), Sanctum tokens with mcp:read/mcp:write and mandatory expiry <= 90 days, 9 read + 3 write tools sharing extracted Admin services with REST, mcp_audit_events with 90-day pruning, health tool fed by a backup status file. No product code added yet."
   },
   {
     "id": "web-to-mobile-skill",
