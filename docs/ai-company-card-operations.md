@@ -40,6 +40,24 @@ AI_CARD_LOG_RETENTION_DAYS=90
 
 Comprobación tras activar: con una cuenta registrada, abrir `/instruments/NVDA#ai-company-card`, pulsar «Generar ficha» y verificar que aparece la ficha en menos del tiempo límite; recargar y comprobar que se reutiliza (no aparece una fila nueva en `ai_company_card_generations`). Repetir en inglés: cada idioma genera y guarda su propia ficha.
 
+## Configuración de producción (2026-10-16)
+
+Decisiones del propietario: proveedor **DevExpert Inference** (`https://inference.devexpert.io/v1`, modelo `chat`, el mismo de la prueba real del 15 de octubre), envío de datos técnicos permitido (`AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=true`, son datos públicos) y límites por defecto. La política de privacidad nombra al proveedor (y también a TypeSafe AI para Jev) desde `updated_at` 2026-10-16.
+
+Igual que la clave de Jev, la clave no se escribe a mano en el VPS. Vive en el secreto `AI_API_KEY` del entorno GitHub `production`. En cada despliegue, `ci-deploy.yml` la pasa por SSH (stdin) a `deploy/configure-ai-env.py`, que escribe en `shared/.env`, sin imprimir nada:
+
+- `AI_API_KEY`,
+- `AI_CARD_ENABLED=true`,
+- `AI_BASE_URL`,
+- `AI_MODEL`,
+- `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=true`.
+
+Después `deploy.sh` vuelve a cachear la configuración. Si falta el secreto, el despliegue falla antes de activar la release.
+
+- Alta o rotación de la clave: `gh secret set AI_API_KEY --env production` (la pide por teclado; no la pongas en la línea de comandos ni en el chat) y redesplegar.
+- Cambiar proveedor o modelo: editar `SETTINGS` en `deploy/configure-ai-env.py`, actualizar la política de privacidad si cambia el proveedor y desplegar.
+- Desactivar de urgencia: poner `AI_CARD_ENABLED=false` en `shared/.env` y `config:cache`. El siguiente despliegue lo volvería a activar, así que cambia también el script.
+
 ## Coste y límites
 
 - Una ficha por Instrument, idioma y versión de esquema; se reutiliza para todos los usuarios mientras sea fresca (7 días y mismo modelo y versión de prompt). Reutilizar no cuenta para ningún límite.

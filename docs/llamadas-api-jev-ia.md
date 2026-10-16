@@ -229,7 +229,10 @@ La llamada solo se hace cuando se cumplen estas condiciones:
 - `AI_CARD_ENABLED=true`.
 - `AI_BASE_URL` válida, `AI_API_KEY` y `AI_MODEL` configurados.
 
-**Estado a 2026-10-16:** desactivada en producción.
+**Configuración de producción (decidida el 2026-10-16):**
+- Proveedor: DevExpert Inference (`https://inference.devexpert.io/v1`), modelo `chat`.
+- `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=true`, así que se envía el bloque `technical`.
+- La clave se instala desde el secreto de GitHub `AI_API_KEY` mediante `deploy/configure-ai-env.py`. El procedimiento está en [ai-company-card-operations.md](ai-company-card-operations.md).
 
 **Caché y concurrencia.** Una ficha se reutiliza durante 7 días por instrumento e idioma (`AI_CARD_FRESHNESS_DAYS`). Un bloqueo evita que dos peticiones simultáneas generen la misma ficha.
 

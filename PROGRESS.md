@@ -1,5 +1,21 @@
 # Progress Log
 
+## AI company card: production provider configured — 2026-10-16
+
+- Owner decisions:
+  - provider DevExpert Inference (`https://inference.devexpert.io/v1`, model `chat`, the same one tested on 2026-10-15);
+  - technical market data may be sent (public data), so `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=true`;
+  - default limits kept (7-day freshness, 10 per user and 200 overall per day, 5 POST/min);
+  - Jev/TypeSafe also named in the privacy policy.
+- Key delivery mirrors Jev:
+  - The GitHub `production` secret `AI_API_KEY` is piped over SSH stdin to the new `deploy/configure-ai-env.py`.
+  - That script pins `AI_CARD_ENABLED`, `AI_BASE_URL`, `AI_MODEL` and `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED`, rejects keys that would break a quoted dotenv value, and prints nothing.
+  - The new `ci-deploy.yml` step fails the deploy when the secret is missing.
+- Privacy "Funciones de IA" (es/en) names DevExpert Inference for cards and TypeSafe AI for Jev forecasts, and states that no account data, IP address, Watchlist or Saved Screeners reach either provider. Forecasts are stored per instrument and date (verified: `forecast_predictions` has no user column). `config/legal.php` `updated_at` set to 2026-10-16.
+- Docs updated: `docs/ai-company-card-operations.md`, `deploy/README.md`, `docs/risks-and-open-questions.md` and `docs/llamadas-api-jev-ia.md`.
+- Verification: `configure-ai-env.py` builder checked with a dummy key (settings replaced, key quoted, unsafe or short keys rejected); `.\init.ps1` exit 0 (Laravel 380 passed / 6 skipped, Vitest 138, SPA build, engine 67). Branch `chore/ai-card-devexpert`; no production change yet.
+- Pending: the owner sets the `AI_API_KEY` secret, then the PR is merged and deployed, followed by a production smoke on `/instruments/NVDA#ai-company-card` in es/en.
+
 ## Spec: Admin operations MCP — 2026-10-16
 
 - At the user's request, wrote `docs/specs/admin-ops-mcp.md` with the `feature-spec` skill; `admin-ops-mcp` stays `not_started` (all deps accepted).

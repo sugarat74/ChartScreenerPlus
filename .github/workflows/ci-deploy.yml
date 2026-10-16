@@ -150,6 +150,13 @@ jobs:
           test -n "$TYPESAFE_API_KEY"
           printf '%s' "$TYPESAFE_API_KEY" | ssh -F "$SSH_DIRECTORY/config" chartiko-vps \
             "python3 /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/configure-jev-env.py"
+      - name: Configure AI company card key in private server environment
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+        run: |
+          test -n "$AI_API_KEY"
+          printf '%s' "$AI_API_KEY" | ssh -F "$SSH_DIRECTORY/config" chartiko-vps \
+            "python3 /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/configure-ai-env.py"
       - name: Activate release
         run: ssh -F "$SSH_DIRECTORY/config" chartiko-vps "bash /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/deploy.sh ${GITHUB_SHA::10}"
       - name: Remove SSH credentials
