@@ -13,7 +13,7 @@
   - The new `ci-deploy.yml` step fails the deploy when the secret is missing.
 - Privacy "Funciones de IA" (es/en) names DevExpert Inference for cards and TypeSafe AI for Jev forecasts, and states that no account data, IP address, Watchlist or Saved Screeners reach either provider. Forecasts are stored per instrument and date (verified: `forecast_predictions` has no user column). `config/legal.php` `updated_at` set to 2026-10-16.
 - Docs updated: `docs/ai-company-card-operations.md`, `deploy/README.md`, `docs/risks-and-open-questions.md` and `docs/llamadas-api-jev-ia.md`.
-- Verification: `configure-ai-env.py` builder checked with a dummy key (settings replaced, key quoted, unsafe or short keys rejected); `.\init.ps1` exit 0 (Laravel 380 passed / 6 skipped, Vitest 138, SPA build, engine 67). Branch `chore/ai-card-devexpert`; no production change yet.
+- Verification: `configure-ai-env.py` builder checked with a dummy key (settings replaced, key quoted, unsafe or short keys rejected); `.\init.ps1` exit 0 after rebasing on #41 (Laravel 380 passed / 6 skipped, Vitest 154, SPA build, engine 67). Branch `chore/ai-card-devexpert`, PR #42.
 - Pending: the owner sets the `AI_API_KEY` secret, then the PR is merged and deployed, followed by a production smoke on `/instruments/NVDA#ai-company-card` in es/en.
 
 ## Spec: Admin operations MCP — 2026-10-16
