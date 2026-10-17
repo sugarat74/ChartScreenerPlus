@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Ai\AiProviderException;
 use App\Services\Ai\OpenAiCompatibleClient;
 use App\Services\Ai\StructuredCompletion;
+use App\Services\Fundamentals\CompanyFundamentalsService;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -24,13 +25,21 @@ use Illuminate\Support\Facades\Log;
  * `CompanyCardSchema::validate`. Every generation attempt (including a
  * json_schema -> json_object fallback, which is one attempt of up to two HTTP
  * requests) writes one log row without prompt or response text.
+ *
+ * A card remembers the SEC filing (accession) its outlook was grounded on;
+ * when Company Fundamentals move to a newer filing the card is stale.
  */
 class CompanyCardService
 {
+    private readonly CompanyFundamentalsService $fundamentals;
+
     public function __construct(
         private readonly OpenAiCompatibleClient $client,
         private readonly CompanyCardContextBuilder $contextBuilder,
-    ) {}
+        ?CompanyFundamentalsService $fundamentals = null,
+    ) {
+        $this->fundamentals = $fundamentals ?? app(CompanyFundamentalsService::class);
+    }
 
     /** Generation is enabled and the provider is fully configured. */
     public function available(): bool
@@ -54,7 +63,7 @@ class CompanyCardService
     public function generate(Instrument $instrument, string $locale, User $user): array
     {
         $existing = $this->find($instrument, $locale);
-        if ($existing !== null && $this->isFresh($existing)) {
+        if ($existing !== null && $this->isFresh($existing, $instrument)) {
             return ['card' => $this->payload($existing, $instrument), 'reused' => true];
         }
 
@@ -66,7 +75,7 @@ class CompanyCardService
 
         return $this->withLock($lockKey, function () use ($instrument, $locale, $user): array {
             $existing = $this->find($instrument, $locale);
-            if ($existing !== null && $this->isFresh($existing)) {
+            if ($existing !== null && $this->isFresh($existing, $instrument)) {
                 return ['card' => $this->payload($existing, $instrument), 'reused' => true];
             }
 
@@ -152,6 +161,8 @@ class CompanyCardService
                     'model' => $model,
                     'context_mode' => $built['mode'],
                     'context_as_of_date' => $built['as_of_date'],
+                    'fundamentals_accession' => $built['fundamentals_accession'],
+                    'fundamentals_period_end' => $built['fundamentals_period_end'],
                     'content' => $content,
                     'generated_at' => now(),
                 ],
@@ -198,14 +209,17 @@ class CompanyCardService
             ->first();
     }
 
-    private function isFresh(AiCompanyCard $card): bool
+    private function isFresh(AiCompanyCard $card, Instrument $instrument): bool
     {
         $days = max(0, (int) config('ai_card.freshness_days'));
 
         return $card->generated_at !== null
             && $card->generated_at->greaterThanOrEqualTo(now()->subDays($days))
             && $card->model === $this->client->model()
-            && $card->prompt_version === (string) config('ai_card.prompt_version');
+            && $card->prompt_version === (string) config('ai_card.prompt_version')
+            // A newer 10-K/10-Q in Company Fundamentals makes the card stale
+            // (both null counts as equal).
+            && $card->fundamentals_accession === $this->fundamentals->accession($instrument);
     }
 
     /** @return array<string, mixed> */
@@ -217,9 +231,10 @@ class CompanyCardService
             'schema_version' => $card->schema_version,
             'model' => $card->model,
             'generated_at' => $card->generated_at->copy()->utc()->toIso8601ZuluString(),
-            'fresh' => $this->isFresh($card),
+            'fresh' => $this->isFresh($card, $instrument),
             'context_mode' => $card->context_mode,
             'context_as_of_date' => $card->context_as_of_date?->format('Y-m-d'),
+            'fundamentals_period_end' => $card->fundamentals_period_end?->format('Y-m-d'),
             'content' => $card->content,
         ];
     }

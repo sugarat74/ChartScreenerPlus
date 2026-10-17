@@ -1378,7 +1378,7 @@
     "title": "Verified SEC fundamentals in the company card with a grounded 3-month outlook",
     "user_visible_behavior": "For a signed-in user, the company card shows P/E, EPS, market cap, revenue and its growth, EBITDA and margin, net debt/EBITDA, ROIC and dividend yield computed by Chartiko from the company's SEC 10-K/10-Q filings and our latest close, each with its period and source, or a dash with the reason when not meaningful (e.g. EBITDA for banks). The AI writes only the qualitative part, a clearly headed 'Previsión a 3 meses' (scenario, summary, macro, sector, drivers, risks, confidence) grounded on those figures and labelled as AI, with no price targets or ratings.",
     "depends_on": ["ai-company-card", "premium-panels-auth-only", "db-schema-market-data", "ingestion-scheduler", "app-multilanguage", "legal-compliance-eu"],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "A scheduled, opt-in artisan command reads SEC EDGAR (descriptive SEC_USER_AGENT, at most the configured requests per second, bounded retry/backoff) and stores one company_fundamentals row per Instrument; it never blocks or changes the daily ingestion pipeline and one company failure never stops the others",
       "Offline tests with trimmed real companyfacts fixtures prove TTM from 10-K + YTD 10-Q, Q4 and restatement handling, concept fallbacks, banks (EBITDA/ROIC null with reason), negative EPS (P/E null), missing concepts and multi-class shares",
@@ -1386,7 +1386,12 @@
       "Spanish and English UI separate 'Fuente: SEC (10-K/10-Q)' metrics from the AI-labelled 3-month outlook; legal texts name the SEC source; no price target or buy/sell wording",
       "No test calls SEC or an AI provider; real-browser QA with a fake provider; standard init.ps1 gate passes"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-15 implementer: SEC EDGAR client (UA, gzip, <=SEC_REQUESTS_PER_SECOND spacing, 2 retries 2s/8s, no redirects, 403 stops), companyfacts reader, TTM calculator, extractor, on-read metrics, company_fundamentals table, fundamentals:refresh (weekdays 07:00 New York, opt-in) and card schema company-card-v2 / prompt company-card-prompt-v3; SPA panel with the AI Previsión a 3 meses block above SEC Métricas clave",
+      "Tests offline (Http::fake + preventStrayRequests, trimmed real fixtures tests/fixtures/sec): 73 new PHP tests (TtmCalculatorTest 11, FundamentalsExtractorTest 9, FundamentalsMetricsTest 9, SecEdgarClientTest 20, FundamentalsRefreshCommandTest 14, CompanyFundamentalsCardTest 10); AAPL EPS 8.72, revenue 466,823M (+14.24%), EBITDA 167,959M match the spec research table; Vitest 160 (6 new SEC panel cases)",
+      ".\\init.ps1 exit 0: Laravel 445 passed / 6 skipped, SPA lint + 160 tests + build, engine 67",
+      "Edge QA 22/22 on a local stack (fake SEC :8211 serving the fixtures, fake OpenAI-compatible :8212, Laravel :8213, Vite :5213, throwaway SQLite): refresh --force 11 requests >=203 ms apart with the UA, second run skips unchanged companies; outlook above metrics, SEC badge and periods, JPM not-applicable reasons, XOM pending note, MSFT fiscal-year label, stale after a new accession, provider body has SEC figures without price-derived ones or user data, es/en, 390 px without overflow, Visitor no panel and API 401"
+    ],
     "notes": "Requested by the user on 2026-10-15 ('en el análisis de IA busca la forma que salgan los datos de PER, EBITDA, etc. y una previsión a 3 meses vista'). Explicit scope change: brings a verified fundamentals data feed (SEC EDGAR XBRL, public domain) into scope. Spec: docs/specs/company-fundamentals-sec.md. Needs the owner's SEC_USER_AGENT contact before enabling."
   }
 ]

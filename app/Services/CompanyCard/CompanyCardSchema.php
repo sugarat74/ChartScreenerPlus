@@ -3,41 +3,25 @@
 namespace App\Services\CompanyCard;
 
 /**
- * The `company-card-v1` JSON Schema sent to the provider and the hand-written
+ * The `company-card-v2` JSON Schema sent to the provider and the hand-written
  * server-side validator applied to every answer before it is stored or shown.
  *
- * The schema carries no price target, fair value, stop, rating or position
- * field. Units are fixed by the metric key (ratio `x`, percent, millions of
- * `currency`), never by the model. Changing the schema requires bumping
- * `config('ai_card.schema_version')` and `prompt_version`.
+ * v2 carries only the qualitative part (company description and the 3-month
+ * outlook): every financial figure comes from Company Fundamentals computed
+ * from SEC filings (company-fundamentals-sec), never from the model. The
+ * schema carries no price target, fair value, stop, rating or position field.
+ * Changing the schema requires bumping `config('ai_card.schema_version')` and
+ * `prompt_version`.
  */
 class CompanyCardSchema
 {
-    public const NAME = 'company_card_v1';
-
-    /** Metric keys in display order. */
-    public const METRICS = [
-        'pe_ttm',
-        'pe_forward',
-        'roic_percent',
-        'ebitda_millions',
-        'ebitda_margin_percent',
-        'revenue_growth_yoy_percent',
-        'net_debt_to_ebitda',
-        'market_cap_millions',
-        'dividend_yield_percent',
-    ];
-
-    /** Metrics expressed in millions of a currency (currency required when non-null). */
-    public const CURRENCY_METRICS = ['ebitda_millions', 'market_cap_millions'];
+    public const NAME = 'company_card_v2';
 
     public const STANCES = ['bullish', 'neutral', 'bearish'];
 
     public const CONFIDENCE = ['low', 'medium', 'high'];
 
-    private const MAX_ABS_VALUE = 10_000_000;
-
-    private const MAX_PERCENT = 1000;
+    private const KEYS = ['company', 'outlook', 'limitations', 'sources'];
 
     /**
      * Strict JSON Schema (every property required, no additional properties).
@@ -47,22 +31,12 @@ class CompanyCardSchema
     public static function schema(): array
     {
         $nullableString = ['type' => ['string', 'null']];
-        $metric = [
-            'type' => 'object',
-            'additionalProperties' => false,
-            'required' => ['value', 'currency', 'period'],
-            'properties' => [
-                'value' => ['type' => ['number', 'null']],
-                'currency' => ['type' => ['string', 'null'], 'description' => 'ISO 4217 code, only for amounts in millions of a currency; otherwise null.'],
-                'period' => ['type' => ['string', 'null'], 'description' => 'Fiscal period or date the value refers to, e.g. "FY2025" or "TTM Q2 2026".'],
-            ],
-        ];
         $stringList = ['type' => 'array', 'items' => ['type' => 'string']];
 
         return [
             'type' => 'object',
             'additionalProperties' => false,
-            'required' => ['company', 'metrics', 'outlook', 'data_as_of', 'limitations', 'sources'],
+            'required' => self::KEYS,
             'properties' => [
                 'company' => [
                     'type' => 'object',
@@ -75,12 +49,6 @@ class CompanyCardSchema
                         'industry' => $nullableString,
                         'description' => $nullableString,
                     ],
-                ],
-                'metrics' => [
-                    'type' => 'object',
-                    'additionalProperties' => false,
-                    'required' => self::METRICS,
-                    'properties' => array_fill_keys(self::METRICS, $metric),
                 ],
                 'outlook' => [
                     'type' => 'object',
@@ -97,7 +65,6 @@ class CompanyCardSchema
                         'confidence' => ['type' => 'string', 'enum' => self::CONFIDENCE],
                     ],
                 ],
-                'data_as_of' => $nullableString,
                 'limitations' => ['type' => 'string'],
                 'sources' => $stringList + ['description' => '0 to 5 plain-text descriptions, no URLs required.'],
             ],
@@ -114,19 +81,13 @@ class CompanyCardSchema
      */
     public static function validate(array $data, string $ticker): array
     {
-        self::keys($data, ['company', 'metrics', 'outlook', 'data_as_of', 'limitations', 'sources']);
+        self::keys($data, self::KEYS);
 
         $company = self::object($data['company'], ['name', 'ticker', 'sector', 'industry', 'description']);
         $name = self::string($company['name'], 200);
         $cardTicker = self::string($company['ticker'], 12);
         if (strcasecmp($cardTicker, trim($ticker)) !== 0) {
             throw new InvalidCompanyCard('ticker mismatch');
-        }
-
-        $metricsIn = self::object($data['metrics'], self::METRICS);
-        $metrics = [];
-        foreach (self::METRICS as $key) {
-            $metrics[$key] = self::metric($key, $metricsIn[$key]);
         }
 
         $outlook = self::object($data['outlook'], ['horizon_months', 'stance', 'summary', 'macro_context', 'sector_context', 'drivers', 'risks', 'confidence']);
@@ -142,7 +103,6 @@ class CompanyCardSchema
                 'industry' => self::nullableString($company['industry'], 120),
                 'description' => self::nullableProse($company['description'], 600),
             ],
-            'metrics' => $metrics,
             'outlook' => [
                 'horizon_months' => 3,
                 'stance' => self::enum($outlook['stance'], self::STANCES),
@@ -153,49 +113,8 @@ class CompanyCardSchema
                 'risks' => self::list($outlook['risks'], 1, 5),
                 'confidence' => self::enum($outlook['confidence'], self::CONFIDENCE),
             ],
-            'data_as_of' => self::nullableString($data['data_as_of'], 40),
             'limitations' => self::prose($data['limitations'], 400),
             'sources' => self::list($data['sources'], 0, 5),
-        ];
-    }
-
-    /**
-     * @return array{value: float|int|null, currency: string|null, period: string|null}
-     */
-    private static function metric(string $key, mixed $raw): array
-    {
-        $metric = self::object($raw, ['value', 'currency', 'period']);
-        $value = $metric['value'];
-        if ($value !== null) {
-            if (! is_int($value) && ! is_float($value)) {
-                throw new InvalidCompanyCard("metric {$key} value");
-            }
-            $bound = str_ends_with($key, '_percent') ? self::MAX_PERCENT : self::MAX_ABS_VALUE;
-            if (! is_finite((float) $value) || abs((float) $value) > $bound) {
-                throw new InvalidCompanyCard("metric {$key} bounds");
-            }
-        }
-
-        $currency = self::nullableString($metric['currency'], 3);
-        if ($currency !== null) {
-            $currency = strtoupper($currency);
-            if (preg_match('/^[A-Z]{3}$/', $currency) !== 1) {
-                throw new InvalidCompanyCard("metric {$key} currency");
-            }
-        }
-        if (in_array($key, self::CURRENCY_METRICS, true)) {
-            if ($value !== null && $currency === null) {
-                throw new InvalidCompanyCard("metric {$key} currency required");
-            }
-        } else {
-            // Ratios and percentages have a fixed unit; a currency is noise.
-            $currency = null;
-        }
-
-        return [
-            'value' => $value,
-            'currency' => $value === null ? null : $currency,
-            'period' => self::nullableString($metric['period'], 40),
         ];
     }
 
@@ -288,7 +207,7 @@ class CompanyCardSchema
             $cut = mb_substr($cut, 0, $space);
         }
 
-        return rtrim($cut, " ,;:-").'…';
+        return rtrim($cut, ' ,;:-').'…';
     }
 
     private static function nullableString(mixed $value, int $max): ?string

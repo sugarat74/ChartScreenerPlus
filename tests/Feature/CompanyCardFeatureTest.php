@@ -126,12 +126,14 @@ class CompanyCardFeatureTest extends TestCase
             ->assertJsonPath('reused', false)
             ->assertJsonPath('card.ticker', 'NVDA')
             ->assertJsonPath('card.locale', 'es')
-            ->assertJsonPath('card.schema_version', 'company-card-v1')
+            ->assertJsonPath('card.schema_version', 'company-card-v2')
             ->assertJsonPath('card.model', 'fixture-model')
             ->assertJsonPath('card.fresh', true)
             ->assertJsonPath('card.context_mode', 'identity')
             ->assertJsonPath('card.context_as_of_date', null)
-            ->assertJsonPath('card.content.metrics.pe_forward.value', null)
+            ->assertJsonPath('card.content.metrics', null)
+            ->assertJsonPath('card.fundamentals_period_end', null)
+            ->assertJsonPath('fundamentals', null)
             ->assertJsonPath('card.content.outlook.horizon_months', 3);
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $response->json('card.generated_at'));
 
@@ -145,7 +147,7 @@ class CompanyCardFeatureTest extends TestCase
                 && $body['model'] === 'fixture-model'
                 && $body['response_format']['type'] === 'json_schema'
                 && $body['response_format']['json_schema']['strict'] === true
-                && $body['response_format']['json_schema']['name'] === 'company_card_v1'
+                && $body['response_format']['json_schema']['name'] === 'company_card_v2'
                 && $body['max_tokens'] === config('ai_card.max_tokens')
                 && $body['temperature'] === 0.2
                 && ! str_contains($raw, 'first-user@example.test')
@@ -173,7 +175,7 @@ class CompanyCardFeatureTest extends TestCase
         Http::fake();
         $user = User::factory()->create();
 
-        $this->actingAs($user)->getJson('/api/instruments/NVDA/company-card')->assertOk()->assertExactJson(['card' => null, 'available' => true]);
+        $this->actingAs($user)->getJson('/api/instruments/NVDA/company-card')->assertOk()->assertExactJson(['card' => null, 'available' => true, 'fundamentals' => null]);
 
         AiCompanyCard::factory()->create(['instrument_id' => $instrument->id, 'locale' => 'en']);
         $this->actingAs($user)->withHeader('Accept-Language', 'es')->getJson('/api/instruments/NVDA/company-card')
@@ -220,7 +222,7 @@ class CompanyCardFeatureTest extends TestCase
         $this->assertSame('json_schema', $sent[0]['response_format']['type']);
         $this->assertSame(['type' => 'json_object'], $sent[1]['response_format']);
         $this->assertStringContainsString('JSON Schema', $sent[1]['messages'][0]['content']);
-        $this->assertStringContainsString('"pe_ttm"', $sent[1]['messages'][0]['content']);
+        $this->assertStringContainsString('"horizon_months"', $sent[1]['messages'][0]['content']);
         $this->assertDatabaseCount('ai_company_cards', 1);
         $this->assertDatabaseHas('ai_company_card_generations', ['status' => 'succeeded', 'response_format' => 'json_object']);
     }
@@ -268,11 +270,7 @@ class CompanyCardFeatureTest extends TestCase
 
                 return ['content' => $card];
             }],
-            'partial metrics' => [function (array $card) {
-                unset($card['metrics']['dividend_yield_percent']);
-
-                return ['content' => $card];
-            }],
+            'v1 metrics from the model' => [fn (array $card) => ['content' => $card + ['metrics' => ['pe_ttm' => ['value' => 45, 'currency' => null, 'period' => 'TTM']]]]],
             'extra key' => [fn (array $card) => ['content' => $card + ['price_target' => 250]]],
             'extra nested key' => [function (array $card) {
                 $card['outlook']['rating'] = 'buy';
@@ -366,7 +364,7 @@ class CompanyCardFeatureTest extends TestCase
 
         $user = User::factory()->create();
         $this->actingAs($user)->getJson('/api/instruments/NVDA/company-card')
-            ->assertOk()->assertExactJson(['card' => null, 'available' => false]);
+            ->assertOk()->assertExactJson(['card' => null, 'available' => false, 'fundamentals' => null]);
         $this->actingAs($user)->postJson('/api/instruments/NVDA/company-card')
             ->assertStatus(503)->assertJsonPath('code', 'provider_not_configured');
 
@@ -541,7 +539,7 @@ class CompanyCardFeatureTest extends TestCase
                 return 0;
             }
         });
-        $lock = Cache::lock('ai-card:'.hash('sha256', $instrument->id.'|es|company-card-v1'), 60);
+        $lock = Cache::lock('ai-card:'.hash('sha256', $instrument->id.'|es|company-card-v2'), 60);
         $this->assertTrue($lock->get());
 
         $this->actingAs(User::factory()->create())->postJson('/api/instruments/NVDA/company-card')

@@ -46,6 +46,28 @@ Schedule::command('ingestion:pipeline', ['--universe' => config('ingestion.unive
 
 /*
 |--------------------------------------------------------------------------
+| Company Fundamentals (SEC EDGAR)
+|--------------------------------------------------------------------------
+|
+| Separate from the EOD pipeline (own command, own lock, never part of
+| `ingestion:pipeline`): weekdays at 07:00 in the market timezone, only when
+| SEC_FUNDAMENTALS_ENABLED is true (the command also refuses to run without a
+| valid SEC_USER_AGENT). One submissions request per company; companyfacts
+| only when a new 10-K/10-Q is listed or a filing is still pending.
+|
+*/
+
+Schedule::command('fundamentals:refresh')
+    ->name('fundamentals-refresh')
+    ->dailyAt('07:00')
+    ->timezone($timezone)
+    ->weekdays()
+    ->when(fn (): bool => (bool) config('fundamentals.enabled'))
+    ->withoutOverlapping(90)
+    ->runInBackground();
+
+/*
+|--------------------------------------------------------------------------
 | Personal-data retention
 |--------------------------------------------------------------------------
 |

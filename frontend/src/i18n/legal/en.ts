@@ -66,7 +66,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'AI features',
         paragraphs: [
-          'If you are a registered user and ask for an AI company card, the server sends an external AI provider the instrument identity (ticker, company name, sector and exchange) and, only when enabled, Chartiko technical market data. None of your account data is sent (no name, email, Watchlist or Saved Screeners). The provider will be named here when the feature is switched on; until then nothing is sent. The generated card is shared with every user and contains no personal data.',
+          'If you are a registered user and ask for an AI company card, the server sends an external AI provider the instrument identity (ticker, company name, sector and exchange), the public financial figures Chartiko computes from the filings the company submits to the SEC (EDGAR) and, only when enabled, Chartiko market data (latest close and technical data). None of your account data is sent (no name, email, Watchlist or Saved Screeners). The provider will be named here when the feature is switched on; until then nothing is sent. The generated card is shared with every user and contains no personal data.',
           'To control cost and prevent abuse we record each generation you request: your account identifier, the instrument, the date, the outcome and the number of tokens used, without the text sent or received.',
         ],
         items: [
@@ -153,7 +153,7 @@ export const legalEn: LegalTexts = {
         heading: 'Not investment advice',
         paragraphs: [
           'Chartiko information (Screener, Candidates, Signals and charts) is generated automatically from market data and technical indicators and is for information and educational purposes only. It is not investment advice, a personal recommendation or an offer to buy or sell financial instruments.',
-          'AI-generated company cards may contain errors or outdated figures and are not verified.',
+          'Financial figures are computed by Chartiko from public SEC EDGAR filings and our latest close and may differ from other sources or lag the latest filing; the AI-written outlook may contain errors and is not verified.',
           'Data may contain errors or delays. Past performance does not guarantee future results and investing involves the risk of loss. Consult an authorised professional before making investment decisions.',
         ],
       },
@@ -170,7 +170,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'Intellectual property',
         paragraphs: [
-          'The design, software, brand and texts of Chartiko belong to its owner or are used under licence. Market data comes from third-party sources and may be subject to their own terms; it may not be reused commercially through Chartiko.',
+          'The design, software, brand and texts of Chartiko belong to its owner or are used under licence. Market data comes from third-party sources and may be subject to their own terms; it may not be reused commercially through Chartiko. Company financial figures are computed from public filings in the EDGAR system of the U.S. Securities and Exchange Commission (SEC).',
         ],
       },
       {

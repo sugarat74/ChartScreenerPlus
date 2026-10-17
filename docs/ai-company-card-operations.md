@@ -1,10 +1,10 @@
 # Ficha de empresa IA: operación
 
-La ficha de empresa IA (`ai-company-card`, especificación `docs/specs/ai-company-card.md`) es una hoja estructurada por Instrument que redacta un proveedor externo compatible con la API Chat Completions de OpenAI: sector e industria, descripción del negocio, métricas clave con su periodo y un escenario cualitativo a tres meses. Solo la ven y la generan usuarios registrados (`GET`/`POST /api/instruments/{ticker}/company-card`, con sesión Sanctum). Abrir el panel solo lee la base de datos; el proveedor se llama únicamente cuando el usuario pulsa «Generar ficha» y no existe una ficha fresca. Las cifras las escribe el modelo y no están verificadas; la interfaz lo indica siempre.
+La ficha de empresa IA (`ai-company-card`, especificación `docs/specs/ai-company-card.md`) es una hoja estructurada por Instrument que redacta un proveedor externo compatible con la API Chat Completions de OpenAI: sector e industria, descripción del negocio y una previsión cualitativa a tres meses. Desde `company-fundamentals-sec`, las métricas clave no las escribe el modelo: las calcula Chartiko con los informes 10-K/10-Q de la empresa en SEC EDGAR (sección «Fundamentales SEC» más abajo) y se envían al modelo como contexto verificado. Solo la ven y la generan usuarios registrados (`GET`/`POST /api/instruments/{ticker}/company-card`, con sesión Sanctum). Abrir el panel solo lee la base de datos; el proveedor se llama únicamente cuando el usuario pulsa «Generar previsión» y no existe una ficha fresca. El texto lo escribe el modelo y no está verificado; la interfaz lo indica siempre y separa las cifras SEC («Fuente: SEC (10-K/10-Q)») de la previsión IA.
 
 ## Estado por defecto
 
-La función se entrega **desactivada** (`AI_CARD_ENABLED=false`) y sin proveedor elegido. Mientras no esté activada y configurada, los usuarios registrados ven «Las fichas de empresa con IA aún no están disponibles», `POST` responde `503 provider_not_configured` y no sale ninguna petición del servidor. Las pruebas automáticas usan siempre `Http::fake`; ningún test ni CI llama a una API real.
+La función se entrega **desactivada** (`AI_CARD_ENABLED=false`) y sin proveedor elegido. Mientras no esté activada y configurada, los usuarios registrados ven «La previsión con IA aún no está disponible» (las métricas SEC se siguen viendo), `POST` responde `503 provider_not_configured` y no sale ninguna petición del servidor. Las pruebas automáticas usan siempre `Http::fake`; ningún test ni CI llama a una API real.
 
 ## Activación en producción
 
@@ -38,7 +38,7 @@ AI_CARD_LOG_RETENTION_DAYS=90
 
 `deploy.sh` ejecuta `config:cache` y `route:cache`: tras editar `.env` hay que volver a cachear (`php artisan config:cache` y `php artisan route:cache` en el release activo, como `deploy`) o redesplegar. `AI_CARD_REQUESTS_PER_MINUTE` forma parte de la ruta, así que solo cambia al reconstruir la caché de rutas. Si `AI_BASE_URL` no es `https://` (salvo `http://localhost` o `http://127.0.0.1` para servidores locales), la función se considera no configurada.
 
-Comprobación tras activar: con una cuenta registrada, abrir `/instruments/NVDA#ai-company-card`, pulsar «Generar ficha» y verificar que aparece la ficha en menos del tiempo límite; recargar y comprobar que se reutiliza (no aparece una fila nueva en `ai_company_card_generations`). Repetir en inglés: cada idioma genera y guarda su propia ficha.
+Comprobación tras activar: con una cuenta registrada, abrir `/instruments/NVDA#ai-company-card`, pulsar «Generar previsión» y verificar que aparece la ficha en menos del tiempo límite; recargar y comprobar que se reutiliza (no aparece una fila nueva en `ai_company_card_generations`). Repetir en inglés: cada idioma genera y guarda su propia ficha.
 
 ## Coste y límites
 
@@ -53,11 +53,45 @@ Comprobación tras activar: con una cuenta registrada, abrir `/instruments/NVDA#
 
 ## Validación y errores
 
-La respuesta del modelo se valida en el servidor contra `company-card-v1` (claves exactas, tipos, enumerados, horizonte 3, límites numéricos, longitudes y ticker). Una respuesta truncada, rechazada, con claves de más o de menos, o de otro ticker devuelve `503 invalid_provider_response`, no se guarda y no sustituye a la ficha anterior. Errores de red, tiempo agotado o respuestas 4xx/5xx devuelven `503 provider_unavailable`. Dos peticiones simultáneas para la misma ficha comparten un bloqueo: la segunda espera y reutiliza la primera; si espera más de `AI_TIMEOUT_SECONDS + 10` s, `503 busy`. Los logs de aplicación solo registran la clase de excepción o el estado HTTP, nunca la clave ni el contenido.
+La respuesta del modelo se valida en el servidor contra `company-card-v2` (claves exactas `company`, `outlook`, `limitations`, `sources`; sin métricas; tipos, enumerados, horizonte 3, longitudes y ticker). Las fichas `company-card-v1` (con cifras del modelo) siguen en la tabla pero ya no se muestran. Una respuesta truncada, rechazada, con claves de más o de menos, o de otro ticker devuelve `503 invalid_provider_response`, no se guarda y no sustituye a la ficha anterior. Errores de red, tiempo agotado o respuestas 4xx/5xx devuelven `503 provider_unavailable`. Dos peticiones simultáneas para la misma ficha comparten un bloqueo: la segunda espera y reutiliza la primera; si espera más de `AI_TIMEOUT_SECONDS + 10` s, `503 busy`. Los logs de aplicación solo registran la clase de excepción o el estado HTTP, nunca la clave ni el contenido.
 
 ## Cambiar el esquema o el prompt
 
 Cualquier cambio en `CompanyCardSchema` o `CompanyCardPrompt` exige subir `schema_version` o `prompt_version` en `config/ai_card.php`. Un cambio de `prompt_version` o de `AI_MODEL` marca las fichas existentes como desactualizadas (se siguen mostrando hasta regenerarlas); un cambio de `schema_version` las deja fuera de lectura, porque el contenido antiguo no cumple el esquema nuevo.
+
+## Fundamentales SEC
+
+Las métricas (PER, BPA, capitalización, ingresos y su crecimiento, EBITDA y margen, deuda neta/EBITDA, ROIC aproximado y rentabilidad por dividendo) se calculan con los datos XBRL públicos de SEC EDGAR (`companyfacts` y `submissions`, dominio público, sin clave) y nuestro último cierre. Especificación: `docs/specs/company-fundamentals-sec.md`. Se ven aunque el proveedor de IA esté desactivado.
+
+### Activación
+
+En `/var/www/alphapulse/shared/.env` (y volver a cachear la configuración):
+
+```
+SEC_FUNDAMENTALS_ENABLED=true
+SEC_USER_AGENT="Chartiko <buzón de contacto>@chartiko.com"   # nombre + email reales (política de acceso de la SEC)
+SEC_REQUESTS_PER_SECOND=5                                      # (5) máximo 9; la SEC permite 10/s
+SEC_TIMEOUT_SECONDS=30                                         # (30)
+```
+
+Sin `SEC_USER_AGENT` válido (nombre y email) el comando termina con código 1 sin hacer ninguna petición, la tarea programada no se ejecuta y la API devuelve `fundamentals: null`. `SEC_DATA_BASE_URL` y `SEC_TICKERS_URL` solo se cambian para pruebas locales con servidores falsos; en producción se dejan sin definir.
+
+Carga inicial tras activar (una vez, unas 1.000 peticiones, unos 4 minutos a 5 peticiones/s):
+
+```
+php artisan fundamentals:refresh --force
+```
+
+Después, la tarea `fundamentals-refresh` corre de lunes a viernes a las 07:00 (hora de Nueva York), separada del pipeline diario: una petición pequeña de `submissions` por empresa y `companyfacts` solo si hay un 10-K/10-Q nuevo, un informe pendiente o `--force`. Para un subconjunto: `php artisan fundamentals:refresh --ticker=AAPL --ticker=BRK.B`.
+
+### Seguimiento
+
+- `company_fundamentals.status`: `ok`, `partial` (faltan conceptos; ver `inputs`), `no_cik` (el ticker no está en el mapa de la SEC), `no_data` (la SEC no tiene datos XBRL) o `error` (primer intento fallido). `last_error` guarda el último fallo (p. ej. `sec_unavailable (503)`) sin borrar las últimas cifras buenas.
+- Un `403` de la SEC detiene toda la ejecución: revisar `SEC_USER_AGENT`.
+- `pending_accession`/`pending_form`/`pending_filed_at`: hay un informe listado en `submissions` que aún no está en `companyfacts`; se vuelve a leer en cada ejecución.
+- Un informe nuevo cambia `latest_accession` y deja desactualizadas (no borra) las previsiones IA hechas con el anterior.
+- Aproximaciones documentadas: BPA de 12 meses por aritmética de acumulados, ROIC con el capital al cierre del periodo, D&A como `Depreciation` + amortización de intangibles cuando no hay concepto conjunto, capitalización multi-clase con el cierre de una sola clase. Bancos y aseguradoras (SIC 6000-6411) muestran EBITDA, margen, deuda neta/EBITDA y ROIC como «no aplica».
+- Comprobación manual opcional (nunca en CI), con el `SEC_USER_AGENT` real: `php artisan fundamentals:refresh --ticker=AAPL --ticker=JPM --ticker=XOM` y comparar con la tabla de la especificación.
 
 ## Desactivar
 

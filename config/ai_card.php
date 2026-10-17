@@ -46,6 +46,8 @@ return [
     'log_retention_days' => (int) env('AI_CARD_LOG_RETENTION_DAYS', 90),
 
     // Bump when the schema or the prompt changes (CONSTRAINTS.md).
-    'schema_version' => 'company-card-v1',
-    'prompt_version' => 'company-card-prompt-v2',
+    // v2: qualitative only; figures come from SEC fundamentals
+    // (company-fundamentals-sec). v1 cards stay stored but are never shown.
+    'schema_version' => 'company-card-v2',
+    'prompt_version' => 'company-card-prompt-v3',
 ];
