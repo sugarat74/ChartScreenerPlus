@@ -92,7 +92,7 @@ La llamada la hace un cliente genérico compatible con OpenAI Chat Completions, 
 
 En resumen:
 
-1. Se pide salida estructurada con `response_format: json_schema` en modo `strict`, con el esquema `company_card_v1`.
+1. Se pide salida estructurada con `response_format: json_schema` en modo `strict`, con el esquema `company_card_v2`.
 2. Si el proveedor responde 400 a ese formato, se reintenta una vez con `json_object` y el esquema incluido en el prompt.
 3. Laravel vuelve a validar la respuesta por su cuenta antes de guardarla.
 
@@ -111,12 +111,12 @@ El cliente no sigue redirecciones.
 {
   "model": "<AI_MODEL>",
   "messages": [
-    { "role": "system", "content": "<instrucciones company-card-prompt-v2>" },
+    { "role": "system", "content": "<instrucciones company-card-prompt-v3>" },
     { "role": "user",   "content": "<JSON de contexto del instrumento>" }
   ],
   "response_format": {
     "type": "json_schema",
-    "json_schema": { "name": "company_card_v1", "strict": true, "schema": { ... } }
+    "json_schema": { "name": "company_card_v2", "strict": true, "schema": { ... } }
   },
   "max_tokens": 8000,
   "temperature": 0.2
@@ -142,37 +142,30 @@ No se envían `top_p`, `seed`, `tools` ni `stream`.
 
 ```
 company     { name, ticker, sector|null, industry|null, description|null }
-metrics     { pe_ttm, pe_forward, roic_percent, ebitda_millions,
-              ebitda_margin_percent, revenue_growth_yoy_percent,
-              net_debt_to_ebitda, market_cap_millions, dividend_yield_percent }
-              cada métrica: { value: number|null, currency: string|null, period: string|null }
 outlook     { horizon_months (siempre 3), stance: bullish|neutral|bearish,
               summary, macro_context, sector_context,
               drivers[1-5], risks[1-5], confidence: low|medium|high }
-data_as_of  string|null
 limitations string
 sources     string[0-5]
 ```
 
 - El esquema no tiene campos de precio objetivo, valor razonable, stop, rating ni posición.
-- La unidad la fija el nombre de la métrica:
-  - ratios (`pe_*`, `net_debt_to_ebitda`): en veces;
-  - `*_percent`: en porcentaje (5.2 significa 5,2 %);
-  - `*_millions`: en millones de la divisa indicada en `currency` (código ISO 4217).
+- **Desde `company-card-v2` el esquema no incluye métricas.** El modelo no tiene datos financieros fiables, así que en la v1 dejaba casi todas a `null`. Ahora las cifras clave las calcula Chartiko con los informes 10-K/10-Q de la empresa en la SEC (EDGAR XBRL) y con el último cierre. Son estas: `pe_ttm`, `eps_diluted_ttm`, `market_cap_millions`, `revenue_ttm_millions`, `revenue_growth_yoy_percent`, `ebitda_millions`, `ebitda_margin_percent`, `net_debt_to_ebitda`, `roic_percent` y `dividend_yield_percent`.
+- Cada cifra lleva su periodo y su fuente. Si no tiene sentido, lleva un motivo en lugar del valor: `negative_earnings`, `financial_sector`, `missing_data`…
+- Las cifras se envían al modelo como contexto verificado (objeto `fundamentals` del mensaje `user`) y se muestran en la ficha tal cual, sin pasar por la IA. El detalle está en [specs/company-fundamentals-sec.md](specs/company-fundamentals-sec.md).
 
 **Modo `json_object` (respaldo).** Se envía `{"type": "json_object"}` y se añade al mensaje `system` esta instrucción, seguida del esquema en JSON:
 
-> Respond with exactly one JSON object (no Markdown, no prose) that validates against this JSON Schema named "company_card_v1". Every property is required and no other property is allowed:
+> Respond with exactly one JSON object (no Markdown, no prose) that validates against this JSON Schema named "company_card_v2". Every property is required and no other property is allowed:
 
 **Cuándo se rechaza la respuesta.** Si `finish_reason` es distinto de `stop`, si `message.refusal` no está vacío, si el contenido no es JSON o si el JSON es una lista en vez de un objeto. Antes de leer el JSON se quita el envoltorio ```` ```json ```` si viene.
 
 ### 2.3 Mensajes
 
-**`system`** (`CompanyCardPrompt`, versión `company-card-prompt-v2`, en [CompanyCardPrompt.php](../app/Services/CompanyCard/CompanyCardPrompt.php)). Incluye:
+**`system`** (`CompanyCardPrompt`, versión `company-card-prompt-v3`, en [CompanyCardPrompt.php](../app/Services/CompanyCard/CompanyCardPrompt.php)). Incluye:
 
 - La fecha de hoy y el idioma de salida: `es` → español de España, `en` → inglés.
-- Usar solo datos fiables y dar la cifra más reciente conocida con su periodo. Usar `null` solo cuando no se conoce la cifra, sin adivinar ni extrapolar.
-- Las unidades de cada métrica.
+- Las cifras financieras del objeto `fundamentals` están verificadas, salen de los informes ante la SEC y llevan su periodo. El modelo debe apoyarse en ellas y no inventar otras. Si no hay `fundamentals`, no debe dar ninguna cifra financiera y la previsión será solo cualitativa.
 - `outlook` es una visión cualitativa a 3 meses. `stance` describe el escenario base, no es una recomendación.
 - No dar precios objetivo, valores razonables, stops, ratings de compra/venta ni consejos de inversión.
 - Límites de longitud en caracteres:
@@ -184,7 +177,6 @@ sources     string[0-5]
   | `macro_context`, `sector_context` | 500 cada uno |
   | `limitations` | 400 |
   | Cada driver, riesgo o fuente | 200 |
-  | Periodos y `data_as_of` | 40 |
 
 - `company.ticker` debe coincidir con el ticker pedido.
 
@@ -193,6 +185,7 @@ sources     string[0-5]
 ```json
 {
   "instrument": { "ticker": "NVDA", "company": "...", "sector": "...", "exchange": "..." },
+  "fundamentals": { "period_end": "...", "metrics": { "pe_ttm": { "value": 0.0, "period": "..." }, "...": "..." } },
   "technical": {
     "as_of_date": "2026-10-15",
     "close": 0.0,
@@ -204,7 +197,7 @@ sources     string[0-5]
 }
 ```
 
-El bloque `technical` solo se envía si `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=true`. Sin esa variable solo viaja la identidad pública del instrumento. Nunca se envían datos de usuarios, sesiones, Watchlist ni Saved Screeners.
+El objeto `fundamentals` se envía cuando hay cifras de la SEC para la empresa. El bloque `technical` solo se envía si `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=true`. Sin esa variable viajan la identidad pública del instrumento y, si existen, las cifras de la SEC (sin las que dependen del precio: PER, capitalización y rentabilidad por dividendo). Nunca se envían datos de usuarios, sesiones, Watchlist ni Saved Screeners.
 
 ### 2.4 Validación al recibir la respuesta
 
@@ -215,10 +208,8 @@ El bloque `technical` solo se envía si `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=tru
 - El ticker coincide con el pedido.
 - `horizon_months === 3`.
 - Los enums tienen valores válidos.
-- Límites numéricos: ±1000 % en porcentajes y ±10.000.000 en el resto.
-- Las métricas en millones llevan un código ISO válido. En ratios y porcentajes la divisa se descarta.
 
-**Recorte en vez de rechazo.** Si un texto libre supera su límite, se corta al final de una frase o palabra y se añade "…". Los identificadores, periodos, enums, números y la estructura siguen siendo estrictos.
+**Recorte en vez de rechazo.** Si un texto libre supera su límite, se corta al final de una frase o palabra y se añade "…". Los identificadores, enums y la estructura siguen siendo estrictos.
 
 **Si la validación falla**, la ficha no se guarda ni se muestra, y el intento cuenta para los límites diarios.
 
@@ -253,10 +244,10 @@ La llamada solo se hace cuando se cumplen estas condiciones:
 | | Jev | Ficha IA |
 |---|---|---|
 | Endpoint | `https://api.typesafe.ai/v1/systemone` (fijo) | `{AI_BASE_URL}/chat/completions` (configurable) |
-| Formato de salida | Pregunta `choice` con probabilidades `up/down/flat` | JSON Schema estricto `company_card_v1` (respaldo `json_object`) |
+| Formato de salida | Pregunta `choice` con probabilidades `up/down/flat` | JSON Schema estricto `company_card_v2` (respaldo `json_object`) |
 | Datos enviados | 252 barras, indicadores y Signals del instrumento | Identidad del instrumento. Contexto técnico solo con derechos verificados |
 | Activación | `JEV_ENABLED` + `JEV_MARKET_DATA_RIGHTS_VERIFIED` | `AI_CARD_ENABLED` (+ `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED` para `technical`) |
 | Timeout | 8 s | 40 s |
 | Caché | Por instrumento, horizonte, modelo, versión de pregunta y `as_of_date` | Por instrumento e idioma, 7 días |
-| Validación propia | Modelo, tipo, 3 probabilidades que suman 1, `choice` coherente | Esquema completo, ticker, enums, límites, divisas, recorte de texto |
+| Validación propia | Modelo, tipo, 3 probabilidades que suman 1, `choice` coherente | Esquema completo, ticker, enums y recorte de texto. Las cifras no vienen del modelo: las calcula Chartiko desde la SEC |
 | Datos personales | Ninguno | Ninguno |

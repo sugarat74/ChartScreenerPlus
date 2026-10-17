@@ -105,4 +105,14 @@ class Instrument extends Model
     {
         return $this->hasMany(ChartPattern::class);
     }
+
+    /**
+     * Company Fundamentals computed from the company's SEC filings.
+     *
+     * @return HasOne<CompanyFundamental, $this>
+     */
+    public function fundamentals(): HasOne
+    {
+        return $this->hasOne(CompanyFundamental::class);
+    }
 }

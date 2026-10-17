@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'instrument_id', 'locale', 'schema_version', 'prompt_version', 'model',
     'context_mode', 'context_as_of_date', 'content', 'generated_at',
+    'fundamentals_accession', 'fundamentals_period_end',
 ])]
 class AiCompanyCard extends Model
 {
@@ -25,6 +26,7 @@ class AiCompanyCard extends Model
     {
         return [
             'context_as_of_date' => 'date',
+            'fundamentals_period_end' => 'date',
             'content' => 'array',
             'generated_at' => 'datetime',
         ];

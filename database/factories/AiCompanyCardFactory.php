@@ -29,16 +29,13 @@ class AiCompanyCardFactory extends Factory
     }
 
     /**
-     * A valid `company-card-v1` object for tests and fixtures.
+     * A valid `company-card-v2` object for tests and fixtures (no figures:
+     * those come from Company Fundamentals).
      *
      * @return array<string, mixed>
      */
     public static function content(string $ticker): array
     {
-        $metric = fn (int|float|null $value, ?string $period, ?string $currency = null): array => [
-            'value' => $value, 'currency' => $currency, 'period' => $period,
-        ];
-
         return [
             'company' => [
                 'name' => 'Fixture Corp',
@@ -46,17 +43,6 @@ class AiCompanyCardFactory extends Factory
                 'sector' => 'Information Technology',
                 'industry' => 'Semiconductors',
                 'description' => 'Designs chips used in data centers.',
-            ],
-            'metrics' => [
-                'pe_ttm' => $metric(45.2, 'TTM Q2 2026'),
-                'pe_forward' => $metric(null, null),
-                'roic_percent' => $metric(38.5, 'FY2025'),
-                'ebitda_millions' => $metric(86000, 'FY2025', 'USD'),
-                'ebitda_margin_percent' => $metric(62.1, 'FY2025'),
-                'revenue_growth_yoy_percent' => $metric(78, 'FY2025'),
-                'net_debt_to_ebitda' => $metric(-0.4, 'FY2025'),
-                'market_cap_millions' => $metric(null, null),
-                'dividend_yield_percent' => $metric(0.03, 'TTM'),
             ],
             'outlook' => [
                 'horizon_months' => 3,
@@ -68,7 +54,6 @@ class AiCompanyCardFactory extends Factory
                 'risks' => ['Export restrictions'],
                 'confidence' => 'medium',
             ],
-            'data_as_of' => 'FY2025',
             'limitations' => 'Figures come from the model and may be outdated.',
             'sources' => ['Company annual reports'],
         ];

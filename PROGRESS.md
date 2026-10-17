@@ -1,5 +1,32 @@
 # Progress Log
 
+## SEC fundamentals: rebase and production contact — 2026-10-17
+
+- User report: the AI card does not fill P/E, EBITDA and the other key metrics. Known cause: the model has no data source and returns them as null. `company-fundamentals-sec` (passing) is the fix.
+- Rebased `feat/company-fundamentals-sec` onto `main` `ce04307`. Four conflicts:
+  - **Privacy texts (es/en):** they now name DevExpert Inference and also state that SEC-computed figures and public market data are sent. The Jev paragraph and the "no account data" paragraph are kept. `config/legal.php` `updated_at` is 2026-10-17.
+  - **Risks:** SEC entries kept; the AI-card cost entry now says metrics come from SEC filings.
+  - **`PROGRESS.md`:** both entries kept.
+- Production contact given by the owner: `SEC_USER_AGENT="Chartiko Roberto Rodriguez contacto@chartiko.com"` (ASCII, no accent, because it is sent as an HTTP header). The new `deploy/configure-fundamentals-env.py`, called by a new `ci-deploy.yml` step, writes it and `SEC_FUNDAMENTALS_ENABLED=true` on every deploy; it uses no secret. Checks: the builder replaces existing lines, and `SecEdgarClient::validUserAgent()` returns true for this value.
+- Docs:
+  - `docs/llamadas-api-jev-ia.md` now describes `company_card_v2` / prompt v3 (no metrics in the schema; `fundamentals` context).
+  - `docs/ai-company-card-operations.md` covers production activation through the deploy script.
+  - Also updated: `deploy/README.md` and the risks file.
+- First production data load: the scheduled `fundamentals-refresh` (weekdays 07:00 America/New_York) fetches every company without a stored row; or an operator can run `php artisan fundamentals:refresh --force` on the VPS.
+- **Independent validator: ACCEPT.** Checks the validator ran:
+  - `init.ps1`: same counts as the orchestrator's run;
+  - focused suites: 126 passed;
+  - deploy script checked against Laravel's dotenv loader;
+  - v1 cards unreachable;
+  - privacy es/en parity.
+
+  Two doc nits from the validator were fixed (spec implementation notes; a calls-reference sentence about what is sent without the rights flag). `company-fundamentals-sec` is `accepted`.
+- Open follow-ups (non-blocking):
+  - record the per-metric null-count report after the first production refresh;
+  - full-size companyfacts decoding (JPM, 3–8 MB) is untested against the PHP CLI memory limit;
+  - `migrate-to-postgresql.sh` and `remediate-permissions.sh` activity checks do not look for `fundamentals:refresh`;
+  - XOM stays partial until it files a 10-K under its new CIK.
+
 ## AI company card: production provider configured — 2026-10-16
 
 - Owner decisions:
@@ -30,6 +57,13 @@
   - Rate limits 60/min, 6 writes/min.
   - The `health` tool reads a new non-secret backup status file, because the backup directory is root-only.
 - Planning only: no code or deploy changes; `init.ps1` not rerun. The spec is at the upper size bound; the fallback split is the SPA token page (artisan command instead). Root-key retirement stays an operator follow-up after production smoke.
+
+## Verified SEC fundamentals in the company card — 2026-10-15
+
+- Implemented `company-fundamentals-sec` (spec `docs/specs/company-fundamentals-sec.md`, branch `feat/company-fundamentals-sec`): `App\Services\Fundamentals\` (SecEdgarClient + Sleeper, CompanyFactsReader, TtmCalculator, FundamentalsExtractor, FundamentalsMetrics, FundamentalsRefresher, CompanyFundamentalsService), `company_fundamentals` table + `ai_company_cards.fundamentals_accession/period_end`, `php artisan fundamentals:refresh {--ticker=*} {--force}` scheduled as `fundamentals-refresh` (weekdays 07:00 New York, only when enabled, separate from the EOD pipeline), `config/fundamentals.php` (`SEC_FUNDAMENTALS_ENABLED=false`, empty `SEC_USER_AGENT`: inert until both are set). The card API returns `fundamentals` (also with the AI disabled); the LLM schema is `company-card-v2` (no metrics), prompt `company-card-prompt-v3` gets the SEC figures always and price-derived ones only with the rights flag; v1 cards are no longer shown; a new filing makes a card stale. SPA panel: AI "Previsión a 3 meses" first, then "Métricas clave" with "Fuente: SEC (10-K/10-Q)", periods and reasons. Forward P/E dropped.
+- Docs: AGENTS scope, CONSTRAINTS (new Company Fundamentals section, AI card amended), ARCHITECTURE, CONTEXT, DESIGN, domain model, risks, ops doc (SEC enablement/backfill/monitoring), legal texts (SEC source), spec implementation notes.
+- Verification: 73 new PHP tests offline with trimmed real fixtures; `init.ps1` exit 0 (Laravel 445 / 6 skipped, Vitest 160, engine 67); Edge QA 22/22 with fake SEC and AI servers. No real AI call; 13 real SEC requests were made once to build fixtures.
+- Risks/next: production `SEC_USER_AGENT` contact still pending (owner); XOM moved to a new holding CIK (2115436) in the SEC map, so XOM will be partial until it files a 10-K there; after enabling run `php artisan fundamentals:refresh --force` and record a null-count report. Status `passing`, ready for independent validation.
 
 ## Premium panels for signed-in users only — 2026-10-15
 

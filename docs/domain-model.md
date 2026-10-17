@@ -14,7 +14,8 @@
 - **Ingestion Run (EOD Run):** one execution of the pipeline (scrape -> store Daily Bars -> compute Snapshots -> recompute Signals).
 - **Alert:** a Registered User's rule (new Candidates in a Saved Screener, chosen Signal types appearing on Watchlist Instruments, or chosen Chartist Pattern types appearing or being confirmed on Watchlist Instruments), evaluated once per daily data update.
 - **Notification:** what an Alert produces when it finds additions; owned by the user, kept 90 days.
-- **Company Card (Ficha IA):** an AI-generated, unverified sheet for one Instrument (sector/industry, description, key metrics with periods, qualitative 3-month outlook). Shared system data per Instrument, language and schema version; no owner. Each attempted generation leaves a Company Card Generation log row (requesting account, status, token counts; no text), kept 90 days.
+- **Company Card (Ficha IA):** the AI-generated, unverified part of the company sheet for one Instrument (sector/industry, description, qualitative 3-month outlook grounded on Company Fundamentals; no figures of its own since `company-card-v2`). Shared system data per Instrument, language and schema version; no owner; remembers the SEC filing it was grounded on.
+- **Company Fundamentals:** verified financial inputs for one Instrument computed from its SEC 10-K/10-Q filings (EDGAR companyfacts), with provenance and the latest/pending filing; one row per Instrument, rebuilt by `fundamentals:refresh`. Metrics that need a price are derived at read time from our latest close. Each attempted generation leaves a Company Card Generation log row (requesting account, status, token counts; no text), kept 90 days.
 - **User:** Visitor (anonymous), Registered User, or Admin.
 
 ## Relationships
@@ -26,6 +27,7 @@
 - A **Registered User** owns many **Saved Screeners**, many **Watchlist Entries**, up to 10 **Alerts** and their **Notifications**; deleting a Saved Screener deletes its Alert.
 - An **Ingestion Run** processes a whole **Universe** and produces Daily Bars, Snapshots and Signals.
 - An **Instrument** has many **Company Cards**, at most one per language and schema version.
+- An **Instrument** has at most one **Company Fundamentals** row; Instruments of one company (GOOG/GOOGL) share the same CIK and figures.
 
 ## States and Lifecycles
 
@@ -45,7 +47,10 @@ Recomputed on every Ingestion Run. A Signal is not edited by users; it is derive
 `forming -> confirmed`, recomputed on every run like Signals; it disappears when invalidated or 10 sessions after its breakout.
 
 **Company Card**
-`absent -> fresh -> stale -> fresh`. Generated on a Registered User's request; *fresh* while younger than the freshness window (7 days) and made with the current model and prompt version; a *stale* card is still shown until a successful regeneration replaces it (a failed one keeps it).
+`absent -> fresh -> stale -> fresh`. Generated on a Registered User's request; *fresh* while younger than the freshness window (7 days) and made with the current model and prompt version; a *stale* card is still shown until a successful regeneration replaces it (a failed one keeps it). A newer SEC filing in Company Fundamentals also makes it stale.
+
+**Company Fundamentals**
+`absent -> ok | partial | no_cik | no_data | error`, refreshed daily; companyfacts is re-read only when a new 10-K/10-Q is listed, while a filing is *pending* (listed but not yet in companyfacts) or on `--force`; a failure keeps the last good figures and records the error.
 
 ## Important Scenarios
 

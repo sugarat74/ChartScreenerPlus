@@ -645,27 +645,56 @@ export type Forecast = {
   experimental: true
 }
 
-/** Metric keys of `company-card-v1`, in display order. Units are fixed by key. */
-export const COMPANY_CARD_METRICS = [
+/** `fundamentals-v1` metric keys in display order. Units are fixed by key. */
+export const FUNDAMENTAL_METRICS = [
   'pe_ttm',
-  'pe_forward',
-  'roic_percent',
+  'eps_diluted_ttm',
+  'market_cap_millions',
+  'revenue_ttm_millions',
+  'revenue_growth_yoy_percent',
   'ebitda_millions',
   'ebitda_margin_percent',
-  'revenue_growth_yoy_percent',
   'net_debt_to_ebitda',
-  'market_cap_millions',
+  'roic_percent',
   'dividend_yield_percent',
 ] as const
 
-export type CompanyCardMetricKey = (typeof COMPANY_CARD_METRICS)[number]
+export type FundamentalMetricKey = (typeof FUNDAMENTAL_METRICS)[number]
 
-export type CompanyCardMetric = { value: number | null; currency: string | null; period: string | null }
+export type FundamentalReason =
+  | 'negative_earnings'
+  | 'negative_ebitda'
+  | 'financial_sector'
+  | 'missing_data'
+  | 'not_reported'
+  | 'no_price'
+  | 'not_meaningful'
 
-/** Validated `company-card-v1` content (AI-generated, unverified). */
+export type FundamentalPeriod = { kind: 'ttm' | 'fy' | 'instant' | 'price'; end: string; form: string | null }
+
+export type FundamentalMetric = { value: number | null; period: FundamentalPeriod | null; reason: FundamentalReason | null }
+
+/**
+ * Company Fundamentals computed by Chartiko from SEC 10-K/10-Q filings
+ * (EDGAR) and our latest close. Verified data, separate from the AI outlook.
+ */
+export type Fundamentals = {
+  schema_version: 'fundamentals-v1'
+  source: 'sec_edgar'
+  currency: string
+  is_financial: boolean
+  period_end: string | null
+  filing: { form: string; filed_at: string | null; accession: string | null } | null
+  pending_filing: { form: string | null; filed_at: string | null } | null
+  price: { close: number; date: string } | null
+  /** ISO-8601 UTC instant of the last SEC fetch. */
+  fetched_at: string | null
+  metrics: Record<FundamentalMetricKey, FundamentalMetric>
+}
+
+/** Validated `company-card-v2` content (AI-generated, unverified; no figures). */
 export type CompanyCardContent = {
   company: { name: string; ticker: string; sector: string | null; industry: string | null; description: string | null }
-  metrics: Record<CompanyCardMetricKey, CompanyCardMetric>
   outlook: {
     horizon_months: 3
     stance: 'bullish' | 'neutral' | 'bearish'
@@ -676,7 +705,6 @@ export type CompanyCardContent = {
     risks: string[]
     confidence: 'low' | 'medium' | 'high'
   }
-  data_as_of: string | null
   limitations: string
   sources: string[]
 }
@@ -692,23 +720,27 @@ export type CompanyCard = {
   fresh: boolean
   context_mode: 'identity' | 'identity+technical'
   context_as_of_date: string | null
+  /** Period end of the SEC figures the outlook was grounded on, if any. */
+  fundamentals_period_end: string | null
   content: CompanyCardContent
 }
 
+export type CompanyCardResponse = { card: CompanyCard | null; available: boolean; fundamentals: Fundamentals | null }
+
 /**
  * AI Company Card (Registered Users only). `get` reads the stored card for the
- * active language (plus whether generation is switched on) and never triggers
- * generation; `generate` reuses a fresh
+ * active language (plus whether generation is switched on and the SEC
+ * fundamentals) and never triggers generation; `generate` reuses a fresh
  * card or asks the provider once. Errors carry a localized message; the
  * stable `code` stays in the JSON body.
  */
 export const companyCardApi = {
-  async get(ticker: string): Promise<{ card: CompanyCard | null; available: boolean }> {
-    return request<{ card: CompanyCard | null; available: boolean }>(`/api/instruments/${encodeURIComponent(ticker)}/company-card`)
+  async get(ticker: string): Promise<CompanyCardResponse> {
+    return request<CompanyCardResponse>(`/api/instruments/${encodeURIComponent(ticker)}/company-card`)
   },
-  async generate(ticker: string): Promise<{ card: CompanyCard; reused: boolean }> {
+  async generate(ticker: string): Promise<{ card: CompanyCard; reused: boolean; fundamentals: Fundamentals | null }> {
     await ensureCsrfCookie()
-    return request<{ card: CompanyCard; reused: boolean }>(`/api/instruments/${encodeURIComponent(ticker)}/company-card`, {
+    return request<{ card: CompanyCard; reused: boolean; fundamentals: Fundamentals | null }>(`/api/instruments/${encodeURIComponent(ticker)}/company-card`, {
       method: 'POST',
     })
   },

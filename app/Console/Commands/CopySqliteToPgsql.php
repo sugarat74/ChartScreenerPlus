@@ -70,6 +70,8 @@ class CopySqliteToPgsql extends Command
         // AI Company Cards and their generation log postdate the cut-over.
         'ai_company_cards',
         'ai_company_card_generations',
+        // Derived from SEC filings, rebuilt by `fundamentals:refresh`.
+        'company_fundamentals',
     ];
 
     private const CHUNK = 500;
