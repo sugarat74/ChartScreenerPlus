@@ -13,6 +13,19 @@
   - `docs/ai-company-card-operations.md` covers production activation through the deploy script.
   - Also updated: `deploy/README.md` and the risks file.
 - First production data load: the scheduled `fundamentals-refresh` (weekdays 07:00 America/New_York) fetches every company without a stored row; or an operator can run `php artisan fundamentals:refresh --force` on the VPS.
+- **Independent validator: ACCEPT.** Checks the validator ran:
+  - `init.ps1`: same counts as the orchestrator's run;
+  - focused suites: 126 passed;
+  - deploy script checked against Laravel's dotenv loader;
+  - v1 cards unreachable;
+  - privacy es/en parity.
+
+  Two doc nits from the validator were fixed (spec implementation notes; a calls-reference sentence about what is sent without the rights flag). `company-fundamentals-sec` is `accepted`.
+- Open follow-ups (non-blocking):
+  - record the per-metric null-count report after the first production refresh;
+  - full-size companyfacts decoding (JPM, 3–8 MB) is untested against the PHP CLI memory limit;
+  - `migrate-to-postgresql.sh` and `remediate-permissions.sh` activity checks do not look for `fundamentals:refresh`;
+  - XOM stays partial until it files a 10-K under its new CIK.
 
 ## AI company card: production provider configured — 2026-10-16
 

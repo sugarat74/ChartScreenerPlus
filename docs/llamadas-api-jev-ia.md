@@ -197,7 +197,7 @@ sources     string[0-5]
 }
 ```
 
-El objeto `fundamentals` se envía cuando hay cifras de la SEC para la empresa. El bloque `technical` solo se envía si `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=true`. Sin esa variable solo viaja la identidad pública del instrumento. Nunca se envían datos de usuarios, sesiones, Watchlist ni Saved Screeners.
+El objeto `fundamentals` se envía cuando hay cifras de la SEC para la empresa. El bloque `technical` solo se envía si `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED=true`. Sin esa variable viajan la identidad pública del instrumento y, si existen, las cifras de la SEC (sin las que dependen del precio: PER, capitalización y rentabilidad por dividendo). Nunca se envían datos de usuarios, sesiones, Watchlist ni Saved Screeners.
 
 ### 2.4 Validación al recibir la respuesta
 

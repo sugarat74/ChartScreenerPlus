@@ -252,9 +252,9 @@ Findings and deviations, all within the decisions above:
 
 - **Skip check.** The newest submissions accession seen at the last fetch is stored in `inputs._meta.submissions_accession` (no extra column), so a 10-K/A without financial facts does not force a daily companyfacts download. A `404` on submissions is also `no_data`.
 - **Spacing** is measured from the start and the end of the previous request (latency jitter could otherwise let two requests arrive closer than `1/rps`; observed with the local fake).
-- **`context_mode`** keeps its two values; whether fundamentals were sent is recorded by `fundamentals_period_end` (the column is `string(24)`).
+- **`context_mode`** keeps its two values; whether fundamentals were sent is recorded by `fundamentals_period_end` (a `date` column).
 - **Not configured = disabled or invalid UA**: then the API, the AI context and card freshness all see no fundamentals.
 - **Dates** use the `useI18n` market-date formatter ("TTM a 27 jun 2026 · 10-Q") rather than `27/06/2026`.
 - **XOM reorganization:** the live SEC ticker map (fetched 2026-10-15) points XOM to a new holding company (CIK 2115436) whose companyfacts only has its first 10-Q, while the old CIK 34088 lists that 10-Q in submissions without facts. The committed fixture keeps CIK 34088 (documented in `tests/Concerns/FakesSecEdgar.php`); in production XOM will be `partial` until the new CIK files a 10-K (risk recorded).
 - **Submissions fixtures** keep the 20 newest filings plus every 10-K/10-Q (banks file hundreds of 424B2s; a plain head dropped JPM's 10-Qs).
-- `config/legal.php` `updated_at` already equals the change date (2026-10-15), so it is unchanged.
+- `config/legal.php` `updated_at` is 2026-10-17, set when the branch was rebased onto main and the privacy texts were merged with the DevExpert wording.
