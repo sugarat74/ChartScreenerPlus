@@ -66,7 +66,7 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Funciones de IA',
         paragraphs: [
-          'Si eres usuario registrado y pides generar una ficha de empresa con IA, el servidor envía a DevExpert Inference (inference.devexpert.io), el proveedor externo de IA, la identidad del instrumento (ticker, nombre de la empresa, sector y bolsa) y datos técnicos públicos de mercado de Chartiko (último cierre y variación, indicadores, Signals y patrones). La ficha generada se comparte con todos los usuarios y no contiene datos personales.',
+          'Si eres usuario registrado y pides generar una ficha de empresa con IA, el servidor envía a DevExpert Inference (inference.devexpert.io), el proveedor externo de IA, la identidad del instrumento (ticker, nombre de la empresa, sector y bolsa), las cifras financieras públicas que Chartiko calcula con los informes de la empresa ante la SEC (EDGAR) y datos públicos de mercado de Chartiko (último cierre y variación, indicadores, Signals y patrones). La ficha generada se comparte con todos los usuarios y no contiene datos personales.',
           'Si eres usuario registrado y pides un pronóstico experimental, el servidor envía a TypeSafe AI (typesafe.ai), proveedor del modelo Jev, el histórico de precios diarios del instrumento, sus indicadores y sus Signals. El pronóstico se guarda por instrumento y fecha, no por usuario.',
           'En ninguno de los dos casos se envía ningún dato de tu cuenta (ni nombre, ni email, ni dirección IP, ni Watchlist, ni Screeners guardados): los proveedores solo reciben datos de mercado.',
           'Para controlar el coste y evitar abusos registramos cada generación solicitada: tu identificador de cuenta, el instrumento, la fecha, el resultado y el número de tokens consumidos, sin el texto enviado ni recibido.',
@@ -155,7 +155,7 @@ export const legalEs: LegalTexts = {
         heading: 'No es asesoramiento de inversión',
         paragraphs: [
           'La información de Chartiko (Screener, candidatos, Signals y gráficos) se genera automáticamente a partir de datos de mercado e indicadores técnicos y tiene carácter exclusivamente informativo y educativo. No constituye asesoramiento en materia de inversión, recomendación personalizada ni oferta de compra o venta de instrumentos financieros.',
-          'Las fichas de empresa generadas con IA pueden contener errores o cifras desactualizadas y no están verificadas.',
+          'Las cifras financieras las calcula Chartiko a partir de informes públicos de la SEC (EDGAR) y de nuestro último cierre, y pueden diferir de otras fuentes o no reflejar aún el último informe; la previsión redactada por IA puede contener errores y no está verificada.',
           'Los datos pueden contener errores o retrasos. Las rentabilidades pasadas no garantizan resultados futuros e invertir conlleva riesgo de pérdida. Consulta a un profesional autorizado antes de tomar decisiones de inversión.',
         ],
       },
@@ -172,7 +172,7 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Propiedad intelectual',
         paragraphs: [
-          'El diseño, el software, la marca y los textos de Chartiko pertenecen a su titular o se usan con licencia. Los datos de mercado proceden de fuentes de terceros y pueden estar sujetos a sus propias condiciones; no se autoriza su reutilización comercial a través de Chartiko.',
+          'El diseño, el software, la marca y los textos de Chartiko pertenecen a su titular o se usan con licencia. Los datos de mercado proceden de fuentes de terceros y pueden estar sujetos a sus propias condiciones; no se autoriza su reutilización comercial a través de Chartiko. Las cifras financieras de las empresas se calculan con informes públicos del sistema EDGAR de la Comisión de Bolsa y Valores de EE. UU. (SEC).',
         ],
       },
       {

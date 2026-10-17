@@ -5,15 +5,19 @@ namespace App\Services\CompanyCard;
 use App\Models\ChartPattern;
 use App\Models\Instrument;
 use App\Models\Signal;
+use App\Services\Fundamentals\CompanyFundamentalsService;
 
 /**
  * The only data that leaves the server for a Company Card.
  *
- * Always the Instrument identity (public). Our stored technical context
- * (latest close, change, indicators, Signals, chartist patterns) is added only
- * when `config('ai_card.rights_verified')` is true, the same market-data
- * rights caution as Jev. Never any user, session, Watchlist or Saved Screener
- * data.
+ * Always the Instrument identity (public) and, whenever a Company
+ * Fundamentals row with figures exists, the SEC-derived metrics with their
+ * periods (public-domain filing data). Metrics derived from our close (P/E,
+ * market cap, dividend yield, the close itself) and our stored technical
+ * context (latest close, change, indicators, Signals, chartist patterns) are
+ * added only when `config('ai_card.rights_verified')` is true, the same
+ * market-data rights caution as Jev. Never any user, session, Watchlist or
+ * Saved Screener data.
  */
 class CompanyCardContextBuilder
 {
@@ -23,10 +27,32 @@ class CompanyCardContextBuilder
 
     private const INDICATORS = ['sma20', 'sma50', 'sma200', 'rsi14', 'rvol', 'macd_hist', 'adx'];
 
+    public function __construct(private readonly CompanyFundamentalsService $fundamentals) {}
+
+    /**
+     * @return array{context: array<string, mixed>, mode: string, as_of_date: string|null, fundamentals_accession: string|null, fundamentals_period_end: string|null}
+     */
+    public function build(Instrument $instrument): array
+    {
+        $built = $this->identityAndTechnical($instrument);
+        $rights = (bool) config('ai_card.rights_verified');
+
+        $fundamentals = $this->fundamentals->context($instrument, $rights);
+        $built['fundamentals_accession'] = null;
+        $built['fundamentals_period_end'] = null;
+        if ($fundamentals !== null) {
+            $built['context']['fundamentals'] = $fundamentals;
+            $built['fundamentals_accession'] = $this->fundamentals->accession($instrument);
+            $built['fundamentals_period_end'] = $fundamentals['period_end'];
+        }
+
+        return $built;
+    }
+
     /**
      * @return array{context: array<string, mixed>, mode: string, as_of_date: string|null}
      */
-    public function build(Instrument $instrument): array
+    private function identityAndTechnical(Instrument $instrument): array
     {
         $context = [
             'instrument' => [

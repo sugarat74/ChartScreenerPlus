@@ -9,8 +9,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `company-card-v1` schema and its server-side validator
- * (docs/specs/ai-company-card.md -> Card JSON schema).
+ * `company-card-v2` schema and its server-side validator
+ * (docs/specs/ai-company-card.md -> Card JSON schema; v2 drops every
+ * financial figure, docs/specs/company-fundamentals-sec.md decision 7).
  */
 class CompanyCardSchemaTest extends TestCase
 {
@@ -18,8 +19,6 @@ class CompanyCardSchemaTest extends TestCase
     {
         $card = AiCompanyCardFactory::content('nvda');
         $card['company']['description'] = "  Designs\u{0000} chips\nfor data centers.  ";
-        $card['metrics']['pe_ttm']['currency'] = 'USD';
-        $card['metrics']['ebitda_millions']['currency'] = 'usd';
         $card['company']['industry'] = '   ';
 
         $result = CompanyCardSchema::validate($card, 'NVDA');
@@ -27,9 +26,7 @@ class CompanyCardSchemaTest extends TestCase
         $this->assertSame('NVDA', $result['company']['ticker']);
         $this->assertSame('Designs chips for data centers.', $result['company']['description']);
         $this->assertNull($result['company']['industry']);
-        $this->assertNull($result['metrics']['pe_ttm']['currency'], 'ratios never carry a currency');
-        $this->assertSame('USD', $result['metrics']['ebitda_millions']['currency']);
-        $this->assertNull($result['metrics']['pe_forward']['value']);
+        $this->assertSame(['company', 'outlook', 'limitations', 'sources'], array_keys($result));
         $this->assertSame(array_keys(AiCompanyCardFactory::content('X')), array_keys($result));
     }
 
@@ -47,7 +44,13 @@ class CompanyCardSchemaTest extends TestCase
         };
         $check($schema);
 
+        $this->assertSame('company_card_v2', CompanyCardSchema::NAME);
+        $this->assertSame(['company', 'outlook', 'limitations', 'sources'], $schema['required']);
         $encoded = json_encode($schema);
+        // No figures from the model: metrics come only from SEC fundamentals.
+        foreach (['metrics', 'data_as_of', 'pe_ttm', 'ebitda', 'currency'] as $figure) {
+            $this->assertStringNotContainsString($figure, $encoded);
+        }
         foreach (['target', 'fair_value', 'stop', 'rating', 'recommendation', 'position'] as $forbidden) {
             $this->assertStringNotContainsString($forbidden, $encoded);
         }
@@ -64,33 +67,8 @@ class CompanyCardSchemaTest extends TestCase
             'missing company key' => [function (array $c) { unset($c['company']['industry']);
 
                 return $c; }],
-            'extra metric' => [function (array $c) { $c['metrics']['fair_value'] = ['value' => 1, 'currency' => null, 'period' => null];
-
-                return $c; }],
-            'missing metric field' => [function (array $c) { unset($c['metrics']['pe_ttm']['period']);
-
-                return $c; }],
-            'metric is list' => [function (array $c) { $c['metrics']['pe_ttm'] = [1, null, null];
-
-                return $c; }],
-            'string value' => [function (array $c) { $c['metrics']['pe_ttm']['value'] = '45';
-
-                return $c; }],
-            'value out of bounds' => [function (array $c) { $c['metrics']['market_cap_millions'] = ['value' => 2e7, 'currency' => 'USD', 'period' => 'FY'];
-
-                return $c; }],
-            'percent out of bounds' => [function (array $c) { $c['metrics']['roic_percent']['value'] = 1500;
-
-                return $c; }],
-            'currency amount without currency' => [function (array $c) { $c['metrics']['ebitda_millions']['currency'] = null;
-
-                return $c; }],
-            'bad currency' => [function (array $c) { $c['metrics']['ebitda_millions']['currency'] = 'US$';
-
-                return $c; }],
-            'long period' => [function (array $c) { $c['metrics']['pe_ttm']['period'] = str_repeat('a', 41);
-
-                return $c; }],
+            'v1 metrics block' => [fn (array $c) => $c + ['metrics' => ['pe_ttm' => ['value' => 45, 'currency' => null, 'period' => 'TTM']]]],
+            'v1 data_as_of' => [fn (array $c) => $c + ['data_as_of' => 'FY2025']],
             'ticker mismatch' => [function (array $c) { $c['company']['ticker'] = 'AMD';
 
                 return $c; }],
@@ -122,9 +100,6 @@ class CompanyCardSchemaTest extends TestCase
 
                 return $c; }],
             'non-string source' => [function (array $c) { $c['sources'] = [['url' => 'x']];
-
-                return $c; }],
-            'data_as_of number' => [function (array $c) { $c['data_as_of'] = 2025;
 
                 return $c; }],
         ];

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Instrument;
 use App\Services\CompanyCard\CompanyCardService;
 use App\Services\CompanyCard\CompanyCardUnavailable;
+use App\Services\Fundamentals\CompanyFundamentalsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -15,12 +16,15 @@ use Illuminate\Support\Facades\App;
  * Both routes sit inside `auth:sanctum` (a Visitor gets 401 and never reaches
  * the provider). `show` only reads the stored card for the request locale;
  * `store` reuses a fresh card or generates one. `available` on `show` tells
- * the SPA whether generation is switched on. Error `code` and status never
- * depend on the locale; only `message` is localized.
+ * the SPA whether generation is switched on. Both successful responses carry
+ * `fundamentals` (SEC-derived figures, a database read that works even with
+ * the AI provider disabled; null while the SEC feature is not configured).
+ * Error `code` and status never depend on the locale; only `message` is
+ * localized.
  */
 class CompanyCardController extends Controller
 {
-    public function show(string $ticker, CompanyCardService $service): JsonResponse
+    public function show(string $ticker, CompanyCardService $service, CompanyFundamentalsService $fundamentals): JsonResponse
     {
         $instrument = $this->instrument($ticker);
         if ($instrument === null) {
@@ -32,10 +36,11 @@ class CompanyCardController extends Controller
             // Lets the panel show "not available yet" instead of a button
             // that can only fail; it reveals no configuration detail.
             'available' => $service->available(),
+            'fundamentals' => $fundamentals->payload($instrument),
         ]);
     }
 
-    public function store(Request $request, string $ticker, CompanyCardService $service): JsonResponse
+    public function store(Request $request, string $ticker, CompanyCardService $service, CompanyFundamentalsService $fundamentals): JsonResponse
     {
         $instrument = $this->instrument($ticker);
         if ($instrument === null) {
@@ -43,7 +48,8 @@ class CompanyCardController extends Controller
         }
 
         try {
-            return response()->json($service->generate($instrument, $this->locale(), $request->user()));
+            return response()->json($service->generate($instrument, $this->locale(), $request->user())
+                + ['fundamentals' => $fundamentals->payload($instrument)]);
         } catch (CompanyCardUnavailable $exception) {
             return response()->json([
                 'code' => $exception->reason,

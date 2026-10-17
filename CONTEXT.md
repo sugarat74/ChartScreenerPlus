@@ -86,7 +86,11 @@ A natural-language refinement surface backed by an LLM. Shown in the mockup; **o
 
 ### Company Card (Ficha IA)
 
-A structured sheet for one Instrument generated on demand by an external LLM: sector and industry, business description, key financial metrics with their period, and a qualitative three-month outlook from macro and sector context. Shared per Instrument and language, refreshed after a freshness window. Its figures are AI-generated and unverified; it never contains price targets or buy/sell advice. It is not the Copilot.
+A sheet for one Instrument with two clearly separated parts: the key financial metrics, verified figures computed by Chartiko from the company's SEC filings (see Fundamentals), and an AI-written part generated on demand by an external LLM: business description, sector and industry, and a qualitative three-month outlook ("Previsión a 3 meses") grounded on those figures and on macro and sector context. The AI part is shared per Instrument and language, refreshed after a freshness window or a new filing, labelled as AI-generated and unverified, and never contains price targets or buy/sell advice. It is not the Copilot.
+
+### Fundamentals (Fundamentales SEC)
+
+Company Fundamentals: per-Instrument financial inputs (revenue, operating income, D&A, EPS, debt, cash, equity, shares, dividends) computed by Chartiko from the company's own 10-K/10-Q filings in SEC EDGAR, with the period they refer to (trailing twelve months, fiscal year or balance-sheet date). Ratios that use a price (P/E, market cap, dividend yield) combine them with our latest close at read time. Refreshed by a daily command separate from the EOD pipeline; a newer filing not yet in SEC data is shown as pending. Not used by the Screener or alerts.
 
 ### Admin (Operator)
 
