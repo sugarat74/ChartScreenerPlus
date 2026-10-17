@@ -28,6 +28,8 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    Claves de proveedores (entorno `production`): `TYPESAFE_API_KEY` (Jev) y `AI_API_KEY`
    (ficha IA). En cada despliegue se instalan en `shared/.env` mediante
    `configure-jev-env.py` y `configure-ai-env.py`, sin imprimirlas. Si falta alguna, el despliegue falla.
+   `configure-fundamentals-env.py` activa los fundamentales SEC y fija `SEC_USER_AGENT`. No usa
+   ningún secreto, porque el contacto que exige la SEC no es confidencial.
    Obtén la clave desde la consola del proveedor con
    `cat /etc/ssh/ssh_host_ed25519_key.pub` y contrasta su huella con
    `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` por ese canal independiente.

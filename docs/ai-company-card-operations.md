@@ -83,7 +83,15 @@ Las métricas (PER, BPA, capitalización, ingresos y su crecimiento, EBITDA y ma
 
 ### Activación
 
-En `/var/www/alphapulse/shared/.env` (y volver a cachear la configuración):
+**Producción (2026-10-17):** no se edita a mano. En cada despliegue, `deploy/configure-fundamentals-env.py`, invocado desde `ci-deploy.yml`, escribe en `shared/.env` estas dos variables:
+- `SEC_FUNDAMENTALS_ENABLED=true`
+- `SEC_USER_AGENT="Chartiko Roberto Rodriguez contacto@chartiko.com"`
+
+El User-Agent va solo en ASCII, sin tildes, porque se envía como cabecera HTTP. Para cambiar el contacto, edita `SETTINGS` en ese script y despliega.
+
+Si no hay carga inicial manual, la primera ejecución programada (de lunes a viernes a las 07:00, hora de Nueva York) descarga los datos de todas las empresas sin fila guardada.
+
+Variables, para otros entornos (`.env`, y después volver a cachear la configuración):
 
 ```
 SEC_FUNDAMENTALS_ENABLED=true

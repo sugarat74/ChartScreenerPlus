@@ -1,5 +1,19 @@
 # Progress Log
 
+## SEC fundamentals: rebase and production contact — 2026-10-17
+
+- User report: the AI card does not fill P/E, EBITDA and the other key metrics. Known cause: the model has no data source and returns them as null. `company-fundamentals-sec` (passing) is the fix.
+- Rebased `feat/company-fundamentals-sec` onto `main` `ce04307`. Four conflicts:
+  - **Privacy texts (es/en):** they now name DevExpert Inference and also state that SEC-computed figures and public market data are sent. The Jev paragraph and the "no account data" paragraph are kept. `config/legal.php` `updated_at` is 2026-10-17.
+  - **Risks:** SEC entries kept; the AI-card cost entry now says metrics come from SEC filings.
+  - **`PROGRESS.md`:** both entries kept.
+- Production contact given by the owner: `SEC_USER_AGENT="Chartiko Roberto Rodriguez contacto@chartiko.com"` (ASCII, no accent, because it is sent as an HTTP header). The new `deploy/configure-fundamentals-env.py`, called by a new `ci-deploy.yml` step, writes it and `SEC_FUNDAMENTALS_ENABLED=true` on every deploy; it uses no secret. Checks: the builder replaces existing lines, and `SecEdgarClient::validUserAgent()` returns true for this value.
+- Docs:
+  - `docs/llamadas-api-jev-ia.md` now describes `company_card_v2` / prompt v3 (no metrics in the schema; `fundamentals` context).
+  - `docs/ai-company-card-operations.md` covers production activation through the deploy script.
+  - Also updated: `deploy/README.md` and the risks file.
+- First production data load: the scheduled `fundamentals-refresh` (weekdays 07:00 America/New_York) fetches every company without a stored row; or an operator can run `php artisan fundamentals:refresh --force` on the VPS.
+
 ## AI company card: production provider configured — 2026-10-16
 
 - Owner decisions:

@@ -66,7 +66,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'AI features',
         paragraphs: [
-          'If you are a registered user and ask for an AI company card, the server sends DevExpert Inference (inference.devexpert.io), the external AI provider, the instrument identity (ticker, company name, sector and exchange), the public financial figures Chartiko computes from the company's SEC (EDGAR) filings and public Chartiko market data (latest close and change, indicators, Signals and patterns). The generated card is shared with every user and contains no personal data.',
+          'If you are a registered user and ask for an AI company card, the server sends DevExpert Inference (inference.devexpert.io), the external AI provider, the instrument identity (ticker, company name, sector and exchange), the public financial figures Chartiko computes from the company\'s SEC (EDGAR) filings and public Chartiko market data (latest close and change, indicators, Signals and patterns). The generated card is shared with every user and contains no personal data.',
           'If you are a registered user and ask for an experimental forecast, the server sends TypeSafe AI (typesafe.ai), provider of the Jev model, the instrument\'s daily price history, its indicators and its Signals. The forecast is stored per instrument and date, not per user.',
           'In neither case is any of your account data sent (no name, email, IP address, Watchlist or Saved Screeners): the providers only receive market data.',
           'To control cost and prevent abuse we record each generation you request: your account identifier, the instrument, the date, the outcome and the number of tokens used, without the text sent or received.',
