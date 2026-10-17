@@ -119,3 +119,31 @@ class PatternsDetectResponse(BaseModel):
     """The patterns active on the as-of bar of the submitted series."""
 
     patterns: list[Pattern]
+
+
+class PatternNearMiss(BaseModel):
+    """A pattern the production rules reject because of exactly one rule.
+
+    Calibration review aid only (chart-patterns-calibration): ``pattern`` is
+    what the detector finds when ``parameter`` alone is set to
+    ``relaxed_value`` instead of ``production_value``. Never persisted as an
+    active pattern.
+    """
+
+    rule: str
+    parameter: str
+    production_value: float
+    relaxed_value: float
+    pattern: Pattern
+
+
+class PatternsNearMissesResponse(BaseModel):
+    """Near misses (at most one per type not detected) for the submitted series."""
+
+    near_misses: list[PatternNearMiss]
+
+
+class PatternParametersResponse(BaseModel):
+    """The production pattern parameters (for calibration reports)."""
+
+    parameters: dict[str, float]

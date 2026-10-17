@@ -9,12 +9,16 @@ from app.models import (
     EodResponse,
     IndicatorsComputeRequest,
     IndicatorsComputeResponse,
+    PatternParametersResponse,
     PatternsDetectRequest,
     PatternsDetectResponse,
+    PatternsNearMissesResponse,
     SignalsDetectRequest,
     SignalsDetectResponse,
 )
 from app.patterns.detect import detect_patterns
+from app.patterns.near_misses import detect_near_misses
+from app.patterns.rules import DEFAULT_PARAMS
 from app.signals.detect import detect_signals
 from app.sources.stooq import fetch_eod
 
@@ -75,6 +79,20 @@ def create_app() -> FastAPI:
         """Detect the chartist patterns active on the as-of bar (pure)."""
 
         return PatternsDetectResponse(patterns=detect_patterns(request.bars))
+
+    @application.post("/patterns/near-misses", response_model=PatternsNearMissesResponse)
+    def patterns_near_misses(request: PatternsDetectRequest) -> PatternsNearMissesResponse:
+        """Calibration aid: instances rejected by exactly one rule (pure, never persisted)."""
+
+        return PatternsNearMissesResponse(near_misses=detect_near_misses(request.bars))
+
+    @application.get("/patterns/parameters", response_model=PatternParametersResponse)
+    def patterns_parameters() -> PatternParametersResponse:
+        """The production pattern parameters (booleans as 1/0), for calibration reports."""
+
+        return PatternParametersResponse(
+            parameters={name: float(value) for name, value in DEFAULT_PARAMS.as_dict().items()}
+        )
 
     return application
 

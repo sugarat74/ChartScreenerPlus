@@ -1154,15 +1154,21 @@
       "chart-patterns-ui",
       "screener-precomputed"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "patterns:review-sample exports detected and near-miss cases with charts and a CSV for labelling (Admin/CLI only)",
       "patterns:calibration-report gives precision per type, miss rate and frequency for a labelled CSV",
       "Validator-identified rule fixes implemented with tests (handle cap, post-breakout invalidation for flag/cup, consistent session metadata, prior-move lookback incl. t1)",
       "Precision >= 80% per type on the reviewed sample or the type documented as low confidence; parameter table, CONSTRAINTS and tests updated; .\\init.ps1 and CI pass"
     ],
-    "evidence": [],
-    "notes": "Added 2026-10-12 at user request, to develop later. Spec: docs/specs/chart-patterns-calibration.md. Motivation: 97 of 178 local detections were double tops with the initial parameters. Not backtesting (out of scope)."
+    "evidence": [
+      "2026-10-16 phase 1, rule fixes: cup handle cap HANDLE_MAX_RISE=0.03 plus close-above-rim-without-volume invalidation, post-breakout invalidation for cup (close < handle low) and bull_flag (close < flag low), handle_sessions excludes the breakout bar, prior-move lookback includes t1. Engine tests: test_cup_handle_high_capped_above_the_rim, test_cup_with_handle_confirmed_needs_volume (updated), test_cup_invalidated_by_a_close_below_the_handle_low_after_the_breakout, test_bull_flag_invalidated_by_a_close_below_the_flag_low_after_the_breakout, test_handle_sessions_exclude_the_breakout_bar, test_flag_sessions_exclude_the_breakout_bar, test_double_top_prior_rise_lookback_includes_t1; all but the flag-sessions guard fail against the previous rules.py.",
+      "2026-10-16 phase 1, near misses: PatternParams + near_misses.py (one rule relaxed at a time, fixed table), POST /patterns/near-misses and GET /patterns/parameters; 4 engine tests (single rule reported, none for detected types, detection unchanged, endpoints + 422). Engine pytest 77 passed, ruff clean.",
+      "2026-10-16 phase 1, commands: patterns:review-sample and patterns:calibration-report (CLI only); tests/Feature/PatternCalibrationCommandsTest.php 4 tests / 86 assertions with fixture tests/Fixtures/pattern-calibration/. Same seed gives a byte-identical sample.csv on the real data.",
+      "2026-10-16 real export on a migrated copy of the dev SQLite (494 instruments, as-of 2026-10-02) with the local engine: docs/calibration/sample-2026-10-16/ (seed 20261016, 138 cases: DT 27 forming/13 confirmed + 10 near misses, DB 31/9 + 10, CWH 14/1 + 10, BF 2/1 + 10). Frequency before/after the fixes: DT 97/97, DB 61/61, CWH 17/15, BF 3/3, total 178/176. suggested_label filled by Claude from Edge-rendered PNGs (label left empty).",
+      "2026-10-16 .\\init.ps1 exit 0: Laravel 384 passed / 6 skipped (3172 assertions), Vitest 154 + lint + build, engine 77 passed."
+    ],
+    "notes": "Added 2026-10-12 at user request, to develop later. Spec: docs/specs/chart-patterns-calibration.md. Motivation: 97 of 178 local detections were double tops with the initial parameters. Not backtesting (out of scope). 2026-10-16: phase 1 done (rule fixes, review-sample, calibration-report, real sample with suggested labels). Stays in_progress: acceptance needs phase 2 (a person labels docs/calibration/sample-2026-10-16/sample.csv, then the report, parameter tuning and roll-out)."
   },
   {
     "id": "alerts-patterns",

@@ -1,5 +1,33 @@
 # Progress Log
 
+## Pattern calibration phase 1 — 2026-10-16
+
+- `chart-patterns-calibration` phase 1, decided by the user. Spec: `docs/specs/chart-patterns-calibration.md` ("Implementation Findings / Phase 1"). Status stays `in_progress`: acceptance needs human labels.
+- Rule fixes in `engine/app/patterns/rules.py`, with tests:
+  - cup: a handle high above 1.03 × right rim (`HANDLE_MAX_RISE`) invalidates it, and so does a close above the rim that is not the volume-confirmed breakout;
+  - post-breakout invalidation: a cup on a close below the handle low, a bull flag on a close below the flag low;
+  - `handle_sessions` excludes the breakout bar (as `flag_sessions` already did);
+  - the prior-move lookback includes `t1`.
+  - The parameter table in `chart-patterns-detect.md` and `CONSTRAINTS.md` are updated.
+- Near misses: parameters are now a frozen `PatternParams` (production = `DEFAULT_PARAMS`).
+  - `near_misses.py` relaxes one rule at a time.
+  - Two calibration-only endpoints: `POST /patterns/near-misses`, `GET /patterns/parameters`.
+  - The engine stays DB-free.
+- CLI only:
+  - `php artisan patterns:review-sample` writes SVG charts, `sample.csv`, `parameters.json` and `README.txt` with labelling rules.
+  - `php artisan patterns:calibration-report {csv}` prints markdown: precision, miss rate, suggested-label agreement, frequency and parameters.
+- Real sample: `docs/calibration/sample-2026-10-16/` (seed 20261016, 138 cases), from a migrated copy of the dev DB (494 instruments, as-of 2026-10-02).
+  - Frequency before/after the fixes: double_top 97/97, double_bottom 61/61, cup 17/15, flag 3/3 (total 178/176).
+  - Double tops are still 55% of detections; that is for phase 2.
+  - `suggested_label` was filled by Claude after viewing every chart rendered with headless Edge. These are suggestions only; implied precision DT 57.5%, DB 42.5%, CWH 73%, BF 3/3.
+  - Recurring issues to test in phase 2: points set by wicks, a left point that is not the local extreme, double bottoms with no rebound, and a CTVA data artifact.
+- Bug found while viewing the charts and fixed: the as-of bar was missing from every chart (`whereDate`).
+- Verification: engine 77 passed + ruff clean; `PatternCalibrationCommandsTest` 4 tests / 86 assertions; `.\init.ps1` exit 0 (Laravel 384 passed / 6 skipped, Vitest 154 + lint + build, engine 77). The local engine was stopped afterwards.
+- Next (phase 2):
+  1. A person fills `label` in `docs/calibration/sample-2026-10-16/sample.csv` (two labellers if possible).
+  2. Run `php artisan patterns:calibration-report docs/calibration/sample-2026-10-16/sample.csv`.
+  3. Tune parameters through the spec (step 5), then roll out (step 6).
+
 ## AI company card: production provider configured — 2026-10-16
 
 - Owner decisions:
