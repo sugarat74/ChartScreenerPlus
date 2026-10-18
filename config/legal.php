@@ -7,10 +7,14 @@ return [
     | Owner (data controller) identity
     |--------------------------------------------------------------------------
     |
-    | Supplied by the owner, never invented (docs/specs/legal-compliance-eu.md).
-    | The privacy policy and legal notice are published only when name, tax_id,
-    | address and email are all set; registry is optional and shown only when
-    | it applies (registry, authorisation or professional body data).
+    | Supplied by the owner, never invented (docs/specs/legal-compliance-eu.md,
+    | docs/specs/legal-privacy-publication.md). Two gates:
+    | - the privacy policy is published when name and a valid email are set;
+    | - the legal notice also needs tax_id and address.
+    | A field is returned by GET /api/legal only while the page that needs it
+    | is published. registry is optional and shown on the notice only when it
+    | applies (registry, authorisation or professional body data). Production
+    | sets name and email through deploy/configure-legal-env.py.
     |
     */
 
@@ -32,7 +36,7 @@ return [
     |
     */
 
-    'updated_at' => '2026-10-17',
+    'updated_at' => '2026-10-18',
 
     /*
     |--------------------------------------------------------------------------

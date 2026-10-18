@@ -14,8 +14,6 @@ export const legalEs: LegalTexts = {
         heading: 'Responsable del tratamiento',
         items: [
           'Responsable: {ownerName}',
-          'NIF: {ownerTaxId}',
-          'Domicilio: {ownerAddress}',
           'Contacto y protección de datos: {ownerEmail}',
         ],
       },

@@ -161,6 +161,10 @@ jobs:
         run: |
           ssh -F "$SSH_DIRECTORY/config" chartiko-vps \
             "python3 /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/configure-fundamentals-env.py"
+      - name: Configure legal publication and log retention in private server environment
+        run: |
+          ssh -F "$SSH_DIRECTORY/config" chartiko-vps \
+            "python3 /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/configure-legal-env.py"
       - name: Activate release
         run: ssh -F "$SSH_DIRECTORY/config" chartiko-vps "bash /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/deploy.sh ${GITHUB_SHA::10}"
       - name: Remove SSH credentials

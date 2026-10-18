@@ -10,13 +10,22 @@ import { COOKIES_ROUTE, PRIVACY_ROUTE } from '../nav.ts'
 
 export type LegalPageKind = 'privacy' | 'notice' | 'cookies'
 
-/** Pages that identify the owner are withheld until the owner data is configured. */
-const NEEDS_OWNER: Record<LegalPageKind, boolean> = { privacy: true, notice: true, cookies: false }
+/**
+ * Pages that identify the owner are withheld until their own gate opens: the
+ * privacy policy needs name + email, the legal notice also tax id + address.
+ * The cookie policy needs no owner data and is always shown.
+ */
+function isPublished(kind: LegalPageKind, info: LegalInfo): boolean {
+  if (kind === 'privacy') return info.privacy_published === true
+  if (kind === 'notice') return info.notice_published === true
+  return true
+}
 
 const LINK_CLASS = 'font-bold text-on-surface underline'
 
 /**
- * Public legal pages (docs/specs/legal-compliance-eu.md). Texts come from the
+ * Public legal pages (docs/specs/legal-compliance-eu.md,
+ * docs/specs/legal-privacy-publication.md). Texts come from the
  * typed legal catalogs; owner identity and retention figures from
  * `GET /api/legal`, so nothing is shown as a placeholder.
  */
@@ -35,7 +44,7 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
         {t('legal.loadError')}
       </p>
     )
-  } else if (NEEDS_OWNER[kind] && !state.info.published) {
+  } else if (!isPublished(kind, state.info)) {
     body = (
       <div className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
         <h2 className="font-headline text-lg font-bold">{t('legal.pendingTitle')}</h2>
@@ -128,13 +137,14 @@ function placeholderValues(info: LegalInfo, cookiesLabel: string, privacyLabel: 
     ...(owner
       ? {
           ownerName: owner.name,
-          ownerTaxId: owner.tax_id,
-          ownerAddress: owner.address,
+          // Plain, selectable text: never a mailto link (owner decision, anti-scraping).
           ownerEmail: (
-            <a href={`mailto:${owner.email}`} className={LINK_CLASS}>
+            <span translate="no" className="font-bold break-all text-on-surface">
               {owner.email}
-            </a>
+            </span>
           ),
+          ...(owner.tax_id !== null ? { ownerTaxId: owner.tax_id } : {}),
+          ...(owner.address !== null ? { ownerAddress: owner.address } : {}),
         }
       : {}),
     activityDays: info.retention.sign_in_activity_days,

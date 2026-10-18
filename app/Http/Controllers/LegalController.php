@@ -5,24 +5,44 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Public facts the legal pages render (docs/specs/legal-compliance-eu.md).
+ * Public facts the legal pages render (docs/specs/legal-compliance-eu.md,
+ * docs/specs/legal-privacy-publication.md).
  *
- * The owner's identity is returned only once every required field is
- * configured; until then `published` is false and the SPA withholds the
- * privacy policy and legal notice instead of showing placeholders. Retention
- * figures come from the same configuration the application enforces.
+ * Two gates, one per page that identifies the owner:
+ * - the privacy policy is published once the owner's name and a valid
+ *   contact email are configured;
+ * - the legal notice additionally needs the tax id and the address.
+ *
+ * No owner field is serialized unless the page that needs it is published:
+ * `owner` is null while the privacy policy is withheld, and `tax_id`,
+ * `address` and `registry` stay null while the legal notice is withheld.
+ * Retention figures come from the same configuration the application enforces.
  */
 class LegalController extends Controller
 {
-    private const REQUIRED_OWNER_FIELDS = ['name', 'tax_id', 'address', 'email'];
+    private const OWNER_FIELDS = ['name', 'tax_id', 'address', 'email', 'registry'];
 
     public function show(): JsonResponse
     {
-        $owner = $this->owner();
+        $values = $this->ownerValues();
+
+        $privacyPublished = $values['name'] !== null
+            && $values['email'] !== null
+            && filter_var($values['email'], FILTER_VALIDATE_EMAIL) !== false;
+        $noticePublished = $privacyPublished
+            && $values['tax_id'] !== null
+            && $values['address'] !== null;
 
         return response()->json([
-            'published' => $owner !== null,
-            'owner' => $owner,
+            'privacy_published' => $privacyPublished,
+            'notice_published' => $noticePublished,
+            'owner' => $privacyPublished ? [
+                'name' => $values['name'],
+                'email' => $values['email'],
+                'tax_id' => $noticePublished ? $values['tax_id'] : null,
+                'address' => $noticePublished ? $values['address'] : null,
+                'registry' => $noticePublished ? $values['registry'] : null,
+            ] : null,
             'updated_at' => config('legal.updated_at'),
             'retention' => [
                 'sign_in_activity_days' => (int) config('admin.activity_retention_days'),
@@ -36,20 +56,16 @@ class LegalController extends Controller
     }
 
     /**
-     * @return array{name: string, tax_id: string, address: string, email: string, registry: string|null}|null
+     * Configured owner fields, trimmed; a blank value becomes null.
+     *
+     * @return array{name: string|null, tax_id: string|null, address: string|null, email: string|null, registry: string|null}
      */
-    private function owner(): ?array
+    private function ownerValues(): array
     {
         $values = [];
-        foreach ([...self::REQUIRED_OWNER_FIELDS, 'registry'] as $field) {
+        foreach (self::OWNER_FIELDS as $field) {
             $value = trim((string) config("legal.owner.{$field}"));
             $values[$field] = $value === '' ? null : $value;
-        }
-
-        foreach (self::REQUIRED_OWNER_FIELDS as $field) {
-            if ($values[$field] === null) {
-                return null;
-            }
         }
 
         return $values;

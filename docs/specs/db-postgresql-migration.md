@@ -207,6 +207,7 @@ Deviations from the plan above, each keeping the decision's intent:
 - **Cut-over keeps `shared/.env` on SQLite until the copy is committed**: `migrate` and the copy run as `deploy` with the PostgreSQL settings in the process environment and `APP_CONFIG_CACHE` pointed at a missing file. A failure before the switch resumes on SQLite with nothing to undo; a failure after it restores `.env` and the cached config automatically. The copy reads a private `.backup` snapshot, not the live file. `--dry-run` migrates the still-unused PostgreSQL database (schema only) and validates the snapshot.
 - **Copy tests**: the six copy scenarios need PostgreSQL and are skipped on SQLite (they run in `test-pgsql`); the refusal scenarios and the value validator (`tests/Unit/PostgresValueNormalizerTest.php`) run everywhere. A SQLite-only duplicate (`'2026-09-03'` vs `'2026-09-03 00:00:00'` under a unique key) aborts with PostgreSQL's own key message; `--dry-run` validates values, not cross-row uniqueness.
 - **PostgreSQL version**: CI pins `postgres:18`, assuming Ubuntu 26.04's distro package; confirm with `psql --version` on the VPS before cut-over and align the image.
+- **2026-10-18 (owner decision, `legal-privacy-publication`):** the 30-day SQLite rollback source and every other SQLite copy holding personal data were deleted early, before publishing the privacy policy; rollback to SQLite is no longer possible.
 
 ## Validator Checklist
 

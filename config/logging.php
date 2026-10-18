@@ -70,6 +70,11 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
+            // Shared by `deploy` (artisan, umask 027) and `www-data` (PHP-FPM,
+            // queue, scheduler): the SGID storage/logs directory supplies the
+            // www-data group, 0660 lets both append and rotate. Files older
+            // than legal.server_log_retention_days are removed by logs:prune.
+            'permission' => 0660,
             'replace_placeholders' => true,
         ],
 

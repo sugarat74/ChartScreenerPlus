@@ -5,9 +5,10 @@ namespace Tests\Feature;
 use Tests\TestCase;
 
 /**
- * Public legal facts (legal-compliance-eu): the owner's identity is never
- * returned until every required field is configured, and retention figures
- * follow the configuration the application enforces.
+ * Public legal facts (legal-compliance-eu, legal-privacy-publication): the
+ * privacy policy is published with name + valid email, the legal notice also
+ * needs tax id + address, and no owner value leaves the server unless the page
+ * that needs it is published. Retention figures follow configuration.
  */
 class LegalInfoTest extends TestCase
 {
@@ -16,45 +17,140 @@ class LegalInfoTest extends TestCase
         'tax_id' => '00000000T',
         'address' => 'Calle Prueba 1, 28000 Madrid',
         'email' => 'privacy@example.test',
-        'registry' => null,
+        'registry' => 'Registro Mercantil Tomo 1',
     ];
 
-    public function test_unpublished_without_owner_data(): void
+    private function setOwner(array $owner): void
     {
-        config(['legal.owner' => array_fill_keys(array_keys(self::OWNER), null)]);
+        config(['legal.owner' => [...array_fill_keys(array_keys(self::OWNER), null), ...$owner]]);
+    }
+
+    private function assertBodyLacks(string $body, array $values, string $context): void
+    {
+        foreach ($values as $value) {
+            $this->assertStringNotContainsString($value, $body, $context);
+        }
+    }
+
+    public function test_nothing_published_without_owner_data(): void
+    {
+        $this->setOwner([]);
 
         $this->getJson('/api/legal')
             ->assertOk()
-            ->assertJsonPath('published', false)
+            ->assertJsonPath('privacy_published', false)
+            ->assertJsonPath('notice_published', false)
             ->assertJsonPath('owner', null)
+            ->assertJsonMissingPath('published')
             ->assertJsonStructure(['updated_at', 'retention' => ['sign_in_activity_days', 'session_minutes', 'backup_days', 'server_log_days', 'notification_days', 'ai_card_log_days']]);
     }
 
-    public function test_any_missing_required_field_keeps_it_unpublished_and_leaks_nothing(): void
+    public function test_name_and_email_publish_privacy_only(): void
     {
-        foreach (['name', 'tax_id', 'address', 'email'] as $missing) {
-            config(['legal.owner' => [...self::OWNER, $missing => '   ']]);
+        $this->setOwner(['name' => 'Owner Test', 'email' => 'privacy@example.test']);
 
-            $response = $this->getJson('/api/legal')->assertOk();
+        $this->getJson('/api/legal')
+            ->assertOk()
+            ->assertJsonPath('privacy_published', true)
+            ->assertJsonPath('notice_published', false)
+            ->assertJsonPath('owner', [
+                'name' => 'Owner Test',
+                'email' => 'privacy@example.test',
+                'tax_id' => null,
+                'address' => null,
+                'registry' => null,
+            ])
+            ->assertJsonMissingPath('published');
+    }
 
-            $response->assertJsonPath('published', false)->assertJsonPath('owner', null);
-            foreach (array_filter(self::OWNER) as $value) {
-                $this->assertStringNotContainsString($value, $response->getContent(), "missing {$missing}");
+    public function test_a_partial_notice_field_is_withheld(): void
+    {
+        foreach (['tax_id', 'address'] as $present) {
+            $this->setOwner(['name' => 'Owner Test', 'email' => 'privacy@example.test', $present => self::OWNER[$present], 'registry' => self::OWNER['registry']]);
+
+            $response = $this->getJson('/api/legal')
+                ->assertOk()
+                ->assertJsonPath('privacy_published', true)
+                ->assertJsonPath('notice_published', false)
+                ->assertJsonPath('owner.tax_id', null)
+                ->assertJsonPath('owner.address', null)
+                ->assertJsonPath('owner.registry', null);
+
+            $this->assertBodyLacks($response->getContent(), [self::OWNER[$present], self::OWNER['registry']], "only {$present}");
+        }
+    }
+
+    public function test_every_field_publishes_both_pages(): void
+    {
+        $this->setOwner(self::OWNER);
+
+        $this->getJson('/api/legal')
+            ->assertOk()
+            ->assertJsonPath('privacy_published', true)
+            ->assertJsonPath('notice_published', true)
+            ->assertJsonPath('owner', [
+                'name' => 'Owner Test',
+                'email' => 'privacy@example.test',
+                'tax_id' => '00000000T',
+                'address' => 'Calle Prueba 1, 28000 Madrid',
+                'registry' => 'Registro Mercantil Tomo 1',
+            ])
+            ->assertJsonMissingPath('published');
+    }
+
+    public function test_registry_is_null_when_not_configured(): void
+    {
+        $this->setOwner([...self::OWNER, 'registry' => '  ']);
+
+        $this->getJson('/api/legal')
+            ->assertOk()
+            ->assertJsonPath('notice_published', true)
+            ->assertJsonPath('owner.registry', null);
+    }
+
+    public function test_missing_name_or_email_leaks_nothing(): void
+    {
+        foreach (['name', 'email'] as $missing) {
+            foreach ([null, '', '   '] as $blank) {
+                $this->setOwner([...self::OWNER, $missing => $blank]);
+
+                $response = $this->getJson('/api/legal')
+                    ->assertOk()
+                    ->assertJsonPath('privacy_published', false)
+                    ->assertJsonPath('notice_published', false)
+                    ->assertJsonPath('owner', null);
+
+                $this->assertBodyLacks($response->getContent(), array_filter(self::OWNER, fn ($value) => $value !== null), "missing {$missing}");
             }
         }
     }
 
-    public function test_published_with_all_required_owner_fields(): void
+    public function test_an_invalid_email_publishes_nothing(): void
     {
-        config(['legal.owner' => [...self::OWNER, 'name' => '  Owner Test  ']]);
+        foreach (['not-an-email', 'privacy@', 'a b@example.test'] as $email) {
+            $this->setOwner([...self::OWNER, 'email' => $email]);
+
+            $response = $this->getJson('/api/legal')
+                ->assertOk()
+                ->assertJsonPath('privacy_published', false)
+                ->assertJsonPath('notice_published', false)
+                ->assertJsonPath('owner', null);
+
+            $this->assertBodyLacks($response->getContent(), [self::OWNER['name'], self::OWNER['tax_id'], self::OWNER['address'], self::OWNER['registry'], $email], "email {$email}");
+        }
+    }
+
+    public function test_values_are_trimmed(): void
+    {
+        $this->setOwner(['name' => '  Owner Test  ', 'email' => " privacy@example.test\t", 'tax_id' => ' 00000000T ', 'address' => ' Calle Prueba 1, 28000 Madrid ']);
 
         $this->getJson('/api/legal')
             ->assertOk()
-            ->assertJsonPath('published', true)
+            ->assertJsonPath('notice_published', true)
             ->assertJsonPath('owner.name', 'Owner Test')
-            ->assertJsonPath('owner.tax_id', '00000000T')
             ->assertJsonPath('owner.email', 'privacy@example.test')
-            ->assertJsonPath('owner.registry', null);
+            ->assertJsonPath('owner.tax_id', '00000000T')
+            ->assertJsonPath('owner.address', 'Calle Prueba 1, 28000 Madrid');
     }
 
     public function test_retention_figures_come_from_configuration(): void

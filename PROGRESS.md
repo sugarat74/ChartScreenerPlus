@@ -1,5 +1,29 @@
 # Progress Log
 
+## Legal: privacy policy published with minimal owner data (`legal-privacy-publication`, accepted) — 2026-10-18
+
+- Spec `docs/specs/legal-privacy-publication.md`; branch `feat/legal-privacy-publication` (worktree). Status `passing`: implemented and self-verified, awaiting independent validation.
+- **Split gate.** `GET /api/legal` now returns `privacy_published` (name + valid email) and `notice_published` (also tax id + address) instead of `published`. `owner` is null while privacy is withheld; `tax_id`, `address` and `registry` are null while the notice is withheld.
+- **SPA.**
+  - Each legal page follows its own flag; the cookie policy is always shown.
+  - The footer links Privacidad and Aviso legal per flag.
+  - Registration uses the new `auth.registerPrivacyNoTerms` (no terms link) when only privacy is published.
+  - The contact email is plain selectable text, never `mailto:`.
+  - The NIF and address lines are removed from the privacy catalogs (es/en).
+- **Anti-bot and logs.**
+  - `robots.txt` disallows `/api/legal`.
+  - The `daily` log channel writes `0660` files.
+  - New `logs:prune` (scheduled `prune-server-logs`, 03:25) deletes `laravel-YYYY-MM-DD.log` files at or beyond `legal.server_log_retention_days`.
+- **Deploy.** New `deploy/configure-legal-env.py`, with a `ci-deploy.yml` step after the SEC step, pins `LEGAL_OWNER_NAME="Roberto Rodríguez"`, `LEGAL_CONTACT_EMAIL=contacto@chartiko.com`, `LOG_CHANNEL=stack`, `LOG_STACK=daily` and `LOG_DAILY_DAYS=14`. It never touches the NIF, address or registry. Checked with `Dotenv\Dotenv::parse` and by booting Laravel on the generated file.
+- **SQLite copies:** deleted by the orchestrator on 2026-10-18 before publication (5 files; directories kept). Rollback to SQLite is no longer possible. This is recorded in `deploy/README.md`, the risks file and both related specs.
+- **Docs updated:** `ARCHITECTURE.md` and `CONSTRAINTS.md` (new "Legal Pages" sections), `deploy/README.md` (step 3/4, logs, historical remediation, retired rollback), `.env.example` comment, `docs/risks-and-open-questions.md`, `docs/specs/legal-compliance-eu.md`, `docs/specs/db-postgresql-migration.md`, `docs/arquitectura-infografia.md`. `config/legal.php` `updated_at` is 2026-10-18.
+- **Verification.**
+  - `.\init.ps1` exit 0: Laravel 455 passed / 6 skipped, Vitest 169, SPA lint + build, engine 67.
+  - Focused: `LegalInfoTest` 10 and `PruneServerLogsTest` 5; `LegalPage.test.tsx` 13.
+  - Edge (Playwright MCP) on a local stack with a throwaway SQLite, at 1280 and 390 px, es/en: no `mailto:`, no NIF/address, no placeholders, 0 px overflow, notice pending, register without terms, cookies unchanged.
+- **Next (orchestrator):** independent validation; merge and deploy; then the post-deploy checks and the legacy `laravel.log` removal listed in the spec's "Implementation Findings". If the merge slips past 2026-10-18, bump `config/legal.php` `updated_at`.
+- **Independent validator: ACCEPT** (gate rerun, dotenv parse, real-app boot without leakage, logging permission and prune checks). Non-blocking: the privacy text still says terms are accepted at sign-up (legal review); `ARCHITECTURE.md` scheduling wording predates this feature. `legal-privacy-publication` is `accepted`.
+
 ## Fix: sign-out flashed the sign-in page — 2026-10-18
 
 - User report: after signing out and going back to the home page, the screen flickers as if the sign-in page loaded repeatedly.

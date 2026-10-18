@@ -131,9 +131,9 @@ export default function RegisterPage() {
         </button>
 
         <p data-testid="register-privacy" className="text-xs leading-5 text-on-surface-variant">
-          {legal.status === 'ready' && legal.info.owner ? (
+          {legal.status === 'ready' && legal.info.privacy_published === true && legal.info.owner ? (
             <Interpolate
-              template={t('auth.registerPrivacy')}
+              template={t(legal.info.notice_published === true ? 'auth.registerPrivacy' : 'auth.registerPrivacyNoTerms')}
               values={{
                 owner: legal.info.owner.name,
                 policy: (
@@ -141,11 +141,15 @@ export default function RegisterPage() {
                     {t('auth.registerPrivacyPolicy')}
                   </Link>
                 ),
-                terms: (
-                  <Link to={LEGAL_NOTICE_ROUTE} className="font-bold text-on-surface underline">
-                    {t('auth.registerPrivacyTerms')}
-                  </Link>
-                ),
+                ...(legal.info.notice_published === true
+                  ? {
+                      terms: (
+                        <Link to={LEGAL_NOTICE_ROUTE} className="font-bold text-on-surface underline">
+                          {t('auth.registerPrivacyTerms')}
+                        </Link>
+                      ),
+                    }
+                  : {}),
               }}
             />
           ) : (

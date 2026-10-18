@@ -77,13 +77,21 @@ Decision: **no consent banner**; the cookie policy is informative.
 
 ## Out of scope / findings for the owner
 
-- **Before publishing:** delete the SQLite rollback source (`shared/database/database.sqlite`, kept until at
-  least 2026-11-05) and the cut-over copies `/root/chartiko-pgsql-cutover-*/database.before.sqlite`. They hold
-  users, sessions and sign-in activity outside the stated 14-day backup retention.
+> **2026-10-18, `legal-privacy-publication`:** the single owner gate described above was split. The privacy
+> policy is now published with name + valid email; the legal notice still needs tax id + address; `/api/legal`
+> returns `privacy_published` / `notice_published` instead of `published` and nulls every field the
+> published pages do not need. The SQLite and log findings below are resolved. See
+> `docs/specs/legal-privacy-publication.md`.
+
+- **Resolved 2026-10-18:** ~~Before publishing: delete the SQLite rollback source (`shared/database/database.sqlite`, kept until at
+  least 2026-11-05) and the cut-over copies `/root/chartiko-pgsql-cutover-*/database.before.sqlite`.~~ They held
+  users, sessions and sign-in activity outside the stated 14-day backup retention; the five SQLite copies were
+  deleted on 2026-10-18 (list in `deploy/README.md`).
 - Self-service account deletion and data export do not exist; rights are handled by email
   (one month). Admin tooling to delete a user is not built.
-- `LOG_STACK=single` in production keeps `laravel.log` with no rotation. Set `LOG_STACK=daily`
-  and `LOG_DAILY_DAYS=14` before publishing so the 14-day log claim is true.
+- **Resolved 2026-10-18:** ~~`LOG_STACK=single` in production keeps `laravel.log` with no rotation.~~
+  `deploy/configure-legal-env.py` sets `LOG_STACK=daily` and `LOG_DAILY_DAYS=14`; daily files are `0660`
+  and `logs:prune` deletes those older than 14 days.
 - Lawyer review points: legal basis for sign-in activity, transfer to Canada, minimum age
   (14, LOPDGDD art. 7), terms of use, owner's address if a natural person.
 
