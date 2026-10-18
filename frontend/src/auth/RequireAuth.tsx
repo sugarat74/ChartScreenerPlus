@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router'
-import { LOGIN_ROUTE } from '../nav.ts'
+import { DEFAULT_ROUTE, LOGIN_ROUTE } from '../nav.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import { useAuth } from './useAuth.ts'
 
@@ -11,12 +12,20 @@ import { useAuth } from './useAuth.ts'
  * `AuthContext`, so guarding is a component concern (the same pattern
  * `AdminPage` established). While the session bootstraps it renders a
  * "Comprobando sesión" panel; a Visitor is redirected to sign-in with
- * `replace` so the protected surface does not pollute history. The API remains
+ * `replace` so the protected surface does not pollute history. If the user
+ * disappears while this surface is open, that is a sign-out (an expired
+ * session keeps the user and is handled by the 401 paths), so the redirect
+ * goes home instead and the sign-in screen does not flash. The API remains
  * the enforcement point — this is only a UI affordance.
  */
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const { user, status } = useAuth()
   const { t } = useI18n()
+  // Derived state (set during render): did this visit ever have a user?
+  const [hadUser, setHadUser] = useState(false)
+  if (user !== null && !hadUser) {
+    setHadUser(true)
+  }
 
   if (status === 'loading') {
     return (
@@ -39,7 +48,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   }
 
   if (user === null) {
-    return <Navigate to={LOGIN_ROUTE} replace />
+    return <Navigate to={hadUser ? DEFAULT_ROUTE : LOGIN_ROUTE} replace />
   }
 
   return <>{children}</>

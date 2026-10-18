@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, NavLink, Outlet } from 'react-router'
+import { Link, Navigate, NavLink, Outlet } from 'react-router'
 import { useAuth } from '../../auth/useAuth.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { MessageKey } from '../../i18n/translate.ts'
-import { LOGIN_ROUTE } from '../../nav.ts'
+import { DEFAULT_ROUTE, LOGIN_ROUTE } from '../../nav.ts'
 
 /** Admin sections; the path is relative to `/admin`. */
 const ADMIN_SECTIONS: ReadonlyArray<{ to: string; labelKey: MessageKey; end: boolean }> = [
@@ -48,6 +49,12 @@ function AdminNotice({ eyebrow, title, message, children }: AdminNoticeProps) {
 export default function AdminLayout() {
   const { user, status } = useAuth()
   const { t } = useI18n()
+  // Same rule as RequireAuth: a user who signs out here goes home, not to the
+  // "sign in to continue" notice.
+  const [hadUser, setHadUser] = useState(false)
+  if (user !== null && !hadUser) {
+    setHadUser(true)
+  }
 
   if (status === 'loading') {
     return (
@@ -57,6 +64,10 @@ export default function AdminLayout() {
         message={t('admin.checkingBody')}
       />
     )
+  }
+
+  if (user === null && hadUser) {
+    return <Navigate to={DEFAULT_ROUTE} replace />
   }
 
   if (user === null) {
