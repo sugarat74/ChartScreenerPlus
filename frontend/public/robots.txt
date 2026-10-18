@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /api/legal
 
 Sitemap: https://www.chartiko.com/sitemap.xml

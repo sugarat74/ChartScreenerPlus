@@ -203,6 +203,8 @@ export const en: Messages = {
   auth: {
     registerPrivacy:
       'Controller: {owner}. Purpose: to create and manage your account. Legal basis: performance of the terms of use. Recipients: no data is shared unless required by law. Rights: access, rectification, erasure and more, as explained in the {policy}. By creating an account you accept the {terms} and confirm you are at least 14 years old.',
+    registerPrivacyNoTerms:
+      'Controller: {owner}. Purpose: to create and manage your account. Legal basis: performance of the contract. Recipients: no data is shared unless required by law. Rights: access, rectification, erasure and more, as explained in the {policy}. By creating an account you confirm you are at least 14 years old.',
     registerPrivacyPolicy: 'privacy policy',
     registerPrivacyTerms: 'terms of use',
     registerPrivacyBasic:

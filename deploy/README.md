@@ -14,14 +14,19 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    `DB_PORT=6432`, `DB_DIRECT_PORT=5432`, `DB_DATABASE=chartiko`, `DB_USERNAME=chartiko`,
    `DB_PASSWORD` = la contraseña dada a `postgresql-add-project.sh`; ver más abajo),
    `SANCTUM_STATEFUL_DOMAINS=www.chartiko.com`, `SESSION_SECURE_COOKIE=true`,
-   `LOG_STACK=daily` + `LOG_DAILY_DAYS=14` (la política de privacidad declara 14 días de logs) y,
-   para publicar la privacidad y el aviso legal, `LEGAL_OWNER_NAME`, `LEGAL_OWNER_TAX_ID`,
-   `LEGAL_OWNER_ADDRESS` y `LEGAL_CONTACT_EMAIL` (opcional `LEGAL_OWNER_REGISTRY`; ver
-   `docs/specs/legal-compliance-eu.md`). Tras cambiarlos: `php artisan config:cache` y recargar PHP-FPM.
-   Antes de publicar la privacidad, borra la SQLite de rollback (`shared/database/database.sqlite`, no antes
-   del 2026-11-05) y las copias `/root/chartiko-pgsql-cutover-*/database.before.sqlite`: contienen datos
-   personales fuera de la retención de copias declarada (14 días).
    Dueño `deploy:www-data`, permisos 640.
+   No escribas a mano `LEGAL_OWNER_NAME`, `LEGAL_CONTACT_EMAIL`, `LOG_CHANNEL`, `LOG_STACK` ni
+   `LOG_DAILY_DAYS`: `configure-legal-env.py` los fija en cada despliegue (nombre del responsable y
+   email de contacto, que publican la política de privacidad; canal `daily` con 14 días, la retención
+   de logs que declara esa política). El aviso legal solo se publica cuando además se añaden a mano
+   `LEGAL_OWNER_TAX_ID` y `LEGAL_OWNER_ADDRESS` (opcional `LEGAL_OWNER_REGISTRY`); tras cambiarlos,
+   `php artisan config:cache` y recargar PHP-FPM. Ver `docs/specs/legal-privacy-publication.md`.
+   **Copias SQLite retiradas (2026-10-18):** antes de publicar la privacidad se borraron, como root, las
+   cinco copias SQLite con datos personales (`shared/database/database.sqlite`, los
+   `database.before.sqlite` de `/root/chartiko-pgsql-cutover-20261006T183353Z`,
+   `/root/chartiko-pgsql-cutover-20261006T184407Z` y `/root/chartiko-security-20261004T153313Z`, y
+   `/home/deploy/chartiko-pre-release-20261004T154604Z/database.sqlite`). Esos directorios se conservan:
+   solo guardan copias de configuración, `.env` y permisos. Ya no es posible volver a SQLite.
 4. GitHub > Settings > Environments > `production`: restringe las ramas de despliegue a `main`.
    Secrets de Actions: `VPS_HOST` (IP), `VPS_SSH_KEY` (clave de deploy) y
    `VPS_SSH_KNOWN_HOSTS` (línea known_hosts con la clave pública del VPS).
@@ -30,6 +35,8 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    `configure-jev-env.py` y `configure-ai-env.py`, sin imprimirlas. Si falta alguna, el despliegue falla.
    `configure-fundamentals-env.py` activa los fundamentales SEC y fija `SEC_USER_AGENT`. No usa
    ningún secreto, porque el contacto que exige la SEC no es confidencial.
+   `configure-legal-env.py` fija el responsable y el email de la política de privacidad y los logs
+   diarios con 14 días (paso 3). Tampoco usa secretos y no toca NIF, domicilio ni registro.
    Obtén la clave desde la consola del proveedor con
    `cat /etc/ssh/ssh_host_ed25519_key.pub` y contrasta su huella con
    `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` por ese canal independiente.
@@ -55,7 +62,8 @@ y no admiten escritura de `www-data`. Solo `shared/storage`, `shared/database`
 y `bootstrap/cache` de cada release admiten escritura del servicio.
 `release-permissions.sh` aplica esta política antes de activar cada release.
 
-Para el antiguo SQLite en `shared/database.sqlite`, usa desde consola root
+**Histórico (época SQLite, ya sin uso: producción usa PostgreSQL y las copias SQLite se
+borraron el 2026-10-18).** Para el antiguo SQLite en `shared/database.sqlite` se usaba desde consola root
 `bash /ruta/revisada/remediate-permissions.sh`: guarda configuración y modos,
 traslada la base al directorio dedicado, actualiza únicamente `DB_DATABASE` y
 reconstruye su caché, con una pausa de PHP-FPM/worker y del cron de esta aplicación.
@@ -67,6 +75,18 @@ Si existe un registro `running` obsoleto, `--allow-stale-ledger` permite continu
 solo con cola database vacía, registro iniciado hace más de seis horas y sin comandos
 de datos activos; lo comprueba de nuevo después de pausar servicios. No modifica
 el estado del registro. Una ejecución real o jobs pendientes bloquean la operación.
+
+### Logs de Laravel
+
+- Canal `daily` (`LOG_STACK=daily`, fijado por `configure-legal-env.py`): un fichero
+  `shared/storage/logs/laravel-AAAA-MM-DD.log` por día (UTC), creado con modo `0660`; el directorio
+  `2770 deploy:www-data` le da el grupo `www-data`, así que `deploy` (artisan del despliegue) y
+  `www-data` (PHP-FPM, cola, cron) pueden escribir y rotar.
+- `logs:prune` (programado a diario, `prune-server-logs`, 03:25 UTC) borra los `laravel-AAAA-MM-DD.log`
+  con fecha de hace `LOG_DAILY_DAYS` (14) días o más; nunca toca otros ficheros. Monolog limita el
+  número de ficheros, no los días, por eso hace falta esta poda para cumplir los 14 días declarados.
+- El antiguo `laravel.log` único (sin rotación desde 2026-10-04) se borra tras el primer despliegue
+  con el canal `daily`, en cuanto exista el primer `laravel-AAAA-MM-DD.log`.
 
 Verificación local (Git Bash requerido): `.\scripts\verify-deploy-security.ps1`.
 Prueba claves ausentes/incorrectas y el modo SSH estricto. Admite `-HostName`,
@@ -161,10 +181,14 @@ Reejecutarlo rota la contraseña. Añade `<proyecto>` a la línea del cron de ba
    (`php artisan queue:work --once` o lanzar una consulta Admin) y comparar los
    conteos de `copy.txt` con `counts.before.txt` (68,136 Daily Bars en la última
    comprobación). Las sesiones no se copian: los usuarios inician sesión de nuevo.
-6. Borra `/root/chartiko-pgsql.env`. Conserva `shared/database/database.sqlite` sin
-   cambios al menos 30 días como origen de rollback.
+6. Borra `/root/chartiko-pgsql.env`. Se planeaba conservar `shared/database/database.sqlite` sin
+   cambios al menos 30 días como origen de rollback; por decisión del propietario se borró antes,
+   el 2026-10-18, junto con las demás copias SQLite (paso 3 del despliegue).
 
-**Rollback manual** (después de completar la migración; en producción la carpeta válida es
+**Rollback manual: retirado el 2026-10-18.** Ya no es posible volver a SQLite: el origen de
+rollback y los `database.before.sqlite` se borraron (el `env.before` sigue en
+`/root/chartiko-pgsql-cutover-*`, pero sin la base no sirve). Ante un fallo de PostgreSQL, restaura
+el último volcado diario (ver backups). Procedimiento histórico, ya **no aplicable** (en producción la carpeta válida era
 `/root/chartiko-pgsql-cutover-20261006T184407Z`, la `…181456Z` quedó vacía y la `…183353Z` es el
 primer intento revertido): como root,
 `cp -a /root/chartiko-pgsql-cutover-<fecha>/env.before /var/www/alphapulse/shared/.env`,

@@ -243,6 +243,14 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - Screener errors **MUST NOT** be blurred: an unknown `universe` slug is an explicit JSON `404 {"message":"Universe not found."}`, a valid-but-empty match is `200` with `candidates: []`, and invalid param values are `422`. Reason: the SPA contract distinguishes "no results from a bad scope" from "no results from filters".
 - Screener candidate loading **MUST NOT** issue a per-instrument query: the latest bar/snapshot are eager loaded (`latestOfMany`) and the previous close comes from one bulk query. Reason: the universe is ~503 members and an N+1 would add ~500 queries per request.
 
+## Legal Pages
+
+- Owner identity **MUST** come only from `config/legal.php` (`LEGAL_*`) and **MUST NOT** be hardcoded in application code or the SPA catalogs (the deploy script that writes the production values is the only exception). Reason: it is supplied by the owner and never invented.
+- `GET /api/legal` **MUST NOT** serialize an owner field unless the page that needs it is published: privacy gate = name + email valid under `FILTER_VALIDATE_EMAIL`; notice gate = privacy gate + tax id + address. `owner` is null while privacy is withheld; `tax_id`, `address`, `registry` are null while the notice is withheld. Reason: the owner published only name + email (`legal-privacy-publication`).
+- The privacy policy catalog **MUST NOT** use `{ownerTaxId}` or `{ownerAddress}` (notice only). The contact email **MUST** render as plain text, **MUST NOT** be a `mailto:` link. Reason: owner decision against trivial scraping; an unknown placeholder would render literally.
+- `frontend/public/robots.txt` **MUST** keep `Disallow: /api/legal`. Reason: owner decision; keeps the raw owner JSON out of well-behaved crawlers.
+- The `daily` log channel **MUST** keep `'permission' => 0660`, and daily log files **MUST** be pruned at `legal.server_log_retention_days` by the scheduled `logs:prune`. Changing `LOG_DAILY_DAYS` changes the published retention. Reason: `deploy` (umask 027) and `www-data` both write the logs, and Monolog caps files, not days, while the privacy policy states days.
+
 ## Harness
 
 - **MUST** keep `init.ps1` a non-blocking gate: it runs the Laravel checks (`php artisan --version`, `php artisan test`), the SPA typecheck/lint/build when `frontend/` exists, and the engine tests when `engine/requirements.txt` exists. It **MUST NOT** start long-running processes such as `php artisan serve`, the Vite dev server or uvicorn.

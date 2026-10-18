@@ -983,21 +983,27 @@ export const notificationsApi = {
   },
 }
 
-/** Owner identity shown on the legal pages (every field configured by the owner). */
+/**
+ * Owner identity shown on the legal pages. `tax_id`, `address` and `registry`
+ * are null until the legal notice is published.
+ */
 export type LegalOwner = {
   name: string
-  tax_id: string
-  address: string
   email: string
+  tax_id: string | null
+  address: string | null
   registry: string | null
 }
 
 /**
- * `GET /api/legal` (public). `owner` is null and `published` false until the
- * owner's identity is configured (`docs/specs/legal-compliance-eu.md`).
+ * `GET /api/legal` (public). The privacy policy is published once the owner's
+ * name and a valid email are configured; the legal notice also needs tax id and
+ * address. `owner` is null while the privacy policy is withheld
+ * (`docs/specs/legal-privacy-publication.md`).
  */
 export type LegalInfo = {
-  published: boolean
+  privacy_published: boolean
+  notice_published: boolean
   owner: LegalOwner | null
   updated_at: string
   retention: {

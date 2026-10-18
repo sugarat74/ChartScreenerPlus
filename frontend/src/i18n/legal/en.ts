@@ -14,8 +14,6 @@ export const legalEn: LegalTexts = {
         heading: 'Data controller',
         items: [
           'Controller: {ownerName}',
-          'Tax ID (NIF): {ownerTaxId}',
-          'Address: {ownerAddress}',
           'Contact and data protection: {ownerEmail}',
         ],
       },

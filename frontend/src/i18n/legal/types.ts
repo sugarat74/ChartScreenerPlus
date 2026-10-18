@@ -3,7 +3,10 @@
  * must match the verified processing and storage inventory in that spec.
  *
  * Placeholders, filled by `LegalPage` from `GET /api/legal`:
- * `{ownerName}` `{ownerTaxId}` `{ownerAddress}` `{ownerEmail}` (mailto link),
+ * `{ownerName}` `{ownerEmail}` (plain text, never a mailto link),
+ * `{ownerTaxId}` `{ownerAddress}` (legal notice only: they are null until the
+ * notice is published, so the privacy policy must not use them;
+ * docs/specs/legal-privacy-publication.md),
  * `{activityDays}` `{sessionMinutes}` `{backupDays}` `{logDays}` `{notificationDays}`
  * `{aiCardLogDays}`,
  * `{cookiesLink}` `{privacyLink}` (in-app links).
