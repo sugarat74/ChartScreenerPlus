@@ -17,7 +17,7 @@ vi.mock('../../lib/api.ts', async (importOriginal) => {
 const auth = {
   user: { id: 1, name: 'Test', email: 'test@example.com', role: 'user' as const },
   status: 'ready' as const,
-  login: vi.fn(), register: vi.fn(), logout: vi.fn(),
+  login: vi.fn(), register: vi.fn(), logout: vi.fn(), setCurrentUser: vi.fn(),
 }
 
 function tree(signedIn: boolean, status: 'loading' | 'ready' = 'ready') {

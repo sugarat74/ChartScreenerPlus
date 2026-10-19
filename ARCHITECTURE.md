@@ -61,6 +61,13 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
 - The SPA client is `frontend/src/lib/api.ts` (fetch, `credentials: 'include'`, `X-XSRF-TOKEN` echoed from the `XSRF-TOKEN` cookie, `/sanctum/csrf-cookie` before mutations). Auth state is `frontend/src/auth/` (`AuthContext.tsx` provider, `context.ts`, `useAuth`), bootstrapped from `GET /api/user`.
 - **Dev same-origin model:** the Vite dev server proxies `/api` and `/sanctum` to `http://127.0.0.1:8000`, so the browser is same-origin and cookies/CSRF work without CORS. `SANCTUM_STATEFUL_DOMAINS` lists `localhost`, `127.0.0.1`, `localhost:5173` and `127.0.0.1:5173`. Production is expected to serve the SPA and API from the same origin.
 
+## Account Self-Service
+
+- `AccountController` (`auth:sanctum`, session-only like `AuthController`, never a `user_id`): `PATCH /api/account {name}` -> `{user}` (`throttle:30,1,account-profile`); `PUT /api/account/password {current_password, password, password_confirmation}` -> 204, deletes the user's other `sessions` rows and regenerates the current id (`throttle:6,1,account-password`); `GET /api/account/export` -> JSON attachment `chartiko-account-<date>.json` (`throttle:5,1,account-export`); `DELETE /api/account {password, confirmation}` (`DELETE` or `ELIMINAR`) -> 204 (`throttle:6,1,account-delete`). Admins get `422 account.admin_cannot_delete`.
+- `App\Services\Account\AccountExporter` builds `chartiko-account-export-v1` from the User's relations (profile, watchlist, saved screeners, alerts, notifications, own `login_events`, own session metadata, AI card requests); no password hash, remember token, session ids or payloads.
+- `App\Services\Account\AccountDeleter`, one transaction: `login_events` row `account_deleted` (email only, no user id/IP/agent) -> delete the user's `sessions` (no FK) and any tokens/reset rows -> `$user->delete()` (notifications via the `deleting` hook; watchlist, screeners and alerts cascade; `login_events`/`ai_company_card_generations` user ids become null). The controller then logs out with `logoutCurrentDevice()`, forgets the cached Sanctum user and invalidates the session.
+- SPA: `/portal/cuenta` (`ACCOUNT_ROUTE`, `pages/AccountPage.tsx`), linked from the header name chip and the Portal; `accountApi` in `lib/api.ts`; `setCurrentUser` on the auth context updates the name or clears the user after deletion (the guards then go home). Spec: `docs/specs/account-self-service.md`.
+
 ## Authorization And Admin Boundary
 
 - Accounts carry a single `role` string on `users.role`, defaulting to `user`. Two roles exist: `User::ROLE_USER` (`user`) and `User::ROLE_ADMIN` (`admin`); `User::isAdmin()` is the only check callers need. Multi-role/RBAC, teams and ownership are out of scope.
@@ -135,7 +142,7 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
 
 - SPA: `/admin` is a layout route (`frontend/src/pages/admin/AdminLayout.tsx`) with one guard and section tabs: Ingestion (`/admin`), Users (`/admin/users`, `/admin/users/:userId`), Sessions (`/admin/sessions`), Activity (`/admin/activity`). Search, page and event filters are URL-backed.
 - API (`auth:sanctum` + `admin`): `Admin\UserController` (summary, list, detail, end all sessions of a user), `Admin\SessionController` (active sessions, end one by opaque `ref`), `Admin\ActivityController` (sign-in log). Session ids never leave the server (`ref` = truncated HMAC with the app key, `App\Services\Admin\SessionDirectory`); the caller's current session cannot be ended.
-- Sign-in activity: `App\Services\Admin\LoginEventRecorder` listens to Laravel's `Login`/`Failed`/`Logout` events on the `web` guard and writes `login_events` (no passwords). `LoginEvent` is mass-prunable after `config('admin.activity_retention_days')` (90); `model:prune` runs daily at 03:15. Spec: `docs/specs/admin-users-sessions.md`.
+- Sign-in activity: `App\Services\Admin\LoginEventRecorder` listens to Laravel's `Login`/`Failed`/`Logout` events on the `web` guard and writes `login_events` (no passwords); account self-deletion adds `account_deleted` rows. `LoginEvent` is mass-prunable after `config('admin.activity_retention_days')` (90); `model:prune` runs daily at 03:15. Spec: `docs/specs/admin-users-sessions.md`.
 
 ## Admin Ingestion Panel
 

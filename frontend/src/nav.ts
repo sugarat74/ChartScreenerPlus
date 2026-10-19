@@ -41,6 +41,12 @@ export const COOKIES_ROUTE = '/cookies'
 export const NOTIFICATIONS_ROUTE = '/portal/notificaciones'
 
 /**
+ * Account self-service (account-self-service): name, password, data download
+ * and deletion. One path for both locales; linked from the header and Portal.
+ */
+export const ACCOUNT_ROUTE = '/portal/cuenta'
+
+/**
  * react-router nested routes must be relative; `NAV_ITEMS`/auth routes store
  * absolute paths for links. Strip the leading slash when declaring a child.
  */

@@ -129,14 +129,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     : null
 
   if (!response.ok) {
-    const message =
-      typeof payload?.message === 'string' ? payload.message : `Error ${response.status}`
-    const errors = (payload?.errors ?? {}) as ValidationErrors
-    const code = typeof payload?.code === 'string' ? payload.code : null
-    throw new ApiError(response.status, message, errors, code)
+    throw toApiError(response.status, payload)
   }
 
   return payload as T
+}
+
+function toApiError(status: number, payload: Record<string, unknown> | null): ApiError {
+  const message = typeof payload?.message === 'string' ? payload.message : `Error ${status}`
+  const errors = (payload?.errors ?? {}) as ValidationErrors
+  const code = typeof payload?.code === 'string' ? payload.code : null
+  return new ApiError(status, message, errors, code)
 }
 
 async function ensureCsrfCookie(): Promise<void> {
@@ -181,6 +184,75 @@ export const authApi = {
   async logout(): Promise<void> {
     await ensureCsrfCookie()
     await request<void>('/api/logout', { method: 'POST' })
+  },
+}
+
+export type ChangePasswordPayload = {
+  current_password: string
+  password: string
+  password_confirmation: string
+}
+
+/** A downloaded copy of the account's data (`GET /api/account/export`). */
+export type AccountExportFile = {
+  blob: Blob
+  filename: string
+}
+
+/** Default file name when the response carries no usable `Content-Disposition`. */
+export const ACCOUNT_EXPORT_FALLBACK_FILENAME = 'chartiko-account.json'
+
+function attachmentFilename(header: string | null): string {
+  const match = header?.match(/filename="?([^";]+)"?/i)
+  return match ? match[1] : ACCOUNT_EXPORT_FALLBACK_FILENAME
+}
+
+/**
+ * Account self-service (account-self-service). Every endpoint acts on the
+ * session user only; the API never takes a user id.
+ */
+export const accountApi = {
+  async update(name: string): Promise<AuthUser> {
+    await ensureCsrfCookie()
+    const payload = await request<{ user: AuthUser }>('/api/account', {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    })
+    return payload.user
+  },
+
+  /** Ends every other session of the account; the current one stays signed in. */
+  async changePassword(data: ChangePasswordPayload): Promise<void> {
+    await ensureCsrfCookie()
+    await request<void>('/api/account/password', { method: 'PUT', body: JSON.stringify(data) })
+  },
+
+  /** The JSON copy of the account's data, as a file to save. */
+  async export(): Promise<AccountExportFile> {
+    const response = await fetch('/api/account/export', {
+      credentials: 'include',
+      headers: { Accept: 'application/json', 'Accept-Language': getActiveLocale() },
+    })
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type') ?? ''
+      const payload = contentType.includes('application/json')
+        ? ((await response.json()) as Record<string, unknown>)
+        : null
+      throw toApiError(response.status, payload)
+    }
+    return {
+      blob: await response.blob(),
+      filename: attachmentFilename(response.headers.get('content-disposition')),
+    }
+  },
+
+  /** Permanently deletes the account; the session ends with it. */
+  async remove(password: string, confirmation: string): Promise<void> {
+    await ensureCsrfCookie()
+    await request<void>('/api/account', {
+      method: 'DELETE',
+      body: JSON.stringify({ password, confirmation }),
+    })
   },
 }
 
@@ -271,7 +343,7 @@ export type AdminSessionRow = AdminSession & {
   user: { id: number; name: string; email: string; role: UserRole } | null
 }
 
-export type AdminActivityEventType = 'login' | 'failed' | 'logout' | 'session_revoked'
+export type AdminActivityEventType = 'login' | 'failed' | 'logout' | 'session_revoked' | 'account_deleted'
 
 export type AdminActivityEvent = {
   id: number

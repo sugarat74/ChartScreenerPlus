@@ -25,7 +25,7 @@ export const legalEs: LegalTexts = {
         items: [
           'Finalidad: crear y mantener tu cuenta y ofrecerte las funciones de usuario registrado.',
           'Base jurídica: ejecución del contrato de uso del servicio que aceptas al registrarte (art. 6.1.b RGPD).',
-          'Conservación: mientras mantengas la cuenta. Si pides su supresión la borramos; las copias de seguridad pueden conservarla hasta {backupDays} días más y el registro de actividad de acceso conserva el email hasta que se borra, a los {activityDays} días.',
+          'Conservación: mientras mantengas la cuenta. Si la eliminas desde la página Cuenta o pides su supresión, la borramos de inmediato junto con tu Watchlist, tus Screeners guardados, tus alertas, tus notificaciones y tus sesiones; las copias de seguridad pueden conservarla hasta {backupDays} días más y el registro de actividad de acceso conserva el email hasta que se borra, a los {activityDays} días.',
         ],
       },
       {
@@ -42,7 +42,7 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Sesiones y seguridad del acceso',
         paragraphs: [
-          'Para mantener tu sesión y proteger las cuentas registramos la dirección IP, el navegador (agente de usuario) y la hora de la última actividad de cada sesión, así como los inicios de sesión, los intentos fallidos (con el email introducido, que puede no corresponder a ninguna cuenta), los cierres de sesión y las sesiones cerradas por la administración. Los visitantes sin cuenta también tienen una sesión técnica con la dirección IP, el navegador y la última actividad.',
+          'Para mantener tu sesión y proteger las cuentas registramos la dirección IP, el navegador (agente de usuario) y la hora de la última actividad de cada sesión, así como los inicios de sesión, los intentos fallidos (con el email introducido, que puede no corresponder a ninguna cuenta), los cierres de sesión, las sesiones cerradas por la administración y la eliminación de cuentas (solo con el email). Los visitantes sin cuenta también tienen una sesión técnica con la dirección IP, el navegador y la última actividad.',
         ],
         items: [
           'Finalidad: mantener la sesión, detectar accesos indebidos o intentos repetidos y permitir que la administración cierre sesiones abiertas. No se usa para publicidad ni para seguir tu navegación.',
@@ -109,7 +109,7 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Tus derechos',
         paragraphs: [
-          'Puedes solicitar el acceso, la rectificación, la supresión, la oposición, la limitación del tratamiento y la portabilidad de tus datos escribiendo a {ownerEmail}. Te responderemos en el plazo de un mes.',
+          'Si tienes cuenta, desde la página Cuenta de tu Portal puedes descargar una copia de tus datos en formato JSON (acceso y portabilidad), corregir tu nombre (rectificación) y eliminar la cuenta (supresión) tú mismo y al momento.', 'También puedes solicitar el acceso, la rectificación, la supresión, la oposición, la limitación del tratamiento y la portabilidad de tus datos escribiendo a {ownerEmail}; por ejemplo, para cambiar tu email. Te responderemos en el plazo de un mes.',
           'Si consideras que no hemos atendido bien tu solicitud, puedes presentar una reclamación ante la Agencia Española de Protección de Datos (www.aepd.es).',
         ],
       },
@@ -163,7 +163,7 @@ export const legalEs: LegalTexts = {
           'Para registrarte debes tener al menos 14 años y facilitar datos veraces. Eres responsable de custodiar tu contraseña.',
           'Debes usar el servicio de forma lícita, sin intentar acceder a zonas o datos no autorizados, sobrecargarlo ni extraer sus datos de forma masiva o automatizada.',
           'Podemos suspender o cancelar las cuentas que incumplan estas condiciones.',
-          'Puedes dejar de usar el servicio y pedir la supresión de tu cuenta en cualquier momento escribiendo a {ownerEmail}.',
+          'Puedes dejar de usar el servicio y eliminar tu cuenta en cualquier momento desde la página Cuenta de tu Portal o escribiendo a {ownerEmail}.',
           'Podemos modificar el servicio y estas condiciones; la fecha de actualización indica la última versión.',
         ],
       },

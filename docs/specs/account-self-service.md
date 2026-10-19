@@ -177,3 +177,12 @@ Keep the controller thin: `AccountController` validates and delegates to `Accoun
 - **Missed owned data.** A future table with `user_id` must be added to both the export and the deletion. Add a test that lists every column named `user_id`/`requested_by` in the schema and fails if it is not covered (allowlist).
 - **Sessions are not FK-linked.** If they are not deleted explicitly, a deleted user's other browsers would keep a dangling session. Scenario 4 covers this.
 - **Destructive action from the UI.** Mitigated by the password, the typed confirmation word and the throttle.
+
+## Implementation Findings (2026-10-19)
+
+- **Stale Sanctum user on the session write.** `auth:sanctum` makes the cached Sanctum guard the default one, so the `database` session handler wrote the new, empty session row with the deleted user's id. `AccountController::destroy` now calls `Auth::guard('sanctum')->forgetUser()` after `logoutCurrentDevice()` (not `logout()`, which would record a `logout` event and rotate the remember token by saving the deleted model). The deletion test fails without it. The same stale row happens on `POST /api/logout` (pre-existing, out of scope; recorded in `docs/risks-and-open-questions.md`).
+- **Test harness.** Replaying session cookies on the `database` driver also needs `forgetInstance('auth.driver')` and a fresh session store between requests (`AccountSelfServiceTest::asBrowser`); recorded in `CONSTRAINTS.md`.
+- **Additions within scope.** `AccountDeleter` also deletes `personal_access_tokens` (morph) and `password_reset_tokens` rows for the account; neither is issued today. `active_sessions` in the export lists every stored session row of the user (expired rows included until garbage collection), never ids or payloads. The coverage test checks columns named `user_id`, `requested_by`, `actor_id`, morph `*able_id`, and every FK to `users`.
+- **SPA.** The header name chip became the Account link (initial, name and "Cuenta/Account"). The auth context gained `setCurrentUser`. The delete button enables when both fields are filled; the server checks the word. Admins see a note instead of the deletion form.
+- **Validator follow-up (REVISE, low).** `PATCH /api/account` was the only unthrottled account endpoint; it now has `throttle:30,1,account-profile`, and 429 tests cover name changes (31st), exports (6th) and deletion attempts (7th).
+- **Not run here:** CI on SQLite and PostgreSQL (no push from the implementer); the FK cascades were exercised on SQLite with foreign keys on.

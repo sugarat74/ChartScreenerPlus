@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\IngestionRunController;
 use App\Http\Controllers\Admin\SessionController;
@@ -50,6 +51,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/instruments/{ticker}/company-card', [CompanyCardController::class, 'store'])->middleware('throttle:'.config('ai_card.requests_per_minute').',1,ai-card');
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Account self-service (account-self-service): always the session user,
+    // session-only (400 without a stateful session) and never a `user_id`.
+    // Admins cannot delete themselves (422 account.admin_cannot_delete).
+    Route::patch('/account', [AccountController::class, 'update'])->middleware('throttle:30,1,account-profile');
+    Route::put('/account/password', [AccountController::class, 'updatePassword'])->middleware('throttle:6,1,account-password');
+    Route::get('/account/export', [AccountController::class, 'export'])->middleware('throttle:5,1,account-export');
+    Route::delete('/account', [AccountController::class, 'destroy'])->middleware('throttle:6,1,account-delete');
 
     // Personal watchlist: always scoped to the authenticated user, never to a
     // client-supplied `user_id`. `auth:sanctum` rejects a guest with 401.

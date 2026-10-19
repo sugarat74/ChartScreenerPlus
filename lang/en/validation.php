@@ -212,6 +212,8 @@ return [
         'signal_types' => 'signal types',
         'signal_types.*' => 'signal type',
         'saved_screener_id' => 'saved Screener',
+        'current_password' => 'current password',
+        'confirmation' => 'confirmation word',
     ],
 
 ];

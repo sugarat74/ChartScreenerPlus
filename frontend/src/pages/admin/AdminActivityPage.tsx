@@ -8,7 +8,7 @@ import { useI18n } from '../../i18n/useI18n.ts'
 import { adminUsersApi } from '../../lib/api.ts'
 import type { AdminActivityEventType } from '../../lib/api.ts'
 
-const EVENT_TYPES: readonly AdminActivityEventType[] = ['login', 'failed', 'logout', 'session_revoked']
+const EVENT_TYPES: readonly AdminActivityEventType[] = ['login', 'failed', 'logout', 'session_revoked', 'account_deleted']
 
 function eventParam(value: string | null): AdminActivityEventType | null {
   return EVENT_TYPES.find((type) => type === value) ?? null

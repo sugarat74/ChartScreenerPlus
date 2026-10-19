@@ -1431,14 +1431,22 @@
       "user-portal",
       "legal-privacy-publication"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Feature tests: PATCH /api/account, PUT /api/account/password (other sessions ended, current kept), GET /api/account/export (all sections, own data only, no password hash/remember token/session ids), DELETE /api/account (transactional cascade, sessions removed, login_events and ai_company_card_generations nulled, account_deleted event, wrong password/confirmation 422, Admin 422, Visitor 401, no session 400)",
       "A schema coverage test fails if a user-owned column is added without being handled by export and deletion",
       "SPA /portal/cuenta: name, password, download and danger zone in es/en at 1280 and 390 px; delete lands on / signed out without a sign-in flash; Vitest and Playwright+Edge QA",
       "Privacy text mentions the Account page and config/legal.php updated_at is bumped; .\\init.ps1 and CI (SQLite + PostgreSQL) pass"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-19 .\\init.ps1 exit 0: Laravel 482 passed / 6 skipped, Vitest 181 (23 files), SPA lint + build, engine 67",
+      "tests/Feature/AccountSelfServiceTest.php 27 tests: visitor 401 and no-session 400 on all 4 endpoints; name update + 422 for empty/256 chars, name throttle 429 on the 31st, export 429 on the 6th, delete 429 on the 7th; password change ends the other session (401) and keeps the current one under a new id, wrong current password 422, throttle 429; export sections, own data only, no hash/remember token/session id/payload/foreign data, attachment header; deletion cascade, sessions removed, login_events and ai_company_card_generations nulled, account_deleted row (email only), old credentials fail; wrong password/word 422, ELIMINAR accepted, Admin 422 account.admin_cannot_delete; rollback on failure; schema coverage allowlist",
+      "frontend/src/pages/AccountPage.test.tsx 12 tests: four sections, delete button disabled until word and password are filled, ES/EN confirmation word, server errors rendered, lands on / signed out without rendering sign-in, Admin note, name update reaches the auth context, password change, export download, 401 to sign-in",
+      "Edge (Playwright MCP) on a local stack with a throwaway SQLite at 1280 and 390 px, es and en: 0 px horizontal overflow; name change updates the header without reload; wrong current password error; password change keeps the current session (200) and ends a second browser's session (401); export chartiko-account-2026-10-19.json with all 10 keys and no password/remember_token/payload/other emails; Admin sees a note and the API returns 422 account.admin_cannot_delete; wrong word and wrong password errors; deletion (DELETE in en at 390, ELIMINAR in es at 1280) lands on / with only replaceState('/') and no sign-in heading, /api/user 401, re-login fails; DB check after deletion: 0 rows in users, sessions, watchlist_items, saved_screeners, alerts, notifications and login_events for both ids, 2 account_deleted rows without IP",
+      "Privacy (es/en) rights, account retention, activity-log and terms paragraphs mention the Account page; backup and activity retention wording kept; config/legal.php updated_at 2026-10-19",
+      "Not run: CI SQLite and PostgreSQL jobs (no push from the implementer)",
+      "2026-10-19 independent validator ACCEPT (after one revise: PATCH /api/account throttle:30,1,account-profile added with 429 tests for rename/export/delete): init.ps1 exit 0 (Laravel 482 passed / 6 skipped, Vitest 181, engine 67); AccountSelfServiceTest 27 (216 assertions); all /api/account routes throttled with prefixes; forgetUser stale-session fix confirmed by probe; schema coverage guard verified. CI SQLite + PostgreSQL pending on the PR."
+    ],
     "notes": "Requested 2026-10-19. Spec: docs/specs/account-self-service.md. Email change, password reset and email verification wait for an outbound email provider (email-provider-smtp)."
   },
   {

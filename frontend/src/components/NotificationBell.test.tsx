@@ -23,7 +23,7 @@ function page(unread: number): NotificationsPage {
 
 function show(signedIn: boolean) {
   return render(
-    <AuthContext.Provider value={{ user: signedIn ? user : null, status: 'ready', login: vi.fn(), register: vi.fn(), logout: vi.fn() }}>
+    <AuthContext.Provider value={{ user: signedIn ? user : null, status: 'ready', login: vi.fn(), register: vi.fn(), logout: vi.fn(), setCurrentUser: vi.fn() }}>
       <I18nProvider>
         <MemoryRouter initialEntries={['/']}>
           <UnreadNotificationsProvider>

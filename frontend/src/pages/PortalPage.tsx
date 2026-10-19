@@ -21,7 +21,7 @@ import WatchlistTable from '../components/watchlist/WatchlistTable.tsx'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, watchlistApi } from '../lib/api.ts'
 import type { WatchlistEntry } from '../lib/api.ts'
-import { LOGIN_ROUTE, NOTIFICATIONS_ROUTE } from '../nav.ts'
+import { ACCOUNT_ROUTE, LOGIN_ROUTE, NOTIFICATIONS_ROUTE } from '../nav.ts'
 
 const ACTION_LINK_CLASS =
   'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
@@ -231,6 +231,9 @@ function PortalContent() {
         <div className="flex flex-wrap items-center gap-3">
           <Link to={NOTIFICATIONS_ROUTE} className={ACTION_LINK_CLASS}>
             {t('portal.notificationsLink')}
+          </Link>
+          <Link to={ACCOUNT_ROUTE} className={ACTION_LINK_CLASS}>
+            {t('portal.accountLink')}
           </Link>
           <p className="max-w-2xl text-xs text-on-surface-variant">{t('alerts.sectionIntro')}</p>
         </div>

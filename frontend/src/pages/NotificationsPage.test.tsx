@@ -36,7 +36,7 @@ function payload(data: AppNotification[], unread: number, meta: Partial<Payload[
 
 function show(signedIn = true) {
   return render(
-    <AuthContext.Provider value={{ user: signedIn ? user : null, status: 'ready', login: vi.fn(), register: vi.fn(), logout: vi.fn() }}>
+    <AuthContext.Provider value={{ user: signedIn ? user : null, status: 'ready', login: vi.fn(), register: vi.fn(), logout: vi.fn(), setCurrentUser: vi.fn() }}>
       <I18nProvider>
         <MemoryRouter initialEntries={['/portal/notificaciones']}>
           <UnreadNotificationsProvider>

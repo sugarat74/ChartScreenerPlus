@@ -8,7 +8,7 @@ import { useSignedIn } from './useSignedIn.ts'
 const base: AuthContextValue = {
   user: null,
   status: 'ready',
-  login: vi.fn(), register: vi.fn(), logout: vi.fn(),
+  login: vi.fn(), register: vi.fn(), logout: vi.fn(), setCurrentUser: vi.fn(),
 }
 const user = { id: 1, name: 'Test', email: 'test@example.com', role: 'user' as const }
 

@@ -41,6 +41,11 @@ return [
         'run_without_failures' => 'This run has no failed instruments to retry.',
     ],
 
+    'account' => [
+        'admin_cannot_delete' => 'An admin account cannot be deleted here. Remove the admin role first.',
+        'confirmation_word' => 'Type DELETE to confirm.',
+    ],
+
     'alerts' => [
         'limit' => 'You can have at most :max alerts.',
         'duplicate' => 'You already have this alert.',

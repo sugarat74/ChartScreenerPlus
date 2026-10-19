@@ -105,6 +105,28 @@ class User extends Authenticatable
     }
 
     /**
+     * This account's own sign-in activity rows (pruned after the activity
+     * retention). `user_id` is nulled on delete, so they never block deletion.
+     *
+     * @return HasMany<LoginEvent, $this>
+     */
+    public function loginEvents(): HasMany
+    {
+        return $this->hasMany(LoginEvent::class);
+    }
+
+    /**
+     * AI Company Card generation attempts this account requested (cost and
+     * abuse log; `user_id` is nulled on delete, the cards themselves are shared).
+     *
+     * @return HasMany<AiCompanyCardGeneration, $this>
+     */
+    public function companyCardGenerations(): HasMany
+    {
+        return $this->hasMany(AiCompanyCardGeneration::class);
+    }
+
+    /**
      * Notifications are a morph relation without a foreign key, so they are
      * removed explicitly with the account (alerts cascade by FK).
      */

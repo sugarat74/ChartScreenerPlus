@@ -34,7 +34,7 @@ const screenerAlert: Alert = {
 
 function show() {
   render(
-    <AuthContext.Provider value={{ user, status: 'ready', login: vi.fn(), register: vi.fn(), logout: vi.fn() }}>
+    <AuthContext.Provider value={{ user, status: 'ready', login: vi.fn(), register: vi.fn(), logout: vi.fn(), setCurrentUser: vi.fn() }}>
       <I18nProvider>
         <MemoryRouter initialEntries={['/portal']}>
           <PortalPage />
