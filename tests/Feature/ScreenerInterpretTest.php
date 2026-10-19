@@ -311,6 +311,49 @@ class ScreenerInterpretTest extends TestCase
         $this->actingAs($user)->postJson(self::ENDPOINT, ['query' => 'sobrevendidas'])->assertOk();
     }
 
+    public function test_the_cap_slot_is_reserved_before_the_provider_call(): void
+    {
+        $user = User::factory()->create();
+        $pendingDuringCall = null;
+        Http::fake([self::URL.'/chat/completions' => function () use (&$pendingDuringCall) {
+            $pendingDuringCall = AiScreenerQuery::query()->where('outcome', AiScreenerQuery::OUTCOME_PENDING)->count();
+
+            return Http::response($this->completion($this->answer()));
+        }]);
+
+        $this->actingAs($user)->postJson(self::ENDPOINT, ['query' => 'sobrevendidas'])->assertOk();
+
+        // A concurrent request would already see this slot under the caps.
+        $this->assertSame(1, $pendingDuringCall);
+        $this->assertSame(0, AiScreenerQuery::query()->where('outcome', AiScreenerQuery::OUTCOME_PENDING)->count());
+        $this->assertSame(1, AiScreenerQuery::query()->where('user_id', $user->id)->where('outcome', 'ok')->count());
+    }
+
+    public function test_an_in_flight_request_counts_against_the_cap(): void
+    {
+        $this->fakeProvider($this->answer());
+        $user = User::factory()->create();
+        $this->seedRows(29, $user, AiScreenerQuery::OUTCOME_OK);
+        $this->seedRows(1, $user, AiScreenerQuery::OUTCOME_PENDING);
+
+        $this->actingAs($user)
+            ->postJson(self::ENDPOINT, ['query' => 'sobrevendidas'])
+            ->assertStatus(429)
+            ->assertJsonPath('code', 'user_daily_limit');
+        Http::assertNothingSent();
+    }
+
+    public function test_a_failed_call_releases_its_slot(): void
+    {
+        Http::fake([self::URL.'/chat/completions' => Http::response(['error' => 'down'], 500)]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson(self::ENDPOINT, ['query' => 'sobrevendidas'])->assertStatus(503);
+
+        $this->assertSame(0, AiScreenerQuery::query()->where('outcome', AiScreenerQuery::OUTCOME_PENDING)->count());
+        $this->assertSame(1, AiScreenerQuery::query()->where('outcome', AiScreenerQuery::OUTCOME_UNAVAILABLE)->count());
+    }
+
     public function test_scenario_4_the_global_cap_returns_daily_limit_reached(): void
     {
         config()->set('ai_screener.daily_limit', 4);

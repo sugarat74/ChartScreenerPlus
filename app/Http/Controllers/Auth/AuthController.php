@@ -75,6 +75,10 @@ class AuthController extends Controller
         $this->requireStatefulSession($request);
 
         Auth::guard('web')->logout();
+        // `auth:sanctum` made the cached Sanctum guard the default one; without
+        // this the database session handler would write the new, empty session
+        // row with the signed-out user's id.
+        Auth::guard('sanctum')->forgetUser();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

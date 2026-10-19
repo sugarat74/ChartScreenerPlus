@@ -284,6 +284,18 @@ class AccountSelfServiceTest extends TestCase
         $this->assertDatabaseMissing('login_events', ['event' => LoginEvent::EVENT_ACCOUNT_DELETED]);
     }
 
+    public function test_signing_out_leaves_no_session_row_for_the_user(): void
+    {
+        config(['session.driver' => 'database']);
+        $user = User::factory()->create(['email' => 'ana@example.com', 'password' => self::PASSWORD]);
+        $current = $this->signIn('ana@example.com', self::PASSWORD);
+        $this->assertSame(1, DB::table('sessions')->where('user_id', $user->id)->count());
+
+        $this->asBrowser($current)->postJson('/api/logout')->assertNoContent();
+
+        $this->assertSame(0, DB::table('sessions')->where('user_id', $user->id)->count());
+    }
+
     public function test_deleting_the_account_removes_owned_rows_and_ends_the_session(): void
     {
         config(['session.driver' => 'database']);

@@ -1,5 +1,11 @@
 # Progress Log
 
+## Small fixes after the 2026-10-19 releases — 2026-10-19
+
+- **Sign-out session row.** `AuthController::logout` now forgets the cached Sanctum user, so the database session handler no longer writes the new empty session row with the signed-out user's id (same fix as account deletion). New test `test_signing_out_leaves_no_session_row_for_the_user` fails without the line.
+- **Home title with filters.** `RouteMetadata` titled `/?rsi_max=30` as "Página no encontrada". The home path now keeps the home title and description with any query string; only the bare `/` stays indexed and canonical. New `RouteMetadata.test.tsx` (3 tests).
+- **AI screener caps race.** `ScreenerQueryInterpreter` checks the caps and reserves a `pending` row under the short `ai-screener:caps` lock before the provider call, then updates it to `ok`/`invalid`/`unavailable`; `pending` counts against the caps. Lock timeout (5 s) is `503 provider_unavailable`. Three new tests in `ScreenerInterpretTest`.
+
 ## Natural-language Screener (`ai-screener-natural-language`, accepted) — 2026-10-19
 
 - Spec `docs/specs/ai-screener-natural-language.md`; branch `feat/ai-screener-natural-language` (worktree). Status `accepted`: independent validator ACCEPT on 2026-10-19 (init.ps1 exit 0: Laravel 534 / 6 skipped, Vitest 193, engine 67; ScreenerApiTest unchanged). Production real-provider smoke pending after deploy.
@@ -15,7 +21,7 @@
   - Focused: `ScreenerInterpretTest` 44 (scenarios 1-5, invalid output x18, caps, not configured x4, cache, throttle, privacy marker absent from every DB table incl. the database cache and from all log events, prune, columns), `ScreenerQuerySchemaTest` 8, `AccountSelfServiceTest` 27, `LegalInfoTest` 10, `ScreenerAiQuery.test.tsx` 12 (mapper, states, undo, Visitor, not configured, en, page wiring with URL reset to page 1 and Undo).
   - Edge (Playwright MCP), throwaway SQLite, local stub provider outside the repo (no real key): Visitor prompt 1280 es and 390 es; signed-in form, success with unsupported part, URL `?rsi_max=30&min_rvol=1.5&price_above_sma200=1` (signal and page cleared), Undo back to the previous URL, busy state (button and input disabled, `aria-busy`), invalid answer alert with no URL change, too-short message, not-configured notice at 390 en, no horizontal overflow at 390. QA DB and log grep: no query text. Servers stopped, ports 8000/5173/8199 free, `.playwright-mcp` and QA DB deleted.
 - **Not run:** real-provider smoke (no key locally; orchestrator runs the spec's 10 queries in production) and CI (implementer does not push).
-- **Observed, pre-existing:** any query string on `/` sets the document title to "Página no encontrada | Chartiko" (`RouteMetadata` treats `/` with a search as unknown). Not changed here.
+- **Observed, pre-existing:** any query string on `/` sets the document title to "Página no encontrada | Chartiko" (`RouteMetadata` treats `/` with a search as unknown). Not changed here. Fixed 2026-10-19 (see "Small fixes").
 - **Next (orchestrator):** independent validation; PR with CI (SQLite + PostgreSQL); post-deploy production smoke; owner review of DevExpert's processor terms for free text. If the merge slips past 2026-10-19, bump `config/legal.php` `updated_at`.
 
 ## Account self-service (`account-self-service`, accepted) — 2026-10-19

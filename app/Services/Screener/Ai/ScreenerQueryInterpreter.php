@@ -6,6 +6,7 @@ use App\Models\AiScreenerQuery;
 use App\Models\User;
 use App\Services\Ai\AiProviderException;
 use App\Services\Ai\OpenAiCompatibleClient;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\Log;
  * filters (docs/specs/ai-screener-natural-language.md).
  *
  * Order: configuration -> cache (a hit skips the caps and the provider) ->
- * rolling 24 h caps -> one provider call -> `ScreenerQuerySchema` validation
+ * rolling 24 h caps (checked and reserved under a short lock, so concurrent
+ * requests cannot overshoot them) -> one provider call -> `ScreenerQuerySchema` validation
  * (which also runs `ScreenerFilterParser`) -> usage log and cache store.
  * Anything invalid fails as a whole; nothing is partially applied.
  *
@@ -59,7 +61,7 @@ class ScreenerQueryInterpreter
             return $cached;
         }
 
-        $this->enforceCaps($user, $locale, $length);
+        $slot = $this->reserve($user, $locale, $length);
 
         try {
             $completion = $this->client->structured(
@@ -71,7 +73,7 @@ class ScreenerQueryInterpreter
             $outcome = $exception->reason === 'invalid_provider_response'
                 ? AiScreenerQuery::OUTCOME_INVALID
                 : AiScreenerQuery::OUTCOME_UNAVAILABLE;
-            $this->log($user, $locale, $length, $outcome, 0, $exception->usage, $exception->latencyMs);
+            $this->finish($slot, $outcome, 0, $exception->usage, $exception->latencyMs);
 
             throw new ScreenerQueryUnavailable($exception->reason === 'invalid_provider_response' ? 'invalid_provider_response' : 'provider_unavailable');
         }
@@ -80,12 +82,12 @@ class ScreenerQueryInterpreter
             $result = ScreenerQuerySchema::validate($completion->data);
         } catch (InvalidScreenerQuery $exception) {
             Log::warning('AI screener answer rejected by schema validation', ['rule' => $exception->getMessage()]);
-            $this->log($user, $locale, $length, AiScreenerQuery::OUTCOME_INVALID, 0, $completion->usage, $completion->latencyMs);
+            $this->finish($slot, AiScreenerQuery::OUTCOME_INVALID, 0, $completion->usage, $completion->latencyMs);
 
             throw new ScreenerQueryUnavailable('invalid_provider_response');
         }
 
-        $this->log($user, $locale, $length, AiScreenerQuery::OUTCOME_OK, count($result['unsupported']), $completion->usage, $completion->latencyMs);
+        $this->finish($slot, AiScreenerQuery::OUTCOME_OK, count($result['unsupported']), $completion->usage, $completion->latencyMs);
         Cache::put($cacheKey, $result, now()->addHours(max(1, (int) config('ai_screener.cache_ttl_hours'))));
 
         return $result;
@@ -105,6 +107,38 @@ class ScreenerQueryInterpreter
             (string) config('ai_screener.schema_version'),
             (string) config('ai_screener.prompt_version'),
         ]));
+    }
+
+    /**
+     * Check the caps and reserve a `pending` slot atomically. The lock covers
+     * only the count and the insert, never the provider call, so requests are
+     * not serialized; a request that cannot get it in time is unavailable.
+     */
+    private function reserve(User $user, string $locale, int $length): AiScreenerQuery
+    {
+        try {
+            return Cache::lock('ai-screener:caps', 10)->block(5, function () use ($user, $locale, $length): AiScreenerQuery {
+                $this->enforceCaps($user, $locale, $length);
+
+                return $this->log($user, $locale, $length, AiScreenerQuery::OUTCOME_PENDING, 0);
+            });
+        } catch (LockTimeoutException) {
+            throw new ScreenerQueryUnavailable('provider_unavailable');
+        }
+    }
+
+    /**
+     * @param  array{prompt_tokens: int|null, completion_tokens: int|null, total_tokens: int|null}|null  $usage
+     */
+    private function finish(AiScreenerQuery $slot, string $outcome, int $unsupported, ?array $usage, ?int $latency): void
+    {
+        $slot->update([
+            'outcome' => $outcome,
+            'unsupported_count' => $unsupported,
+            'prompt_tokens' => $usage['prompt_tokens'] ?? null,
+            'completion_tokens' => $usage['completion_tokens'] ?? null,
+            'latency_ms' => $latency,
+        ]);
     }
 
     private function enforceCaps(User $user, string $locale, int $length): void
@@ -130,9 +164,9 @@ class ScreenerQueryInterpreter
     /**
      * @param  array{prompt_tokens: int|null, completion_tokens: int|null, total_tokens: int|null}|null  $usage
      */
-    private function log(User $user, string $locale, int $length, string $outcome, int $unsupported, ?array $usage = null, ?int $latency = null): void
+    private function log(User $user, string $locale, int $length, string $outcome, int $unsupported, ?array $usage = null, ?int $latency = null): AiScreenerQuery
     {
-        AiScreenerQuery::query()->create([
+        return AiScreenerQuery::query()->create([
             'user_id' => $user->id,
             'locale' => $locale,
             'query_length' => min($length, 65535),
