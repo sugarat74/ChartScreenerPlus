@@ -74,6 +74,15 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST** write session-auth feature tests by sending an `Origin`/`Referer` that matches a `sanctum.stateful` domain (set it explicitly in the test) and by calling `$this->app['auth']->forgetGuards()` between simulated requests. Reason: Sanctum only applies the session middleware to stateful-looking requests, and a single test app instance caches guard users across requests unlike real HTTP.
 - Passwords **MUST** be hashed via the `User` model's `hashed` cast and **MUST NOT** appear in JSON responses (the model's `#[Hidden]` keeps `password`/`remember_token` out).
 
+## Account Self-Service
+
+- Account endpoints (`/api/account*`) **MUST** act only on `$request->user()`, **MUST NOT** accept a user id, and **MUST** be session-only (400 without a stateful session) and throttled. Reason: they change credentials and erase data; a bearer or cross-user path would bypass the password re-check.
+- The account export **MUST NOT** include the password hash, `remember_token`, session ids or payloads, or other users' data. Reason: it is handed to the browser as a file.
+- A new table or column that references a user (`user_id`, `requested_by`, `actor_id`, a morph `*able_id`, or any FK to `users`) **MUST** be added to `AccountExporter`, `AccountDeleter` and the allowlist in `AccountSelfServiceTest`. Reason: the schema coverage test fails otherwise, and a missed table means data left behind after an erasure request.
+- Account deletion **MUST** stay in one transaction, delete the user's `sessions` rows explicitly (they have no FK), and refuse Admins (`422 account.admin_cannot_delete`). Reason: no half-deleted accounts, no dangling signed-in browsers, and the last Admin and Admin-owned backtest runs (`requested_by` cascades) stay safe.
+- After ending the current session inside a request (deletion), the controller **MUST** call `Auth::guard('sanctum')->forgetUser()` before the session is written. Reason: `auth:sanctum` makes the cached Sanctum guard the default one, so the database session handler would otherwise write the new, empty session row with the old user id.
+- Feature tests that replay session cookies on the `database` driver **MUST** also reset `auth.driver` and the session store between requests (`forgetInstance('auth.driver')`, `session->forgetDrivers()`, `forgetInstance('session.store')`), not only `forgetGuards()`. Reason: the test app caches the guard and the session attributes across requests, which hides or fakes session bugs (see `AccountSelfServiceTest::asBrowser`).
+
 ## Authorization
 
 - `users.role` **MUST** stay limited to `user`/`admin`, default `user`, and **MUST NOT** be added to `User`'s `#[Fillable]`. Reason: `role` is the privilege boundary; keeping it out of mass assignment makes privilege escalation via a request payload structurally impossible (registration validates only `name`/`email`/`password` and the DB/model default applies).

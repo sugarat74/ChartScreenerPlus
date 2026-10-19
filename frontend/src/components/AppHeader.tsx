@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
 import { useI18n } from '../i18n/useI18n.ts'
-import { DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
+import { ACCOUNT_ROUTE, DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
 import LanguageSelector from './LanguageSelector.tsx'
 import NotificationBell from './NotificationBell.tsx'
 
@@ -68,14 +68,23 @@ export default function AppHeader() {
             <>
               {/* Only signed-in users have notifications; Visitors never see the bell. */}
               <NotificationBell />
-              <div className="flex items-center gap-2 rounded-full border-2 border-outline bg-surface-bright py-1 pr-2.5 pl-1 shadow-[2px_2px_0px_#1a1a1a]">
+              {/* The name chip opens the Account page (account-self-service). */}
+              <Link
+                to={ACCOUNT_ROUTE}
+                aria-label={t('header.accountAria', { name: user.name })}
+                title={t('header.account')}
+                className="flex items-center gap-2 rounded-full border-2 border-outline bg-surface-bright py-1 pr-2.5 pl-1 shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+              >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary font-headline text-xs font-bold uppercase text-on-primary">
                   {user.name.charAt(0)}
                 </span>
                 <span className="hidden max-w-40 truncate font-headline text-xs font-bold text-on-surface sm:inline">
                   {user.name}
                 </span>
-              </div>
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                  {t('header.account')}
+                </span>
+              </Link>
               <button
                 type="button"
                 onClick={handleSignOut}

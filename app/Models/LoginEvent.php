@@ -25,11 +25,19 @@ class LoginEvent extends Model
 
     public const EVENT_SESSION_REVOKED = 'session_revoked';
 
+    /**
+     * A Registered User deleted their own account (account-self-service). The
+     * row keeps only the email (no user id, IP or user agent) and is pruned
+     * with the rest of the activity log.
+     */
+    public const EVENT_ACCOUNT_DELETED = 'account_deleted';
+
     public const EVENTS = [
         self::EVENT_LOGIN,
         self::EVENT_FAILED,
         self::EVENT_LOGOUT,
         self::EVENT_SESSION_REVOKED,
+        self::EVENT_ACCOUNT_DELETED,
     ];
 
     public const UPDATED_AT = null;

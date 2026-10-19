@@ -8,6 +8,7 @@ const EVENT_CHIP: Record<AdminActivityEvent['event'], string> = {
   failed: 'border-secondary bg-secondary-container text-on-secondary-container',
   logout: 'border-outline-variant bg-surface-dim text-on-surface-variant',
   session_revoked: 'border-secondary bg-primary-container text-on-primary-container',
+  account_deleted: 'border-secondary bg-secondary-container text-on-secondary-container',
 }
 
 interface ActivityTableProps {

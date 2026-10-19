@@ -25,7 +25,7 @@ function show(path: string, initialUser: AuthUser | null) {
     const [user, setUser] = useState<AuthUser | null>(initialUser)
     signOut = () => setUser(null)
     return (
-      <AuthContext.Provider value={{ user, status: 'ready', login: vi.fn(), register: vi.fn(), logout: vi.fn() }}>
+      <AuthContext.Provider value={{ user, status: 'ready', login: vi.fn(), register: vi.fn(), logout: vi.fn(), setCurrentUser: vi.fn() }}>
         {children}
       </AuthContext.Provider>
     )

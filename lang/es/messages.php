@@ -42,6 +42,11 @@ return [
         'run_without_failures' => 'Esta ejecución no tiene instrumentos fallidos que reintentar.',
     ],
 
+    'account' => [
+        'admin_cannot_delete' => 'Una cuenta de administración no puede eliminarse desde aquí. Retira antes el rol de administración.',
+        'confirmation_word' => 'Escribe ELIMINAR para confirmar.',
+    ],
+
     'alerts' => [
         'limit' => 'Puedes tener como máximo :max alertas.',
         'duplicate' => 'Ya tienes esta alerta.',

@@ -205,6 +205,8 @@ return [
         'signal_types' => 'tipos de señal',
         'signal_types.*' => 'tipo de señal',
         'saved_screener_id' => 'Screener guardado',
+        'current_password' => 'contraseña actual',
+        'confirmation' => 'palabra de confirmación',
     ],
 
 ];

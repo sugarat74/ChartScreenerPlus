@@ -9,6 +9,11 @@ export interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
   logout: () => Promise<void>
+  /**
+   * Replace the session user after an account change (a new name) or clear it
+   * after the account was deleted; the guards then treat it like a sign-out.
+   */
+  setCurrentUser: (user: AuthUser | null) => void
 }
 
 /**

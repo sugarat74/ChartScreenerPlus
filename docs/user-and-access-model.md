@@ -31,6 +31,8 @@
 | View ingestion logs and telemetry | no | no | yes |
 | View users, active sessions and sign-in activity | no | no | yes |
 | End another user's sessions | no | no (own via sign-out) | yes (never own current) |
+| Change own name and password; download own data (JSON) | no | yes (own) | yes (own) |
+| Delete own account | no | yes (own) | no (remove the role out of band first) |
 
 ## Ownership Boundaries
 
@@ -60,6 +62,7 @@
 - Sessions expire after a configured idle/absolute timeout and can be revoked by the user logging out.
 - **Admin session revocation (implemented, `admin-users-sessions`):** an Admin can end any user's session (`DELETE /api/admin/sessions/{ref}`) or all of a user's sessions (`DELETE /api/admin/users/{id}/sessions`). The Admin's own current session is never ended by these actions (single: `422`; all: kept). Every revocation is recorded in `login_events` with the acting Admin. Admins can also read the user list, active sessions and sign-in activity (kept 90 days); they cannot change roles, suspend or delete accounts through the app.
 - Deactivating or deleting an account revokes access to owned Saved Screeners and Watchlists (cascade delete acceptable in the MVP).
+- **Account self-service (implemented, `account-self-service`):** a Registered User changes their name (`PATCH /api/account`) and password (`PUT /api/account/password`, which ends every other session of the account and keeps the current one), downloads their data (`GET /api/account/export`) and deletes the account (`DELETE /api/account` with the password and the typed word `DELETE`/`ELIMINAR`) from `/portal/cuenta`. Deletion is immediate and permanent: sessions, Watchlist, Saved Screeners, Alerts and notifications go; the shared sign-in and AI-card logs keep their rows without the user id; an `account_deleted` activity row keeps only the email until the 90-day prune. Admins cannot self-delete (`422 account.admin_cannot_delete`). Email change, password reset and email verification wait for an outbound email provider.
 - Admin role is granted out of band (seed/manual), not self-service in the MVP.
 
 ## Edge Cases

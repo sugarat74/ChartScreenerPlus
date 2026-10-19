@@ -1,5 +1,25 @@
 # Progress Log
 
+## Account self-service (`account-self-service`, accepted) — 2026-10-19
+
+- Spec `docs/specs/account-self-service.md`; branch `feat/account-self-service` (worktree). Status `accepted`: independent validator ACCEPT on 2026-10-19 after one revise (PATCH /api/account throttle + 429 tests); init.ps1 exit 0 (Laravel 482 / 6 skipped, Vitest 181, engine 67).
+- **API** (`AccountController`, `auth:sanctum`, session-only, never a `user_id`):
+  - `PATCH /api/account {name}` returns `{user}` (`throttle:30,1,account-profile`, added after the validator's REVISE).
+  - `PUT /api/account/password` returns 204. It ends the user's other sessions and regenerates the current id (`throttle:6,1,account-password`).
+  - `GET /api/account/export` returns a JSON attachment (`throttle:5,1,account-export`).
+  - `DELETE /api/account {password, confirmation: DELETE|ELIMINAR}` returns 204 (`throttle:6,1,account-delete`). Admins get `422 account.admin_cannot_delete`.
+- **Services.** `AccountExporter` (`chartiko-account-export-v1`, 8 sections, no secrets) and `AccountDeleter` (one transaction: `account_deleted` event with the email only, sessions, tokens/reset rows, then `$user->delete()`). New `LoginEvent::EVENT_ACCOUNT_DELETED`, shown in the Admin activity filter and labels.
+- **Fix found while testing.** After deletion the database session handler wrote the new session row with the deleted user's id (the cached Sanctum guard is the default guard). The controller now forgets the Sanctum user. `POST /api/logout` has the same pre-existing issue; it is recorded in the risks file as a follow-up, not fixed here.
+- **SPA.** New `/portal/cuenta` (`AccountPage`, four cards), linked from the header name chip and the Portal. `accountApi` in `lib/api.ts`; `setCurrentUser` on the auth context. Deletion clears the user, so the guard goes home with no sign-in flash. es/en catalogs and route metadata added.
+- **Legal.** Privacy (es/en): rights, account retention, activity log and terms now point to the Account page. The backup and activity-log retention statements are kept. `config/legal.php` `updated_at` is 2026-10-19. Legal check (`web-legal-compliance-eu`): no new processing, recipient or storage; the `account_deleted` row (email only) falls under the existing 90-day activity retention, which the text states. Result: implemented locally, publication pending.
+- **Docs.** `ARCHITECTURE.md` (Account Self-Service), `CONSTRAINTS.md` (Account Self-Service, including the coverage allowlist and test-harness rules), `DESIGN.md`, `docs/user-and-access-model.md`, `docs/risks-and-open-questions.md` (no email change/reset until an email provider exists; logout session row), spec "Implementation Findings".
+- **Verification.**
+  - `.\init.ps1` exit 0: Laravel 482 passed / 6 skipped, Vitest 181, SPA lint + build, engine 67.
+  - Focused: `AccountSelfServiceTest` 27 (incl. 429 tests for name, export and delete), `AccountPage.test.tsx` 12.
+  - Edge (Playwright MCP) on a local stack with a throwaway SQLite, 1280 and 390 px, es/en. Covered: name, password with a second browser (that session gets 401, current stays 200), export, Admin refusal, wrong word and wrong password, deletion to `/` with no sign-in render, and a DB row check after deletion. Servers stopped, ports 8000/5173 free; QA DB and `.playwright-mcp` deleted.
+- **Not run:** CI (SQLite + PostgreSQL), because the implementer does not push.
+- **Next (orchestrator):** independent validation, then PR with CI on both databases. If the merge slips past 2026-10-19, bump `config/legal.php` `updated_at`.
+
 ## Legal: privacy policy published with minimal owner data (`legal-privacy-publication`, accepted) — 2026-10-18
 
 - Spec `docs/specs/legal-privacy-publication.md`; branch `feat/legal-privacy-publication` (worktree). Status `passing`: implemented and self-verified, awaiting independent validation.

@@ -25,7 +25,7 @@ export const legalEn: LegalTexts = {
         items: [
           'Purpose: to create and maintain your account and provide the features for registered users.',
           'Legal basis: performance of the terms of use you accept when you sign up (Art. 6(1)(b) GDPR).',
-          'Retention: while you keep the account. If you ask us to delete it we do so; backups may keep it for up to {backupDays} more days and the sign-in activity log keeps the email until it is deleted after {activityDays} days.',
+          'Retention: while you keep the account. If you delete it from the Account page or ask us to delete it, we delete it immediately together with your Watchlist, saved Screeners, alerts, notifications and sessions; backups may keep it for up to {backupDays} more days and the sign-in activity log keeps the email until it is deleted after {activityDays} days.',
         ],
       },
       {
@@ -42,7 +42,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'Sessions and sign-in security',
         paragraphs: [
-          'To keep you signed in and protect accounts we record the IP address, the browser (user agent) and the time of the last activity of each session, as well as sign-ins, failed attempts (with the email entered, which may not belong to any account), sign-outs and sessions ended by the administration. Visitors without an account also have a technical session with the IP address, browser and last activity.',
+          'To keep you signed in and protect accounts we record the IP address, the browser (user agent) and the time of the last activity of each session, as well as sign-ins, failed attempts (with the email entered, which may not belong to any account), sign-outs, sessions ended by the administration and account deletions (email only). Visitors without an account also have a technical session with the IP address, browser and last activity.',
         ],
         items: [
           'Purpose: to keep the session, detect unauthorised access or repeated attempts, and let the administration end open sessions. It is not used for advertising or to track your browsing.',
@@ -109,7 +109,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'Your rights',
         paragraphs: [
-          'You can request access to, rectification, erasure, objection to, restriction of processing and portability of your data by writing to {ownerEmail}. We will reply within one month.',
+          'If you have an account, the Account page in your Portal lets you download a copy of your data as JSON (access and portability), correct your name (rectification) and delete the account (erasure) yourself, immediately.', 'You can also request access to, rectification, erasure, objection to, restriction of processing and portability of your data by writing to {ownerEmail}; for example, to change your email. We will reply within one month.',
           'If you believe we have not handled your request properly, you can lodge a complaint with the Spanish Data Protection Agency (www.aepd.es).',
         ],
       },
@@ -163,7 +163,7 @@ export const legalEn: LegalTexts = {
           'To sign up you must be at least 14 years old and provide accurate details. You are responsible for keeping your password safe.',
           'You must use the service lawfully, without trying to access unauthorised areas or data, overloading it or extracting its data in bulk or by automated means.',
           'We may suspend or close accounts that breach these terms.',
-          'You can stop using the service and ask us to delete your account at any time by writing to {ownerEmail}.',
+          'You can stop using the service and delete your account at any time from the Account page in your Portal or by writing to {ownerEmail}.',
           'We may change the service and these terms; the update date shows the latest version.',
         ],
       },

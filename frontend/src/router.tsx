@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router'
 import AppLayout from './layouts/AppLayout.tsx'
+import AccountPage from './pages/AccountPage.tsx'
 import AdminPage from './pages/AdminPage.tsx'
 import AdminBacktestingPage from './pages/admin/AdminBacktestingPage.tsx'
 import AdminActivityPage from './pages/admin/AdminActivityPage.tsx'
@@ -18,6 +19,7 @@ import PortalPage from './pages/PortalPage.tsx'
 import RegisterPage from './pages/RegisterPage.tsx'
 import ScreenerPage from './pages/ScreenerPage.tsx'
 import {
+  ACCOUNT_ROUTE,
   COOKIES_ROUTE,
   LEGAL_NOTICE_ROUTE,
   LOGIN_ROUTE,
@@ -53,6 +55,7 @@ export const router = createBrowserRouter([
       },
       { path: 'portal', element: <PortalPage /> },
       { path: routeSegment(NOTIFICATIONS_ROUTE), element: <NotificationsPage /> },
+      { path: routeSegment(ACCOUNT_ROUTE), element: <AccountPage /> },
       { path: routeSegment(LOGIN_ROUTE), element: <LoginPage /> },
       { path: routeSegment(REGISTER_ROUTE), element: <RegisterPage /> },
       { path: routeSegment(PRIVACY_ROUTE), element: <LegalPage kind="privacy" /> },
