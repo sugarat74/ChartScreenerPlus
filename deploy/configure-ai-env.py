@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Install the CI-held AI company card key in the VPS shared Laravel environment.
+"""Install the CI-held AI provider key in the VPS shared Laravel environment.
 
 Same contract as configure-jev-env.py: the key arrives on stdin over SSH,
 neither the value nor the environment file is printed, and it runs before the
 new release caches Laravel configuration. Provider, model and the market-data
-flag are pinned here; usage limits keep their config/ai_card.php defaults.
+flag are pinned here, plus the natural-language Screener flag (same provider);
+usage limits keep their config/ai_card.php and config/ai_screener.php defaults.
 """
 
 import os
@@ -20,6 +21,9 @@ SETTINGS = {
     'AI_BASE_URL': 'https://inference.devexpert.io/v1',
     'AI_MODEL': 'chat',
     'AI_CARD_MARKET_DATA_RIGHTS_VERIFIED': 'true',
+    # Natural-language Screener (ai-screener-natural-language): same provider,
+    # own flag; limits keep their config/ai_screener.php defaults.
+    'AI_SCREENER_ENABLED': 'true',
 }
 SETTING_NAMES = {'AI_API_KEY', *SETTINGS}
 

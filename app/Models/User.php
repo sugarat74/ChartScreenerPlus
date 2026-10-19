@@ -127,6 +127,17 @@ class User extends Authenticatable
     }
 
     /**
+     * Natural-language Screener requests this account made (metadata only,
+     * never the query text; `user_id` is nulled on delete).
+     *
+     * @return HasMany<AiScreenerQuery, $this>
+     */
+    public function screenerQueries(): HasMany
+    {
+        return $this->hasMany(AiScreenerQuery::class);
+    }
+
+    /**
      * Notifications are a morph relation without a foreign key, so they are
      * removed explicitly with the account (alerts cascade by FK).
      */

@@ -1460,14 +1460,24 @@
       "ai-company-card",
       "premium-panels-auth-only"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "ScreenerFilterParser extracted from ScreenerController with ScreenerApiTest unchanged and GET /api/screener payloads identical",
       "Feature tests with Http::fake: happy path, unsupported parts, invalid provider output (unknown enum, out-of-range, extra key, non-JSON) gives 503 invalid_provider_response, user and global caps, provider_not_configured, cache hit without provider call, Visitor 401, query length 422, query text absent from DB/logs/cache keys",
       "SPA input with examples, busy state, explanation, unsupported list, undo, Visitor prompt and not-configured notice; Vitest, i18n parity and Playwright+Edge QA at 1280 and 390 px",
       "Real-provider smoke of 10 es/en queries recorded without the key; AI_SCREENER_ENABLED set by deploy/configure-ai-env.py; privacy text updated; .\\init.ps1 and CI (SQLite + PostgreSQL) pass"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-19 .\\init.ps1 exit 0: Laravel 534 passed / 6 skipped, Vitest 193 (24 files), SPA lint + build, engine 67",
+      "ScreenerFilterParser extracted first; tests/Feature/ScreenerApiTest.php unchanged and green (24 tests)",
+      "tests/Feature/ScreenerInterpretTest.php 44 tests (Http::fake): es happy path with exact JSON and request body (temperature 0, max_tokens 800, strict screener_query_v1, user text only in the user message); locale default; unsupported parts cleaned; 18 invalid outputs -> 503 invalid_provider_response, invalid row, never cached; provider 500 and transport failure -> provider_unavailable; 31st request -> 429 user_daily_limit (cached/unavailable/limited/foreign/older rows not counted); global cap -> 503 daily_limit_reached; flag off/missing key/model/http URL -> 503 provider_not_configured with no request; cache hit across users and normalization without provider call and outside caps; Visitor 401; 422 for missing/short/long/non-string query and unknown locale; throttle 429 on the 7th; marker absent from every DB table (database cache store) and every log event; prune after 90 days",
+      "tests/Unit/ScreenerQuerySchemaTest.php 8 tests: schema strict and built from the parser enums, normalization, inclusive bounds, list/object rejection, plain-text cleaning, prompt keeps the user text out of the system message and lists every enum, parser reads query-string and JSON alike and rejects bad values",
+      "AccountSelfServiceTest 27 (ai_screener_requests exported, user_id nulled on deletion, coverage allowlist), LegalInfoTest 10 (retention.ai_screener_log_days), LocalizationTest parity includes lang ai_screener.php",
+      "frontend ScreenerAiQuery.test.tsx 12 tests: API->SPA mapper and URL patch, loading renders nothing, Visitor sign-in link without request, examples fill without request, busy state and single submit, explanation/unsupported as plain text, Undo restores the previous URL, too-short, invalid output and daily limit alerts without applying, not-configured notice, English locale, ScreenerPage wiring (page reset to 1, list reload, Undo)",
+      "Playwright MCP (Edge) on throwaway SQLite with a local stub provider outside the repo: Visitor prompt 1280/390 es, signed-in success with unsupported part and URL update, Undo, busy, invalid-answer alert, too-short, not-configured notice 390 en, no horizontal overflow at 390; no query text in QA DB or log; servers stopped and artifacts deleted",
+      "Not run: real-provider smoke (no key locally; 10-query table in the spec for the post-deploy production smoke) and CI (implementer does not push)",
+      "2026-10-19 independent validator ACCEPT: init.ps1 exit 0 (Laravel 534 passed / 6 skipped, Vitest 193, engine 67); ScreenerApiTest unchanged (empty diff) and green with ScreenerFilterParser shared by both paths; strict AI output validation with no partial application; auth-only, throttled, capped, cache before caps; query-text marker absent from tables, cache and logs; plain-text rendering; deviations (scope exception, Recipients, ai_screener_log_days, PHP range checks) accepted. Non-blocking: caps not locked, privacy wording review, DevExpert processor terms. CI and production real-provider smoke pending."
+    ],
     "notes": "Requested 2026-10-19. Spec: docs/specs/ai-screener-natural-language.md. Reuses the DevExpert Inference provider of the AI company card with its own enable flag and caps. No new filters (sector, price, fundamentals are reported as unsupported)."
   }
 ]

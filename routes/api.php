@@ -16,6 +16,7 @@ use App\Http\Controllers\LegalController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SavedScreenerController;
 use App\Http\Controllers\ScreenerController;
+use App\Http\Controllers\ScreenerInterpretController;
 use App\Http\Controllers\WatchlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +50,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // generates one under per-user and global daily caps.
     Route::get('/instruments/{ticker}/company-card', [CompanyCardController::class, 'show'])->middleware('throttle:60,1,ai-card-read');
     Route::post('/instruments/{ticker}/company-card', [CompanyCardController::class, 'store'])->middleware('throttle:'.config('ai_card.requests_per_minute').',1,ai-card');
+    // Natural-language Screener (ai-screener-natural-language): turns a
+    // free-text request into the public `GET /api/screener` filters under
+    // per-user and global daily caps. The query text is never stored or logged.
+    Route::post('/screener/interpret', ScreenerInterpretController::class)->middleware('throttle:'.config('ai_screener.requests_per_minute').',1,ai-screener');
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 

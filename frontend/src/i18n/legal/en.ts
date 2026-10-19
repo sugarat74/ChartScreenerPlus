@@ -67,12 +67,13 @@ export const legalEn: LegalTexts = {
           'If you are a registered user and ask for an AI company card, the server sends DevExpert Inference (inference.devexpert.io), the external AI provider, the instrument identity (ticker, company name, sector and exchange), the public financial figures Chartiko computes from the company\'s SEC (EDGAR) filings and public Chartiko market data (latest close and change, indicators, Signals and patterns). The generated card is shared with every user and contains no personal data.',
           'If you are a registered user and ask for an experimental forecast, the server sends TypeSafe AI (typesafe.ai), provider of the Jev model, the instrument\'s daily price history, its indicators and its Signals. The forecast is stored per instrument and date, not per user.',
           'In neither case is any of your account data sent (no name, email, IP address, Watchlist or Saved Screeners): the providers only receive market data.',
-          'To control cost and prevent abuse we record each generation you request: your account identifier, the instrument, the date, the outcome and the number of tokens used, without the text sent or received.',
+          'If you are a registered user and describe in your own words what you are looking for in the Screener, the server sends that text and the page language to DevExpert Inference to translate it into the Screener filters, without any of your account data. Chartiko does not store or log your text; it only keeps the translated result (filters, explanation and the parts that could not be translated) for 24 hours to reuse it for identical requests. Do not include personal data in the text.',
+          'To control cost and prevent abuse we record each generation and each AI search you request: your account identifier, the instrument (for cards), the date, the language, the length of the search text, the outcome and the number of tokens used, never the text sent or received.',
         ],
         items: [
-          'Purpose: to generate the card you ask for, limit daily use and prevent abuse.',
-          'Legal basis: performance of the terms of use to generate the card (Art. 6(1)(b) GDPR) and legitimate interest in controlling cost and preventing abuse for the log (Art. 6(1)(f) GDPR).',
-          'Retention: the generation log is deleted automatically after {aiCardLogDays} days.',
+          'Purpose: to generate the card you ask for or translate your search into filters, limit daily use and prevent abuse.',
+          'Legal basis: performance of the terms of use to generate the card or translate the search (Art. 6(1)(b) GDPR) and legitimate interest in controlling cost and preventing abuse for the logs (Art. 6(1)(f) GDPR).',
+          'Retention: the generation log is deleted automatically after {aiCardLogDays} days and the AI search log after {aiScreenerLogDays} days.',
         ],
       },
       {
@@ -103,6 +104,7 @@ export const legalEn: LegalTexts = {
         heading: 'Recipients and international transfers',
         paragraphs: [
           'We do not share your data with third parties unless required by law. The hosting provider, OVH, processes the data on behalf of Chartiko as a data processor.',
+          'If you use the Screener AI search, the text you type is sent to DevExpert Inference, the AI provider, only to return the filters (see "AI features"); that is why we ask you not to include personal data.',
           'The server is located in Canada (Beauharnois, Quebec). The European Commission recognises an adequate level of protection in Canada (Decision 2002/2/EC), on which this international transfer relies.',
         ],
       },

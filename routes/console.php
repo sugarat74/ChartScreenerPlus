@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AiCompanyCardGeneration;
+use App\Models\AiScreenerQuery;
 use App\Models\LoginEvent;
 use App\Services\Market\MarketCalendar;
 use Illuminate\Foundation\Inspiring;
@@ -76,14 +77,17 @@ Schedule::command('fundamentals:refresh')
 | in-app alert notifications older than
 | config('alerts.notification_retention_days') (90). The AI Company Card
 | generation log (account id, Instrument, status, token counts; no prompt or
-| response text) is pruned after config('ai_card.log_retention_days') (90).
+| response text) is pruned after config('ai_card.log_retention_days') (90),
+| and the natural-language Screener log (account id, length, outcome, token
+| counts; never the query text) after config('ai_screener.log_retention_days')
+| (90).
 | Daily server log files (`laravel-YYYY-MM-DD.log`, which may hold personal
 | data) older than config('legal.server_log_retention_days') (14) are deleted
 | by logs:prune, because Monolog keeps a number of files, not of days.
 |
 */
 
-Schedule::command('model:prune', ['--model' => [LoginEvent::class, AiCompanyCardGeneration::class]])
+Schedule::command('model:prune', ['--model' => [LoginEvent::class, AiCompanyCardGeneration::class, AiScreenerQuery::class]])
     ->name('prune-login-events')
     ->dailyAt('03:15')
     ->withoutOverlapping();

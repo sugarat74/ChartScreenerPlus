@@ -154,6 +154,7 @@ function placeholderValues(info: LegalInfo, cookiesLabel: string, privacyLabel: 
     notificationDays: info.retention.notification_days,
     // Older deployments omit it; 90 is the configured default.
     aiCardLogDays: info.retention.ai_card_log_days ?? 90,
+    aiScreenerLogDays: info.retention.ai_screener_log_days ?? 90,
     cookiesLink: (
       <Link to={COOKIES_ROUTE} className={LINK_CLASS}>
         {cookiesLabel}

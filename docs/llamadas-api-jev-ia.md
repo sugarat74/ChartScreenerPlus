@@ -1,8 +1,8 @@
 # Llamadas a proveedores externos: Jev y API de IA
 
-Este documento describe las dos llamadas que Chartiko hace a proveedores externos: el pronóstico **Jev** (TypeSafe) y la **ficha de empresa con IA** (cualquier API compatible con OpenAI Chat Completions).
+Este documento describe las llamadas que Chartiko hace a proveedores externos: el pronóstico **Jev** (TypeSafe), la **ficha de empresa con IA** y el **Screener en lenguaje natural** (estas dos, a cualquier API compatible con OpenAI Chat Completions).
 
-Refleja el código a 2026-10-16. Si hay diferencias, la referencia es el código: `JevClient`, `ForecastStateBuilder` y `config/forecast.php` para Jev; `OpenAiCompatibleClient`, `app/Services/CompanyCard/*` y `config/ai_card.php` para la ficha. Si cambias la pregunta, el esquema o el prompt, sube su versión (`question_version`, `schema_version`, `prompt_version`) y actualiza este documento.
+Refleja el código a 2026-10-19. Si hay diferencias, la referencia es el código: `JevClient`, `ForecastStateBuilder` y `config/forecast.php` para Jev; `OpenAiCompatibleClient`, `app/Services/CompanyCard/*` y `config/ai_card.php` para la ficha; `app/Services/Screener/Ai/*` y `config/ai_screener.php` para el Screener en lenguaje natural. Si cambias la pregunta, el esquema o el prompt, sube su versión (`question_version`, `schema_version`, `prompt_version`) y actualiza este documento.
 
 ---
 
@@ -239,15 +239,79 @@ La llamada solo se hace cuando se cumplen estas condiciones:
 
 ---
 
-## 3. Comparativa rápida
+## 3. Screener en lenguaje natural
 
-| | Jev | Ficha IA |
+Un usuario registrado describe en español o inglés lo que busca y el modelo lo traduce a los filtros **existentes** del Screener (`ai-screener-natural-language`, especificación `docs/specs/ai-screener-natural-language.md`). Usa el mismo proveedor que la ficha (`AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`) a través de `new OpenAiCompatibleClient('ai_screener')`, con su propio interruptor y límites.
+
+### 3.1 Petición HTTP
+
+`POST {AI_BASE_URL}/chat/completions` con `Authorization: Bearer {AI_API_KEY}`, igual que la ficha. Cuerpo:
+
+```json
+{
+  "model": "{AI_MODEL}",
+  "messages": [
+    {"role": "system", "content": "<instrucciones de screener-query-prompt-v1 en el idioma de la petición>"},
+    {"role": "user", "content": "<texto del usuario, tal cual (3 a 300 caracteres)>"}
+  ],
+  "response_format": {"type": "json_schema", "json_schema": {"name": "screener_query_v1", "strict": true, "schema": {}}},
+  "max_tokens": 800,
+  "temperature": 0
+}
+```
+
+Timeout de 20 s. Si el proveedor responde 400 a `json_schema`, se repite una vez con `json_object` y el esquema dentro del mensaje de sistema (mismo respaldo que la ficha).
+
+### 3.2 Esquema `screener-query-v1`
+
+Todas las claves son obligatorias y no se admiten otras. Los enums salen de `ScreenerFilterParser`, el mismo que valida `GET /api/screener`:
+
+| Campo | Tipo |
+|---|---|
+| `signal` | lista de Signals conocidas (máx. 9) |
+| `rsi_min`, `rsi_max` | número 0–100 o `null` |
+| `min_rvol` | número 0–20 o `null` |
+| `price_above_sma200` | booleano |
+| `ma_cross` | `bullish`, `bearish` o `null` |
+| `pattern` | lista de patrones conocidos (máx. 4) |
+| `pattern_status` | `any`, `forming`, `confirmed` |
+| `sort` | uno de los seis órdenes |
+| `unsupported` | hasta 5 textos de 120 caracteres: lo que los filtros no pueden expresar |
+| `explanation` | texto de hasta 300 caracteres |
+
+### 3.3 Mensajes
+
+El mensaje de sistema describe cada filtro con el vocabulario de la interfaz y del manual, y fija convenciones: «sobrevendidas» = `rsi_max` 30, «sobrecompradas» = `rsi_min` 70, «volumen alto» = `min_rvol` 1,5 (salvo que el usuario dé números). Pide poner todo lo demás (sectores, precios, fundamentales, fechas, noticias, consejos) en `unsupported`, no inventar filtros y escribir `explanation` en el idioma de la petición. El texto del usuario va **solo** en el mensaje de usuario. No se envía ningún dato de la cuenta, del Screener ni de mercado.
+
+### 3.4 Validación al recibir la respuesta
+
+`ScreenerQuerySchema::validate()` exige las claves exactas, tipos estrictos (un número o un booleano en texto se rechazan), rangos y enums, limpia `unsupported` y `explanation` (caracteres de control fuera, espacios colapsados) y después pasa los filtros por `ScreenerFilterParser`. Cualquier fallo es `503 invalid_provider_response` y no se aplica nada. No hay recorte: un texto demasiado largo también se rechaza.
+
+### 3.5 Cuándo se llama, caché y límites
+
+Solo con `AI_SCREENER_ENABLED=true` y el proveedor configurado (si no, `503 provider_not_configured` sin petición). Una petición idéntica (texto normalizado, idioma y versiones) se sirve desde la caché durante 24 h sin llamar al proveedor ni contar para los límites.
+
+| Límite | Valor | Variable |
 |---|---|---|
-| Endpoint | `https://api.typesafe.ai/v1/systemone` (fijo) | `{AI_BASE_URL}/chat/completions` (configurable) |
-| Formato de salida | Pregunta `choice` con probabilidades `up/down/flat` | JSON Schema estricto `company_card_v2` (respaldo `json_object`) |
-| Datos enviados | 252 barras, indicadores y Signals del instrumento | Identidad del instrumento. Contexto técnico solo con derechos verificados |
-| Activación | `JEV_ENABLED` + `JEV_MARKET_DATA_RIGHTS_VERIFIED` | `AI_CARD_ENABLED` (+ `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED` para `technical`) |
-| Timeout | 8 s | 40 s |
-| Caché | Por instrumento, horizonte, modelo, versión de pregunta y `as_of_date` | Por instrumento e idioma, 7 días |
-| Validación propia | Modelo, tipo, 3 probabilidades que suman 1, `choice` coherente | Esquema completo, ticker, enums y recorte de texto. Las cifras no vienen del modelo: las calcula Chartiko desde la SEC |
-| Datos personales | Ninguno | Ninguno |
+| Peticiones por minuto y usuario | 6 | `AI_SCREENER_REQUESTS_PER_MINUTE` |
+| Peticiones por usuario en 24 h | 30 | `AI_SCREENER_USER_DAILY_LIMIT` |
+| Peticiones totales en 24 h | 600 | `AI_SCREENER_DAILY_LIMIT` |
+
+Cuentan las filas `ok` e `invalid` de `ai_screener_queries` de las últimas 24 horas.
+
+**Registro y privacidad.** El texto de la petición **nunca** se guarda ni se registra. `ai_screener_queries` guarda solo metadatos (usuario, idioma, longitud, resultado, número de partes no admitidas, tokens, latencia, modelo y versiones) y se borra a los 90 días (`AI_SCREENER_LOG_RETENTION_DAYS`). La clave de caché es un hash SHA-256.
+
+---
+
+## 4. Comparativa rápida
+
+| | Jev | Ficha IA | Screener en lenguaje natural |
+|---|---|---|---|
+| Endpoint | `https://api.typesafe.ai/v1/systemone` (fijo) | `{AI_BASE_URL}/chat/completions` (configurable) | El mismo que la ficha |
+| Formato de salida | Pregunta `choice` con probabilidades `up/down/flat` | JSON Schema estricto `company_card_v2` (respaldo `json_object`) | JSON Schema estricto `screener_query_v1` (respaldo `json_object`) |
+| Datos enviados | 252 barras, indicadores y Signals del instrumento | Identidad del instrumento. Contexto técnico solo con derechos verificados | El texto del usuario y el idioma |
+| Activación | `JEV_ENABLED` + `JEV_MARKET_DATA_RIGHTS_VERIFIED` | `AI_CARD_ENABLED` (+ `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED` para `technical`) | `AI_SCREENER_ENABLED` |
+| Timeout | 8 s | 40 s | 20 s |
+| Caché | Por instrumento, horizonte, modelo, versión de pregunta y `as_of_date` | Por instrumento e idioma, 7 días | Por hash del texto normalizado, idioma y versiones, 24 h |
+| Validación propia | Modelo, tipo, 3 probabilidades que suman 1, `choice` coherente | Esquema completo, ticker, enums y recorte de texto. Las cifras no vienen del modelo: las calcula Chartiko desde la SEC | Esquema completo, rangos, enums y el mismo parser que `GET /api/screener`, sin recorte |
+| Datos personales | Ninguno | Ninguno | Texto libre del usuario (no se guarda; la política pide no incluir datos personales) |

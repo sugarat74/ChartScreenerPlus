@@ -42,7 +42,7 @@ class LegalInfoTest extends TestCase
             ->assertJsonPath('notice_published', false)
             ->assertJsonPath('owner', null)
             ->assertJsonMissingPath('published')
-            ->assertJsonStructure(['updated_at', 'retention' => ['sign_in_activity_days', 'session_minutes', 'backup_days', 'server_log_days', 'notification_days', 'ai_card_log_days']]);
+            ->assertJsonStructure(['updated_at', 'retention' => ['sign_in_activity_days', 'session_minutes', 'backup_days', 'server_log_days', 'notification_days', 'ai_card_log_days', 'ai_screener_log_days']]);
     }
 
     public function test_name_and_email_publish_privacy_only(): void
@@ -162,6 +162,7 @@ class LegalInfoTest extends TestCase
             'legal.server_log_retention_days' => 10,
             'alerts.notification_retention_days' => 30,
             'ai_card.log_retention_days' => 60,
+            'ai_screener.log_retention_days' => 45,
             'legal.updated_at' => '2026-10-10',
         ]);
 
@@ -173,7 +174,8 @@ class LegalInfoTest extends TestCase
             ->assertJsonPath('retention.backup_days', 7)
             ->assertJsonPath('retention.server_log_days', 10)
             ->assertJsonPath('retention.notification_days', 30)
-            ->assertJsonPath('retention.ai_card_log_days', 60);
+            ->assertJsonPath('retention.ai_card_log_days', 60)
+            ->assertJsonPath('retention.ai_screener_log_days', 45);
     }
 
     public function test_endpoint_is_public_and_needs_no_session(): void

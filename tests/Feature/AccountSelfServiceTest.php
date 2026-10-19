@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AiCompanyCardGeneration;
+use App\Models\AiScreenerQuery;
 use App\Models\Alert;
 use App\Models\Instrument;
 use App\Models\LoginEvent;
@@ -223,7 +224,7 @@ class AccountSelfServiceTest extends TestCase
         $export = $response->json();
         $this->assertSame([
             'format', 'generated_at', 'profile', 'watchlist', 'saved_screeners', 'alerts',
-            'notifications', 'sign_in_activity', 'active_sessions', 'ai_card_requests',
+            'notifications', 'sign_in_activity', 'active_sessions', 'ai_card_requests', 'ai_screener_requests',
         ], array_keys($export));
         $this->assertSame('chartiko-account-export-v1', $export['format']);
         $this->assertSame(
@@ -250,6 +251,10 @@ class AccountSelfServiceTest extends TestCase
             fn (array $row) => ['ticker' => $row['ticker'], 'locale' => $row['locale']],
             $export['ai_card_requests'],
         ));
+        $this->assertSame([[
+            'locale' => 'en', 'query_length' => 17, 'outcome' => 'ok', 'unsupported_count' => 1,
+        ]], array_map(fn (array $row) => array_diff_key($row, ['created_at' => true]), $export['ai_screener_requests']));
+        $this->assertNotNull($export['ai_screener_requests'][0]['created_at']);
 
         $raw = $response->getContent();
         $this->assertStringNotContainsString($user->fresh()->password, $raw);
@@ -309,6 +314,9 @@ class AccountSelfServiceTest extends TestCase
         $this->assertSame(0, AiCompanyCardGeneration::query()->where('user_id', $user->id)->count());
         $this->assertSame(1, AiCompanyCardGeneration::query()->whereNull('user_id')->count());
         $this->assertSame(1, AiCompanyCardGeneration::query()->where('user_id', $other->id)->count());
+        $this->assertSame(0, AiScreenerQuery::query()->where('user_id', $user->id)->count());
+        $this->assertSame(1, AiScreenerQuery::query()->whereNull('user_id')->count());
+        $this->assertSame(1, AiScreenerQuery::query()->where('user_id', $other->id)->count());
         $this->assertSame(1, LoginEvent::query()->where('user_id', $other->id)->count());
         $this->assertDatabaseHas('sessions', ['id' => $theirs['session'], 'user_id' => $other->id]);
 
@@ -399,6 +407,7 @@ class AccountSelfServiceTest extends TestCase
             'login_events.user_id' => 'nulled by FK; exported as sign_in_activity',
             'login_events.actor_id' => 'nulled by FK; Admin-only action, Admins cannot self-delete',
             'ai_company_card_generations.user_id' => 'nulled by FK; exported as ai_card_requests',
+            'ai_screener_queries.user_id' => 'nulled by FK; exported as ai_screener_requests',
             'forecast_backtest_runs.requested_by' => 'Admin-only; Admins cannot self-delete',
             'personal_access_tokens.tokenable_id' => 'deleted explicitly; no tokens are issued',
         ];
@@ -466,6 +475,16 @@ class AccountSelfServiceTest extends TestCase
             'prompt_version' => 'v3',
             'response_format' => 'json_schema',
             'status' => AiCompanyCardGeneration::STATUS_SUCCEEDED,
+        ]);
+        AiScreenerQuery::query()->create([
+            'user_id' => $user->id,
+            'locale' => $tag === 'MINE' ? 'en' : 'es',
+            'query_length' => $tag === 'MINE' ? 17 : 99,
+            'outcome' => AiScreenerQuery::OUTCOME_OK,
+            'unsupported_count' => 1,
+            'model' => 'test-model',
+            'schema_version' => 'screener-query-v1',
+            'prompt_version' => 'screener-query-prompt-v1',
         ]);
 
         return ['session' => $this->insertSession($user, "Agent {$tag}", "payload-{$tag}")];

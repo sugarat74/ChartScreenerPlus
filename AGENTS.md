@@ -63,6 +63,8 @@ Also in scope since 2026-10-15 (explicit user decision): the AI Company Card (`a
 
 Also in scope since 2026-10-15 (explicit user decision): verified company fundamentals computed from SEC EDGAR filings for the AI Company Card (`company-fundamentals-sec`): only this public source (10-K/10-Q XBRL companyfacts), only for the card (not Screener filters, alerts or public endpoints), refreshed by a separate opt-in daily command.
 
+Also in scope since 2026-10-19 (explicit user request): the natural-language Screener (`ai-screener-natural-language`): a Registered User's stand-alone free-text request is translated by the same AI provider into the existing Screener filters only (strict schema, no chat, memory, new filters or advice); the text is never stored or logged.
+
 Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, other fundamentals data feeds and news, real-time or push/SMS notifications, non-US markets, native apps, AI Copilot (chat or free-text AI), paid plans.
 
 ## Startup Workflow
