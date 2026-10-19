@@ -28,7 +28,10 @@ export default function RouteMetadata() {
   const { t } = useI18n()
 
   useEffect(() => {
-    const isHome = pathname === '/' && search === ''
+    // The Screener home keeps its title with filters in the URL (`/?rsi_max=30`),
+    // but only the bare home is indexed and canonical.
+    const isHomePath = pathname === '/'
+    const isHome = isHomePath && search === ''
     const tickerMatch = pathname.match(/^\/instruments\/([a-z0-9.-]+)$/i)
     const ticker = tickerMatch ? tickerMatch[1].toUpperCase() : null
     const keys = ROUTE_METADATA[pathname] ?? (pathname.startsWith('/admin/') ? ROUTE_METADATA['/admin'] : undefined)
@@ -40,7 +43,7 @@ export default function RouteMetadata() {
             description: t('meta.instrumentDescription', { ticker }),
           }
         : undefined
-    document.title = isHome ? t('meta.homeTitle') : routeMetadata?.title ?? t('meta.notFoundTitle')
+    document.title = isHomePath ? t('meta.homeTitle') : routeMetadata?.title ?? t('meta.notFoundTitle')
 
     let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
     if (!robots) {
@@ -56,7 +59,7 @@ export default function RouteMetadata() {
       description.name = 'description'
       document.head.append(description)
     }
-    description.content = isHome
+    description.content = isHomePath
       ? t('meta.homeDescription')
       : routeMetadata?.description ?? t('meta.notFoundDescription')
 

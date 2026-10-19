@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * One natural-language Screener request (ai-screener-natural-language).
- * Metadata only: the query text is never stored. `ok` and `invalid` rows of
- * the last 24 h count against the daily caps; rows older than
+ * Metadata only: the query text is never stored. `ok`, `invalid` and
+ * in-flight `pending` rows of the last 24 h count against the daily caps; rows older than
  * `config('ai_screener.log_retention_days')` are mass-pruned daily
  * (`routes/console.php`).
  */
@@ -36,8 +36,14 @@ class AiScreenerQuery extends Model
 
     public const OUTCOME_LIMITED = 'limited';
 
-    /** Outcomes that reached the provider and count against the caps. */
-    public const COUNTED_OUTCOMES = [self::OUTCOME_OK, self::OUTCOME_INVALID];
+    /**
+     * A slot reserved under the caps lock before the provider call; replaced
+     * by the final outcome once the call ends.
+     */
+    public const OUTCOME_PENDING = 'pending';
+
+    /** Outcomes that reached (or are reaching) the provider and count against the caps. */
+    public const COUNTED_OUTCOMES = [self::OUTCOME_OK, self::OUTCOME_INVALID, self::OUTCOME_PENDING];
 
     protected function casts(): array
     {
