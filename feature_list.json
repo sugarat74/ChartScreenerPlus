@@ -1420,5 +1420,46 @@
       "2026-10-18 independent validator ACCEPT: init.ps1 exit 0 (Laravel 455 passed / 6 skipped, Vitest 169, engine 67); built robots.txt disallows /api/legal; configure-legal-env.py idempotent and parsed by Dotenv\\Dotenv::parse (UTF-8 name), never writes NIF/address/registry, CI step before activation; real app boot shows no leakage with partial owner data; no remaining `published` consumers; daily channel permission 0660 via Monolog chmod; logs:prune boundaries tested and scheduled 03:25. Browser check relied on implementer's Edge QA (1280/390 px)."
     ],
     "notes": "Requested 2026-10-18. Follows the 2026-10-10 plan (publish privacy with name + @chartiko.com email only; legal notice waits for NIF/address). Owner chose to delete the SQLite rollback copies now rather than wait until 2026-11-05. Not legal advice; professional review still recommended."
+  },
+  {
+    "id": "account-self-service",
+    "area": "auth",
+    "title": "Account self-service: export data, delete account, change name and password",
+    "user_visible_behavior": "A Registered User opens /portal/cuenta (linked from the header and the Portal) to change their display name and password, download a JSON copy of their personal data (profile, watchlist, saved screeners, alerts, notifications, own sign-in activity, active sessions metadata, AI card requests) and permanently delete the account after confirming with their password and a typed confirmation word. Deletion removes sessions and every owned row in one transaction and signs the user out to the home page; Admins cannot self-delete. The privacy policy points to the Account page for exercising rights.",
+    "depends_on": [
+      "auth-registration-login",
+      "user-portal",
+      "legal-privacy-publication"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Feature tests: PATCH /api/account, PUT /api/account/password (other sessions ended, current kept), GET /api/account/export (all sections, own data only, no password hash/remember token/session ids), DELETE /api/account (transactional cascade, sessions removed, login_events and ai_company_card_generations nulled, account_deleted event, wrong password/confirmation 422, Admin 422, Visitor 401, no session 400)",
+      "A schema coverage test fails if a user-owned column is added without being handled by export and deletion",
+      "SPA /portal/cuenta: name, password, download and danger zone in es/en at 1280 and 390 px; delete lands on / signed out without a sign-in flash; Vitest and Playwright+Edge QA",
+      "Privacy text mentions the Account page and config/legal.php updated_at is bumped; .\\init.ps1 and CI (SQLite + PostgreSQL) pass"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-19. Spec: docs/specs/account-self-service.md. Email change, password reset and email verification wait for an outbound email provider (email-provider-smtp)."
+  },
+  {
+    "id": "ai-screener-natural-language",
+    "area": "screener",
+    "title": "Natural-language Screener: AI translates a request into the existing filters",
+    "user_visible_behavior": "A signed-in user types what they are looking for in Spanish or English above the Screener filters; Chartiko sends only that text to the configured AI provider, which fills a strict enumerated schema of the existing Screener filters. The filters are validated by the same parser as GET /api/screener, applied to the URL (undoable and savable as a Saved Screener), with a short explanation and a list of the parts that could not be expressed. Visitors see a sign-in prompt. Requests are cached for 24 h, throttled and capped per user and globally; the query text is never stored or logged.",
+    "depends_on": [
+      "screener-filters-ui",
+      "screener-precomputed",
+      "ai-company-card",
+      "premium-panels-auth-only"
+    ],
+    "status": "not_started",
+    "verification": [
+      "ScreenerFilterParser extracted from ScreenerController with ScreenerApiTest unchanged and GET /api/screener payloads identical",
+      "Feature tests with Http::fake: happy path, unsupported parts, invalid provider output (unknown enum, out-of-range, extra key, non-JSON) gives 503 invalid_provider_response, user and global caps, provider_not_configured, cache hit without provider call, Visitor 401, query length 422, query text absent from DB/logs/cache keys",
+      "SPA input with examples, busy state, explanation, unsupported list, undo, Visitor prompt and not-configured notice; Vitest, i18n parity and Playwright+Edge QA at 1280 and 390 px",
+      "Real-provider smoke of 10 es/en queries recorded without the key; AI_SCREENER_ENABLED set by deploy/configure-ai-env.py; privacy text updated; .\\init.ps1 and CI (SQLite + PostgreSQL) pass"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-19. Spec: docs/specs/ai-screener-natural-language.md. Reuses the DevExpert Inference provider of the AI company card with its own enable flag and caps. No new filters (sector, price, fundamentals are reported as unsupported)."
   }
 ]
