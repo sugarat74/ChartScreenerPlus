@@ -11,7 +11,7 @@ import type { LegalInfo, LegalOwner } from '../lib/api.ts'
 import LegalPage from './LegalPage.tsx'
 import RegisterPage from './RegisterPage.tsx'
 
-const RETENTION = { sign_in_activity_days: 90, session_minutes: 120, backup_days: 14, server_log_days: 14, notification_days: 90, ai_card_log_days: 90 }
+const RETENTION = { sign_in_activity_days: 90, session_minutes: 120, backup_days: 14, server_log_days: 14, notification_days: 90, ai_card_log_days: 90, ai_screener_log_days: 90 }
 
 /** No owner data: only the cookie policy is published. */
 const NONE: LegalInfo = { privacy_published: false, notice_published: false, owner: null, updated_at: '2026-10-10', retention: RETENTION }

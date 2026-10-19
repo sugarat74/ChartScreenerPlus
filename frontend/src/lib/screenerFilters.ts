@@ -321,6 +321,16 @@ export function deserializeScreenerFilters(
 }
 
 /**
+ * Map the natural-language interpreter's filters (API param names, already
+ * validated server-side) to a complete SPA patch. It goes through the same
+ * lenient path as a Saved Screener, so every owned key (sort included) is
+ * replaced and nothing can produce an invalid URL.
+ */
+export function interpretedFiltersToPatch(filters: SavedScreenerFilters): Partial<ScreenerFilters> {
+  return deserializeScreenerFilters(filters)
+}
+
+/**
  * Compact, human-readable summary of a stored definition in the active
  * language; `formatValue` renders thresholds with the locale's separators.
  * Lenient: a malformed stored payload is described, never thrown on.

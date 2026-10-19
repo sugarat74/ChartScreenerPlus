@@ -67,12 +67,13 @@ export const legalEs: LegalTexts = {
           'Si eres usuario registrado y pides generar una ficha de empresa con IA, el servidor envía a DevExpert Inference (inference.devexpert.io), el proveedor externo de IA, la identidad del instrumento (ticker, nombre de la empresa, sector y bolsa), las cifras financieras públicas que Chartiko calcula con los informes de la empresa ante la SEC (EDGAR) y datos públicos de mercado de Chartiko (último cierre y variación, indicadores, Signals y patrones). La ficha generada se comparte con todos los usuarios y no contiene datos personales.',
           'Si eres usuario registrado y pides un pronóstico experimental, el servidor envía a TypeSafe AI (typesafe.ai), proveedor del modelo Jev, el histórico de precios diarios del instrumento, sus indicadores y sus Signals. El pronóstico se guarda por instrumento y fecha, no por usuario.',
           'En ninguno de los dos casos se envía ningún dato de tu cuenta (ni nombre, ni email, ni dirección IP, ni Watchlist, ni Screeners guardados): los proveedores solo reciben datos de mercado.',
-          'Para controlar el coste y evitar abusos registramos cada generación solicitada: tu identificador de cuenta, el instrumento, la fecha, el resultado y el número de tokens consumidos, sin el texto enviado ni recibido.',
+          'Si eres usuario registrado y describes con tus palabras lo que buscas en el Screener, el servidor envía ese texto y el idioma de la página a DevExpert Inference para traducirlo a los filtros del Screener, sin ningún dato de tu cuenta. Chartiko no guarda ni registra tu texto; solo conserva durante 24 horas el resultado traducido (filtros, explicación y partes que no se han podido traducir) para reutilizarlo con peticiones idénticas. No incluyas datos personales en el texto.',
+          'Para controlar el coste y evitar abusos registramos cada generación y cada búsqueda con IA que solicitas: tu identificador de cuenta, el instrumento (en las fichas), la fecha, el idioma, la longitud del texto de la búsqueda, el resultado y el número de tokens consumidos, nunca el texto enviado ni recibido.',
         ],
         items: [
-          'Finalidad: generar la ficha que pides, limitar el uso diario y prevenir abusos.',
-          'Base jurídica: ejecución de las condiciones de uso para generar la ficha (art. 6.1.b RGPD) e interés legítimo en controlar costes y prevenir abusos para el registro (art. 6.1.f RGPD).',
-          'Conservación: el registro de generaciones se borra automáticamente a los {aiCardLogDays} días.',
+          'Finalidad: generar la ficha que pides o traducir tu búsqueda a filtros, limitar el uso diario y prevenir abusos.',
+          'Base jurídica: ejecución de las condiciones de uso para generar la ficha o traducir la búsqueda (art. 6.1.b RGPD) e interés legítimo en controlar costes y prevenir abusos para los registros (art. 6.1.f RGPD).',
+          'Conservación: el registro de generaciones se borra automáticamente a los {aiCardLogDays} días y el de búsquedas con IA a los {aiScreenerLogDays} días.',
         ],
       },
       {
@@ -103,6 +104,7 @@ export const legalEs: LegalTexts = {
         heading: 'Destinatarios y transferencias internacionales',
         paragraphs: [
           'No cedemos tus datos a terceros salvo obligación legal. El proveedor de alojamiento, OVH, trata los datos por cuenta de Chartiko como encargado del tratamiento.',
+          'Si usas la búsqueda con IA del Screener, el texto que escribes se envía a DevExpert Inference, el proveedor de IA, solo para devolver los filtros (véase «Funciones de IA»); por eso te pedimos que no incluyas datos personales.',
           'El servidor está situado en Canadá (Beauharnois, Quebec). La Comisión Europea reconoce a Canadá un nivel de protección adecuado (Decisión 2002/2/CE), en el que se basa esta transferencia internacional.',
         ],
       },

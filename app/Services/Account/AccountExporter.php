@@ -3,6 +3,7 @@
 namespace App\Services\Account;
 
 use App\Models\AiCompanyCardGeneration;
+use App\Models\AiScreenerQuery;
 use App\Models\Alert;
 use App\Models\Instrument;
 use App\Models\LoginEvent;
@@ -128,6 +129,20 @@ class AccountExporter
                     'ticker' => $generation->instrument?->ticker,
                     'locale' => $generation->locale,
                     'created_at' => self::date($generation->created_at),
+                ])
+                ->values()
+                ->all(),
+            // Metadata only: the query text is never stored, so it cannot be exported.
+            'ai_screener_requests' => $user->screenerQueries()
+                ->orderBy('created_at')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (AiScreenerQuery $query): array => [
+                    'locale' => $query->locale,
+                    'query_length' => $query->query_length,
+                    'outcome' => $query->outcome,
+                    'unsupported_count' => $query->unsupported_count,
+                    'created_at' => self::date($query->created_at),
                 ])
                 ->values()
                 ->all(),

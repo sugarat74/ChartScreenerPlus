@@ -563,6 +563,28 @@ export const screenerApi = {
     const query = params.toString()
     return request<ScreenerResponse>(`/api/screener${query ? `?${query}` : ''}`, { signal })
   },
+
+  /**
+   * Natural-language Screener (Registered Users only; a Visitor gets `401`).
+   * The answer uses the API param names, like a Saved Screener definition.
+   * Errors carry a stable `code` (`provider_not_configured`,
+   * `user_daily_limit`, ...) and a localized message. The text is never
+   * stored by the server.
+   */
+  async interpret(query: string, locale: string): Promise<ScreenerInterpretation> {
+    await ensureCsrfCookie()
+    return request<ScreenerInterpretation>('/api/screener/interpret', {
+      method: 'POST',
+      body: JSON.stringify({ query, locale }),
+    })
+  },
+}
+
+/** `POST /api/screener/interpret` result: filters plus plain-text notes. */
+export type ScreenerInterpretation = {
+  filters: SavedScreenerFilters
+  unsupported: string[]
+  explanation: string
 }
 
 /**
@@ -1086,6 +1108,8 @@ export type LegalInfo = {
     notification_days: number
     /** Absent from older deployments. */
     ai_card_log_days?: number
+    /** Absent from older deployments. */
+    ai_screener_log_days?: number
   }
 }
 

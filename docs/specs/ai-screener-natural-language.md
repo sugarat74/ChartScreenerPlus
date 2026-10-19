@@ -5,7 +5,7 @@
 - `id`: `ai-screener-natural-language`
 - `area`: `screener`
 - `depends_on`: `screener-filters-ui`, `screener-precomputed`, `ai-company-card`, `premium-panels-auth-only` (all `accepted`)
-- `status`: `not_started`
+- `status`: `passing`
 - `source`: `feature_list.json`
 
 ## Goal
@@ -193,3 +193,35 @@ The input sits above the filter panel with two or three clickable example prompt
 - **Some providers reject strict `json_schema`.** The existing `json_object` fallback plus PHP validation covers it.
 - **Prompt injection.** Its worst case is a valid but odd filter set: there are no tools, no data access and no HTML rendering.
 - **Refactor risk** in the controller. Do the extraction first, gated by the existing tests.
+
+## Implementation Findings (2026-10-19)
+
+- **Order kept.** `ScreenerFilterParser::fromArray()` was extracted first; `ScreenerApiTest` (24 tests) passed unchanged before anything else was added. The controller passes `$request->query()`; the AI path passes the validated answer.
+- **Container pitfall.** `ScreenerQueryInterpreter` builds `new OpenAiCompatibleClient('ai_screener')` itself. An injected nullable client would be resolved by the container as the default `ai_card` client.
+- **Schema keywords.** Ranges and list sizes are described in the schema text and enforced in PHP, not with `minimum`/`maxItems`, which some OpenAI-compatible servers reject in strict mode (same choice as `company-card-v2`). Strict types: a number or boolean sent as a string is `invalid_provider_response`. Text is never cut: a too-long `unsupported` item or `explanation` is rejected.
+- **Signal definitions** in the prompt follow the manual: alignment is SMA20/SMA50/SMA200 (no close), RSI overbought/oversold are states (>= 70, <= 30), RVOL is volume over the previous 50-session average, `ma_cross` is the SMA50/SMA200 state, not a fresh cross.
+- **Logging.** Outcomes `ok`, `cached`, `invalid`, `unavailable`, `limited` are logged; `provider_not_configured` and input `422` write no row (no provider work). Caps count only `ok`/`invalid` rows of the last 24 h (rolling, not UTC day).
+- **Not-configured UX.** There is no availability endpoint: the SPA learns it from the first `503 provider_not_configured`, then hides the input with a notice (as the company-card panel does). Adding a `GET` availability flag was judged outside the contract.
+- **Account self-service** (merged after the spec): `ai_screener_queries.user_id` is nulled by FK on deletion and exported as `ai_screener_requests` (locale, query length, outcome, unsupported count, date). The coverage allowlist, the export test and the deletion test include it; the Account page export text mentions AI searches.
+- **Legal.** `GET /api/legal` adds `retention.ai_screener_log_days` (placeholder `{aiScreenerLogDays}`). Besides the AI features paragraph, the "Recipients" section now names DevExpert Inference for the free text. `config/legal.php` `updated_at` already was 2026-10-19 (today), so it did not change. Owner/legal review pending: DevExpert's processor terms (DPA, location, retention, training use) for free text that may contain personal data.
+- **Scope docs.** `CONSTRAINTS.md` banned any free-text AI surface; it now carves out this feature only, and `AGENTS.md` gets an "in scope since 2026-10-19" line (the spec said AGENTS was not needed, but its scope guard listed free-text AI as out of scope).
+- **Real-provider smoke not run locally** (no key in this environment, by owner instruction). Browser QA used a local stub provider (outside the repo). The orchestrator runs the smoke below in production after deploy.
+
+### Production smoke: 10 sample queries and expected filters
+
+Expected values follow the prompt conventions (Decision 4). Filters not listed are empty/default (`signal []`, numbers `null`, `price_above_sma200 false`, `ma_cross null`, `pattern []`, `pattern_status any`, `sort rvol_desc`).
+
+| # | Locale | Query | Expected filters | Expected `unsupported` |
+|---|---|---|---|---|
+| 1 | es | sobrevendidas por encima de la SMA200 con volumen alto | `rsi_max 30`, `price_above_sma200 true`, `min_rvol 1.5` | none |
+| 2 | es | acciones tecnológicas con cruce dorado | `signal [golden_cross]` | sector tecnológico |
+| 3 | es | sobrecompradas ordenadas por mayor subida del día | `rsi_min 70`, `sort change_desc` | none |
+| 4 | es | doble suelo confirmado con RSI entre 40 y 60 | `pattern [double_bottom]`, `pattern_status confirmed`, `rsi_min 40`, `rsi_max 60` | none |
+| 5 | es | MACD alcista con volumen muy alto y precio menor de 50 dólares | `signal [macd_bullish_cross]`, `min_rvol 2` | precio menor de 50 dólares |
+| 6 | en | oversold stocks above the 200-day average with high volume | `rsi_max 30`, `price_above_sma200 true`, `min_rvol 1.5` | none |
+| 7 | en | bull flags still forming, most signals first | `pattern [bull_flag]`, `pattern_status forming`, `sort signal_count_desc` | none |
+| 8 | en | death cross or bearish MA alignment, lowest RSI first | `signal [death_cross, ma_alignment_bearish]`, `sort rsi_asc` | none |
+| 9 | en | pivot breakouts in banks with P/E under 15 | `signal [pivot_breakout_rvol]` | banks sector; P/E under 15 |
+| 10 | en | SMA50 above SMA200, RSI above 55, cup with handle | `ma_cross bullish`, `rsi_min 55`, `pattern [cup_with_handle]` | none |
+
+Pass criteria: every answer is `200` (no `invalid_provider_response`), the filters match (wording of `unsupported` and `explanation` may vary, but `explanation` is in the request language), and a repeat of query 1 is served from cache (a `cached` row, no provider call). Record the table with the actual output, never the key.

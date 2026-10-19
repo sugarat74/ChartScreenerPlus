@@ -119,6 +119,10 @@ Después, la tarea `fundamentals-refresh` corre de lunes a viernes a las 07:00 (
 - Aproximaciones documentadas: BPA de 12 meses por aritmética de acumulados, ROIC con el capital al cierre del periodo, D&A como `Depreciation` + amortización de intangibles cuando no hay concepto conjunto, capitalización multi-clase con el cierre de una sola clase. Bancos y aseguradoras (SIC 6000-6411) muestran EBITDA, margen, deuda neta/EBITDA y ROIC como «no aplica».
 - Comprobación manual opcional (nunca en CI), con el `SEC_USER_AGENT` real: `php artisan fundamentals:refresh --ticker=AAPL --ticker=JPM --ticker=XOM` y comparar con la tabla de la especificación.
 
+## Screener en lenguaje natural (mismo proveedor)
+
+El Screener en lenguaje natural (`ai-screener-natural-language`) comparte `AI_BASE_URL`, `AI_API_KEY` y `AI_MODEL` con la ficha, pero tiene su propio interruptor `AI_SCREENER_ENABLED` (por defecto `false`) y sus límites en `config/ai_screener.php` (6/min por usuario, 30 por usuario y 600 en total cada 24 h, registro de 90 días sin el texto). En producción, `deploy/configure-ai-env.py` escribe `AI_SCREENER_ENABLED=true` en cada despliegue; para apagarlo, quitarlo de `SETTINGS` (o poner `false`) y desplegar. Si la ficha se apaga y el Screener sigue encendido, el proveedor recibe solo peticiones del Screener. Detalle de la llamada: [llamadas-api-jev-ia.md](llamadas-api-jev-ia.md), sección 3.
+
 ## Desactivar
 
 Poner `AI_CARD_ENABLED=false` y volver a cachear la configuración. Las fichas guardadas se siguen mostrando (marcadas como desactualizadas cuando corresponda) y no se hace ninguna llamada.

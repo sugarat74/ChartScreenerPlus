@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\DB;
  *
  * Order: audit row -> sessions (no FK) -> the user row. Deleting the user
  * removes notifications through `User::booted()`, cascades the Watchlist,
- * Saved Screeners and Alerts by FK, and nulls `login_events.user_id` and
- * `ai_company_card_generations.user_id` (shared logs that keep no account
- * link). A new user-owned table must be handled here and in `AccountExporter`.
+ * Saved Screeners and Alerts by FK, and nulls `login_events.user_id`,
+ * `ai_company_card_generations.user_id` and `ai_screener_queries.user_id`
+ * (shared logs that keep no account link). A new user-owned table must be handled here and in `AccountExporter`.
  * Admins are refused by the controller before reaching this service.
  */
 class AccountDeleter

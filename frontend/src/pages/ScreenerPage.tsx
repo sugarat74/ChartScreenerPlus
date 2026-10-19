@@ -5,7 +5,8 @@
  * Anonymous by design — no `useAuth`, no redirect, no login prompt. Filtering
  * and ranking stay server-side; this page only serializes the filters/sort,
  * issues the request and renders loading / refreshing / empty / error / result
- * states.
+ * states. The signed-in affordances (natural-language input, Saved Screeners)
+ * live in their own components and only patch the URL like `update`.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -13,6 +14,7 @@ import { Link, useSearchParams } from 'react-router'
 import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
 import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
+import ScreenerAiQuery from '../components/screener/ScreenerAiQuery.tsx'
 import ScreenerFilterPanel from '../components/screener/ScreenerFilterPanel.tsx'
 import ScreenerPagination from '../components/screener/ScreenerPagination.tsx'
 import ScreenerSortControl from '../components/screener/ScreenerSortControl.tsx'
@@ -157,6 +159,16 @@ export default function ScreenerPage() {
     setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, patch)), { replace: true })
   }
 
+  function applyInterpretedFilters(patch: Partial<ScreenerFilters>) {
+    // The AI result is ordinary filter state, applied through the same path.
+    setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, patch)), { replace: true })
+  }
+
+  function restoreSearchParams(previous: URLSearchParams) {
+    // Undo of an AI search: back to the exact URL the user had before it.
+    setSearchParams(new URLSearchParams(previous), { replace: true })
+  }
+
   function clearFilters() {
     // Only the criteria are cleared: the selected ranking must survive.
     setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, EMPTY_SCREENER_CRITERIA)), {
@@ -206,6 +218,12 @@ export default function ScreenerPage() {
           {t('screener.howItWorksLink')}
         </Link>
       </header>
+
+      <ScreenerAiQuery
+        searchParams={searchParams}
+        onApply={applyInterpretedFilters}
+        onRestore={restoreSearchParams}
+      />
 
       <ScreenerFilterPanel
         filters={filters}
