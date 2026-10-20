@@ -166,7 +166,8 @@ export default function SavedScreenersPanel({
   }
 
   if (authStatus === 'loading') {
-    return null
+    // Holds the height of the Visitor link so the results do not jump.
+    return <div aria-hidden="true" className="h-4" />
   }
 
   if (user === null) {

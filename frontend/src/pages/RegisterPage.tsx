@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import RedirectSignedIn from '../auth/RedirectSignedIn.tsx'
 import { useAuth } from '../auth/useAuth.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import AuthField from '../components/AuthField.tsx'
@@ -27,7 +28,7 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false)
 
   if (user) {
-    return <Navigate to={DEFAULT_ROUTE} replace />
+    return <RedirectSignedIn />
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

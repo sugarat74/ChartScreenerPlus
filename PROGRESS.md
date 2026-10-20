@@ -1,5 +1,14 @@
 # Progress Log
 
+## Fix: home page flicker — 2026-10-20
+
+- User report: the home page still flickers. Measured in production (Playwright, 1280 px, Visitor): layout shift 0.069 when `/api/user` answers, because the AI box and the saved-screeners link rendered nothing while auth loaded; on a cold load the unstyled `index.html` fallback showed for about 1 s before React mounted.
+- **Auth-loading placeholders.** `ScreenerAiQuery` draws the Visitor box without its link while auth loads; `SavedScreenersPanel` keeps the link's height. Visitor shift is now 0.0001. A signed-in user still sees one shift (0.06) when the box grows into the form; avoiding it needs a stored "had a session" hint, which would be a new local-storage key for the cookie table.
+- **Static fallback.** `frontend/index.html` reuses the classes of `AppLayout`, `AppHeader` and the Screener header, so the hand-over to React no longer flashes plain text. Same crawler content (h1, intro, how-it-works link).
+- **Expired-session loop.** With an expired session but the user still in context, a 401 on the home page (e.g. `/api/screeners`) sent the user to `/login`, which redirected a "signed-in" user home, and so on every ~150 ms. New `RedirectSignedIn` (sign-in and register pages) checks `/api/user` first: a live session goes home, an expired one clears the user and shows the form. New `RedirectSignedIn.test.tsx` (2); the expired case fails without the fix. Checked on a local preview: one `/api/screeners` call, then the sign-in form.
+- `.\init.ps1` exit 0: Laravel 538 passed / 6 skipped, Vitest 198 (26 files), SPA lint + build, engine 67.
+- Also updated `docs/llamadas-api-jev-ia.md` (provider response handling, Chartiko AI endpoints and error codes, screener caps reservation).
+
 ## Small fixes after the 2026-10-19 releases — 2026-10-19
 
 - **Sign-out session row.** `AuthController::logout` now forgets the cached Sanctum user, so the database session handler no longer writes the new empty session row with the signed-out user's id (same fix as account deletion). New test `test_signing_out_leaves_no_session_row_for_the_user` fails without the line.
