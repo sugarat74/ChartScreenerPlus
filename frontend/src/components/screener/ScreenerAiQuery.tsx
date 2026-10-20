@@ -1,8 +1,9 @@
 /**
  * Natural-language Screener input (docs/specs/ai-screener-natural-language.md).
  *
- * Signed-in only, like the premium panels: nothing renders while auth is
- * loading (no flash), a Visitor sees a sign-in prompt instead of the input,
+ * Signed-in only, like the premium panels: while auth is loading the Visitor
+ * box holds the space without its link (no flash, no layout jump), a Visitor
+ * sees a sign-in prompt instead of the input,
  * and the server enforces the boundary (`401`). A request is sent only on
  * submit, never while typing. The answer is ordinary filter state: the page
  * patches the URL with it (page reset to 1), so the user can adjust, share or
@@ -107,14 +108,16 @@ export default function ScreenerAiQuery({ searchParams, onApply, onRestore }: Sc
     }
   }
 
-  if (authStatus === 'loading') {
-    return null
-  }
+  // While auth loads, the Visitor box is drawn without its sign-in link: it
+  // keeps the space so the filters below do not jump, and it offers nothing
+  // that could flash and disappear for a signed-in user.
+  if (authStatus === 'loading' || user === null) {
+    const loading = authStatus === 'loading'
 
-  if (user === null) {
     return (
       <section
         aria-labelledby="ai-query-title"
+        aria-busy={loading || undefined}
         className="flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-dashed border-outline-variant bg-surface-container px-4 py-3"
       >
         <div className="min-w-0">
@@ -124,12 +127,14 @@ export default function ScreenerAiQuery({ searchParams, onApply, onRestore }: Sc
           </h2>
           <p className="mt-1 text-xs text-on-surface-variant">{t('aiQuery.guestIntro')}</p>
         </div>
-        <Link
-          to={LOGIN_ROUTE}
-          className="font-mono text-xs font-bold text-on-surface underline underline-offset-4 hover:text-primary focus:outline-2 focus:outline-offset-2 focus:outline-outline"
-        >
-          {t('aiQuery.signIn')}
-        </Link>
+        {loading ? null : (
+          <Link
+            to={LOGIN_ROUTE}
+            className="font-mono text-xs font-bold text-on-surface underline underline-offset-4 hover:text-primary focus:outline-2 focus:outline-offset-2 focus:outline-outline"
+          >
+            {t('aiQuery.signIn')}
+          </Link>
+        )}
       </section>
     )
   }

@@ -104,9 +104,13 @@ describe('ScreenerAiQuery', () => {
     fireEvent.click(screen.getByRole('button', { name: es.submit }))
   }
 
-  it('renders nothing while auth is loading', () => {
-    const { container } = show(false, 'loading')
-    expect(container.innerHTML).toBe('')
+  it('keeps its space while auth is loading, with no link or input', () => {
+    const interpret = vi.spyOn(screenerApi, 'interpret')
+    show(true, 'loading')
+    expect(screen.getByRole('heading', { name: new RegExp(es.title) }).closest('section')?.getAttribute('aria-busy')).toBe('true')
+    expect(screen.queryByRole('link')).toBeNull()
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(interpret).not.toHaveBeenCalled()
   })
 
   it('shows a Visitor a sign-in prompt instead of the input', () => {

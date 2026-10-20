@@ -23,15 +23,46 @@
     <title>Chartiko | Screener de análisis técnico de acciones</title>
   </head>
   <body>
+    <!--
+      Shown until the SPA mounts and read by crawlers without JavaScript. It
+      reuses the classes of AppLayout, AppHeader and the ScreenerPage header so
+      the hand-over to React does not flash; keep them in sync.
+    -->
     <div id="root">
-      <main>
-        <header>
-          <p>Screener de análisis técnico de acciones</p>
-          <h1>Screener</h1>
-          <p>Filtra acciones del S&amp;P 500 con criterios técnicos, revisa candidatos ordenados y abre sus gráficos interactivos.</p>
-          <p><a href="/como-funciona">Conoce cómo funciona Chartiko</a></p>
+      <div class="flex min-h-screen flex-col bg-surface text-on-surface">
+        <header class="sticky top-0 z-40 w-full border-b-2 border-outline bg-surface">
+          <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-2.5">
+            <a href="/" class="flex items-center gap-3 rounded-md">
+              <img src="/favicon.svg" alt="" width="40" height="40" class="h-10 w-10 shrink-0" />
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-headline text-xl font-black tracking-tight text-on-surface">CHARTIKO</span>
+                  <span class="rounded-[4px] border border-outline bg-primary-container px-1.5 py-0.5 font-mono text-[10px] font-bold text-on-primary-container shadow-[1px_1px_0px_#1a1a1a]">SCREENER</span>
+                </div>
+                <p class="hidden font-mono text-xs text-on-surface-variant sm:block">Screener de análisis técnico</p>
+              </div>
+            </a>
+          </div>
+          <nav class="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto border-t border-outline-variant px-4">
+            <a href="/" class="whitespace-nowrap border-b-2 border-outline bg-surface-container px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface">Screener</a>
+            <a href="/como-funciona" class="whitespace-nowrap border-b-2 border-transparent px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface-variant">Cómo funciona</a>
+            <a href="/portal" class="whitespace-nowrap border-b-2 border-transparent px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface-variant">Portal</a>
+          </nav>
         </header>
-      </main>
+        <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+          <section class="flex flex-col gap-6">
+            <header class="flex flex-col gap-2">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">Superficie</span>
+                <span class="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">Acceso público</span>
+              </div>
+              <h1 class="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">Screener</h1>
+              <p class="max-w-2xl text-sm text-on-surface-variant">Filtra acciones del S&amp;P 500 con criterios técnicos, revisa candidatos ordenados y abre sus gráficos interactivos.</p>
+              <a href="/como-funciona" class="w-fit font-mono text-xs font-bold text-on-surface underline underline-offset-4">Conoce cómo funciona Chartiko →</a>
+            </header>
+          </section>
+        </main>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

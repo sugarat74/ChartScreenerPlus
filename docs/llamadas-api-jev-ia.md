@@ -235,7 +235,46 @@ La llamada solo se hace cuando se cumplen estas condiciones:
 | Fichas totales por día UTC | 200 | `AI_CARD_DAILY_LIMIT` |
 | Peticiones POST por minuto | 5 | `AI_CARD_REQUESTS_PER_MINUTE` |
 
-**Registro.** Las generaciones se guardan en `ai_company_card_generations` y se borran a los 90 días. Los logs solo contienen la clase de excepción o el código HTTP, nunca la clave, el prompt ni la respuesta.
+Los límites diarios cuentan todos los intentos del día UTC en `ai_company_card_generations`, también los fallidos. Se comprueban dentro del bloqueo por instrumento e idioma, justo antes de llamar al proveedor.
+
+**Registro.** Las generaciones se guardan en `ai_company_card_generations` y se borran a los 90 días. Cada fila guarda instrumento, usuario, idioma, modelo, versiones, formato usado (`json_schema` o `json_object`), estado, código de error, tokens y latencia. Los logs solo contienen la clase de excepción o el código HTTP, nunca la clave, el prompt ni la respuesta.
+
+### 2.6 Lectura de la respuesta del proveedor
+
+Esta parte es común a la ficha y al Screener, porque la hace `OpenAiCompatibleClient`.
+
+- **Contenido.** Solo se lee `choices[0]`. El resultado se considera inválido si `finish_reason` es distinto de `stop` (por ejemplo, `length` cuando se agotan los tokens).
+- **Tokens.** Se leen `usage.prompt_tokens`, `usage.completion_tokens` y `usage.total_tokens`. Un valor que falta o no es un entero ≥ 0 se guarda como `null`.
+- **Latencia.** Se mide desde el primer envío hasta la respuesta final, así que incluye el reintento con `json_object` si lo hubo.
+- **Errores.** El cliente lanza `AiProviderException` con uno de estos dos motivos:
+  - `provider_unavailable`: fallo de red, timeout o respuesta HTTP distinta de 2xx.
+  - `invalid_provider_response`: respuesta 2xx pero inservible (cortada, rechazada por el modelo, sin JSON o con JSON que no es un objeto).
+
+  La excepción conserva el formato usado, los tokens y la latencia para el registro. Nunca incluye el prompt, la respuesta ni la clave.
+
+El cliente no valida el esquema: devuelve un `StructuredCompletion` (`data`, `usage`, `responseFormat`, `latencyMs`) y cada funcionalidad valida `data` con su propio validador.
+
+### 2.7 API de Chartiko para la ficha
+
+Las dos rutas exigen sesión (`auth:sanctum`). Un visitante recibe 401 y nunca llega al proveedor.
+
+| Ruta | Límite | Respuesta 200 |
+|---|---|---|
+| `GET /api/instruments/{ticker}/company-card` | 60/min | `{ card \| null, available, fundamentals }`. Solo lee la base de datos y nunca llama al proveedor. |
+| `POST /api/instruments/{ticker}/company-card` | 5/min | `{ card, reused, fundamentals }`. `reused: true` significa que se devolvió una ficha vigente sin llamar al proveedor. |
+
+`card` contiene `ticker`, `locale`, `schema_version`, `model`, `generated_at`, `fresh`, `context_mode` (`identity` o `identity+technical`), `context_as_of_date`, `fundamentals_period_end` y `content`, que es la respuesta ya validada.
+
+Los errores devuelven `{ code, message }`. El `code` y el estado HTTP no dependen del idioma; solo `message` va traducido.
+
+| `code` | HTTP | Cuándo |
+|---|---|---|
+| `user_daily_limit` | 429 | El usuario ya ha generado 10 fichas hoy. |
+| `daily_limit_reached` | 503 | Se ha llegado al límite global del día. |
+| `provider_not_configured` | 503 | La función está desactivada o falta la URL, la clave o el modelo. |
+| `provider_unavailable` | 503 | Fallo de red, timeout o error HTTP del proveedor. |
+| `invalid_provider_response` | 503 | La respuesta no se pudo leer o no pasó la validación. |
+| `busy` | 503 | Otra petición está generando la misma ficha y no terminó a tiempo. |
 
 ---
 
@@ -297,9 +336,43 @@ Solo con `AI_SCREENER_ENABLED=true` y el proveedor configurado (si no, `503 prov
 | Peticiones por usuario en 24 h | 30 | `AI_SCREENER_USER_DAILY_LIMIT` |
 | Peticiones totales en 24 h | 600 | `AI_SCREENER_DAILY_LIMIT` |
 
-Cuentan las filas `ok` e `invalid` de `ai_screener_queries` de las últimas 24 horas.
+Los límites diarios son una ventana móvil de 24 horas, no un día UTC. Cuentan las filas `ok`, `invalid` y `pending` de `ai_screener_queries`.
 
-**Registro y privacidad.** El texto de la petición **nunca** se guarda ni se registra. `ai_screener_queries` guarda solo metadatos (usuario, idioma, longitud, resultado, número de partes no admitidas, tokens, latencia, modelo y versiones) y se borra a los 90 días (`AI_SCREENER_LOG_RETENTION_DAYS`). La clave de caché es un hash SHA-256.
+Antes de llamar al proveedor, la petición reserva su plaza. Con el bloqueo `ai-screener:caps` (duración 10 s) comprueba los límites e inserta una fila `pending`. El bloqueo cubre solo esa comprobación y esa inserción, nunca la llamada al proveedor. Al terminar, la fila pasa a `ok`, `invalid` o `unavailable`, y una fila `unavailable` deja de contar. Si la petición no consigue el bloqueo en 5 s, recibe `provider_unavailable`. Así, dos peticiones simultáneas no pueden pasarse del límite.
+
+**Configuración de producción.** `AI_SCREENER_ENABLED=true`, que instala `deploy/configure-ai-env.py`. Usa el mismo proveedor DevExpert y el modelo `chat` que la ficha, con los límites por defecto de `config/ai_screener.php`.
+
+**Registro y privacidad.** El texto de la petición **nunca** se guarda ni se registra. `ai_screener_queries` guarda solo metadatos: usuario, idioma, longitud, resultado (`ok`, `invalid`, `unavailable`, `limited`, `cached` o `pending`), número de partes no admitidas, tokens, latencia, modelo y versiones. Se borra a los 90 días (`AI_SCREENER_LOG_RETENTION_DAYS`). La clave de caché es un hash SHA-256 del texto normalizado (minúsculas y espacios colapsados), el idioma y las dos versiones.
+
+### 3.6 API de Chartiko para el Screener
+
+`POST /api/screener/interpret` exige sesión (`auth:sanctum`) y admite 6 peticiones por minuto.
+
+Petición:
+
+```json
+{ "query": "acciones sobrevendidas con volumen alto", "locale": "es" }
+```
+
+- `query`: obligatorio, de 3 a 300 caracteres.
+- `locale`: opcional, `es` o `en`. Si falta, se usa el idioma de la petición.
+- Si alguno no es válido, la respuesta es 422 con el formato estándar de validación de Laravel.
+
+Respuesta 200. Los filtros usan los mismos nombres de parámetro que `GET /api/screener`, así que la SPA los aplica como filtros normales de la URL:
+
+```json
+{
+  "filters": {
+    "signal": [], "rsi_min": null, "rsi_max": 30.0, "min_rvol": 1.5,
+    "price_above_sma200": false, "ma_cross": null,
+    "pattern": [], "pattern_status": "any", "sort": "rvol_desc"
+  },
+  "unsupported": [],
+  "explanation": "RSI(14) de 30 o menos y RVOL mínimo de 1,5."
+}
+```
+
+Los errores devuelven `{ code, message }`, con los mismos códigos que la ficha salvo `busy`. Aquí `user_daily_limit` (429) significa 30 peticiones en 24 h. Un visitante sin sesión recibe 401.
 
 ---
 
@@ -312,6 +385,8 @@ Cuentan las filas `ok` e `invalid` de `ai_screener_queries` de las últimas 24 h
 | Datos enviados | 252 barras, indicadores y Signals del instrumento | Identidad del instrumento. Contexto técnico solo con derechos verificados | El texto del usuario y el idioma |
 | Activación | `JEV_ENABLED` + `JEV_MARKET_DATA_RIGHTS_VERIFIED` | `AI_CARD_ENABLED` (+ `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED` para `technical`) | `AI_SCREENER_ENABLED` |
 | Timeout | 8 s | 40 s | 20 s |
+| Parámetros del modelo | — | `max_tokens` 8000, `temperature` 0.2 | `max_tokens` 800, `temperature` 0 |
 | Caché | Por instrumento, horizonte, modelo, versión de pregunta y `as_of_date` | Por instrumento e idioma, 7 días | Por hash del texto normalizado, idioma y versiones, 24 h |
+| Límites diarios | — | 10 por usuario y 200 en total, por día UTC; cuentan todos los intentos | 30 por usuario y 600 en total, en 24 h móviles; cuentan `ok`, `invalid` y `pending` |
 | Validación propia | Modelo, tipo, 3 probabilidades que suman 1, `choice` coherente | Esquema completo, ticker, enums y recorte de texto. Las cifras no vienen del modelo: las calcula Chartiko desde la SEC | Esquema completo, rangos, enums y el mismo parser que `GET /api/screener`, sin recorte |
 | Datos personales | Ninguno | Ninguno | Texto libre del usuario (no se guarda; la política pide no incluir datos personales) |
