@@ -72,6 +72,8 @@ export default function InteractiveChart({
 
     // Rebuilt on a theme switch (in the dependencies) with that theme's chrome.
     const chrome = CHART_THEME_COLORS[theme]
+    // Data helpers use the light blue; swap in the theme's for lines and markers.
+    const tint = (color: string) => (color === CHART_COLORS.tertiary ? chrome.tertiary : color)
     const chart = createChart(container, {
       autoSize: true,
       layout: {
@@ -113,7 +115,7 @@ export default function InteractiveChart({
     for (const level of smaLevels(snapshot)) {
       candleSeries.createPriceLine({
         price: level.price,
-        color: level.color,
+        color: tint(level.color),
         lineWidth: 1,
         lineStyle: LineStyle.Dashed,
         axisLabelVisible: true,
@@ -125,7 +127,7 @@ export default function InteractiveChart({
     for (const level of signalLevels(signals, pivotTitle)) {
       candleSeries.createPriceLine({
         price: level.price,
-        color: level.color,
+        color: tint(level.color),
         lineWidth: 2,
         lineStyle: LineStyle.Dashed,
         axisLabelVisible: true,
@@ -137,7 +139,7 @@ export default function InteractiveChart({
     for (const level of patternLevels(patterns, (pattern) => patternLabel(pattern.type, t))) {
       candleSeries.createPriceLine({
         price: level.price,
-        color: level.color,
+        color: tint(level.color),
         lineWidth: 2,
         lineStyle: LineStyle.Dotted,
         axisLabelVisible: true,
@@ -146,7 +148,7 @@ export default function InteractiveChart({
     }
     const markers = patternMarkers(patterns, bars, (role) => t(`patterns.rolesShort.${role}` as MessageKey))
     if (markers.length > 0) {
-      createSeriesMarkers(candleSeries, markers)
+      createSeriesMarkers(candleSeries, markers.map((marker) => ({ ...marker, color: tint(marker.color) })))
     }
 
     chart.timeScale().fitContent()

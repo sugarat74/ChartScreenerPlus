@@ -133,8 +133,8 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
                         <span
                           key={`pattern-${pattern.type}`}
                           data-testid="candidate-pattern"
-                          className={`rounded-[4px] border-2 border-dashed border-outline px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface ${
-                            pattern.status === 'confirmed' ? 'bg-primary-container' : 'bg-surface-bright'
+                          className={`rounded-[4px] border-2 border-dashed border-outline px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${
+                            pattern.status === 'confirmed' ? 'bg-primary-container text-on-primary-container' : 'bg-surface-bright text-on-surface'
                           }`}
                         >
                           {patternLabel(pattern.type, t)} · {t(`patterns.status.${pattern.status}`)}

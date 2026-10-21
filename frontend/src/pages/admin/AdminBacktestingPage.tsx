@@ -101,7 +101,7 @@ export default function AdminBacktestingPage() {
         <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="backtest-bars">{t('backtesting.bars')}
           <input id="backtest-bars" className="w-28 rounded border-2 border-outline bg-surface-bright p-2 font-mono text-sm" type="number" min="1" max="100" value={bars} onChange={(event) => setBars(Number(event.target.value))} required />
         </label>
-        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase shadow-[2px_2px_0px_var(--color-shadow)] disabled:opacity-50" type="submit" disabled={starting || runs.some((item) => item.status === 'queued' || item.status === 'running')}>
+        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] disabled:opacity-50" type="submit" disabled={starting || runs.some((item) => item.status === 'queued' || item.status === 'running')}>
           {starting ? t('common.loading') : t('backtesting.start')}
         </button>
       </form>

@@ -107,7 +107,9 @@ Selectable in the header (sun/moon control next to the language selector, `ui-da
 - **Accent unchanged:** `#ffcc00` with `#1a1a1a` ink, same as the light theme.
 - **Signals lightened for contrast:** gains `#34d399`, losses/attention `#ff6b5e`, pipeline blue `#7aa2ff`; containers `#4a1f1b` (red) and `#1f2c4d` (blue).
 - **Hard shadows:** the offset uses `var(--color-shadow)` (`#1a1a1a` light, `#000000` dark); never write the ink hex in a shadow or accent class (a Vitest guard enforces it).
-- **Chart canvas:** background, text, grid and borders follow the theme; candle outlines use each candle's hue in dark.
+- **Chart canvas:** background, text, grid and borders follow the theme; candle outlines use each candle's hue in dark, and SMA/breakout lines and pattern markers use the lighter blue.
+- **Text on filled accents:** always pair the fill with its own ink: `bg-primary-container text-on-primary-container`, `bg-gain text-on-gain` (`#1a1a1a` in both themes). Never leave the text to inherit `on-surface`, which is off-white in dark.
+- **Admin run log** stays a black terminal in both themes (`.terminal-panel` pins the light token values inside it).
 
 ## Typography
 

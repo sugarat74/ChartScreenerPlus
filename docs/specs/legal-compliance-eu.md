@@ -71,6 +71,7 @@ OVH's DPA.
 | `alphapulse-session` | first-party cookie, HttpOnly, Secure | keeps the session | session lifetime (120 min) | strictly necessary |
 | `XSRF-TOKEN` | first-party cookie, Secure | CSRF protection | session lifetime (120 min) | strictly necessary |
 | `chartiko.locale` | localStorage | language chosen by the user | until cleared | user-requested preference, exempt |
+| `chartiko.theme` | localStorage | color theme (light/dark) chosen by the user (`ui-dark-mode`, 2026-10-21) | until cleared | user-requested preference, exempt |
 
 No third-party resources load (fonts fall back to system fonts; no CDN, maps, video or captcha).
 Decision: **no consent banner**; the cookie policy is informative.

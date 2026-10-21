@@ -4,7 +4,7 @@ import type { AdminActivityEvent } from '../../../lib/api.ts'
 import { deviceLabel } from './adminFormat.ts'
 
 const EVENT_CHIP: Record<AdminActivityEvent['event'], string> = {
-  login: 'border-gain bg-gain text-primary',
+  login: 'border-gain bg-gain text-on-gain',
   failed: 'border-secondary bg-secondary-container text-on-secondary-container',
   logout: 'border-outline-variant bg-surface-dim text-on-surface-variant',
   session_revoked: 'border-secondary bg-primary-container text-on-primary-container',

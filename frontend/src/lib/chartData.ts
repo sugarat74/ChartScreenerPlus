@@ -44,6 +44,7 @@ export const CHART_THEME_COLORS = {
     // Candle outlines: ink in light; in dark each candle keeps its own hue.
     candleUp: CHART_COLORS.ink,
     candleDown: CHART_COLORS.ink,
+    tertiary: CHART_COLORS.tertiary,
   },
   dark: {
     background: '#22201d', // --color-surface-bright
@@ -52,6 +53,8 @@ export const CHART_THEME_COLORS = {
     border: '#e8e3da', // --color-outline
     candleUp: CHART_COLORS.gain,
     candleDown: CHART_COLORS.loss,
+    // Thin SMA/breakout lines need the lighter blue to reach 3:1 on dark.
+    tertiary: '#7aa2ff', // --color-tertiary
   },
 } as const
 

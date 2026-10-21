@@ -15,7 +15,8 @@ function drawing(kind: ExampleKind) {
   const bars = [...svg.querySelectorAll('rect')].map((rect) => ({
     centre: Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2,
     height: Number(rect.getAttribute('height')),
-    fill: rect.getAttribute('fill'),
+    // Themed hues are set through `style`; the ink may also be an attribute.
+    fill: (rect.style.getPropertyValue('fill') || rect.getAttribute('fill') || '').toLowerCase(),
   }))
   return { pivotY, vertices, marker: { x: Number(marker.getAttribute('cx')), y: Number(marker.getAttribute('cy')) }, bars }
 }
@@ -36,7 +37,7 @@ describe('TechnicalExample pivot breakout diagrams', () => {
   it('pivotBreakoutRvol: the highlighted volume bar sits under the breakout close with at least 2x average volume', () => {
     const { vertices, bars } = drawing('pivotBreakoutRvol')
     expect(bars.map((bar) => bar.centre)).toEqual(vertices.map((point) => point.x))
-    const highlighted = bars.filter((bar) => bar.fill !== 'currentColor')
+    const highlighted = bars.filter((bar) => bar.fill !== 'currentcolor')
     expect(highlighted).toHaveLength(1)
     expect(highlighted[0]).toBe(bars.at(-1))
     const earlier = bars.slice(0, -1)

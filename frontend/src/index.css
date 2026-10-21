@@ -19,6 +19,8 @@
   /* DESIGN.md documents gains green #059669 as a signal color; promote it to a
      token so success/status UI does not invent a hue. */
   --color-gain: #059669;
+  /* Ink on a gain-filled badge (`bg-gain text-on-gain`). */
+  --color-on-gain: #1a1a1a;
 
   --color-tertiary: #0055ff;
   --color-tertiary-container: #d6e3ff;
@@ -62,6 +64,7 @@
   --color-on-secondary-container: #ffdad6;
 
   --color-gain: #34d399;
+  --color-on-gain: #1a1a1a;
 
   --color-tertiary: #7aa2ff;
   --color-tertiary-container: #1f2c4d;
@@ -83,6 +86,20 @@
   --color-outline-variant: #4a4741;
 
   --color-shadow: #000000;
+}
+
+/* The Admin run log is a dark terminal in both themes: inside it the tokens
+   keep their light values (black panel, light text, light status colors). */
+.terminal-panel {
+  --color-primary: #1a1a1a;
+  --color-on-primary: #ffffff;
+  --color-surface-dim: #d6d1c9;
+  --color-surface-bright: #faf7f2;
+  --color-secondary: #e63b2e;
+  --color-secondary-container: #ffdad6;
+  --color-on-secondary-container: #1a1a1a;
+  --color-gain: #059669;
+  --color-outline-variant: #d0cbc3;
 }
 
 body {
