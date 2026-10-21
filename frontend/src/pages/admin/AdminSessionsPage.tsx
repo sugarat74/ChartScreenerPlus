@@ -59,7 +59,7 @@ export default function AdminSessionsPage() {
               {sessions.data.meta.total > 0 ? t('adminUsers.pageEmpty') : t('adminUsers.sessionsEmpty')}
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
+            <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
               <table className="w-full border-collapse text-left">
                 <thead>
                   <tr className={ADMIN_TABLE_HEAD_CLASS}>

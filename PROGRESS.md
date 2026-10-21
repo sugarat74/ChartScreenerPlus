@@ -1,5 +1,15 @@
 # Progress Log
 
+## Dark mode (`ui-dark-mode`, accepted) — 2026-10-21
+
+- User request: "añade un modo oscuro al diseño web seleccionable en la portada del sitio". Spec `docs/specs/ui-dark-mode.md`; feature entry added.
+- Sun/moon selector before the language selector in the header (home and every page). Without a stored choice the theme follows the OS (live); a choice is stored in `chartiko.theme`. Inline script in `index.html` applies it before the first paint.
+- Same tokens with dark values under `:root[data-theme='dark']` (`index.css`, documented in `DESIGN.md`). 131 hard shadows now use `var(--color-shadow)`, checkbox accents use `accent-primary`; chart chrome and the How it works schematics follow the theme.
+- Legal: cookie table lists `chartiko.theme` (es/en), deletion text updated, `config/legal.php` `updated_at` 2026-10-21.
+- `.\init.ps1` exit 0: Laravel 538 passed / 6 skipped, Vitest 205 (28 files; 206 after round 1), SPA lint + build, engine 67. Edge QA in both themes at 1280/390 px (details in the spec).
+- Validator round 1: revise (off-white text on yellow/green fills in dark: confirmed pattern chips on the home page, Forecast panel, Admin badges and run log). Fixed with paired ink classes, an `on-gain` token, a `.terminal-panel` scope and the lighter chart blue; `.\init.ps1` exit 0 (Laravel 538 / 6 skipped, Vitest 206, engine 67).
+- **Independent validator: ACCEPT** (round 2): gate rerun, dark contrast sweep on 13 pages with no text pair under 4.5:1. Applied its optional note (Admin banner keeps the black terminal look via `.terminal-panel`). Follow-up, not in scope: light-theme `text-gain`/`text-secondary` on light surfaces are 3.1–3.9:1 (pre-existing).
+
 ## Nginx cache headers for the SPA — 2026-10-21
 
 - After the flicker fix (#50) a browser that had visited before still loaded the old bundle: `index.html` had no `Cache-Control`, so browsers cached it heuristically and did not revalidate after a deploy.

@@ -95,4 +95,32 @@ describe('Screener pattern controls', () => {
     withI18n(<CandidateTable candidates={[candidate]} />)
     expect(screen.getByTestId('candidate-pattern').textContent).toBe('Bandera alcista · En formación')
   })
+
+  it('a confirmed pattern badge pairs the yellow fill with its own ink, readable in both themes', () => {
+    const candidate: ScreenerCandidate = {
+      ticker: 'NVDA',
+      company: 'NVIDIA',
+      sector: 'Tech',
+      exchange: 'NASDAQ',
+      active: true,
+      date: '2026-10-02',
+      close: 100,
+      change_percent: 1,
+      rvol: 1.2,
+      rsi14: 55,
+      signals: [],
+      patterns: [
+        { type: 'double_top', status: 'confirmed', breakout_level: 90, end_date: '2026-09-30' },
+        { type: 'bull_flag', status: 'forming', breakout_level: 101, end_date: '2026-09-30' },
+      ],
+    }
+    withI18n(<CandidateTable candidates={[candidate]} />)
+    const [confirmed, forming] = screen.getAllByTestId('candidate-pattern')
+
+    expect(confirmed.className).toContain('bg-primary-container')
+    expect(confirmed.className).toContain('text-on-primary-container')
+    expect(confirmed.className).not.toMatch(/\btext-on-surface\b/)
+    expect(forming.className).toContain('bg-surface-bright')
+    expect(forming.className).toContain('text-on-surface')
+  })
 })

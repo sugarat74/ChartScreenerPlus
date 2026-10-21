@@ -50,7 +50,7 @@ export default function AdminActivityPage() {
           id="admin-activity-event"
           value={event ?? ''}
           onChange={(change) => update(eventParam(change.target.value))}
-          className="rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-xs text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+          className="rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-xs text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
         >
           <option value="">{t('adminUsers.eventAll')}</option>
           {EVENT_TYPES.map((type) => (

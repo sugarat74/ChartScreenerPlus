@@ -28,6 +28,7 @@ import { patternLabel } from '../../lib/screenerFilters.ts'
 import type { InstrumentBar, InstrumentPattern, InstrumentSignal, InstrumentSnapshot } from '../../lib/api.ts'
 import {
   CHART_COLORS,
+  CHART_THEME_COLORS,
   patternLevels,
   patternMarkers,
   signalLevels,
@@ -35,6 +36,7 @@ import {
   toCandlestickData,
   toVolumeData,
 } from '../../lib/chartData.ts'
+import { useTheme } from '../../theme/useTheme.ts'
 
 const NO_PATTERNS: InstrumentPattern[] = []
 
@@ -58,6 +60,7 @@ export default function InteractiveChart({
   patterns = NO_PATTERNS,
 }: InteractiveChartProps) {
   const { locale, t } = useI18n()
+  const { theme } = useTheme()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const pivotTitle = t('chart.pivot')
 
@@ -67,20 +70,24 @@ export default function InteractiveChart({
       return
     }
 
+    // Rebuilt on a theme switch (in the dependencies) with that theme's chrome.
+    const chrome = CHART_THEME_COLORS[theme]
+    // Data helpers use the light blue; swap in the theme's for lines and markers.
+    const tint = (color: string) => (color === CHART_COLORS.tertiary ? chrome.tertiary : color)
     const chart = createChart(container, {
       autoSize: true,
       layout: {
-        background: { type: ColorType.Solid, color: CHART_COLORS.surfaceBright },
-        textColor: CHART_COLORS.ink,
+        background: { type: ColorType.Solid, color: chrome.background },
+        textColor: chrome.text,
         fontFamily: MONO_FONT_FAMILY,
         attributionLogo: true,
       },
       grid: {
-        vertLines: { color: CHART_COLORS.grid },
-        horzLines: { color: CHART_COLORS.grid },
+        vertLines: { color: chrome.grid },
+        horzLines: { color: chrome.grid },
       },
-      rightPriceScale: { borderColor: CHART_COLORS.ink },
-      timeScale: { borderColor: CHART_COLORS.ink },
+      rightPriceScale: { borderColor: chrome.border },
+      timeScale: { borderColor: chrome.border },
       crosshair: { mode: CrosshairMode.Normal },
       // Axis prices and dates follow the selected language.
       localization: { locale: LOCALE_DEFINITIONS[locale].intl },
@@ -89,8 +96,8 @@ export default function InteractiveChart({
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: CHART_COLORS.gain,
       downColor: CHART_COLORS.loss,
-      borderUpColor: CHART_COLORS.ink,
-      borderDownColor: CHART_COLORS.ink,
+      borderUpColor: chrome.candleUp,
+      borderDownColor: chrome.candleDown,
       wickUpColor: CHART_COLORS.gain,
       wickDownColor: CHART_COLORS.loss,
     })
@@ -108,7 +115,7 @@ export default function InteractiveChart({
     for (const level of smaLevels(snapshot)) {
       candleSeries.createPriceLine({
         price: level.price,
-        color: level.color,
+        color: tint(level.color),
         lineWidth: 1,
         lineStyle: LineStyle.Dashed,
         axisLabelVisible: true,
@@ -120,7 +127,7 @@ export default function InteractiveChart({
     for (const level of signalLevels(signals, pivotTitle)) {
       candleSeries.createPriceLine({
         price: level.price,
-        color: level.color,
+        color: tint(level.color),
         lineWidth: 2,
         lineStyle: LineStyle.Dashed,
         axisLabelVisible: true,
@@ -132,7 +139,7 @@ export default function InteractiveChart({
     for (const level of patternLevels(patterns, (pattern) => patternLabel(pattern.type, t))) {
       candleSeries.createPriceLine({
         price: level.price,
-        color: level.color,
+        color: tint(level.color),
         lineWidth: 2,
         lineStyle: LineStyle.Dotted,
         axisLabelVisible: true,
@@ -141,7 +148,7 @@ export default function InteractiveChart({
     }
     const markers = patternMarkers(patterns, bars, (role) => t(`patterns.rolesShort.${role}` as MessageKey))
     if (markers.length > 0) {
-      createSeriesMarkers(candleSeries, markers)
+      createSeriesMarkers(candleSeries, markers.map((marker) => ({ ...marker, color: tint(marker.color) })))
     }
 
     chart.timeScale().fitContent()
@@ -150,7 +157,7 @@ export default function InteractiveChart({
       // Removes the series, price lines and observers from the container.
       chart.remove()
     }
-  }, [ticker, bars, snapshot, signals, patterns, locale, pivotTitle, t])
+  }, [ticker, bars, snapshot, signals, patterns, locale, pivotTitle, t, theme])
 
   return (
     <div

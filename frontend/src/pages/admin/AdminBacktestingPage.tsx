@@ -90,7 +90,7 @@ export default function AdminBacktestingPage() {
   const tickerCount = tickerText.split(/[\s,;]+/).filter(Boolean).length
 
   return <div className="flex flex-col gap-5">
-    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
+    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
       <h2 className="font-headline text-xl font-black uppercase">{t('backtesting.title')}</h2>
       <p className="mt-2 text-sm text-on-surface-variant">{t('backtesting.description')}</p>
       <form onSubmit={(event) => void start(event)} className="mt-4 flex flex-wrap items-end gap-4">
@@ -101,14 +101,14 @@ export default function AdminBacktestingPage() {
         <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="backtest-bars">{t('backtesting.bars')}
           <input id="backtest-bars" className="w-28 rounded border-2 border-outline bg-surface-bright p-2 font-mono text-sm" type="number" min="1" max="100" value={bars} onChange={(event) => setBars(Number(event.target.value))} required />
         </label>
-        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase shadow-[2px_2px_0px_#1a1a1a] disabled:opacity-50" type="submit" disabled={starting || runs.some((item) => item.status === 'queued' || item.status === 'running')}>
+        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] disabled:opacity-50" type="submit" disabled={starting || runs.some((item) => item.status === 'queued' || item.status === 'running')}>
           {starting ? t('common.loading') : t('backtesting.start')}
         </button>
       </form>
       <p className="mt-3 text-xs text-on-surface-variant">{t('backtesting.costNote')}</p>
       {error ? <p className="mt-3 text-sm text-secondary" role="alert">{error}</p> : null}
     </section>
-    {runs.length > 0 ? <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
+    {runs.length > 0 ? <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
       <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="backtest-run">{t('backtesting.runs')}
         <select id="backtest-run" className="mt-1 rounded border-2 border-outline bg-surface-bright p-2 font-mono text-sm" value={selectedId ?? ''} onChange={(event) => { setCasePage(1); setSelectedId(Number(event.target.value)) }}>
           {runs.map((item) => <option key={item.id} value={item.id}>#{item.id} · {item.tickers.slice(0, 3).join(', ')}{item.tickers.length > 3 ? ` +${item.tickers.length - 3}` : ''} · {item.bars_requested} · {statusLabel(item.status)}</option>)}

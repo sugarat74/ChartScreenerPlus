@@ -39,7 +39,7 @@ export default function AuthField({
         required
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className="rounded-md border-2 border-outline bg-surface-bright px-3 py-2 text-sm text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-shadow focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+        className="rounded-md border-2 border-outline bg-surface-bright px-3 py-2 text-sm text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-shadow focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
       />
       {error ? (
         <p id={`${id}-error`} className="font-mono text-[11px] font-bold text-secondary">

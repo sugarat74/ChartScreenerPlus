@@ -24,7 +24,7 @@ import type { WatchlistEntry } from '../lib/api.ts'
 import { ACCOUNT_ROUTE, LOGIN_ROUTE, NOTIFICATIONS_ROUTE } from '../nav.ts'
 
 const ACTION_LINK_CLASS =
-  'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
+  'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
 function WatchlistPanel() {
   const { user } = useAuth()
@@ -114,7 +114,7 @@ function WatchlistPanel() {
             {t('watchlist.intro')}
           </p>
         </div>
-        <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+        <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
           {items.length === 1
             ? t('watchlist.countOne', { count: items.length })
             : t('watchlist.countOther', { count: items.length })}
@@ -125,7 +125,7 @@ function WatchlistPanel() {
         <div
           role="status"
           aria-busy="true"
-          className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]"
+          className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
         >
           <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
             {t('watchlist.loading')}
@@ -141,7 +141,7 @@ function WatchlistPanel() {
       {!loading && error !== null ? (
         <div
           role="alert"
-          className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_#1a1a1a]"
+          className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
         >
           <div>
             <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">
@@ -156,7 +156,7 @@ function WatchlistPanel() {
       ) : null}
 
       {!loading && error === null && items.length === 0 ? (
-        <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
+        <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_var(--color-shadow)]">
           <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
             {t('watchlist.emptyTitle')}
           </p>
@@ -211,7 +211,7 @@ function PortalContent() {
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
             {t('portal.badge')}
           </span>
           <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
@@ -242,7 +242,7 @@ function PortalContent() {
       {alerts.error !== null ? (
         <div
           role="alert"
-          className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-4 shadow-[2px_2px_0px_#1a1a1a]"
+          className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-4 shadow-[2px_2px_0px_var(--color-shadow)]"
         >
           <div>
             <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">

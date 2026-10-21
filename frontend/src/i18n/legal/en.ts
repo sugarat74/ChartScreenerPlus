@@ -216,6 +216,13 @@ export const legalEn: LegalTexts = {
         duration: 'Until you clear it',
         category: 'Preference you choose',
       },
+      {
+        name: 'chartiko.theme',
+        type: 'First-party local storage',
+        purpose: 'Remembers the color theme (light or dark) you choose.',
+        duration: 'Until you clear it',
+        category: 'Preference you choose',
+      },
     ],
     sections: [
       {
@@ -227,7 +234,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'How to remove them',
         paragraphs: [
-          'You can delete or block cookies and local storage in your browser settings. If you block the technical cookies you will not be able to sign in; if you clear the language preference, Chartiko will use your browser’s language.',
+          'You can delete or block cookies and local storage in your browser settings. If you block the technical cookies you will not be able to sign in; if you clear the language or theme preference, Chartiko will use your browser’s language or color theme.',
         ],
       },
       {

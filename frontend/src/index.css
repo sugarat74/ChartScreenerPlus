@@ -19,6 +19,8 @@
   /* DESIGN.md documents gains green #059669 as a signal color; promote it to a
      token so success/status UI does not invent a hue. */
   --color-gain: #059669;
+  /* Ink on a gain-filled badge (`bg-gain text-on-gain`). */
+  --color-on-gain: #1a1a1a;
 
   --color-tertiary: #0055ff;
   --color-tertiary-container: #d6e3ff;
@@ -40,8 +42,68 @@
   --color-outline-variant: #d0cbc3;
 }
 
+/* Offset of the hard shadows (`shadow-[2px_2px_0px_var(--color-shadow)]`).
+   A plain variable, not a @theme token: it is only read through var(). */
+:root {
+  --color-shadow: #1a1a1a;
+  color-scheme: light;
+}
+
+/* Dark theme (ui-dark-mode, DESIGN.md "Dark theme"): the same tokens with dark
+   values, switched by `data-theme` on <html> (src/theme/theme.ts). The brand
+   yellow and its ink stay as they are; text and outlines turn warm off-white. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-primary: #f2ede5;
+  --color-on-primary: #1a1a1a;
+
+  --color-secondary: #ff6b5e;
+  --color-secondary-container: #4a1f1b;
+  --color-on-secondary: #1a1a1a;
+  --color-on-secondary-container: #ffdad6;
+
+  --color-gain: #34d399;
+  --color-on-gain: #1a1a1a;
+
+  --color-tertiary: #7aa2ff;
+  --color-tertiary-container: #1f2c4d;
+  --color-on-tertiary: #1a1a1a;
+  --color-on-tertiary-container: #d6e3ff;
+
+  --color-surface: #181715;
+  --color-surface-bright: #22201d;
+  --color-surface-dim: #3a3733;
+  --color-surface-container-lowest: #0f0e0d;
+  --color-surface-container-low: #1d1c19;
+  --color-surface-container: #2a2825;
+  --color-surface-container-high: #32302c;
+  --color-surface-container-highest: #3a3834;
+
+  --color-on-surface: #f2ede5;
+  --color-on-surface-variant: #b5afa6;
+  --color-outline: #e8e3da;
+  --color-outline-variant: #4a4741;
+
+  --color-shadow: #000000;
+}
+
+/* The Admin run log is a dark terminal in both themes: inside it the tokens
+   keep their light values (black panel, light text, light status colors). */
+.terminal-panel {
+  --color-primary: #1a1a1a;
+  --color-on-primary: #ffffff;
+  --color-surface-dim: #d6d1c9;
+  --color-surface-bright: #faf7f2;
+  --color-secondary: #e63b2e;
+  --color-secondary-container: #ffdad6;
+  --color-on-secondary-container: #1a1a1a;
+  --color-gain: #059669;
+  --color-outline-variant: #d0cbc3;
+}
+
 body {
-  background-color: #f5f0e8;
-  color: #1a1a1a;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
   font-family: var(--font-body);
 }

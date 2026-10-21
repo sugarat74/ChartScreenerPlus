@@ -84,7 +84,7 @@ export default function ScreenerAlertToggle({ screener, alert, disabled, onSaved
             aria-hidden="true"
             className={`flex h-5 w-9 shrink-0 items-center rounded-[4px] border-2 border-outline px-0.5 transition-colors ${checked ? 'justify-end bg-primary-container' : 'justify-start bg-surface-container'}`}
           >
-            <span className="h-3 w-3 rounded-[2px] bg-primary" />
+            <span className={`h-3 w-3 rounded-[2px] ${checked ? 'bg-on-primary-container' : 'bg-primary'}`} />
           </span>
           <span>{saving ? t('alerts.saving') : t('alerts.screenerToggle')}</span>
         </button>

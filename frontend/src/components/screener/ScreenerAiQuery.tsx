@@ -27,13 +27,13 @@ const MAX_LENGTH = 300
 const EXAMPLE_KEYS = ['first', 'second', 'third'] as const
 
 const PRIMARY_BUTTON_CLASS =
-  'w-fit shrink-0 rounded-md border-2 border-outline bg-primary-container px-3 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60'
+  'w-fit shrink-0 rounded-md border-2 border-outline bg-primary-container px-3 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60'
 
 const SECONDARY_BUTTON_CLASS =
-  'w-fit rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
+  'w-fit rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
 const INPUT_CLASS =
-  'min-w-0 flex-1 rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:opacity-60'
+  'min-w-0 flex-1 rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:opacity-60'
 
 const BADGE_CLASS =
   'rounded border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-on-primary-container'
@@ -148,7 +148,7 @@ export default function ScreenerAiQuery({ searchParams, onApply, onRestore }: Sc
   }
 
   return (
-    <section aria-labelledby="ai-query-title" className="flex flex-col gap-3 rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_#1a1a1a]">
+    <section aria-labelledby="ai-query-title" className="flex flex-col gap-3 rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_var(--color-shadow)]">
       <h2 id="ai-query-title" className="flex items-center gap-2 font-headline text-sm font-bold uppercase tracking-wide text-on-surface">
         {t('aiQuery.title')}
         <span className={BADGE_CLASS}>{t('aiQuery.aiBadge')}</span>

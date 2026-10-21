@@ -32,7 +32,7 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
   const { t, formatPrice, formatChangePercent, formatMultiple, formatNumber } = useI18n()
 
   return (
-    <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
@@ -102,7 +102,7 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
 
                 <td className="px-4 py-2 text-right">
                   {accentRvol ? (
-                    <span className="inline-flex rounded-[4px] border-2 border-outline bg-primary-container px-1.5 py-0.5 font-mono text-xs font-black text-on-primary-container shadow-[1px_1px_0px_#1a1a1a]">
+                    <span className="inline-flex rounded-[4px] border-2 border-outline bg-primary-container px-1.5 py-0.5 font-mono text-xs font-black text-on-primary-container shadow-[1px_1px_0px_var(--color-shadow)]">
                       {formatMultiple(candidate.rvol)}
                     </span>
                   ) : (
@@ -133,8 +133,8 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
                         <span
                           key={`pattern-${pattern.type}`}
                           data-testid="candidate-pattern"
-                          className={`rounded-[4px] border-2 border-dashed border-outline px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface ${
-                            pattern.status === 'confirmed' ? 'bg-primary-container' : 'bg-surface-bright'
+                          className={`rounded-[4px] border-2 border-dashed border-outline px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${
+                            pattern.status === 'confirmed' ? 'bg-primary-container text-on-primary-container' : 'bg-surface-bright text-on-surface'
                           }`}
                         >
                           {patternLabel(pattern.type, t)} · {t(`patterns.status.${pattern.status}`)}

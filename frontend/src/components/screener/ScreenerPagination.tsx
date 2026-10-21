@@ -8,7 +8,7 @@ import { useI18n } from '../../i18n/useI18n.ts'
 import { SCREENER_PAGE_SIZES, screenerPageCount } from '../../lib/screenerPagination.ts'
 
 const BUTTON_CLASS =
-  'rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0'
+  'rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0'
 
 interface ScreenerPaginationProps {
   page: number
@@ -35,7 +35,7 @@ export default function ScreenerPagination({
     <nav
       aria-label={t('screener.pagination.aria')}
       aria-busy={busy}
-      className="flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-outline bg-surface-bright px-4 py-3 shadow-[2px_2px_0px_#1a1a1a]"
+      className="flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-outline bg-surface-bright px-4 py-3 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <div className="flex items-center gap-2">
         <button
@@ -64,7 +64,7 @@ export default function ScreenerPagination({
         <select
           value={limit}
           onChange={(event) => onLimitChange(Number(event.target.value))}
-          className="rounded-md border-2 border-outline bg-surface-bright px-2 py-1 font-mono text-xs text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+          className="rounded-md border-2 border-outline bg-surface-bright px-2 py-1 font-mono text-xs text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
         >
           {SCREENER_PAGE_SIZES.map((size) => (
             <option key={size} value={size}>

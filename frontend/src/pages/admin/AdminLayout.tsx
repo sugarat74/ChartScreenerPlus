@@ -25,7 +25,7 @@ interface AdminNoticeProps {
 function AdminNotice({ eyebrow, title, message, children }: AdminNoticeProps) {
   return (
     <section className="mx-auto flex w-full max-w-lg flex-col gap-4">
-      <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+      <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
         {eyebrow}
       </span>
       <h2 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">
@@ -33,7 +33,7 @@ function AdminNotice({ eyebrow, title, message, children }: AdminNoticeProps) {
       </h2>
       <p className="text-sm text-on-surface-variant">{message}</p>
       {children ? (
-        <div className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
+        <div className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
           {children}
         </div>
       ) : null}
@@ -75,7 +75,7 @@ export default function AdminLayout() {
       <AdminNotice eyebrow={t('admin.eyebrow')} title={t('admin.signInTitle')} message={t('admin.signInBody')}>
         <Link
           to={LOGIN_ROUTE}
-          className="inline-block rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px"
+          className="inline-block rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px"
         >
           {t('admin.signIn')}
         </Link>
@@ -109,7 +109,7 @@ export default function AdminLayout() {
                 'rounded-md border-2 border-outline px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none',
                 isActive
                   ? 'bg-primary text-on-primary shadow-[2px_2px_0px_#ffcc00]'
-                  : 'bg-surface-bright text-on-surface shadow-[2px_2px_0px_#1a1a1a]',
+                  : 'bg-surface-bright text-on-surface shadow-[2px_2px_0px_var(--color-shadow)]',
               ].join(' ')
             }
           >

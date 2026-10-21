@@ -38,7 +38,7 @@ const RATIO_METRICS: ReadonlySet<FundamentalMetricKey> = new Set(['pe_ttm', 'net
 const MILLION_METRICS: ReadonlySet<FundamentalMetricKey> = new Set(['market_cap_millions', 'revenue_ttm_millions', 'ebitda_millions'])
 
 const BUTTON_CLASS =
-  'rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:translate-y-0 disabled:opacity-60'
+  'rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:translate-y-0 disabled:opacity-60'
 
 const BADGE_CLASS =
   'rounded border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-on-primary-container'
@@ -169,7 +169,7 @@ export default function CompanyCardPanel({ ticker }: { ticker: string }) {
       ref={sectionRef}
       id={COMPANY_CARD_ANCHOR}
       aria-labelledby="ai-company-card-title"
-      className="scroll-mt-24 rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]"
+      className="scroll-mt-24 rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <h2 id="ai-company-card-title" className="font-headline text-lg font-black uppercase">
         {t('companyCard.title')}

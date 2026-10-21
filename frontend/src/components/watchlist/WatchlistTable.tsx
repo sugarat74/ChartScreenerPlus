@@ -19,7 +19,7 @@ export default function WatchlistTable({ items, removingTicker, onRemove }: Watc
   const { t } = useI18n()
 
   return (
-    <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
@@ -65,7 +65,7 @@ export default function WatchlistTable({ items, removingTicker, onRemove }: Watc
                     onClick={() => onRemove(item.ticker)}
                     disabled={removing}
                     aria-label={t('watchlist.removeAria', { ticker: item.ticker })}
-                    className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+                    className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {removing ? t('watchlist.removing') : t('watchlist.remove')}
                   </button>

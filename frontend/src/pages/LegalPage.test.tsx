@@ -108,7 +108,7 @@ describe('legal pages while the owner data is missing', () => {
   it('cookie policy is published and lists the real storage with configured durations', async () => {
     renderAt('/cookies')
     const table = await screen.findByRole('table')
-    for (const name of ['alphapulse-session', 'XSRF-TOKEN', 'chartiko.locale']) {
+    for (const name of ['alphapulse-session', 'XSRF-TOKEN', 'chartiko.locale', 'chartiko.theme']) {
       expect(within(table).getByText(name)).toBeTruthy()
     }
     expect(within(table).getAllByText('120 minutos')).toHaveLength(2)

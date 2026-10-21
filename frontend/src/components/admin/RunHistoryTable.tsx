@@ -30,7 +30,7 @@ export default function RunHistoryTable({
   const { t, formatDateTime } = useI18n()
 
   return (
-    <section className="flex min-h-0 flex-col rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
+    <section className="flex min-h-0 flex-col rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-outline px-4 py-3">
         <div>
           <h3 className="font-headline text-sm font-black uppercase tracking-wider text-on-surface">
@@ -44,7 +44,7 @@ export default function RunHistoryTable({
           type="button"
           onClick={onRefresh}
           disabled={loading}
-          className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
+          className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? t('admin.refreshing') : t('admin.refresh')}
         </button>
@@ -109,7 +109,7 @@ export default function RunHistoryTable({
                         <button
                           type="button"
                           onClick={() => onSelect(run.id)}
-                          className="rounded-[4px] border-2 border-outline bg-surface-bright px-2 py-1 font-headline text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a] transition-transform hover:-translate-y-px"
+                          className="rounded-[4px] border-2 border-outline bg-surface-bright px-2 py-1 font-headline text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px"
                         >
                           {t('admin.view')}
                         </button>
@@ -118,7 +118,7 @@ export default function RunHistoryTable({
                             type="button"
                             onClick={() => onRetry(run.id)}
                             disabled={retryingId === run.id}
-                            className="rounded-[4px] border-2 border-outline bg-primary-container px-2 py-1 font-headline text-[10px] font-bold uppercase tracking-wider text-on-primary-container shadow-[1px_1px_0px_#1a1a1a] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
+                            className="rounded-[4px] border-2 border-outline bg-primary-container px-2 py-1 font-headline text-[10px] font-bold uppercase tracking-wider text-on-primary-container shadow-[1px_1px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             {retryingId === run.id ? t('admin.retrying') : t('admin.retry')}
                           </button>

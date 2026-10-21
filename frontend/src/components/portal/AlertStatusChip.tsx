@@ -13,7 +13,7 @@ export default function AlertStatusChip({ alert }: { alert: Alert | undefined })
 
   return (
     <span
-      className={`rounded-[4px] border border-outline px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider shadow-[1px_1px_0px_#1a1a1a] ${tone}`}
+      className={`rounded-[4px] border border-outline px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider shadow-[1px_1px_0px_var(--color-shadow)] ${tone}`}
     >
       {label}
     </span>

@@ -37,7 +37,7 @@ const LEGEND_CLASS =
   'font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface-variant'
 
 const NUMBER_INPUT_CLASS =
-  'w-24 rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
+  'w-24 rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
 const MA_CROSS_OPTIONS: ReadonlyArray<{ value: ScreenerMaCross | null; labelKey: MessageKey }> = [
   { value: null, labelKey: 'screener.maCrossAny' },
@@ -103,7 +103,7 @@ export default function ScreenerFilterPanel({
   }
 
   return (
-    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
+    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
@@ -309,7 +309,7 @@ export default function ScreenerFilterPanel({
           type="button"
           onClick={onClear}
           disabled={activeCount === 0}
-          className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
         >
           {t('screener.clearFilters')}
         </button>

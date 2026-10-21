@@ -1479,5 +1479,29 @@
       "2026-10-19 independent validator ACCEPT: init.ps1 exit 0 (Laravel 534 passed / 6 skipped, Vitest 193, engine 67); ScreenerApiTest unchanged (empty diff) and green with ScreenerFilterParser shared by both paths; strict AI output validation with no partial application; auth-only, throttled, capped, cache before caps; query-text marker absent from tables, cache and logs; plain-text rendering; deviations (scope exception, Recipients, ai_screener_log_days, PHP range checks) accepted. Non-blocking: caps not locked, privacy wording review, DevExpert processor terms. CI and production real-provider smoke pending."
     ],
     "notes": "Requested 2026-10-19. Spec: docs/specs/ai-screener-natural-language.md. Reuses the DevExpert Inference provider of the AI company card with its own enable flag and caps. No new filters (sector, price, fundamentals are reported as unsupported)."
+  },
+  {
+    "id": "ui-dark-mode",
+    "area": "ui",
+    "title": "Dark mode selectable from the header",
+    "user_visible_behavior": "Every visitor can switch the whole SPA between the light design and a dark one with a sun/moon selector next to the language selector in the header (visible on the home page). The choice applies at once on every surface, including the chart canvas and the How it works schematics, persists in local storage (chartiko.theme) and, until a choice is made, follows the operating system. No flash on load.",
+    "depends_on": [
+      "app-shell-navigation",
+      "app-multilanguage"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Vitest: OS default, stored choice wins, choosing sets data-theme and storage, storage failures tolerated, selector aria-pressed, no literal #1a1a1a shadow/accent in class names, cookie table lists chartiko.theme",
+      "Browser QA at 1280 and 390 px in both themes (home, chart, How it works, Portal, legal) and no flash on reload with a stored dark choice",
+      ".\\init.ps1 and CI pass"
+    ],
+    "evidence": [
+      "2026-10-21 .\\init.ps1 exit 0: Laravel 538 passed / 6 skipped, Vitest 205 (28 files), SPA lint + build, engine 67",
+      "src/theme/ThemeProvider.test.tsx 5 tests (OS default and live change, stored choice wins, invalid value, blocked storage); src/theme/themeTokens.test.ts 2 guards (no #1a1a1a in class names, dark block covers every light color token); LegalPage.test.tsx lists chartiko.theme",
+      "Edge QA on a local preview (API forwarded to production): home, chart, How it works, cookies, Portal at 1280 and 390 px in both themes, 0 px overflow; stored dark choice paints the static fallback dark before React; toggle switches and stores without reload; light theme unchanged",
+      "Validator round 1 revise (off-white text on yellow/green fills in dark: confirmed pattern chips, Forecast panel, Admin badges and run log); fixed in dc35e66 with paired ink classes, on-gain token, .terminal-panel scope and #7aa2ff chart blue; new confirmed-chip test",
+      "2026-10-21 independent validator ACCEPT: init.ps1 exit 0 (Laravel 538 passed / 6 skipped, Vitest 206, engine 67); runtime contrast sweep in dark on 13 pages (incl. signed-in chart, Portal, account, notifications, Admin ingestion/log/activity, 404) with no text pair under 4.5:1. Non-blocking: Admin banner terminal look (applied), pre-existing light-theme green/red text 3.1-3.9:1 (follow-up)"
+    ],
+    "notes": "Requested 2026-10-21. Spec: docs/specs/ui-dark-mode.md. Same token names with dark values under :root[data-theme='dark']; DESIGN.md documents the palette."
   }
 ]

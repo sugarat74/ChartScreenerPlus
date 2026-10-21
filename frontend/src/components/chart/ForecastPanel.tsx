@@ -52,10 +52,10 @@ export default function ForecastPanel({ ticker }: { ticker: string }) {
   const label = forecast?.signal === 'up' ? t('forecast.up') : forecast?.signal === 'down' ? t('forecast.down') : t('forecast.noSignal')
 
   return (
-    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]" aria-label={t('forecast.title')}>
+    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]" aria-label={t('forecast.title')}>
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="font-headline text-lg font-black uppercase">{t('forecast.title')}</h2>
-        <span className="rounded border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] uppercase">{t('forecast.experimental')}</span>
+        <span className="rounded border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] uppercase text-on-primary-container">{t('forecast.experimental')}</span>
       </div>
       <p className="mt-2 text-sm text-on-surface-variant">{t('forecast.explanation')}</p>
       <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={(event) => void submit(event)}>
@@ -67,7 +67,7 @@ export default function ForecastPanel({ ticker }: { ticker: string }) {
         <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="forecast-minimum">{t('forecast.minimum')}
           <input id="forecast-minimum" className="w-28 rounded border-2 border-outline bg-surface-bright p-2" type="number" min="0" max="100" step="1" required value={minimum} onChange={(event) => { invalidateResult(); setMinimum(Number(event.target.value)) }} />
         </label>
-        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase shadow-[2px_2px_0px_#1a1a1a] disabled:opacity-60" type="submit" disabled={loading}>{loading ? t('common.loading') : t('forecast.analyze')}</button>
+        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] disabled:opacity-60" type="submit" disabled={loading}>{loading ? t('common.loading') : t('forecast.analyze')}</button>
       </form>
       {error ? <p role="alert" className="mt-3 text-sm text-secondary">{error}</p> : null}
       {forecast ? (

@@ -4,7 +4,7 @@ import type { IngestionRunStatus } from '../../lib/api.ts'
 const CLASSES: Record<IngestionRunStatus, string> = {
   queued: 'border-outline-variant bg-surface-dim text-on-surface-variant',
   running: 'border-tertiary bg-tertiary-container text-on-tertiary-container',
-  completed: 'border-gain bg-gain text-primary',
+  completed: 'border-gain bg-gain text-on-gain',
   partial: 'border-secondary bg-primary-container text-on-primary-container',
   failed: 'border-secondary bg-secondary-container text-on-secondary-container',
 }

@@ -9,7 +9,7 @@ import { adminUsersApi } from '../../lib/api.ts'
 
 function Tile({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_var(--color-shadow)]">
       <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{label}</p>
       <p className="mt-2 font-headline text-2xl font-black text-on-surface">{value}</p>
       {hint ? <p className="mt-1 font-mono text-[11px] text-on-surface-variant">{hint}</p> : null}
@@ -89,7 +89,7 @@ export default function AdminUsersPage() {
             key={search}
             defaultValue={search}
             placeholder={t('adminUsers.searchPlaceholder')}
-            className="w-72 rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+            className="w-72 rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
           />
         </div>
         <button type="submit" className={`bg-primary-container text-on-primary-container ${ADMIN_BUTTON_CLASS}`}>
@@ -111,7 +111,7 @@ export default function AdminUsersPage() {
                   : t('adminUsers.usersNoMatch', { search })}
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
+            <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
               <table className="w-full border-collapse text-left">
                 <thead>
                   <tr className={ADMIN_TABLE_HEAD_CLASS}>

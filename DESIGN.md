@@ -98,6 +98,19 @@ None. The prototype already provides the visual language; no image generation wa
 - **Context accents:** red (`#e63b2e`) for AI/attention, blue (`#0055ff`) for admin/pipeline.
 - Do not introduce new hues; extend the existing palette if truly needed.
 
+### Dark theme
+
+Selectable in the header (sun/moon control next to the language selector, `ui-dark-mode`); without a stored choice it follows the operating system. Same token names, dark values under `:root[data-theme='dark']` in `frontend/src/index.css`:
+
+- **Ink → warm off-white:** `primary` / `on-surface` `#f2ede5`, `outline` `#e8e3da`, `on-surface-variant` `#b5afa6`, `outline-variant` `#4a4741`. `on-primary` becomes `#1a1a1a`.
+- **Surfaces:** page `#181715`, panels `#2a2825`, elevated cards `#22201d` (container scale `#0f0e0d` → `#3a3834`).
+- **Accent unchanged:** `#ffcc00` with `#1a1a1a` ink, same as the light theme.
+- **Signals lightened for contrast:** gains `#34d399`, losses/attention `#ff6b5e`, pipeline blue `#7aa2ff`; containers `#4a1f1b` (red) and `#1f2c4d` (blue).
+- **Hard shadows:** the offset uses `var(--color-shadow)` (`#1a1a1a` light, `#000000` dark); never write the ink hex in a shadow or accent class (a Vitest guard enforces it).
+- **Chart canvas:** background, text, grid and borders follow the theme; candle outlines use each candle's hue in dark, and SMA/breakout lines and pattern markers use the lighter blue.
+- **Text on filled accents:** always pair the fill with its own ink: `bg-primary-container text-on-primary-container`, `bg-gain text-on-gain` (`#1a1a1a` in both themes). Never leave the text to inherit `on-surface`, which is off-white in dark.
+- **Admin run log** stays a black terminal in both themes (`.terminal-panel` pins the light token values inside it).
+
 ## Typography
 
 - **Headline / display:** Space Grotesk, bold/black weights, often uppercase.
@@ -118,7 +131,7 @@ None. The prototype already provides the visual language; no image generation wa
 
 - 2px solid `#1a1a1a` borders on cards, buttons, inputs and badges.
 - Small radii (4-6px). Avoid pill shapes except status chips and the user avatar.
-- Hard offset shadows (`2px 2px 0 #1a1a1a`, larger `4px 4px 0 #ffcc00` for emphasis), never soft/blurred shadows.
+- Hard offset shadows (`2px 2px 0 #1a1a1a`, written `shadow-[2px_2px_0px_var(--color-shadow)]` so it follows the theme; larger `4px 4px 0 #ffcc00` for emphasis), never soft/blurred shadows.
 - Pressed/active state translates the element by the shadow offset.
 
 ## Components

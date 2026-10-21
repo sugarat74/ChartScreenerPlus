@@ -14,7 +14,7 @@ export default function LanguageSelector() {
     <div
       role="group"
       aria-label={t('language.selectorAria')}
-      className="inline-flex overflow-hidden rounded-[4px] border-2 border-outline shadow-[2px_2px_0px_#1a1a1a]"
+      className="inline-flex overflow-hidden rounded-[4px] border-2 border-outline shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       {SUPPORTED_LOCALES.map((code, index) => {
         const definition = LOCALE_DEFINITIONS[code]

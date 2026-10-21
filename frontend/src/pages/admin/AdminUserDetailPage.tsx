@@ -99,7 +99,7 @@ export default function AdminUserDetailPage() {
       {notice ? <AdminNoticeLine tone={notice.tone} message={notice.message} /> : null}
       {detail.error ? <AdminError message={detail.error} onRetry={detail.reload} /> : null}
 
-      <dl className="grid grid-cols-2 gap-3 rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_#1a1a1a] md:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-3 rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_var(--color-shadow)] md:grid-cols-3">
         {facts.map(([label, value]) => (
           <div key={label}>
             <dt className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{label}</dt>
@@ -117,7 +117,7 @@ export default function AdminUserDetailPage() {
             {t('adminUsers.sessionsEmpty')}
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
+          <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className={ADMIN_TABLE_HEAD_CLASS}>

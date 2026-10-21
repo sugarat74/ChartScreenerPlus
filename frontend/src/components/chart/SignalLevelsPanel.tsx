@@ -30,7 +30,7 @@ export default function SignalLevelsPanel({ signals }: { signals: InstrumentSign
   const { t, formatPrice, formatMultiple, formatMarketDate } = useI18n()
 
   return (
-    <div className="rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_var(--color-shadow)]">
       <p className="font-headline text-xs font-bold uppercase tracking-wider text-on-surface">
         {t('chart.activeSignals')}
       </p>

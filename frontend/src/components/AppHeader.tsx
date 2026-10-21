@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/useI18n.ts'
 import { ACCOUNT_ROUTE, DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
 import LanguageSelector from './LanguageSelector.tsx'
 import NotificationBell from './NotificationBell.tsx'
+import ThemeSelector from './ThemeSelector.tsx'
 
 /** Sticky product chrome: brand, language, session controls and route-backed tabs. */
 export default function AppHeader() {
@@ -42,7 +43,7 @@ export default function AppHeader() {
               <span className="font-headline text-xl font-black tracking-tight text-on-surface">
                 CHARTIKO
               </span>
-              <span className="rounded-[4px] border border-outline bg-primary-container px-1.5 py-0.5 font-mono text-[10px] font-bold text-on-primary-container shadow-[1px_1px_0px_#1a1a1a]">
+              <span className="rounded-[4px] border border-outline bg-primary-container px-1.5 py-0.5 font-mono text-[10px] font-bold text-on-primary-container shadow-[1px_1px_0px_var(--color-shadow)]">
                 {t('header.badge')}
               </span>
             </div>
@@ -53,10 +54,11 @@ export default function AppHeader() {
         </Link>
 
         <div className="flex flex-wrap items-center gap-3">
+          <ThemeSelector />
           <LanguageSelector />
 
           {status === 'loading' ? (
-            <div className="flex items-center gap-2 rounded-full border-2 border-outline bg-surface-bright py-1 pr-2.5 pl-1 shadow-[2px_2px_0px_#1a1a1a]">
+            <div className="flex items-center gap-2 rounded-full border-2 border-outline bg-surface-bright py-1 pr-2.5 pl-1 shadow-[2px_2px_0px_var(--color-shadow)]">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-dim font-headline text-xs font-bold text-on-surface-variant">
                 ··
               </span>
@@ -73,7 +75,7 @@ export default function AppHeader() {
                 to={ACCOUNT_ROUTE}
                 aria-label={t('header.accountAria', { name: user.name })}
                 title={t('header.account')}
-                className="flex items-center gap-2 rounded-full border-2 border-outline bg-surface-bright py-1 pr-2.5 pl-1 shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+                className="flex items-center gap-2 rounded-full border-2 border-outline bg-surface-bright py-1 pr-2.5 pl-1 shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary font-headline text-xs font-bold uppercase text-on-primary">
                   {user.name.charAt(0)}
@@ -89,7 +91,7 @@ export default function AppHeader() {
                 type="button"
                 onClick={handleSignOut}
                 disabled={signingOut}
-                className="rounded-md border-2 border-outline bg-surface-bright px-2.5 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] disabled:cursor-not-allowed disabled:opacity-70"
+                className="rounded-md border-2 border-outline bg-surface-bright px-2.5 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {signingOut ? t('header.signingOut') : t('header.signOut')}
               </button>
@@ -97,7 +99,7 @@ export default function AppHeader() {
           ) : (
             <Link
               to={LOGIN_ROUTE}
-              className="rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px"
+              className="rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px"
             >
               {t('header.signIn')}
             </Link>
