@@ -198,7 +198,7 @@ export default function ScreenerPage() {
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
             {t('screener.badge')}
           </span>
           <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
@@ -252,7 +252,7 @@ export default function ScreenerPage() {
           {data !== null ? (
             <span
               title={t('screener.universeTitle')}
-              className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]"
+              className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]"
             >
               {t('screener.universe', { name: data.universeName })}
             </span>

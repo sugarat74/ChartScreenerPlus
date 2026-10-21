@@ -25,7 +25,7 @@ export default function NotificationBell() {
       title={label}
       className={({ isActive }) =>
         [
-          'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border-2 border-outline text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none',
+          'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border-2 border-outline text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none',
           isActive ? 'bg-surface-container' : 'bg-surface-bright',
         ].join(' ')
       }

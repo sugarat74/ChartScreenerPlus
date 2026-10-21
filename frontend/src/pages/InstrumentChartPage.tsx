@@ -46,7 +46,7 @@ function isAbortError(error: unknown): boolean {
 }
 
 const ACTION_LINK_CLASS =
-  'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
+  'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
 function ScreenerLink() {
   const { t } = useI18n()
@@ -89,7 +89,7 @@ function LegendValue({
 function GuidancePanel() {
   const { t } = useI18n()
   return (
-    <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_var(--color-shadow)]">
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
         {t('chart.guidanceTitle')}
       </p>
@@ -107,7 +107,7 @@ function LoadingPanel() {
     <div
       role="status"
       aria-busy="true"
-      className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]"
+      className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
         {t('chart.loadingInstrument')}
@@ -120,7 +120,7 @@ function LoadingPanel() {
 function NotFoundPanel({ message }: { message: string }) {
   const { t } = useI18n()
   return (
-    <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_var(--color-shadow)]">
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
         {t('chart.notFoundTitle')}
       </p>
@@ -135,7 +135,7 @@ function NotFoundPanel({ message }: { message: string }) {
 function EmptyPanel({ ticker }: { ticker: string }) {
   const { t } = useI18n()
   return (
-    <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_var(--color-shadow)]">
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
         {t('chart.emptyTitle', { ticker })}
       </p>
@@ -152,7 +152,7 @@ function ErrorPanel({ message, onRetry }: { message: string; onRetry: () => void
   return (
     <div
       role="alert"
-      className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_#1a1a1a]"
+      className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <div>
         <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">
@@ -235,7 +235,7 @@ export default function InstrumentChartPage() {
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
             {t('chart.badge')}
           </span>
           <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
@@ -260,7 +260,7 @@ export default function InstrumentChartPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             {current !== null ? (
-              <span className="rounded-[4px] border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-primary-container shadow-[1px_1px_0px_#1a1a1a]">
+              <span className="rounded-[4px] border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-primary-container shadow-[1px_1px_0px_var(--color-shadow)]">
                 {t('chart.analysisBadge')}
               </span>
             ) : null}
@@ -295,7 +295,7 @@ export default function InstrumentChartPage() {
 
       {current !== null && current.bars.length > 0 && lastBar !== null ? (
         <>
-          <div className="rounded-md border-2 border-outline bg-surface-bright p-3 shadow-[2px_2px_0px_#1a1a1a]">
+          <div className="rounded-md border-2 border-outline bg-surface-bright p-3 shadow-[2px_2px_0px_var(--color-shadow)]">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs">
               <span className="font-bold text-on-surface">{formatMarketDate(lastBar.date)}</span>
               <LegendValue label={t('chart.legendOpen')} value={formatPrice(lastBar.open)} />

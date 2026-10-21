@@ -132,6 +132,11 @@ export const es = {
     label: 'Idioma',
     selectorAria: 'Cambiar idioma',
   },
+  theme: {
+    selectorAria: 'Cambiar tema de color',
+    light: 'Tema claro',
+    dark: 'Tema oscuro',
+  },
   header: {
     homeAria: 'Chartiko · inicio',
     badge: 'SCREENER',

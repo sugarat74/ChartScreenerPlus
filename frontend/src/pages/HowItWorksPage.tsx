@@ -13,9 +13,9 @@ import type { GuideSection } from '../i18n/guide/types.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 
 const CTA_CLASS =
-  'inline-flex w-fit items-center rounded-md border-2 border-outline bg-primary-container px-5 py-3 font-headline text-sm font-bold uppercase tracking-wide text-on-primary-container shadow-[3px_3px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:outline-2 focus:outline-offset-4 focus:outline-outline'
+  'inline-flex w-fit items-center rounded-md border-2 border-outline bg-primary-container px-5 py-3 font-headline text-sm font-bold uppercase tracking-wide text-on-primary-container shadow-[3px_3px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:outline-2 focus:outline-offset-4 focus:outline-outline'
 
-const CARD_CLASS = 'border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]'
+const CARD_CLASS = 'border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]'
 
 const LINK_CLASS =
   'font-mono text-xs font-bold text-on-surface underline-offset-4 hover:underline focus:outline-2 focus:outline-offset-2 focus:outline-outline'

@@ -51,7 +51,7 @@ export default function RunLogStream({
   })
 
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-md border-2 border-outline bg-primary shadow-[2px_2px_0px_#1a1a1a]">
+    <section className="flex min-h-0 flex-col overflow-hidden rounded-md border-2 border-outline bg-primary shadow-[2px_2px_0px_var(--color-shadow)]">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-primary px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span className="font-headline text-sm font-black uppercase tracking-wider text-on-primary">

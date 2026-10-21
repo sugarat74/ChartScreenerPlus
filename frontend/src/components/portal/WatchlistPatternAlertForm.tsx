@@ -18,10 +18,10 @@ import { LOGIN_ROUTE } from '../../nav.ts'
 import AlertStatusChip from './AlertStatusChip.tsx'
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+  'rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
 
 const SECONDARY_BUTTON_CLASS =
-  'rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+  'rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
 
 const LEGEND_CLASS = 'mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant'
 
@@ -134,7 +134,7 @@ export default function WatchlistPatternAlertForm({ alert, disabled, onSaved, on
   return (
     <section
       aria-labelledby="pattern-alert-heading"
-      className="flex flex-col gap-3 rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_#1a1a1a]"
+      className="flex flex-col gap-3 rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
@@ -157,7 +157,7 @@ export default function WatchlistPatternAlertForm({ alert, disabled, onSaved, on
                   type="checkbox"
                   checked={types.includes(type)}
                   onChange={() => toggleType(type)}
-                  className="h-4 w-4 accent-[#1a1a1a]"
+                  className="h-4 w-4 accent-primary"
                 />
                 {patternLabel(type, t)}
               </label>
@@ -174,7 +174,7 @@ export default function WatchlistPatternAlertForm({ alert, disabled, onSaved, on
                   type="checkbox"
                   checked={events.includes(event)}
                   onChange={() => toggleEvent(event)}
-                  className="h-4 w-4 accent-[#1a1a1a]"
+                  className="h-4 w-4 accent-primary"
                 />
                 {t(`alerts.patternEvents.${event}` as const)}
               </label>

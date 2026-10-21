@@ -34,7 +34,7 @@ interface TileProps {
 
 function Tile({ label, children, hint }: TileProps) {
   return (
-    <div className="rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_var(--color-shadow)]">
       <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
         {label}
       </p>

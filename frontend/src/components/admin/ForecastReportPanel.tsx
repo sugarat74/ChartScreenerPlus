@@ -21,7 +21,7 @@ export default function ForecastReportPanel() {
   }, [t])
 
   return (
-    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
+    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
       <h2 className="font-headline text-lg font-black uppercase">{t('forecast.adminTitle')}</h2>
       {error ? <p role="alert">{error}</p> : null}
       {!error && groups.length === 0 ? <p className="mt-2 text-sm">{t('forecast.adminEmpty')}</p> : null}

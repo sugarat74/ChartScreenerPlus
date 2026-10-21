@@ -20,10 +20,10 @@ import { LOGIN_ROUTE } from '../nav.ts'
 import { useUnreadNotifications } from '../notifications/useUnreadNotifications.ts'
 
 const PRIMARY_BUTTON_CLASS =
-  'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+  'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
 
 const SECONDARY_BUTTON_CLASS =
-  'w-fit rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+  'w-fit rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
 
 function notificationTitle(notification: AppNotification, t: Translate): string {
   if (notification.kind === 'watchlist_signal') {
@@ -176,7 +176,7 @@ function NotificationsInbox() {
     <section className="flex flex-col gap-6" aria-labelledby="notifications-heading">
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+          <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
             {t('portal.badge')}
           </span>
           <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
@@ -213,7 +213,7 @@ function NotificationsInbox() {
       ) : null}
 
       {loading ? (
-        <div role="status" aria-busy="true" className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
+        <div role="status" aria-busy="true" className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
           <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">{t('notifications.loading')}</p>
           <div className="mt-4 flex flex-col gap-2" aria-hidden="true">
             <div className="h-14 rounded-[2px] bg-surface-container" />
@@ -223,7 +223,7 @@ function NotificationsInbox() {
       ) : null}
 
       {!loading && error !== null ? (
-        <div role="alert" className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_#1a1a1a]">
+        <div role="alert" className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
           <div>
             <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">{t('notifications.loadError')}</p>
             <p className="mt-1 font-mono text-xs text-on-secondary-container">{error}</p>
@@ -233,7 +233,7 @@ function NotificationsInbox() {
       ) : null}
 
       {!loading && error === null && items.length === 0 ? (
-        <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
+        <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_var(--color-shadow)]">
           <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">{t('notifications.emptyTitle')}</p>
           <p className="mx-auto mt-2 max-w-xl text-sm text-on-surface-variant">{t('notifications.emptyBody')}</p>
           <div className="mt-4 flex justify-center">
@@ -249,13 +249,13 @@ function NotificationsInbox() {
             return (
               <li
                 key={notification.id}
-                className={`flex flex-col gap-3 rounded-md border-2 border-outline p-4 shadow-[2px_2px_0px_#1a1a1a] ${unread ? 'bg-surface-bright' : 'bg-surface-container'}`}
+                className={`flex flex-col gap-3 rounded-md border-2 border-outline p-4 shadow-[2px_2px_0px_var(--color-shadow)] ${unread ? 'bg-surface-bright' : 'bg-surface-container'}`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`rounded-[4px] border border-outline px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider shadow-[1px_1px_0px_#1a1a1a] ${unread ? 'bg-secondary text-on-secondary' : 'bg-surface-dim text-on-surface'}`}
+                        className={`rounded-[4px] border border-outline px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider shadow-[1px_1px_0px_var(--color-shadow)] ${unread ? 'bg-secondary text-on-secondary' : 'bg-surface-dim text-on-surface'}`}
                       >
                         {unread ? t('notifications.unread') : t('notifications.read')}
                       </span>
@@ -287,7 +287,7 @@ function NotificationsInbox() {
                           to={`/instruments/${encodeURIComponent(item.ticker)}`}
                           aria-label={`${t('notifications.openChartAria', { ticker: item.ticker })}: ${label}`}
                           title={item.name ?? undefined}
-                          className="flex items-center gap-1.5 rounded-[4px] border-2 border-outline bg-surface-container-lowest px-2 py-1 shadow-[1px_1px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+                          className="flex items-center gap-1.5 rounded-[4px] border-2 border-outline bg-surface-container-lowest px-2 py-1 shadow-[1px_1px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
                         >
                           <span className="font-mono text-xs font-bold text-on-surface">{item.ticker}</span>
                           <span className="min-w-0 break-words text-[11px] text-on-surface-variant">{label}</span>

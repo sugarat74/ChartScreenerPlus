@@ -21,10 +21,10 @@ import type { PortalAlerts } from './usePortalAlerts.ts'
 
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+  'rounded-md border-2 border-outline bg-primary-container px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
 
 const SECONDARY_BUTTON_CLASS =
-  'rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+  'rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
 
 /**
  * `alerts` is the Portal's alert list: each row carries its "notify me of new
@@ -123,7 +123,7 @@ export default function PortalSavedScreeners({ alerts }: { alerts: PortalAlerts 
             {t('saved.portalIntro')}
           </p>
         </div>
-        <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+        <span className="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
           {items.length === 1
             ? t('saved.countOne', { count: items.length })
             : t('saved.countOther', { count: items.length })}
@@ -131,7 +131,7 @@ export default function PortalSavedScreeners({ alerts }: { alerts: PortalAlerts 
       </header>
 
       {loading ? (
-        <div role="status" aria-busy="true" className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
+        <div role="status" aria-busy="true" className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
           <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">{t('saved.loading')}</p>
           <div className="mt-4 flex flex-col gap-2" aria-hidden="true">
             <div className="h-9 rounded-[2px] bg-surface-container" />
@@ -141,7 +141,7 @@ export default function PortalSavedScreeners({ alerts }: { alerts: PortalAlerts 
       ) : null}
 
       {!loading && error !== null ? (
-        <div role="alert" className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_#1a1a1a]">
+        <div role="alert" className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
           <div>
             <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">{t('saved.loadError')}</p>
             <p className="mt-1 font-mono text-xs text-on-secondary-container">{error}</p>
@@ -151,7 +151,7 @@ export default function PortalSavedScreeners({ alerts }: { alerts: PortalAlerts 
       ) : null}
 
       {!loading && error === null && items.length === 0 ? (
-        <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
+        <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_var(--color-shadow)]">
           <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">{t('saved.portalEmptyTitle')}</p>
           <p className="mt-2 text-sm text-on-surface-variant">{t('saved.portalEmptyBody')}</p>
         </div>
@@ -160,7 +160,7 @@ export default function PortalSavedScreeners({ alerts }: { alerts: PortalAlerts 
       {!loading && error === null && items.length > 0 ? (
         <>
           {removeError !== null ? <p role="alert" className="rounded-[4px] border-2 border-secondary bg-secondary-container px-3 py-2 font-mono text-xs text-on-secondary-container">{removeError}</p> : null}
-          <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
+          <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">

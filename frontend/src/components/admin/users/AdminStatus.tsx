@@ -1,7 +1,7 @@
 import { useI18n } from '../../../i18n/useI18n.ts'
 
 export const ADMIN_BUTTON_CLASS =
-  'rounded-md border-2 border-outline px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+  'rounded-md border-2 border-outline px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
 
 export const ADMIN_TABLE_HEAD_CLASS =
   'border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant'
@@ -22,7 +22,7 @@ export function AdminError({ message, onRetry }: { message: string; onRetry: () 
   return (
     <div
       role="alert"
-      className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-4 shadow-[2px_2px_0px_#1a1a1a]"
+      className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-4 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <p className="font-mono text-xs text-on-secondary-container">{message}</p>
       <button type="button" onClick={onRetry} className={`w-fit bg-primary-container text-on-primary-container ${ADMIN_BUTTON_CLASS}`}>

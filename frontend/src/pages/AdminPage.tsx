@@ -198,7 +198,7 @@ export default function AdminPage() {
 
       <form
         onSubmit={handleTrigger}
-        className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]"
+        className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
       >
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex min-w-60 flex-1 flex-col gap-1.5">
@@ -213,14 +213,14 @@ export default function AdminPage() {
               name="universe"
               value={universe}
               onChange={(event) => setUniverse(event.target.value)}
-              className="rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+              className="rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={triggering}
-            className="rounded-md border-2 border-outline bg-primary-container px-5 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[3px_3px_0px_#1a1a1a] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded-md border-2 border-outline bg-primary-container px-5 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[3px_3px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
           >
             {triggering ? t('admin.triggering') : t('admin.trigger')}
           </button>

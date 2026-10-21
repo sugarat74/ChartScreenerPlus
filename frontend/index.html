@@ -21,6 +21,20 @@
       {"@context":"https://schema.org","@type":"WebSite","name":"Chartiko","url":"https://www.chartiko.com/","inLanguage":"es","description":"Screener de acciones del S&P 500 con filtros técnicos, candidatos ordenados y gráficos interactivos."}
     </script>
     <title>Chartiko | Screener de análisis técnico de acciones</title>
+    <script>
+      // Color theme before the first paint (no flash); same rule as
+      // src/theme/theme.ts: the stored choice, else the operating system.
+      (function () {
+        var theme = null
+        try {
+          theme = window.localStorage.getItem('chartiko.theme')
+        } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+        document.documentElement.setAttribute('data-theme', theme)
+      })()
+    </script>
   </head>
   <body>
     <!--
@@ -37,7 +51,7 @@
               <div>
                 <div class="flex items-center gap-2">
                   <span class="font-headline text-xl font-black tracking-tight text-on-surface">CHARTIKO</span>
-                  <span class="rounded-[4px] border border-outline bg-primary-container px-1.5 py-0.5 font-mono text-[10px] font-bold text-on-primary-container shadow-[1px_1px_0px_#1a1a1a]">SCREENER</span>
+                  <span class="rounded-[4px] border border-outline bg-primary-container px-1.5 py-0.5 font-mono text-[10px] font-bold text-on-primary-container shadow-[1px_1px_0px_var(--color-shadow)]">SCREENER</span>
                 </div>
                 <p class="hidden font-mono text-xs text-on-surface-variant sm:block">Screener de análisis técnico</p>
               </div>
@@ -53,7 +67,7 @@
           <section class="flex flex-col gap-6">
             <header class="flex flex-col gap-2">
               <div class="flex flex-wrap items-center gap-3">
-                <span class="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">Superficie</span>
+                <span class="rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">Superficie</span>
                 <span class="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">Acceso público</span>
               </div>
               <h1 class="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">Screener</h1>

@@ -7,7 +7,7 @@ export default function NotFoundPage() {
 
   return (
     <section className="flex flex-col gap-5">
-      <span className="w-fit rounded-[4px] border border-outline bg-secondary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-secondary-container shadow-[1px_1px_0px_#1a1a1a]">
+      <span className="w-fit rounded-[4px] border border-outline bg-secondary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-secondary-container shadow-[1px_1px_0px_var(--color-shadow)]">
         404
       </span>
 
@@ -22,7 +22,7 @@ export default function NotFoundPage() {
 
       <Link
         to={DEFAULT_ROUTE}
-        className="w-fit rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-sm font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a]"
+        className="w-fit rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-sm font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)]"
       >
         {t('notFound.back')}
       </Link>

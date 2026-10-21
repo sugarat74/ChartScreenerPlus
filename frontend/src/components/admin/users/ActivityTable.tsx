@@ -32,7 +32,7 @@ export default function ActivityTable({ events, showUser = false, emptyMessage }
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">

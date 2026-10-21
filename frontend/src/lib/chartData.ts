@@ -30,6 +30,31 @@ export const CHART_COLORS = {
   tertiary: '#0055ff', // --color-tertiary
 } as const
 
+/**
+ * Canvas chrome per color theme (ui-dark-mode): background, text, grid and
+ * borders follow the theme; the data hues above are the same in both. Each
+ * dark entry is the `:root[data-theme='dark']` value of the same token.
+ */
+export const CHART_THEME_COLORS = {
+  light: {
+    background: CHART_COLORS.surfaceBright,
+    text: CHART_COLORS.ink,
+    grid: CHART_COLORS.grid,
+    border: CHART_COLORS.ink,
+    // Candle outlines: ink in light; in dark each candle keeps its own hue.
+    candleUp: CHART_COLORS.ink,
+    candleDown: CHART_COLORS.ink,
+  },
+  dark: {
+    background: '#22201d', // --color-surface-bright
+    text: '#f2ede5', // --color-on-surface
+    grid: '#4a4741', // --color-outline-variant
+    border: '#e8e3da', // --color-outline
+    candleUp: CHART_COLORS.gain,
+    candleDown: CHART_COLORS.loss,
+  },
+} as const
+
 /** Structural input types (the API payload is assignable to these). */
 export interface ChartBar {
   date: string

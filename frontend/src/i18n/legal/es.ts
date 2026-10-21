@@ -216,6 +216,13 @@ export const legalEs: LegalTexts = {
         duration: 'Hasta que lo borres',
         category: 'Preferencia que eliges tú',
       },
+      {
+        name: 'chartiko.theme',
+        type: 'Almacenamiento local propio',
+        purpose: 'Recuerda el tema de color (claro u oscuro) que eliges.',
+        duration: 'Hasta que lo borres',
+        category: 'Preferencia que eliges tú',
+      },
     ],
     sections: [
       {
@@ -227,7 +234,7 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Cómo eliminarlas',
         paragraphs: [
-          'Puedes borrar o bloquear las cookies y el almacenamiento local desde la configuración de tu navegador. Si bloqueas las cookies técnicas no podrás iniciar sesión; si borras la preferencia de idioma, Chartiko usará el idioma de tu navegador.',
+          'Puedes borrar o bloquear las cookies y el almacenamiento local desde la configuración de tu navegador. Si bloqueas las cookies técnicas no podrás iniciar sesión; si borras la preferencia de idioma o de tema, Chartiko usará el idioma o el tema de color de tu navegador.',
         ],
       },
       {

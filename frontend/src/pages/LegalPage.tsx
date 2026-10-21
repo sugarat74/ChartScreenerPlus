@@ -46,7 +46,7 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
     )
   } else if (!isPublished(kind, state.info)) {
     body = (
-      <div className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]">
+      <div className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
         <h2 className="font-headline text-lg font-bold">{t('legal.pendingTitle')}</h2>
         <p className="mt-2 text-sm leading-6 text-on-surface-variant">{t('legal.pendingBody')}</p>
       </div>

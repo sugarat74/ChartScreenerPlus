@@ -31,7 +31,7 @@ function LoadingPanel() {
     <div
       role="status"
       aria-busy="true"
-      className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]"
+      className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
         {t('screener.loadingCandidates')}
@@ -58,7 +58,7 @@ interface EmptyPanelProps {
 function EmptyPanel({ hasFilters, onClearFilters }: EmptyPanelProps) {
   const { t } = useI18n()
   return (
-    <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_#1a1a1a]">
+    <div className="rounded-md border-2 border-outline bg-surface-bright p-8 text-center shadow-[2px_2px_0px_var(--color-shadow)]">
       <p className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
         {hasFilters ? t('screener.emptyFilteredTitle') : t('screener.emptyUniverseTitle')}
       </p>
@@ -69,7 +69,7 @@ function EmptyPanel({ hasFilters, onClearFilters }: EmptyPanelProps) {
         <button
           type="button"
           onClick={onClearFilters}
-          className="mt-4 rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+          className="mt-4 rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
         >
           {t('screener.clearFilters')}
         </button>
@@ -88,7 +88,7 @@ function ErrorPanel({ message, onRetry }: ErrorPanelProps) {
   return (
     <div
       role="alert"
-      className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_#1a1a1a]"
+      className="flex flex-col gap-3 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <div>
         <p className="font-headline text-sm font-black uppercase tracking-wide text-on-secondary-container">
@@ -99,7 +99,7 @@ function ErrorPanel({ message, onRetry }: ErrorPanelProps) {
       <button
         type="button"
         onClick={onRetry}
-        className="w-fit rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+        className="w-fit rounded-md border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
       >
         {t('common.retry')}
       </button>

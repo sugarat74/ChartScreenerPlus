@@ -30,7 +30,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   if (status === 'loading') {
     return (
       <section className="mx-auto flex w-full max-w-lg flex-col gap-4">
-        <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+        <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
           {t('auth.checkingBadge')}
         </span>
         <h2 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">

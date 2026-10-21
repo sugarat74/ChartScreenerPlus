@@ -129,6 +129,11 @@ export const en: Messages = {
     label: 'Language',
     selectorAria: 'Change language',
   },
+  theme: {
+    selectorAria: 'Change color theme',
+    light: 'Light theme',
+    dark: 'Dark theme',
+  },
   header: {
     homeAria: 'Chartiko · home',
     badge: 'SCREENER',

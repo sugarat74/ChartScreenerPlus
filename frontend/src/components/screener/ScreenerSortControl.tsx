@@ -12,7 +12,7 @@ import { useI18n } from '../../i18n/useI18n.ts'
 import { SCREENER_SORT_OPTIONS } from '../../lib/screenerFilters.ts'
 
 const SELECT_CLASS =
-  'rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-xs text-on-surface shadow-[2px_2px_0px_#1a1a1a] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
+  'rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-xs text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
 interface ScreenerSortControlProps {
   value: ScreenerSort

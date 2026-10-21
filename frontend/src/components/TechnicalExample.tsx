@@ -5,7 +5,9 @@ export type ExampleKind = GuideIllustrationKind
 
 type Props = { kind: ExampleKind; label: string }
 
-const INK = '#1a1a1a'
+// Ink follows the text color of the <svg> (`text-on-surface`), so it flips with
+// the theme; the signal hues are the same in both themes.
+const INK = 'currentColor'
 const BLUE = '#0055ff'
 const RED = '#e63b2e'
 const GREEN = '#059669'
@@ -153,8 +155,8 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
 
 export default function TechnicalExample({ kind, label }: Props) {
   return (
-    <svg role="img" aria-label={label} viewBox="0 0 308 154" className="block h-auto w-full border border-outline-variant bg-surface-bright">
-      <path d="M18 35 H290 M18 82 H290 M18 130 H290 M18 20 V138 M154 20 V138 M290 20 V138" stroke="#d0cbc3" strokeWidth="1" />
+    <svg role="img" aria-label={label} viewBox="0 0 308 154" className="block h-auto w-full border border-outline-variant bg-surface-bright text-on-surface">
+      <path d="M18 35 H290 M18 82 H290 M18 130 H290 M18 20 V138 M154 20 V138 M290 20 V138" className="stroke-outline-variant" strokeWidth="1" />
       <Drawing kind={kind} />
     </svg>
   )

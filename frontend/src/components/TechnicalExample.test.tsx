@@ -9,7 +9,7 @@ function drawing(kind: ExampleKind) {
   const { container } = render(<TechnicalExample kind={kind} label={kind} />)
   const svg = container.querySelector('svg')!
   const pivotY = Number(svg.querySelector('path[stroke-dasharray]')!.getAttribute('d')!.match(/^M\S+ (\S+) H/)![1])
-  const price = svg.querySelector('path[fill="none"][stroke="#1a1a1a"]')!.getAttribute('d')!
+  const price = svg.querySelector('path[fill="none"][stroke="currentColor"]')!.getAttribute('d')!
   const vertices = [...price.matchAll(/[ML](\S+) (\S+)/g)].map(([, x, y]) => ({ x: Number(x), y: Number(y) }))
   const marker = svg.querySelector('circle')!
   const bars = [...svg.querySelectorAll('rect')].map((rect) => ({
@@ -36,7 +36,7 @@ describe('TechnicalExample pivot breakout diagrams', () => {
   it('pivotBreakoutRvol: the highlighted volume bar sits under the breakout close with at least 2x average volume', () => {
     const { vertices, bars } = drawing('pivotBreakoutRvol')
     expect(bars.map((bar) => bar.centre)).toEqual(vertices.map((point) => point.x))
-    const highlighted = bars.filter((bar) => bar.fill !== '#1a1a1a')
+    const highlighted = bars.filter((bar) => bar.fill !== 'currentColor')
     expect(highlighted).toHaveLength(1)
     expect(highlighted[0]).toBe(bars.at(-1))
     const earlier = bars.slice(0, -1)

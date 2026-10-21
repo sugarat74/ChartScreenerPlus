@@ -23,13 +23,13 @@ import type { AuthUser, ValidationErrors } from '../lib/api.ts'
 import { LOGIN_ROUTE, PRIVACY_ROUTE } from '../nav.ts'
 
 const PRIMARY_BUTTON_CLASS =
-  'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0'
+  'w-fit rounded-md border-2 border-outline bg-primary-container px-3 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0'
 
 const DANGER_BUTTON_CLASS =
-  'w-fit rounded-md border-2 border-outline bg-secondary px-3 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-secondary shadow-[2px_2px_0px_#1a1a1a] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0'
+  'w-fit rounded-md border-2 border-outline bg-secondary px-3 py-2 font-headline text-xs font-bold uppercase tracking-wider text-on-secondary shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0'
 
 const CARD_CLASS =
-  'flex min-w-0 flex-col gap-4 rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_#1a1a1a]'
+  'flex min-w-0 flex-col gap-4 rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]'
 
 /** Field-level errors from a 422, or one form-level message otherwise. */
 type FormFailure = { fields: ValidationErrors; message: string | null }
@@ -295,7 +295,7 @@ function DangerZone({ user }: { user: AuthUser }) {
   return (
     <section
       aria-labelledby="account-delete"
-      className="flex min-w-0 flex-col gap-4 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_#1a1a1a]"
+      className="flex min-w-0 flex-col gap-4 rounded-md border-2 border-secondary bg-secondary-container p-5 shadow-[2px_2px_0px_var(--color-shadow)]"
     >
       <div>
         <h2 id="account-delete" className="font-headline text-lg font-black uppercase tracking-wide text-on-secondary-container">
@@ -349,7 +349,7 @@ function AccountContent() {
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_#1a1a1a]">
+        <span className="w-fit rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface shadow-[1px_1px_0px_var(--color-shadow)]">
           {t('account.badge')}
         </span>
         <h1 className="font-headline text-3xl font-black tracking-tight uppercase text-on-surface">{t('account.title')}</h1>
