@@ -96,7 +96,7 @@ export const guideEs: GuideTexts = {
         },
         {
           term: 'Patrones chartistas',
-          summary: 'Muestra valores con un patrón activo de los tipos elegidos (doble suelo, doble techo, taza con asa, bandera alcista).',
+          summary: 'Muestra valores con un patrón activo de los tipos elegidos. Los diez tipos se agrupan en alcistas (doble y triple suelo, taza con asa, bandera alcista, banderín alcista) y bajistas (doble y triple techo, taza con asa invertida, bandera bajista, banderín bajista).',
           details: [
             'El control de estado («Cualquiera», «En formación», «Confirmado») se activa al elegir algún patrón y filtra solo esos patrones.',
           ],
@@ -185,7 +185,7 @@ export const guideEs: GuideTexts = {
       title: 'Patrones chartistas',
       paragraphs: [
         'Los patrones son formaciones geométricas del precio que Chartiko detecta automáticamente con reglas fijas sobre los máximos y mínimos locales (un máximo o mínimo se confirma cuando lo rodean 5 sesiones a cada lado, así que un patrón aparece como pronto 5 sesiones después de su último máximo o mínimo local).',
-        '«En formación» significa que la figura está completa pero aún no ha roto su nivel. «Confirmado» significa que un cierre ha roto el nivel de ruptura (por encima; por debajo en el doble techo) en las últimas 10 sesiones. Pasado ese plazo, o si el precio invalida la figura, el patrón deja de mostrarse. Un patrón en formación también caduca si no rompe a tiempo: 60 sesiones desde el segundo suelo o techo, un asa de más de 25 sesiones o una bandera de más de 20. Chartiko solo muestra el nivel de ruptura: nunca calcula objetivos de precio.',
+        '«En formación» significa que la figura está completa pero aún no ha roto su nivel. «Confirmado» significa que un cierre ha roto el nivel de ruptura en las últimas 10 sesiones: por encima en los patrones alcistas y por debajo en los bajistas (doble y triple techo, taza con asa invertida, bandera bajista, banderín bajista). Pasado ese plazo, o si el precio invalida la figura, el patrón deja de mostrarse. Un patrón en formación también caduca si no rompe a tiempo: 60 sesiones desde el último suelo o techo, un asa de más de 25 sesiones o una bandera o un banderín de más de 20. Chartiko solo muestra el nivel de ruptura: nunca calcula objetivos de precio.',
       ],
       entries: [
         {
@@ -211,6 +211,42 @@ export const guideEs: GuideTexts = {
           summary: 'Un mástil (subida de al menos un 15 % en 20 sesiones o menos) seguido de una bandera de 5 a 20 sesiones que corrige sin subir, con menos volumen y sin retroceder más de la mitad del mástil.',
           illustration: { kind: 'bullFlag', alt: 'Precio que sube con fuerza, desciende dentro de un canal estrecho y rompe al alza.' },
           details: ['Nivel de ruptura: el máximo de la bandera. Se confirma con un cierre por encima; un cierre posterior por debajo del mínimo de la bandera la invalida.'],
+        },
+        {
+          term: 'Triple suelo',
+          summary: 'Tres mínimos parecidos (hasta un 3 % de diferencia), cada uno a entre 15 y 120 sesiones del siguiente, tras una caída de al menos un 15 % que termina en el primer suelo, con dos rebotes intermedios de al menos un 10 %. A cada suelo y rebote se le aplican las mismas reglas que al doble suelo.',
+          illustration: { kind: 'tripleBottom', alt: 'Precio con tres suelos similares y una subida que supera la más alta de las dos crestas intermedias.' },
+          details: ['Nivel de ruptura: la más alta de las dos crestas entre los suelos. Se confirma con un cierre por encima; se invalida con cualquier cierre por debajo de los suelos. Un triple suelo oculta el doble suelo formado por dos de sus suelos.'],
+        },
+        {
+          term: 'Triple techo',
+          summary: 'Tres máximos parecidos (hasta un 3 % de diferencia), cada uno a entre 15 y 120 sesiones del siguiente, tras una subida de al menos un 15 % que termina en el primer techo, con dos caídas intermedias de al menos un 10 %. A cada techo y caída se le aplican las mismas reglas que al doble techo.',
+          illustration: { kind: 'tripleTop', alt: 'Precio con tres techos similares y una caída por debajo del más bajo de los dos valles intermedios.' },
+          details: ['Nivel de ruptura: el más bajo de los dos valles entre los techos. Se confirma con un cierre por debajo; se invalida con cualquier cierre por encima de los techos. Un triple techo oculta el doble techo formado por dos de sus techos.'],
+        },
+        {
+          term: 'Taza con asa invertida',
+          summary: 'El reflejo de la taza con asa: un techo redondeado de 30 a 325 sesiones y de entre un 12 % y un 35 % de altura, entre dos mínimos de altura parecida (hasta un 5 %), seguido de un asa de 5 a 25 sesiones que rebota como mucho un 12 % y no supera la mitad de la taza.',
+          illustration: { kind: 'inverseCupWithHandle', alt: 'Precio con un techo redondeado, un asa corta hacia arriba y una caída por debajo del mínimo del asa.' },
+          details: ['Nivel de ruptura: el mínimo del asa. Se confirma con un cierre por debajo y un volumen relativo de 1,5× o más; un cierre posterior por encima del máximo del asa la invalida.'],
+        },
+        {
+          term: 'Bandera bajista',
+          summary: 'El reflejo de la bandera alcista: un mástil (caída de al menos un 15 % en 20 sesiones o menos) seguido de una bandera de 5 a 20 sesiones que corrige sin bajar, con menos volumen y sin recuperar más de la mitad del mástil.',
+          illustration: { kind: 'bearFlag', alt: 'Precio que cae con fuerza, sube dentro de un canal estrecho y rompe a la baja.' },
+          details: ['Nivel de ruptura: el mínimo de la bandera. Se confirma con un cierre por debajo; un cierre posterior por encima del máximo de la bandera la invalida.'],
+        },
+        {
+          term: 'Banderín alcista',
+          summary: 'El mástil de la bandera alcista seguido de un banderín de 5 a 20 sesiones que se estrecha: su segunda mitad tiene un máximo más bajo, un mínimo más alto y un rango de como mucho el 70 % del de la primera, con menos volumen y sin retroceder más de la mitad del mástil.',
+          illustration: { kind: 'bullPennant', alt: 'Precio que sube con fuerza, se estrecha entre dos líneas convergentes y rompe al alza.' },
+          details: ['Nivel de ruptura: el máximo del banderín. Se confirma con un cierre por encima. Si el mismo mástil forma también una bandera alcista, solo se muestra el banderín.'],
+        },
+        {
+          term: 'Banderín bajista',
+          summary: 'El mástil de la bandera bajista seguido de un banderín de 5 a 20 sesiones que se estrecha del mismo modo, con menos volumen y sin recuperar más de la mitad del mástil.',
+          illustration: { kind: 'bearPennant', alt: 'Precio que cae con fuerza, se estrecha entre dos líneas convergentes y rompe a la baja.' },
+          details: ['Nivel de ruptura: el mínimo del banderín. Se confirma con un cierre por debajo. Si el mismo mástil forma también una bandera bajista, solo se muestra el banderín.'],
         },
       ],
       notes: [

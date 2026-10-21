@@ -96,7 +96,7 @@ export const guideEn: GuideTexts = {
         },
         {
           term: 'Chart patterns',
-          summary: 'Shows stocks with an active pattern of the chosen types (double bottom, double top, cup with handle, bull flag).',
+          summary: 'Shows stocks with an active pattern of the chosen types. The ten types are grouped as bullish (double and triple bottom, cup with handle, bull flag, bullish pennant) and bearish (double and triple top, inverse cup with handle, bear flag, bearish pennant).',
           details: [
             'The status control ("Any", "Forming", "Confirmed") becomes available once a pattern is chosen and only narrows those patterns.',
           ],
@@ -185,7 +185,7 @@ export const guideEn: GuideTexts = {
       title: 'Chart patterns',
       paragraphs: [
         'Patterns are geometric price formations that Chartiko detects automatically with fixed rules on local highs and lows (a high or low is confirmed when 5 sessions surround it on each side, so a pattern appears at the earliest 5 sessions after its last local high or low).',
-        '"Forming" means the figure is complete but has not broken its level yet. "Confirmed" means a close broke through the breakout level (above it; below it for a double top) within the last 10 sessions. After that, or if the price invalidates the figure, the pattern is no longer shown. A forming pattern also expires if it does not break out in time: 60 sessions after the second bottom or top, a handle longer than 25 sessions or a flag longer than 20. Chartiko only shows the breakout level: it never computes price targets.',
+        '"Forming" means the figure is complete but has not broken its level yet. "Confirmed" means a close broke through the breakout level within the last 10 sessions: above it for bullish patterns, below it for bearish ones (double and triple top, inverse cup with handle, bear flag, bearish pennant). After that, or if the price invalidates the figure, the pattern is no longer shown. A forming pattern also expires if it does not break out in time: 60 sessions after the last bottom or top, a handle longer than 25 sessions or a flag or pennant longer than 20. Chartiko only shows the breakout level: it never computes price targets.',
       ],
       entries: [
         {
@@ -211,6 +211,42 @@ export const guideEn: GuideTexts = {
           summary: 'A pole (a rise of at least 15% in 20 sessions or fewer) followed by a flag of 5 to 20 sessions that drifts without rising, on lower volume and without retracing more than half of the pole.',
           illustration: { kind: 'bullFlag', alt: 'Price rising sharply, drifting down within a narrow channel and then breaking upward.' },
           details: ['Breakout level: the high of the flag. Confirmed by a close above it; a later close below the flag low invalidates it.'],
+        },
+        {
+          term: 'Triple bottom',
+          summary: 'Three similar lows (up to 3% apart), each 15 to 120 sessions from the next, after a fall of at least 15% that ends at the first low, with two rebounds of at least 10% between them. The same rules as the double bottom apply to each low and rebound.',
+          illustration: { kind: 'tripleBottom', alt: 'Price with three similar bottoms and a rise above the higher of the two intermediate peaks.' },
+          details: ['Breakout level: the higher of the two peaks between the lows. Confirmed by a close above it; invalidated by any close below the lows. A triple bottom hides the double bottom formed by two of its lows.'],
+        },
+        {
+          term: 'Triple top',
+          summary: 'Three similar highs (up to 3% apart), each 15 to 120 sessions from the next, after a rise of at least 15% that ends at the first top, with two drops of at least 10% between them. The same rules as the double top apply to each top and drop.',
+          illustration: { kind: 'tripleTop', alt: 'Price with three similar tops and a fall below the lower of the two intermediate troughs.' },
+          details: ['Breakout level: the lower of the two troughs between the tops. Confirmed by a close below it; invalidated by any close above the tops. A triple top hides the double top formed by two of its tops.'],
+        },
+        {
+          term: 'Inverse cup with handle',
+          summary: 'The mirror of the cup with handle: a rounded top of 30 to 325 sessions, 12% to 35% tall, between two lows of similar height (within 5%), followed by a handle of 5 to 25 sessions that bounces at most 12% and stays below the middle of the cup.',
+          illustration: { kind: 'inverseCupWithHandle', alt: 'Price tracing a rounded top, a short upward handle and a fall below the handle low.' },
+          details: ['Breakout level: the low of the handle. Confirmed by a close below it with relative volume of 1.5× or more; a later close above the handle high invalidates it.'],
+        },
+        {
+          term: 'Bear flag',
+          summary: 'The mirror of the bull flag: a pole (a fall of at least 15% in 20 sessions or fewer) followed by a flag of 5 to 20 sessions that drifts without falling, on lower volume and without retracing more than half of the pole.',
+          illustration: { kind: 'bearFlag', alt: 'Price falling sharply, drifting up within a narrow channel and then breaking downward.' },
+          details: ['Breakout level: the low of the flag. Confirmed by a close below it; a later close above the flag high invalidates it.'],
+        },
+        {
+          term: 'Bullish pennant',
+          summary: 'The bull flag pole followed by a pennant of 5 to 20 sessions that narrows: its second half has a lower high, a higher low and a range of at most 70% of the first half, on lower volume and without retracing more than half of the pole.',
+          illustration: { kind: 'bullPennant', alt: 'Price rising sharply, narrowing between two converging lines and then breaking upward.' },
+          details: ['Breakout level: the high of the pennant. Confirmed by a close above it. When the same pole also forms a bull flag, only the pennant is shown.'],
+        },
+        {
+          term: 'Bearish pennant',
+          summary: 'The bear flag pole followed by a pennant of 5 to 20 sessions that narrows the same way, on lower volume and without retracing more than half of the pole.',
+          illustration: { kind: 'bearPennant', alt: 'Price falling sharply, narrowing between two converging lines and then breaking downward.' },
+          details: ['Breakout level: the low of the pennant. Confirmed by a close below it. When the same pole also forms a bear flag, only the pennant is shown.'],
         },
       ],
       notes: [

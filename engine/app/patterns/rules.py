@@ -63,6 +63,10 @@ FLAG_MIN_LENGTH = 5
 FLAG_MAX_LENGTH = 20
 FLAG_MAX_RETRACE = 0.5
 
+# bull_pennant / bear_pennant (chart-patterns-extended); every other pennant,
+# flag, triple and inverse-cup rule reuses the constants above.
+PENNANT_MAX_WIDTH_RATIO = 0.7
+
 
 @dataclass(frozen=True)
 class PatternParams:
@@ -109,6 +113,7 @@ class PatternParams:
     flag_down_slope: bool = True
     flag_lower_volume: bool = True
     flag_extremes: bool = True
+    pennant_max_width_ratio: float = PENNANT_MAX_WIDTH_RATIO
 
     def as_dict(self) -> dict[str, float | int | bool]:
         return asdict(self)
@@ -408,6 +413,9 @@ def bull_flag(
                 break
             base = bars[ts].low
             if (top - base) / base < params.pole_min_rise:
+                continue
+            # The pole ends at its own top (chart-patterns-extended finding).
+            if params.flag_extremes and bars[_argmax_high(bars, ts, tt)].high > top:
                 continue
             floor = top - params.flag_max_retrace * (top - base)
 

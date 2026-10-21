@@ -49,7 +49,7 @@ describe('HowItWorksPage', () => {
     renderPage()
     expect(screen.getByRole('heading', { level: 1, name: 'How Chartiko works' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Contents' })).toBeTruthy()
-    expect(screen.getAllByRole('img')).toHaveLength(19)
+    expect(screen.getAllByRole('img')).toHaveLength(25)
     expect(screen.getByRole('img', { name: /blue MACD line crosses below the red signal line/i })).toBeTruthy()
     expect(screen.getByRole('img', { name: /short handle and a rise above the handle high/i })).toBeTruthy()
   })
@@ -61,7 +61,7 @@ describe('HowItWorksPage', () => {
     const patterns = screen.getByRole('region', { name: 'Patrones chartistas' })
     expect(within(indicators).getAllByRole('img')).toHaveLength(6)
     expect(within(signals).getAllByRole('img')).toHaveLength(9)
-    expect(within(patterns).getAllByRole('img')).toHaveLength(4)
+    expect(within(patterns).getAllByRole('img')).toHaveLength(10)
     expect(within(indicators).getByRole('img', { name: /línea horizontal azul que representa el pivote/i })).toBeTruthy()
     expect(within(signals).getByRole('img', { name: /SMA 50 azul cruza de abajo arriba/i })).toBeTruthy()
     expect(within(patterns).getByRole('img', { name: /máximo del asa/i })).toBeTruthy()
@@ -122,7 +122,8 @@ describe('manual stays consistent with the interface', () => {
   })
 
   it('both manuals illustrate each current indicator and pattern exactly once', () => {
-    const expected = ['movingAverages', 'rsi', 'macd', 'rvol', 'pivot', 'volume', 'doubleBottom', 'doubleTop', 'cupWithHandle', 'bullFlag']
+    const expected = ['movingAverages', 'rsi', 'macd', 'rvol', 'pivot', 'volume', 'doubleBottom', 'doubleTop', 'cupWithHandle', 'bullFlag',
+      'tripleBottom', 'tripleTop', 'inverseCupWithHandle', 'bearFlag', 'bullPennant', 'bearPennant']
     for (const locale of ['es', 'en'] as const) {
       const sections = GUIDE_TEXTS[locale].sections.filter((item) => item.id === 'indicadores' || item.id === 'patrones')
       const illustrations = sections.flatMap((item) => (item.entries ?? []).map((entry) => entry.illustration))

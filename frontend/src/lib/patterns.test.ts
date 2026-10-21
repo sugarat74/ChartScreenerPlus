@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { patternLevels, patternMarkers } from './chartData.ts'
 import {
   EMPTY_SCREENER_FILTERS,
+  SCREENER_PATTERN_GROUPS,
+  SCREENER_PATTERN_TYPES,
+  normalizePatterns,
+  patternDirection,
   countActiveFilters,
   deserializeScreenerFilters,
   parseScreenerFilters,
@@ -31,7 +35,8 @@ describe('pattern filters in the URL (chart-patterns-ui)', () => {
       patterns: ['cup_with_handle', 'double_top'],
       patternStatus: 'forming',
     })
-    expect(next.get('pattern')).toBe('double_top,cup_with_handle')
+    // Canonical SPA order: bullish group first (chart-patterns-extended).
+    expect(next.get('pattern')).toBe('cup_with_handle,double_top')
     expect(next.get('pattern_status')).toBe('forming')
     expect(next.get('utm')).toBe('x')
 
@@ -101,5 +106,48 @@ describe('pattern chart helpers', () => {
       ['2026-01-30', 'aboveBar', 'PEAK'],
       ['2026-02-20', 'belowBar', 'RIGHT_LOW'],
     ])
+  })
+
+  it('places the second-batch highs above the bar and lows below (chart-patterns-extended)', () => {
+    const dates = ['2026-01-02', '2026-01-03', '2026-01-04', '2026-01-05', '2026-01-06']
+    const loaded = dates.map((date) => ({ ...bars[0], date }))
+    const triple = {
+      ...pattern,
+      type: 'triple_top',
+      points: [
+        { date: dates[0], price: 100, role: 'left_peak' },
+        { date: dates[1], price: 85, role: 'left_trough' },
+        { date: dates[2], price: 100.5, role: 'middle_peak' },
+        { date: dates[3], price: 85.5, role: 'right_trough' },
+        { date: dates[4], price: 100.2, role: 'right_peak' },
+      ],
+    }
+    expect(patternMarkers([triple], loaded, (role) => role).map((marker) => marker.position)).toEqual([
+      'aboveBar', 'belowBar', 'aboveBar', 'belowBar', 'aboveBar',
+    ])
+    const sides = (roles: string[]) =>
+      patternMarkers(
+        [{ ...pattern, points: roles.map((role, index) => ({ date: dates[index], price: 1, role })) }],
+        loaded,
+        (role) => role,
+      ).map((marker) => marker.position)
+    expect(sides(['rim_left_low', 'cup_top', 'rim_right_low', 'handle_high'])).toEqual(['belowBar', 'aboveBar', 'belowBar', 'aboveBar'])
+    expect(sides(['pole_peak', 'pole_bottom', 'flag_high'])).toEqual(['aboveBar', 'belowBar', 'aboveBar'])
+    expect(sides(['pole_peak', 'pole_bottom', 'pennant_high'])).toEqual(['aboveBar', 'belowBar', 'aboveBar'])
+    expect(sides(['pole_start', 'pole_top', 'pennant_low'])).toEqual(['belowBar', 'aboveBar', 'belowBar'])
+    expect(sides(['left_low', 'left_crest', 'middle_low', 'right_crest', 'right_low'])).toEqual([
+      'belowBar', 'aboveBar', 'belowBar', 'aboveBar', 'belowBar',
+    ])
+  })
+})
+
+describe('pattern vocabulary (chart-patterns-extended)', () => {
+  it('has ten types grouped bullish first, then bearish', () => {
+    expect(SCREENER_PATTERN_TYPES).toHaveLength(10)
+    expect(SCREENER_PATTERN_GROUPS.map((group) => group.direction)).toEqual(['bullish', 'bearish'])
+    expect(patternDirection('bear_pennant')).toBe('bearish')
+    expect(patternDirection('triple_bottom')).toBe('bullish')
+    expect(patternDirection('inverse_cup_with_handle')).toBe('bearish')
+    expect(normalizePatterns(['bear_flag', 'nope', 'triple_bottom', 'bear_flag'])).toEqual(['triple_bottom', 'bear_flag'])
   })
 })

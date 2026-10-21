@@ -55,6 +55,32 @@ describe('PatternPanel', () => {
   })
 })
 
+describe('PatternPanel second batch (chart-patterns-extended)', () => {
+  it('names the new types and their points in both languages', () => {
+    const bearFlag = {
+      ...PATTERN,
+      type: 'bear_flag',
+      status: 'forming' as const,
+      breakout_level: 50.2,
+      points: [
+        { date: '2026-01-05', price: 63, role: 'pole_peak' },
+        { date: '2026-01-15', price: 50, role: 'pole_bottom' },
+        { date: '2026-01-22', price: 54, role: 'flag_high' },
+      ],
+    }
+    withI18n(<PatternPanel patterns={[bearFlag]} />)
+    expect(screen.getByText('Bandera bajista')).toBeTruthy()
+    expect(screen.getByText(/Suelo del mástil/)).toBeTruthy()
+    expect(screen.getByText(/Máximo de la bandera/)).toBeTruthy()
+    cleanup()
+
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, 'en')
+    withI18n(<PatternPanel patterns={[{ ...bearFlag, type: 'inverse_cup_with_handle', points: [{ date: '2026-01-05', price: 100, role: 'cup_top' }] }]} />)
+    expect(screen.getByText('Inverse cup with handle')).toBeTruthy()
+    expect(screen.getByText(/Cup top/)).toBeTruthy()
+  })
+})
+
 describe('Screener pattern controls', () => {
   it('toggles pattern chips and enables the status control only with a pattern selected', () => {
     const onChange = vi.fn()

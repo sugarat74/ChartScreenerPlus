@@ -1514,5 +1514,27 @@
       "2026-10-21 independent validator ACCEPT: init.ps1 exit 0 (Laravel 538 passed / 6 skipped, Vitest 206, engine 67); runtime contrast sweep in dark on 13 pages (incl. signed-in chart, Portal, account, notifications, Admin ingestion/log/activity, 404) with no text pair under 4.5:1. Non-blocking: Admin banner terminal look (applied), pre-existing light-theme green/red text 3.1-3.9:1 (follow-up)"
     ],
     "notes": "Requested 2026-10-21. Spec: docs/specs/ui-dark-mode.md. Same token names with dark values under :root[data-theme='dark']; DESIGN.md documents the palette."
+  },
+  {
+    "id": "chart-patterns-extended",
+    "area": "engine",
+    "title": "More chartist patterns: bear flag, pennants, triple top/bottom, inverse cup with handle",
+    "user_visible_behavior": "Six more Chartist Patterns (triple_top, triple_bottom, inverse_cup_with_handle, bear_flag, bull_pennant, bear_pennant) are detected by deterministic rules that reuse the existing parameters and appear everywhere the current four do: Screener filter, Saved Screeners, chart markers and breakout line, pattern panel, Watchlist pattern alerts, the natural-language Screener and How it works, in Spanish and English. Each still exposes one breakout level, never a target.",
+    "depends_on": [
+      "chart-patterns-detect",
+      "chart-patterns-ui",
+      "alerts-patterns",
+      "ai-screener-natural-language",
+      "how-it-works-manual"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Engine: positive, near-miss, invalidation and status tests per new type; precedence (triple over double, pennant over flag) tested in both directions; existing pattern tests unchanged",
+      "Laravel: screener filter, saved screener, alerts, detect command and AI schema (enum + MAX_PATTERNS) accept the new types; unknown types still 422",
+      "SPA: chips grouped bullish/bearish, markers on the correct side, panel and alert form localized es/en; six themed How it works schematics; browser QA at 1280/390 px in light and dark",
+      "Local smoke counts per type/status recorded for calibration; .\\init.ps1 and CI pass"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-21 (\"realiza la spec de la primera tanda (las 4 faciles)\"). Spec: docs/specs/chart-patterns-extended.md. Vocabulary appended after the current four, no migration. Calibration (chart-patterns-calibration) is recommended first but is not a hard dependency."
   }
 ]

@@ -45,3 +45,31 @@ describe('TechnicalExample pivot breakout diagrams', () => {
     expect(highlighted[0].height).toBeGreaterThanOrEqual(2 * mean)
   })
 })
+
+// chart-patterns-extended: the three second-batch figures with a horizontal
+// neckline break it on the side of their direction, after every marker.
+describe('TechnicalExample second-batch patterns', () => {
+  const cases = [
+    { kind: 'tripleTop', bearish: true, markers: 3 },
+    { kind: 'tripleBottom', bearish: false, markers: 3 },
+    { kind: 'inverseCupWithHandle', bearish: true, markers: 2 },
+  ] as const
+  for (const { kind, bearish, markers } of cases) {
+    it(`${kind}: the last close breaks the neckline ${bearish ? 'downward' : 'upward'}`, () => {
+      const { pivotY, vertices } = drawing(kind)
+      const last = vertices.at(-1)!
+      expect(bearish ? last.y > pivotY : last.y < pivotY).toBe(true)
+      const { container } = render(<TechnicalExample kind={kind} label={kind} />)
+      expect(container.querySelectorAll('circle')).toHaveLength(markers)
+    })
+  }
+
+  for (const kind of ['bearFlag', 'bullPennant', 'bearPennant'] as const) {
+    it(`${kind}: draws the price, two guide lines and the breakout marker`, () => {
+      const { container } = render(<TechnicalExample kind={kind} label={kind} />)
+      expect(container.querySelector('svg')!.getAttribute('aria-label')).toBe(kind)
+      expect(container.querySelectorAll('path[stroke-dasharray]')).toHaveLength(1)
+      expect(container.querySelectorAll('circle')).toHaveLength(1)
+    })
+  }
+})

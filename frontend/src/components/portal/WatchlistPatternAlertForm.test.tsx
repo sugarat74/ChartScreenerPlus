@@ -42,7 +42,7 @@ it('pre-ticks "confirmed", disables save until a type and an event are chosen, t
   const { onSaved } = show(undefined)
   expect(screen.getByRole('heading', { name: 'Mis alertas de patrones' })).toBeTruthy()
   expect(screen.getByText('Sin alerta')).toBeTruthy()
-  expect(screen.getAllByRole('checkbox')).toHaveLength(6)
+  expect(screen.getAllByRole('checkbox')).toHaveLength(12) // 10 types + 2 events
   expect(checkbox('Cuando se confirma (ruptura)').checked).toBe(true)
   expect(checkbox('Cuando aparece').checked).toBe(false)
 

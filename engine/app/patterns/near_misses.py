@@ -16,7 +16,8 @@ from dataclasses import replace
 from app.indicators.core import rvol
 from app.models import Bar, PatternNearMiss
 from app.patterns.detect import MIN_BARS, RVOL_PERIOD, WINDOW
-from app.patterns.rules import DEFAULT_PARAMS, DETECTORS, PatternParams
+from app.patterns.extended import ALL_DETECTORS
+from app.patterns.rules import DEFAULT_PARAMS, PatternParams
 
 # (rule name, PatternParams field, relaxed value) per type. Numeric
 # relaxations stay close to the production value, so a hit is a borderline
@@ -76,10 +77,11 @@ def detect_near_misses(bars: list[Bar], params: PatternParams = DEFAULT_PARAMS) 
     start = max(0, len(bars) - WINDOW)
 
     near_misses: list[PatternNearMiss] = []
-    for pattern_type, detector in DETECTORS:
+    for pattern_type, detector in ALL_DETECTORS:
         if detector(bars, volume_ratios, start, params) is not None:
             continue
-        for rule, field, relaxed in RELAXATIONS[pattern_type]:
+        # The second batch (chart-patterns-extended) has no review relaxations yet.
+        for rule, field, relaxed in RELAXATIONS.get(pattern_type, ()):
             pattern = detector(bars, volume_ratios, start, replace(params, **{field: relaxed}))
             if pattern is not None:
                 near_misses.append(

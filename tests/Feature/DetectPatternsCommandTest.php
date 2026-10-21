@@ -82,6 +82,28 @@ class DetectPatternsCommandTest extends TestCase
             && count($request['bars']) === 3);
     }
 
+    public function test_it_stores_second_batch_types(): void
+    {
+        // chart-patterns-extended: the new types are part of the vocabulary.
+        $instrument = $this->instrumentWithBars('EIX');
+
+        Http::fake(['*/patterns/detect' => Http::response(['patterns' => [
+            $this->pattern('bear_pennant', 'confirmed', ['points' => [
+                ['date' => '2026-07-17', 'price' => 70.1, 'role' => 'pole_peak'],
+                ['date' => '2026-07-30', 'price' => 58.2, 'role' => 'pole_bottom'],
+                ['date' => '2026-08-12', 'price' => 61.0, 'role' => 'pennant_high'],
+            ]]),
+            $this->pattern('inverse_cup_with_handle'),
+        ]])]);
+
+        $this->artisan('patterns:detect', ['--ticker' => 'EIX'])->assertExitCode(0);
+
+        $types = ChartPattern::query()->where('instrument_id', $instrument->id)->orderBy('type')->pluck('type')->all();
+        $this->assertSame(['bear_pennant', 'inverse_cup_with_handle'], $types);
+        $pennant = ChartPattern::query()->where('type', 'bear_pennant')->sole();
+        $this->assertSame(['pole_peak', 'pole_bottom', 'pennant_high'], array_column($pennant->points, 'role'));
+    }
+
     public function test_re_running_is_idempotent_and_status_changes_replace_the_row(): void
     {
         $this->instrumentWithBars('NVDA');
