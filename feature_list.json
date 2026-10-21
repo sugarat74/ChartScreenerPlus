@@ -1553,5 +1553,22 @@
       "2026-10-21 independent validator ACCEPT (round 2, bbf361a): init.ps1 exit 0 (Laravel 546 / 6 skipped, Vitest 216, engine 101); review-sample probe on an inverse_cup_with_handle row now passes; all round-1 findings verified fixed. Follow-up: inverse cup with handle is 34% of detections and unlabelled, first candidate for the next labelling sample."
     ],
     "notes": "Requested 2026-10-21 (\"realiza la spec de la primera tanda (las 4 faciles)\", then \"implementa las 4 figuras que decias eran faciles\"). Spec: docs/specs/chart-patterns-extended.md. Vocabulary appended after the current four, no migration. Built on chart-patterns-calibration phase 2 (accepted), so the mirrored types inherit the calibrated values."
+  },
+  {
+    "id": "alerts-email-golive",
+    "area": "ops",
+    "title": "Turn on the daily alert email in production (Brevo, free EU provider)",
+    "user_visible_behavior": "Registered Users see the daily email opt-in in their Portal and, once they tick it, receive the daily alert summary from alertas@chartiko.com; the privacy policy names Brevo (EU, France) as the sending provider.",
+    "depends_on": [
+      "alerts-email-digest"
+    ],
+    "status": "not_started",
+    "verification": [
+      "chartiko.com authenticated in Brevo (TXT + DKIM in Cloudflare), single SPF including spf.brevo.com, DMARC p=none; DPA accepted",
+      "Mail env written on the server by a prompt-only script (no secret in the repo or chat); legal updated_at bumped in the same deploy",
+      "Owner test: opt-in, one email delivered to the inbox with SPF/DKIM/DMARC pass, List-Unsubscribe headers, unsubscribe page and one-click work; no address in laravel.log"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-21 at user request (\"dejalo como feature a implementar\"). Spec: docs/specs/alerts-email-golive.md. Blocked on the owner: Brevo account, DNS records in Cloudflare, SMTP key. No application code changes expected."
   }
 ]

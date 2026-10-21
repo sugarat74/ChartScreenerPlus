@@ -1,5 +1,11 @@
 # Progress Log
 
+## Planned: production activation of the daily alert email (`alerts-email-golive`, not started) — 2026-10-21
+
+- User decision: "dejalo como feature a implementar".
+- Plan in `docs/specs/alerts-email-golive.md`: Brevo free plan (EU) and Cloudflare DNS records (TXT, DKIM, SPF edit, DMARC); the SMTP key is set by a prompt-only server script; the legal date is bumped in the same deploy; a test send to the owner.
+- Blocked on the owner's Brevo account and DNS changes.
+
 ## Daily alert email digest (`alerts-email-digest`, accepted) — 2026-10-21
 
 - **Independent validator: ACCEPT** (round 2).
