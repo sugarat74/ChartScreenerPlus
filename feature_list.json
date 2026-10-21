@@ -1154,15 +1154,26 @@
       "chart-patterns-ui",
       "screener-precomputed"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "patterns:review-sample exports detected and near-miss cases with charts and a CSV for labelling (Admin/CLI only)",
       "patterns:calibration-report gives precision per type, miss rate and frequency for a labelled CSV",
       "Validator-identified rule fixes implemented with tests (handle cap, post-breakout invalidation for flag/cup, consistent session metadata, prior-move lookback incl. t1)",
       "Precision >= 80% per type on the reviewed sample or the type documented as low confidence; parameter table, CONSTRAINTS and tests updated; .\\init.ps1 and CI pass"
     ],
-    "evidence": [],
-    "notes": "Added 2026-10-12 at user request, to develop later. Spec: docs/specs/chart-patterns-calibration.md. Motivation: 97 of 178 local detections were double tops with the initial parameters. Not backtesting (out of scope)."
+    "evidence": [
+      "2026-10-16 phase 1, rule fixes: cup handle cap HANDLE_MAX_RISE=0.03 plus close-above-rim-without-volume invalidation, post-breakout invalidation for cup (close < handle low) and bull_flag (close < flag low), handle_sessions excludes the breakout bar, prior-move lookback includes t1. Engine tests: test_cup_handle_high_capped_above_the_rim, test_cup_with_handle_confirmed_needs_volume (updated), test_cup_invalidated_by_a_close_below_the_handle_low_after_the_breakout, test_bull_flag_invalidated_by_a_close_below_the_flag_low_after_the_breakout, test_handle_sessions_exclude_the_breakout_bar, test_flag_sessions_exclude_the_breakout_bar, test_double_top_prior_rise_lookback_includes_t1; all but the flag-sessions guard fail against the previous rules.py.",
+      "2026-10-16 phase 1, near misses: PatternParams + near_misses.py (one rule relaxed at a time, fixed table), POST /patterns/near-misses and GET /patterns/parameters; 4 engine tests (single rule reported, none for detected types, detection unchanged, endpoints + 422). Engine pytest 77 passed, ruff clean.",
+      "2026-10-16 phase 1, commands: patterns:review-sample and patterns:calibration-report (CLI only); tests/Feature/PatternCalibrationCommandsTest.php 4 tests / 86 assertions with fixture tests/Fixtures/pattern-calibration/. Same seed gives a byte-identical sample.csv on the real data.",
+      "2026-10-16 real export on a migrated copy of the dev SQLite (494 instruments, as-of 2026-10-02) with the local engine: docs/calibration/sample-2026-10-16/ (seed 20261016, 138 cases: DT 27 forming/13 confirmed + 10 near misses, DB 31/9 + 10, CWH 14/1 + 10, BF 2/1 + 10). Frequency before/after the fixes: DT 97/97, DB 61/61, CWH 17/15, BF 3/3, total 178/176. suggested_label filled by Claude from Edge-rendered PNGs (label left empty).",
+      "2026-10-16 .\\init.ps1 exit 0: Laravel 384 passed / 6 skipped (3172 assertions), Vitest 154 + lint + build, engine 77 passed.",
+      "2026-10-21 phase 2: 138 human labels (docs/calibration/sample-2026-10-16/sample.csv, merged back from an Excel re-save; 10 near-miss 'acceptable/clear' counted as missed). Report: precision DT 57.5%, DB 40.0%, CWH 60.0%, BF 3/3; missed near misses DT min_depth 2/2, BF pole_max_length 2/2.",
+      "2026-10-21 phase 2 tuning (labels + bar features + charts): double anchor (no bar of the prior 40 sessions >1.5% beyond the first extreme), middle point 12-85% of the span, wick <=8% vs closes within 2 bars, invalidation on any close beyond the extreme (0.03 -> 0.0, chosen by a margin sweep), POLE_MAX_LENGTH 15 -> 20. 5 new engine tests + 1 adjusted; engine 82 passed, ruff clean.",
+      "2026-10-21 engine re-run on every labelled case at its as-of: DT 22 good / 3 false kept (88.0%), DB 14/6 (70.0%, low confidence), CWH 9/6 (60.0%, low confidence, unchanged), BF 3/0. Universe as-of 2026-10-02: 176 -> 109 patterns (DT 97 -> 55, DB 61 -> 34, CWH 15, BF 3 -> 5). Same-sample numbers; no fresh validation sample by user decision.",
+      "2026-10-21 .\\init.ps1 exit 0 (worktree rebased on main dd0c35b): Laravel 542 passed / 6 skipped (4246 assertions), Vitest 206 + lint + build, engine 82 passed. How it works texts (es/en) updated for the new double, cup and flag rules.",
+      "2026-10-21 independent validator ACCEPT: init.ps1 exit 0 (Laravel 542 / 6 skipped, Vitest 206, engine 82); recheck reproduced DT 88%, DB 70%, CWH 60%, BF 3/3 and universe 109 exactly; label merge verified row by row against the original export and the Excel copy; no look-ahead in _wick/anchor; CLI-only commands; docs consistent. Nits applied: bull_flag docstring (20 sessions), 'initial parameters' wording in ARCHITECTURE and the detect spec, How it works anchor wording (1.5%)."
+    ],
+    "notes": "Added 2026-10-12 at user request, to develop later. Spec: docs/specs/chart-patterns-calibration.md. Motivation: 97 of 178 local detections were double tops with the initial parameters. Not backtesting (out of scope). 2026-10-16: phase 1 done (rule fixes, review-sample, calibration-report, real sample with suggested labels). 2026-10-21: phase 2 done on the human labels (rules tuned for doubles and the flag pole; double_bottom and cup_with_handle documented as low confidence). The user declined a second labelling round for now."
   },
   {
     "id": "alerts-patterns",
@@ -1503,5 +1514,36 @@
       "2026-10-21 independent validator ACCEPT: init.ps1 exit 0 (Laravel 538 passed / 6 skipped, Vitest 206, engine 67); runtime contrast sweep in dark on 13 pages (incl. signed-in chart, Portal, account, notifications, Admin ingestion/log/activity, 404) with no text pair under 4.5:1. Non-blocking: Admin banner terminal look (applied), pre-existing light-theme green/red text 3.1-3.9:1 (follow-up)"
     ],
     "notes": "Requested 2026-10-21. Spec: docs/specs/ui-dark-mode.md. Same token names with dark values under :root[data-theme='dark']; DESIGN.md documents the palette."
+  },
+  {
+    "id": "chart-patterns-extended",
+    "area": "engine",
+    "title": "More chartist patterns: bear flag, pennants, triple top/bottom, inverse cup with handle",
+    "user_visible_behavior": "Six more Chartist Patterns (triple_top, triple_bottom, inverse_cup_with_handle, bear_flag, bull_pennant, bear_pennant) are detected by deterministic rules that reuse the existing parameters and appear everywhere the current four do: Screener filter, Saved Screeners, chart markers and breakout line, pattern panel, Watchlist pattern alerts, the natural-language Screener and How it works, in Spanish and English. Each still exposes one breakout level, never a target.",
+    "depends_on": [
+      "chart-patterns-detect",
+      "chart-patterns-ui",
+      "alerts-patterns",
+      "ai-screener-natural-language",
+      "how-it-works-manual"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Engine: positive, near-miss, invalidation and status tests per new type; precedence (triple over double, pennant over flag) tested in both directions; existing pattern tests unchanged",
+      "Laravel: screener filter, saved screener, alerts, detect command and AI schema (enum + MAX_PATTERNS) accept the new types; unknown types still 422",
+      "SPA: chips grouped bullish/bearish, markers on the correct side, panel and alert form localized es/en; six themed How it works schematics; browser QA at 1280/390 px in light and dark",
+      "Local smoke counts per type/status recorded for calibration; .\\init.ps1 and CI pass"
+    ],
+    "evidence": [
+      "2026-10-21 engine: extended.py with triple_top/bottom, inverse_cup_with_handle, bear_flag, bull/bear_pennant reusing PatternParams (only new PENNANT_MAX_WIDTH_RATIO=0.7); ALL_DETECTORS registry; apply_precedence (triple hides double, pennant hides flag). tests/test_patterns_extended.py (initially 15 tests; see the validator round below for the additions); first-batch tests unchanged; engine 97 passed, ruff clean.",
+      "2026-10-21 findings: least-squares pennant lines cannot see convergence on daily highs/lows -> half-range rule; a pole must end at its own extreme (applied to bull_flag too; universe bull flag count unchanged). See spec Implementation Findings.",
+      "2026-10-21 real engine + patterns:detect --universe=sp500 on a migrated copy of the dev SQLite (as-of 2026-10-02): 494 instruments, 176 patterns stored (DT 42, DB 27, CWH 15, BF 4, triple top 13, triple bottom 8, inverse cup 59, bear flag 4, bull pennant 2, bear pennant 2); inverse cup is 34% of detections, documented as unlabelled low confidence.",
+      "2026-10-21 Laravel: ChartPattern::TYPES appended (no migration), MAX_PATTERNS 10, AI prompt es/en lists the new types and directions; new tests in ChartPatternsApiTest, DetectPatternsCommandTest, AlertsApiTest, ScreenerQuerySchemaTest; ScreenerInterpretTest too-many case updated. SPA: bullish/bearish groups (filter chips, alert form), direction helper, HIGH_ROLES, es/en types/roles/short labels, six themed TechnicalExample schematics, How it works entries; Vitest 215.",
+      "2026-10-21 Edge QA (Laravel :8000 on the QA DB, Vite :5195): home groups + triple_top chip -> ?pattern=triple_top; chart EIX bear pennant and STE bear flag listed with markers and breakout line; How it works shows 10 pattern images; portal alert form lists the new types (signed-in QA user); 1280/390, es/en, light/dark, 0 px overflow everywhere; servers stopped afterwards.",
+      "2026-10-21 .\\init.ps1 exit 0: Laravel 544 passed / 6 skipped (4272 assertions), Vitest 215 + lint + build, engine 97.",
+      "Validator round 1 revise: patterns:review-sample crashed on new-type rows (PREFIXES covered only 4 types); bear-side precedence, pennant invalidation and expiry tests missing; no alert evaluation case. Fixed: PREFIXES for all 10 types + test_review_sample_covers_every_pattern_type (ICWH-001, BRP-001); engine tests test_bear_pennant_hides_the_bear_flag_on_the_same_pole (fixture where bear_flag matches alone), test_pennant_invalidations, test_pennant_extreme_beyond_the_pole_end_drops_that_pole, test_breakouts_older_than_ten_sessions_are_gone (triple bottom, inverse cup, bear flag, both pennants); AlertPatternEvaluationTest inverse cup case. Low items: third_peak/third_low roles so triples read T1/T2/T3 (S1/S2/S3, B1/B2/B3); fieldset/legend groups in the alert form and aria-labelledby in the filter (new Vitest group test); pennant invalidation in How it works es/en; spec width_ratio key; ARCHITECTURE wording; calibration spec note on the ten types. Engine 101 passed, Vitest 216.",
+      "2026-10-21 independent validator ACCEPT (round 2, bbf361a): init.ps1 exit 0 (Laravel 546 / 6 skipped, Vitest 216, engine 101); review-sample probe on an inverse_cup_with_handle row now passes; all round-1 findings verified fixed. Follow-up: inverse cup with handle is 34% of detections and unlabelled, first candidate for the next labelling sample."
+    ],
+    "notes": "Requested 2026-10-21 (\"realiza la spec de la primera tanda (las 4 faciles)\", then \"implementa las 4 figuras que decias eran faciles\"). Spec: docs/specs/chart-patterns-extended.md. Vocabulary appended after the current four, no migration. Built on chart-patterns-calibration phase 2 (accepted), so the mirrored types inherit the calibrated values."
   }
 ]

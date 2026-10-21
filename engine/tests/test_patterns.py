@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 from app import main as main_module
 from app.models import Bar
 from app.patterns.detect import detect_patterns
+from app.patterns.near_misses import detect_near_misses
 from app.patterns.swings import swing_highs, swing_lows
 
 START = date(2024, 1, 1)
@@ -100,11 +101,64 @@ def test_double_top_peaks_must_be_the_highest_of_their_span():
     assert found(series([(0, 70), (80, 100), (95, 86), (105, 104), (120, 85), (140, 100.5), (150, 95)]), "double_top") is None
 
 
+def test_double_top_prior_rise_lookback_includes_t1():
+    # Prior lows (from index 20) are too high for a 15% rise; only the long
+    # lower wick of the first peak's own bar (t1 = 80) satisfies it.
+    waypoints = [(0, 90), (80, 100), (110, 85), (140, 100.5), (150, 95)]
+    assert found(series(waypoints), "double_top") is None
+    bars = series(waypoints)
+    bars[80] = bars[80].model_copy(update={"low": 86.5})
+    pattern = found(bars, "double_top")
+    assert pattern is not None and pattern.points[0].role == "left_peak"
+    assert pattern.points[0].date == START + timedelta(days=80)
+
+
 def test_double_top_near_misses():
     assert found(series([(0, 70), (80, 100), (110, 85), (140, 105.5), (150, 100)]), "double_top") is None  # 5% apart
     assert found(series([(0, 70), (80, 100), (110, 93), (140, 100.5), (150, 97)]), "double_top") is None  # 7% trough
     assert found(series([(0, 95), (80, 100), (110, 85), (140, 100.5), (150, 95)]), "double_top") is None  # no prior rise
     assert found(series([(0, 70), (80, 100), (88, 85), (90, 100.5), (100, 95)]), "double_top") is None  # tops too close
+
+
+# Calibration 2026-10-21 rules (docs/specs/chart-patterns-calibration.md).
+
+
+def test_double_top_first_peak_must_end_the_rise():
+    # A higher high (104) 25 sessions before the first peak: the "first peak"
+    # is a lower high inside a range, not the end of a rise.
+    waypoints = [(0, 70), (55, 104), (65, 92), (80, 100), (110, 85), (140, 100.5), (150, 95)]
+    assert found(series(waypoints), "double_top") is None
+    # Within the 1.5% tolerance it still counts.
+    waypoints[1] = (55, 101.2)
+    assert found(series(waypoints), "double_top") is not None
+
+
+def test_double_bottom_first_low_must_end_the_decline():
+    waypoints = [(0, 130), (55, 96), (65, 108), (80, 100), (110, 115), (140, 99.5), (150, 105)]
+    assert found(series(waypoints), "double_bottom") is None
+
+
+def test_double_middle_point_is_not_glued_to_an_extreme():
+    # Trough at 87% of the span (52 of 60 sessions).
+    assert found(series([(0, 70), (80, 100), (132, 85), (140, 100.5), (150, 95)]), "double_top") is None
+    assert found(series([(0, 130), (80, 100), (88, 115), (140, 99.5), (150, 105)]), "double_bottom") is not None  # 13%: kept
+    assert found(series([(0, 130), (80, 100), (85, 115), (140, 99.5), (150, 105)]), "double_bottom") is None  # 8%
+
+
+def test_double_extremes_are_not_lone_wicks():
+    base = series(DOUBLE_TOP + [(150, 95)])
+    wicks = [bar.model_copy() for bar in base]
+    wicks[80] = wicks[80].model_copy(update={"high": 109.0})  # 8.3% above the nearby closes
+    wicks[140] = wicks[140].model_copy(update={"high": 109.5})
+    assert found(wicks, "double_top") is None
+    wicks[80] = wicks[80].model_copy(update={"high": 106.0})  # 5.7%
+    wicks[140] = wicks[140].model_copy(update={"high": 106.5})
+    assert found(wicks, "double_top") is not None
+
+
+def test_double_top_invalidated_by_any_close_above_the_tops():
+    # The higher top's high is 100.5 * 1.002; a close just above it voids it.
+    assert found(series(DOUBLE_TOP + [(147, 96), (155, 100.5), (158, 100.8)]), "double_top") is None
 
 
 # --- double_bottom ------------------------------------------------------------
@@ -148,12 +202,41 @@ def test_cup_with_handle_forming():
 
 def test_cup_with_handle_confirmed_needs_volume():
     waypoints = CUP + [(152, 97), (156, 101)]
-    without_volume = found(series(waypoints), "cup_with_handle")
-    assert without_volume is not None and without_volume.status == "forming"
-
     with_volume = found(series(waypoints, volumes={155: 3000}), "cup_with_handle")
     assert with_volume is not None and with_volume.status == "confirmed"
     assert with_volume.metadata["breakout_close"] == pytest.approx(100)
+
+    # calibration fix: a close above the rim without the volume confirmation
+    # is not a handle any more (it used to stay ``forming``).
+    assert found(series(waypoints), "cup_with_handle") is None
+
+
+def test_cup_handle_high_capped_above_the_rim():
+    rim = 99 * 1.002
+    within_cap = series(CUP + [(152, 97)])
+    within_cap[150] = within_cap[150].model_copy(update={"high": rim * 1.029})
+    assert found(within_cap, "cup_with_handle") is not None
+
+    over_cap = series(CUP + [(152, 97)])
+    over_cap[150] = over_cap[150].model_copy(update={"high": rim * 1.031})
+    assert found(over_cap, "cup_with_handle") is None
+
+
+def test_cup_invalidated_by_a_close_below_the_handle_low_after_the_breakout():
+    volumes = {155: 3000}
+    still_confirmed = found(series(CUP + [(152, 97), (156, 101), (160, 96)], volumes=volumes), "cup_with_handle")
+    assert still_confirmed is not None and still_confirmed.status == "confirmed"
+
+    # The handle low is 94 * 0.998; a later close below it voids the breakout.
+    assert found(series(CUP + [(152, 97), (156, 101), (160, 93)], volumes=volumes), "cup_with_handle") is None
+
+
+def test_handle_sessions_exclude_the_breakout_bar():
+    forming = found(series(CUP + [(152, 97)]), "cup_with_handle")
+    assert forming is not None and forming.metadata["handle_sessions"] == 12.0  # bars 141..152
+
+    confirmed = found(series(CUP + [(152, 97), (156, 101)], volumes={155: 3000}), "cup_with_handle")
+    assert confirmed is not None and confirmed.metadata["handle_sessions"] == 14.0  # bars 141..154, breakout 155
 
 
 def test_cup_rims_must_be_the_highest_of_the_cup():
@@ -189,12 +272,31 @@ def test_bull_flag_forming_then_confirmed():
     assert confirmed is not None and confirmed.status == "confirmed"
 
 
+def test_flag_sessions_exclude_the_breakout_bar():
+    forming = found(series(FLAG, volumes=POLE_VOLUME), "bull_flag")
+    assert forming is not None and forming.metadata["flag_sessions"] == 12.0  # bars 81..92
+
+    confirmed = found(series(FLAG + [(97, 72)], volumes=POLE_VOLUME), "bull_flag")
+    assert confirmed is not None and confirmed.metadata["flag_sessions"] == 15.0  # bars 81..95, breakout 96
+
+
+def test_bull_flag_invalidated_by_a_close_below_the_flag_low_after_the_breakout():
+    still_confirmed = found(series(FLAG + [(97, 72), (101, 68)], volumes=POLE_VOLUME), "bull_flag")
+    assert still_confirmed is not None and still_confirmed.status == "confirmed"
+
+    # The flag low is 66 * 0.998; a later close below it voids the breakout.
+    assert found(series(FLAG + [(97, 72), (103, 65)], volumes=POLE_VOLUME), "bull_flag") is None
+
+
 def test_flag_never_rises_above_the_pole_top():
     bars = series(FLAG, volumes=POLE_VOLUME)
     assert found(bars, "bull_flag") is not None
     # An intraday spike above the pole top inside the flag (close still lower).
     bars[86] = bars[86].model_copy(update={"high": 71.0})
-    assert found(bars, "bull_flag") is None
+    # The flag on the original pole (top at bar 80) is gone; with a 20-session
+    # pole the spike itself may start a new, later pole.
+    pattern = found(bars, "bull_flag")
+    assert pattern is None or next(p for p in pattern.points if p.role == "pole_top").date != bars[80].date
 
 
 def test_bull_flag_near_misses():
@@ -223,3 +325,50 @@ def test_patterns_endpoint_returns_the_active_set():
 def test_patterns_endpoint_rejects_malformed_input():
     client = TestClient(main_module.app)
     assert client.post("/patterns/detect", json={"bars": [{"date": "nope"}]}).status_code == 422
+
+
+# --- near misses (calibration review aid) -------------------------------------
+
+
+def test_near_miss_reports_the_single_rule_that_rejects_an_instance():
+    # Tops 3.8% apart: rejected only by the 3% peak tolerance.
+    bars = series([(0, 70), (80, 100), (110, 85), (140, 104), (150, 98)])
+    assert found(bars, "double_top") is None
+    misses = {miss.pattern.type: miss for miss in detect_near_misses(bars)}
+    assert misses["double_top"].rule == "peak_tolerance"
+    assert misses["double_top"].production_value == pytest.approx(0.03)
+    assert misses["double_top"].relaxed_value == pytest.approx(0.05)
+    assert [point.role for point in misses["double_top"].pattern.points] == ["left_peak", "trough", "right_peak"]
+
+
+def test_near_miss_flag_without_lower_volume_and_none_for_detected_types():
+    bars = series(FLAG)  # flag volume equals the pole volume
+    misses = {miss.pattern.type: miss for miss in detect_near_misses(bars)}
+    assert misses["bull_flag"].rule == "lower_volume"
+
+    detected = series(DOUBLE_TOP + [(150, 95)])
+    assert found(detected, "double_top") is not None
+    assert "double_top" not in {miss.pattern.type for miss in detect_near_misses(detected)}
+
+
+def test_near_misses_never_change_the_detected_set():
+    bars = series([(0, 70), (80, 100), (110, 85), (140, 104), (150, 98)])
+    before = detect_patterns(bars)
+    detect_near_misses(bars)
+    assert detect_patterns(bars) == before
+    assert detect_near_misses(series([(0, 50), (30, 60)])) == []
+
+
+def test_near_misses_and_parameters_endpoints():
+    client = TestClient(main_module.app)
+    bars = series([(0, 70), (80, 100), (110, 85), (140, 104), (150, 98)])
+    response = client.post("/patterns/near-misses", json={"bars": [bar.model_dump(mode="json") for bar in bars]})
+    assert response.status_code == 200
+    rules = {item["pattern"]["type"]: item["rule"] for item in response.json()["near_misses"]}
+    assert rules["double_top"] == "peak_tolerance"
+    assert client.post("/patterns/near-misses", json={"bars": [{"date": "nope"}]}).status_code == 422
+
+    parameters = client.get("/patterns/parameters").json()["parameters"]
+    assert parameters["double_peak_tolerance"] == pytest.approx(0.03)
+    assert parameters["handle_max_rise"] == pytest.approx(0.03)
+    assert parameters["cup_extremes"] == 1.0

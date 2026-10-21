@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { I18nProvider } from '../../i18n/I18nProvider.tsx'
@@ -42,7 +42,7 @@ it('pre-ticks "confirmed", disables save until a type and an event are chosen, t
   const { onSaved } = show(undefined)
   expect(screen.getByRole('heading', { name: 'Mis alertas de patrones' })).toBeTruthy()
   expect(screen.getByText('Sin alerta')).toBeTruthy()
-  expect(screen.getAllByRole('checkbox')).toHaveLength(6)
+  expect(screen.getAllByRole('checkbox')).toHaveLength(12) // 10 types + 2 events
   expect(checkbox('Cuando se confirma (ruptura)').checked).toBe(true)
   expect(checkbox('Cuando aparece').checked).toBe(false)
 
@@ -116,4 +116,13 @@ it('renders English labels', () => {
   expect(screen.getByRole('checkbox', { name: 'Double bottom' })).toBeTruthy()
   expect(screen.getByRole('checkbox', { name: 'When it is confirmed (breakout)' })).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Save alert' })).toBeTruthy()
+})
+
+it('groups the pattern types as named bullish and bearish groups (chart-patterns-extended)', () => {
+  show(undefined)
+  const bullish = screen.getByRole('group', { name: 'Alcistas' })
+  const bearish = screen.getByRole('group', { name: 'Bajistas' })
+  expect(within(bullish).getAllByRole('checkbox')).toHaveLength(5)
+  expect(within(bearish).getByRole('checkbox', { name: 'Taza con asa invertida' })).toBeTruthy()
+  expect(within(bearish).getByRole('checkbox', { name: 'Banderín bajista' })).toBeTruthy()
 })

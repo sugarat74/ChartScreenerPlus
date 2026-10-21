@@ -46,6 +46,8 @@ class ScreenerQuerySchemaTest extends TestCase
         ], $schema['required']);
         $this->assertSame(ScreenerFilterParser::SIGNAL_TYPES, $schema['properties']['signal']['items']['enum']);
         $this->assertSame(ChartPattern::TYPES, $schema['properties']['pattern']['items']['enum']);
+        // chart-patterns-extended: the AI may pick any number of the vocabulary.
+        $this->assertSame(count(ChartPattern::TYPES), ScreenerQuerySchema::MAX_PATTERNS);
         $this->assertSame(ScreenerFilterParser::PATTERN_STATUSES, $schema['properties']['pattern_status']['enum']);
         $this->assertSame(ScreenerFilterParser::SORTS, $schema['properties']['sort']['enum']);
         $this->assertSame(['bullish', 'bearish', null], $schema['properties']['ma_cross']['enum']);

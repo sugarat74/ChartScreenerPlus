@@ -191,7 +191,24 @@ export interface ChartMarker {
 }
 
 /** Roles that mark a pattern high (drawn above the bar); every other role is a low. */
-const HIGH_ROLES = new Set(['left_peak', 'right_peak', 'peak', 'rim_left', 'rim_right', 'pole_top'])
+const HIGH_ROLES = new Set([
+  'left_peak',
+  'right_peak',
+  'peak',
+  'rim_left',
+  'rim_right',
+  'pole_top',
+  // chart-patterns-extended
+  'middle_peak',
+  'third_peak',
+  'left_crest',
+  'right_crest',
+  'cup_top',
+  'handle_high',
+  'pole_peak',
+  'flag_high',
+  'pennant_high',
+])
 
 /**
  * One breakout-level line per active pattern (chart-patterns-ui). The breakout

@@ -115,4 +115,55 @@ class EngineClient
 
         return is_array($patterns) ? $patterns : [];
     }
+
+    /**
+     * Calibration aid: patterns the rules reject because of exactly one rule.
+     *
+     * The response is `{near_misses: [{rule, parameter, production_value,
+     * relaxed_value, pattern}]}` (at most one per type the rules do not
+     * detect). Used only by `patterns:review-sample`; never persisted.
+     *
+     * @param  array<int, array<string, mixed>>  $bars
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws RequestException when the engine responds with an error status.
+     * @throws ConnectionException when the engine is unreachable.
+     */
+    public function patternNearMisses(array $bars): array
+    {
+        $baseUrl = rtrim((string) config('engine.url'), '/');
+
+        $payload = Http::acceptJson()
+            ->post($baseUrl.'/patterns/near-misses', ['bars' => $bars])
+            ->throw()
+            ->json();
+
+        $nearMisses = is_array($payload) ? ($payload['near_misses'] ?? []) : [];
+
+        return is_array($nearMisses) ? $nearMisses : [];
+    }
+
+    /**
+     * The production pattern parameters (`{parameters: {name: number}}`).
+     *
+     * @return array<string, float>
+     *
+     * @throws RequestException when the engine responds with an error status.
+     * @throws ConnectionException when the engine is unreachable.
+     */
+    public function patternParameters(): array
+    {
+        $baseUrl = rtrim((string) config('engine.url'), '/');
+
+        $payload = Http::acceptJson()
+            ->get($baseUrl.'/patterns/parameters')
+            ->throw()
+            ->json();
+
+        $parameters = is_array($payload) ? ($payload['parameters'] ?? []) : [];
+
+        return is_array($parameters)
+            ? array_map('floatval', array_filter($parameters, 'is_numeric'))
+            : [];
+    }
 }

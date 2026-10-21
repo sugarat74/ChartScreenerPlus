@@ -99,6 +99,30 @@ class AlertPatternEvaluationTest extends TestCase
         return Alert::factory()->for($user)->watchlistPattern($types, $events)->create();
     }
 
+    public function test_a_second_batch_type_notifies_like_the_first_four(): void
+    {
+        // chart-patterns-extended: an inverse cup with handle confirming on the Watchlist.
+        $user = User::factory()->create();
+        $ste = $this->member('STE');
+        $user->watchlist()->attach($ste->id);
+        $this->pattern($ste, 'inverse_cup_with_handle', 'forming', '2026-05-04');
+        $this->patternAlert($user, ['inverse_cup_with_handle']);
+
+        $this->evaluate('0 notified, 1 baseline');
+
+        $this->newSession($ste, '2026-10-02');
+        $this->pattern($ste, 'inverse_cup_with_handle', 'confirmed', '2026-05-04', 98.7);
+        $this->evaluate('1 notified');
+
+        $this->assertSame([[
+            'ticker' => 'STE',
+            'name' => 'STE Corp',
+            'reason' => 'pattern:inverse_cup_with_handle:confirmed',
+            'status' => 'confirmed',
+            'breakout_level' => 98.7,
+        ]], $this->latest($user)['items']);
+    }
+
     public function test_confirmation_notifies_once_after_a_silent_baseline(): void
     {
         $user = User::factory()->create();

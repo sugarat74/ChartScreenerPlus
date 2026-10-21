@@ -38,7 +38,7 @@ A bullish Signal where the short-term moving average (e.g. SMA 50) crosses above
 
 ### Chartist Pattern (Patrón chartista)
 
-A geometric price formation detected by explicit deterministic rules over swing points. In scope since 2026-10-10: Double Top, Double Bottom, Cup with Handle and Bull Flag (triangles, head-and-shoulders, wedges and bear flags are future scope). A pattern is **forming** (geometry complete, no breakout yet) or **confirmed** (a close beyond its **Breakout level** within the last 10 sessions). The Breakout level (neckline or pivot) is the only price line a pattern exposes; Chartiko never derives targets.
+A geometric price formation detected by explicit deterministic rules over swing points. In scope since 2026-10-10: Double Top, Double Bottom, Cup with Handle and Bull Flag; since 2026-10-21 (chart-patterns-extended) also Triple Top, Triple Bottom, Inverse Cup with Handle, Bear Flag, Bullish Pennant and Bearish Pennant (triangles, wedges, rectangles and head-and-shoulders are future scope). Each type has a fixed **direction**: bullish types confirm with a close above the Breakout level, bearish ones with a close below it. A pattern is **forming** (geometry complete, no breakout yet) or **confirmed** (a close beyond its **Breakout level** within the last 10 sessions). The Breakout level (neckline or pivot) is the only price line a pattern exposes; Chartiko never derives targets.
 
 ### RVOL (Relative Volume)
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AiScreenerQuery;
+use App\Models\ChartPattern;
 use App\Models\User;
 use App\Services\Screener\Ai\ScreenerQueryInterpreter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -222,7 +223,7 @@ class ScreenerInterpretTest extends TestCase
             'boolean as string' => [['price_above_sma200' => 'true']],
             'unknown ma_cross' => [['ma_cross' => 'sideways']],
             'unknown pattern' => [['pattern' => ['head_and_shoulders']]],
-            'too many patterns' => [['pattern' => ['double_top', 'double_bottom', 'cup_with_handle', 'bull_flag', 'bull_flag']]],
+            'too many patterns' => [['pattern' => [...ChartPattern::TYPES, 'bull_flag']]],
             'unknown sort' => [['sort' => 'price_desc']],
             'unknown pattern status' => [['pattern_status' => 'broken']],
             'too many unsupported' => [['unsupported' => ['a', 'b', 'c', 'd', 'e', 'f']]],

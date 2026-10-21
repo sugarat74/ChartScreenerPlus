@@ -183,6 +183,13 @@ class AlertsApiTest extends TestCase
             ->assertJsonPath('alert.pattern_events', null);
 
         $this->actingAs($user)->getJson('/api/alerts')->assertOk()->assertJsonCount(2, 'alerts');
+
+        // chart-patterns-extended: second-batch types are accepted, in canonical order.
+        $third = User::factory()->create();
+        $this->actingAs($third)
+            ->postJson('/api/alerts', ['kind' => 'watchlist_pattern', 'pattern_types' => ['bear_pennant', 'inverse_cup_with_handle', 'double_top']])
+            ->assertCreated()
+            ->assertJsonPath('alert.pattern_types', ['double_top', 'inverse_cup_with_handle', 'bear_pennant']);
     }
 
     public function test_pattern_alert_validation_duplicates_and_limit(): void

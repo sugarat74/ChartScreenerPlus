@@ -152,6 +152,42 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
         <path d="M125 37 L245 70 M143 76 L250 108" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
         <circle cx="261" cy="54" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
+    case 'tripleTop':
+      return <>
+        <path d="M18 104 H290" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <path d="M18 128 L44 90 L70 42 L95 78 L107 100 L125 75 L145 43 L165 80 L182 104 L200 72 L220 42 L240 80 L262 112 L290 130" stroke={INK} strokeWidth="3" fill="none" />
+        <circle cx="70" cy="42" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" /><circle cx="145" cy="43" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" /><circle cx="220" cy="42" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'tripleBottom':
+      return <>
+        <path d="M18 62 H290" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <path d="M18 38 L44 76 L70 124 L95 88 L107 66 L125 91 L145 123 L165 86 L182 62 L200 94 L220 124 L240 86 L262 54 L290 36" stroke={INK} strokeWidth="3" fill="none" />
+        <circle cx="70" cy="124" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" /><circle cx="145" cy="123" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" /><circle cx="220" cy="124" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'inverseCupWithHandle':
+      return <>
+        <path d="M223 101 H290" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <path d="M18 131 L44 116 C66 73 86 47 131 46 C176 44 201 71 223 115 L241 93 L254 85 L270 101 L289 131" stroke={INK} strokeWidth="3" fill="none" />
+        <circle cx="131" cy="46" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" /><circle cx="254" cy="85" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'bearFlag':
+      return <>
+        <path d="M18 36 L48 40 L77 57 L107 121 L128 130 L151 111 L175 114 L198 98 L220 103 L241 91 L261 112 L289 136" stroke={INK} strokeWidth="3" fill="none" />
+        <path d="M140 108 L245 84 M125 131 L250 102" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <circle cx="261" cy="112" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'bullPennant':
+      return <>
+        <path d="M18 130 L48 126 L77 109 L107 45 L128 36 L146 62 L164 44 L182 58 L200 48 L216 55 L230 50 L248 38 L289 24" stroke={INK} strokeWidth="3" fill="none" />
+        <path d="M128 36 L236 50 M146 62 L236 53" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <circle cx="248" cy="38" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
+    case 'bearPennant':
+      return <>
+        <path d="M18 36 L48 40 L77 57 L107 121 L128 130 L146 104 L164 122 L182 108 L200 118 L216 111 L230 116 L248 128 L289 136" stroke={INK} strokeWidth="3" fill="none" />
+        <path d="M128 130 L236 116 M146 104 L236 113" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <circle cx="248" cy="128" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
+      </>
   }
 }
 

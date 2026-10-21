@@ -1,5 +1,58 @@
 # Progress Log
 
+## More chartist patterns (`chart-patterns-extended`, accepted) — 2026-10-21
+
+- **Independent validator: ACCEPT** (round 2).
+  - Round 1 was `revise`: `patterns:review-sample` crashed on rows of the new types, and engine, alert and accessibility tests were missing.
+  - All fixed in `bbf361a`. Triples now show T1/T2/T3.
+
+- User request: "implementa las 4 figuras que decias eran faciles". Spec `docs/specs/chart-patterns-extended.md`, built on the accepted calibration.
+- Six new types:
+  - `triple_top`, `triple_bottom`;
+  - `inverse_cup_with_handle`;
+  - `bear_flag`;
+  - `bull_pennant`, `bear_pennant`.
+- Engine (`engine/app/patterns/extended.py`):
+  - The new detectors reuse `PatternParams`; the only new parameter is the pennant width ratio, 0.7.
+  - Precedence: a triple hides its double, a pennant hides the flag on the same pole.
+  - Fixes found while building:
+    - The pennant uses a half-range rule (least-squares lines cannot see convergence).
+    - A pole must end at its own extreme (also applied to `bull_flag`).
+- Full surface:
+  - Screener filter chips grouped bullish/bearish.
+  - Saved screeners and Watchlist pattern alerts.
+  - AI screener: schema limit 10, prompt in es/en.
+  - Chart markers and panel.
+  - How it works: six entries with schematics.
+  - es/en, light/dark.
+- No migration.
+- Real-data smoke (dev DB, as-of 2026-10-02): 176 patterns.
+  - The inverse cup with handle is 34% (59). The geometry is valid, but it is unlabelled; documented as low confidence and the first candidate for the next labelling sample.
+- Edge QA: 1280/390 px, es/en, light/dark, 0 px overflow (details in `feature_list.json`).
+- `.\init.ps1` exit 0: Laravel 544 passed / 6 skipped, Vitest 215, SPA lint + build, engine 97.
+
+## Pattern calibration (`chart-patterns-calibration`, accepted) — 2026-10-21
+
+- **Independent validator: ACCEPT.** It reran the gate, reproduced the recheck numbers exactly and verified the label merge row by row. Its nits are applied: docstring, "initial parameters" wording, and the How it works anchor wording. Remaining risk: no out-of-sample check.
+
+- Phase 1 (2026-10-16, previously only on the WIP branch, now rebased on `main`):
+  - Rule fixes for cup and flag.
+  - `PatternParams` and the near-miss scan.
+  - The `patterns:review-sample` and `patterns:calibration-report` commands.
+  - The sample `docs/calibration/sample-2026-10-16/` (138 cases).
+  - Details are in the spec.
+- Phase 2, at the user's request ("ajusta lo que puedas pero no quiero volver a calibrar ahora"):
+  - The human labels were merged back into the export format (Excel had re-saved the file).
+  - Report on the initial rules: double top 57.5%, double bottom 40%, cup 60%, flag 3/3.
+- Tuning from the labels, bar features and charts:
+  - Double top/bottom: the first extreme must end the prior move (40 sessions, 1.5%); the middle point must sit at 12–85% of the span; a wick may be at most 8% from the nearby closes; any close beyond the extreme invalidates.
+  - Flag pole up to 20 sessions.
+- Engine re-run on the labelled cases: double top 88%; double bottom 70% and cup 60% (low confidence, documented); flag 3/3.
+- Universe as-of 2026-10-02: 176 → 109 patterns (double top 97 → 55).
+- These are same-sample numbers. No fresh validation sample, by user decision.
+- How it works (es/en) states the new rules.
+- `.\init.ps1` exit 0: Laravel 542 passed / 6 skipped, Vitest 206, SPA lint + build, engine 82.
+
 ## Dark mode (`ui-dark-mode`, accepted) — 2026-10-21
 
 - User request: "añade un modo oscuro al diseño web seleccionable en la portada del sitio". Spec `docs/specs/ui-dark-mode.md`; feature entry added.

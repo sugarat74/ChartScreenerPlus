@@ -22,9 +22,22 @@ class ChartPattern extends Model
     use HasFactory;
 
     /**
-     * The fixed vocabulary owned by the engine (`engine/app/patterns/rules.py`).
+     * The fixed vocabulary owned by the engine (`engine/app/patterns/rules.py`
+     * and `extended.py`). The second batch (chart-patterns-extended) is
+     * appended so the canonical order of stored lists does not change.
      */
-    public const TYPES = ['double_top', 'double_bottom', 'cup_with_handle', 'bull_flag'];
+    public const TYPES = [
+        'double_top',
+        'double_bottom',
+        'cup_with_handle',
+        'bull_flag',
+        'triple_top',
+        'triple_bottom',
+        'inverse_cup_with_handle',
+        'bear_flag',
+        'bull_pennant',
+        'bear_pennant',
+    ];
 
     public const STATUSES = ['forming', 'confirmed'];
 

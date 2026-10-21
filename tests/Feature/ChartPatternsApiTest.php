@@ -67,6 +67,32 @@ class ChartPatternsApiTest extends TestCase
         $this->assertEqualsCanonicalizing(['AAA', 'BBB', 'CCC'], $this->tickers('?pattern[]=double_bottom&pattern[]=cup_with_handle'));
     }
 
+    public function test_second_batch_types_filter_save_and_keep_the_canonical_order(): void
+    {
+        // chart-patterns-extended: the new types go through the same filter.
+        ChartPattern::factory()->create(['instrument_id' => $this->member('EEE')->id, 'type' => 'bear_flag', 'status' => 'confirmed']);
+        ChartPattern::factory()->create(['instrument_id' => $this->member('FFF')->id, 'type' => 'triple_top', 'status' => 'forming']);
+        ChartPattern::factory()->create(['instrument_id' => $this->member('GGG')->id, 'type' => 'inverse_cup_with_handle', 'status' => 'forming']);
+        $this->member('HHH');
+
+        $this->assertEqualsCanonicalizing(['EEE', 'FFF'], $this->tickers('?pattern=bear_flag,triple_top'));
+        $this->assertSame(['EEE'], $this->tickers('?pattern=bear_flag,triple_top&pattern_status=confirmed'));
+        $this->assertSame(['GGG'], $this->tickers('?pattern=inverse_cup_with_handle'));
+
+        $user = User::factory()->create();
+        $filters = [
+            'signal' => [], 'rsi_min' => null, 'rsi_max' => null, 'min_rvol' => null,
+            'price_above_sma200' => false, 'ma_cross' => null,
+            'pattern' => ['bear_pennant', 'double_top', 'bull_pennant', 'triple_bottom'], 'pattern_status' => 'any',
+            'sort' => 'rvol_desc',
+        ];
+        $this->actingAs($user)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->postJson('/api/screeners', ['name' => 'Bajistas', 'filters' => $filters])
+            ->assertCreated()
+            ->assertJsonPath('screener.filters.pattern', ['double_top', 'triple_bottom', 'bull_pennant', 'bear_pennant']);
+    }
+
     public function test_pattern_status_narrows_the_pattern_filter(): void
     {
         $this->seedPatterns();

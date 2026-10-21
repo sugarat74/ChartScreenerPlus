@@ -24,7 +24,7 @@ class ScreenerQuerySchema
 
     public const MAX_SIGNALS = 9;
 
-    public const MAX_PATTERNS = 4;
+    public const MAX_PATTERNS = 10; // the whole ChartPattern::TYPES vocabulary
 
     public const MAX_UNSUPPORTED = 5;
 
@@ -81,7 +81,7 @@ class ScreenerQuerySchema
                 'pattern' => [
                     'type' => 'array',
                     'items' => ['type' => 'string', 'enum' => ScreenerFilterParser::PATTERN_TYPES],
-                    'description' => 'Chartist patterns, OR-combined. At most 4, no duplicates. Empty when not requested.',
+                    'description' => 'Chartist patterns, OR-combined. At most 10, no duplicates. Empty when not requested.',
                 ],
                 'pattern_status' => [
                     'type' => 'string',

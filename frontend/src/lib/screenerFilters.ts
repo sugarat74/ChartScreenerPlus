@@ -33,13 +33,29 @@ export const SCREENER_SIGNAL_TYPES: readonly ScreenerSignalType[] = [
   'macd_bearish_cross',
 ]
 
-/** Canonical order of the chartist pattern types (chart-patterns-detect). */
-export const SCREENER_PATTERN_TYPES: readonly ScreenerPatternType[] = [
-  'double_bottom',
-  'double_top',
-  'cup_with_handle',
-  'bull_flag',
+/**
+ * Chartist pattern types grouped by direction (chart-patterns-extended): a
+ * bullish pattern confirms with a close above its breakout level, a bearish
+ * one with a close below it. Display only, never advice.
+ */
+export const SCREENER_PATTERN_GROUPS: readonly {
+  direction: PatternDirection
+  types: readonly ScreenerPatternType[]
+}[] = [
+  { direction: 'bullish', types: ['double_bottom', 'triple_bottom', 'cup_with_handle', 'bull_flag', 'bull_pennant'] },
+  { direction: 'bearish', types: ['double_top', 'triple_top', 'inverse_cup_with_handle', 'bear_flag', 'bear_pennant'] },
 ]
+
+export type PatternDirection = 'bullish' | 'bearish'
+
+/** Canonical order of the chartist pattern types: bullish group, then bearish. */
+export const SCREENER_PATTERN_TYPES: readonly ScreenerPatternType[] = SCREENER_PATTERN_GROUPS.flatMap(
+  (group) => group.types,
+)
+
+export function patternDirection(type: ScreenerPatternType): PatternDirection {
+  return SCREENER_PATTERN_GROUPS.find((group) => group.types.includes(type))?.direction ?? 'bullish'
+}
 
 export const SCREENER_PATTERN_STATUSES: readonly ScreenerPatternStatus[] = ['any', 'forming', 'confirmed']
 

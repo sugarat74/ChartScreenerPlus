@@ -17,7 +17,7 @@ import type {
 import {
   MIN_RVOL_PRESETS,
   SCREENER_PATTERN_STATUSES,
-  SCREENER_PATTERN_TYPES,
+  SCREENER_PATTERN_GROUPS,
   SCREENER_SIGNAL_TYPES,
   parseRsiInput,
   patternLabel,
@@ -258,22 +258,34 @@ export default function ScreenerFilterPanel({
               ? t('patterns.legendCount', { count: filters.patterns.length })
               : t('patterns.legend')}
           </legend>
-          <div className="flex flex-wrap gap-2">
-            {SCREENER_PATTERN_TYPES.map((type) => {
-              const selected = filters.patterns.includes(type)
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => togglePattern(type)}
-                  className={chipClass(selected)}
-                >
-                  {patternLabel(type, t)}
-                </button>
-              )
-            })}
-          </div>
+          {SCREENER_PATTERN_GROUPS.map((group) => (
+            <div
+              key={group.direction}
+              role="group"
+              aria-labelledby={`pattern-group-${group.direction}`}
+              className="flex flex-col gap-1"
+            >
+              <span id={`pattern-group-${group.direction}`} className="font-mono text-[10px] uppercase text-on-surface-variant">
+                {t(`patterns.groups.${group.direction}`)}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {group.types.map((type) => {
+                  const selected = filters.patterns.includes(type)
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => togglePattern(type)}
+                      className={chipClass(selected)}
+                    >
+                      {patternLabel(type, t)}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
           <div
             role="group"
             aria-label={t('patterns.statusAria')}

@@ -13,6 +13,7 @@ export type GuideIllustrationKind =
   | 'goldenCross' | 'deathCross' | 'bullishAlignment' | 'bearishAlignment'
   | 'pivotBreakoutRvol' | 'rsiOverbought' | 'rsiOversold' | 'macdBullish' | 'macdBearish'
   | 'doubleTop' | 'doubleBottom' | 'cupWithHandle' | 'bullFlag'
+  | 'tripleTop' | 'tripleBottom' | 'inverseCupWithHandle' | 'bearFlag' | 'bullPennant' | 'bearPennant'
 
 export type GuideEntry = {
   term: string

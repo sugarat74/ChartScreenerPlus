@@ -439,7 +439,17 @@ export type ScreenerSignalType =
 export type ScreenerMaCross = 'bullish' | 'bearish'
 
 /** The four chartist pattern types the engine detects (chart-patterns-detect). */
-export type ScreenerPatternType = 'double_top' | 'double_bottom' | 'cup_with_handle' | 'bull_flag'
+export type ScreenerPatternType =
+  | 'double_top'
+  | 'double_bottom'
+  | 'cup_with_handle'
+  | 'bull_flag'
+  | 'triple_top'
+  | 'triple_bottom'
+  | 'inverse_cup_with_handle'
+  | 'bear_flag'
+  | 'bull_pennant'
+  | 'bear_pennant'
 
 export type PatternStatus = 'forming' | 'confirmed'
 
