@@ -1,6 +1,10 @@
 # Progress Log
 
-## More chartist patterns (`chart-patterns-extended`, passing) — 2026-10-21
+## More chartist patterns (`chart-patterns-extended`, accepted) — 2026-10-21
+
+- **Independent validator: ACCEPT** (round 2).
+  - Round 1 was `revise`: `patterns:review-sample` crashed on rows of the new types, and engine, alert and accessibility tests were missing.
+  - All fixed in `bbf361a`. Triples now show T1/T2/T3.
 
 - User request: "implementa las 4 figuras que decias eran faciles". Spec `docs/specs/chart-patterns-extended.md`, built on the accepted calibration.
 - Six new types:
