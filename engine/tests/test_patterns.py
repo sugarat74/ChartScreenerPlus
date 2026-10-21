@@ -120,6 +120,47 @@ def test_double_top_near_misses():
     assert found(series([(0, 70), (80, 100), (88, 85), (90, 100.5), (100, 95)]), "double_top") is None  # tops too close
 
 
+# Calibration 2026-10-21 rules (docs/specs/chart-patterns-calibration.md).
+
+
+def test_double_top_first_peak_must_end_the_rise():
+    # A higher high (104) 25 sessions before the first peak: the "first peak"
+    # is a lower high inside a range, not the end of a rise.
+    waypoints = [(0, 70), (55, 104), (65, 92), (80, 100), (110, 85), (140, 100.5), (150, 95)]
+    assert found(series(waypoints), "double_top") is None
+    # Within the 1.5% tolerance it still counts.
+    waypoints[1] = (55, 101.2)
+    assert found(series(waypoints), "double_top") is not None
+
+
+def test_double_bottom_first_low_must_end_the_decline():
+    waypoints = [(0, 130), (55, 96), (65, 108), (80, 100), (110, 115), (140, 99.5), (150, 105)]
+    assert found(series(waypoints), "double_bottom") is None
+
+
+def test_double_middle_point_is_not_glued_to_an_extreme():
+    # Trough at 87% of the span (52 of 60 sessions).
+    assert found(series([(0, 70), (80, 100), (132, 85), (140, 100.5), (150, 95)]), "double_top") is None
+    assert found(series([(0, 130), (80, 100), (88, 115), (140, 99.5), (150, 105)]), "double_bottom") is not None  # 13%: kept
+    assert found(series([(0, 130), (80, 100), (85, 115), (140, 99.5), (150, 105)]), "double_bottom") is None  # 8%
+
+
+def test_double_extremes_are_not_lone_wicks():
+    base = series(DOUBLE_TOP + [(150, 95)])
+    wicks = [bar.model_copy() for bar in base]
+    wicks[80] = wicks[80].model_copy(update={"high": 109.0})  # 8.3% above the nearby closes
+    wicks[140] = wicks[140].model_copy(update={"high": 109.5})
+    assert found(wicks, "double_top") is None
+    wicks[80] = wicks[80].model_copy(update={"high": 106.0})  # 5.7%
+    wicks[140] = wicks[140].model_copy(update={"high": 106.5})
+    assert found(wicks, "double_top") is not None
+
+
+def test_double_top_invalidated_by_any_close_above_the_tops():
+    # The higher top's high is 100.5 * 1.002; a close just above it voids it.
+    assert found(series(DOUBLE_TOP + [(147, 96), (155, 100.5), (158, 100.8)]), "double_top") is None
+
+
 # --- double_bottom ------------------------------------------------------------
 
 DOUBLE_BOTTOM = [(0, 130), (80, 100), (110, 115), (140, 99.5)]
@@ -252,7 +293,10 @@ def test_flag_never_rises_above_the_pole_top():
     assert found(bars, "bull_flag") is not None
     # An intraday spike above the pole top inside the flag (close still lower).
     bars[86] = bars[86].model_copy(update={"high": 71.0})
-    assert found(bars, "bull_flag") is None
+    # The flag on the original pole (top at bar 80) is gone; with a 20-session
+    # pole the spike itself may start a new, later pole.
+    pattern = found(bars, "bull_flag")
+    assert pattern is None or next(p for p in pattern.points if p.role == "pole_top").date != bars[80].date
 
 
 def test_bull_flag_near_misses():

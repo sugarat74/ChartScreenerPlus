@@ -5,7 +5,7 @@
 - `id`: `chart-patterns-calibration`
 - `area`: `engine`
 - `depends_on`: `chart-patterns-detect`, `chart-patterns-ui`, `screener-precomputed` (accepted)
-- `status`: `in_progress` (planned 2026-10-12; phase 1 implemented 2026-10-16, phase 2 waits for human labels)
+- `status`: implemented (planned 2026-10-12; phase 1 2026-10-16; phase 2 2026-10-21 with the human labels, no second sample by user decision)
 - `source`: `feature_list.json`
 
 ## Goal
@@ -149,4 +149,91 @@ Recurring reasons in the suggestions, as hypotheses for phase 2 (not decisions):
 - Roll-out (step 6).
 - Any precision claim.
 
-`chart-patterns-calibration` stays `in_progress`.
+`chart-patterns-calibration` stayed `in_progress` until phase 2.
+
+## Implementation Findings / Phase 2
+
+Recorded 2026-10-21. The user labelled all 138 cases of `docs/calibration/sample-2026-10-16/sample.csv` and asked to adjust what the labels support **without a second labelling round** ("ajusta lo que puedas pero no quiero volver a calibrar ahora"). Tuning was therefore limited to rules with a clear signal in the labels and checked by re-running the engine on the labelled cases. The numbers after tuning are measured on the same sample used to choose the rules, so they are optimistic.
+
+### Labelled CSV
+
+- Excel had re-saved the file with `;`, `dd/mm/yyyy` dates and the `points` column truncated to its first point. The labels were merged back into the original export format by `id` (all 138 rows). Nothing else changed.
+- On the 10 near misses the reviewer wrote `acceptable` or `clear` instead of `missed`. They were counted as `missed`, with `notes` = "reviewer wrote …".
+
+### Report on the labels (detections of the initial rules)
+
+| Type | Reviewed | Clear | Acceptable | Not a pattern | Precision |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| double_top | 40 | 2 | 21 | 17 | 57.5% |
+| double_bottom | 40 | 2 | 14 | 24 | 40.0% |
+| cup_with_handle | 15 | 0 | 9 | 6 | 60.0% |
+| bull_flag | 3 | 1 | 2 | 0 | 100% |
+
+Near misses that were real (`missed`) for each rule that rejected them:
+- double_top: `min_depth` 2/2, `peak_tolerance` 1/2, `extremes` 1/4, `prior_move` 0/2.
+- double_bottom: 0/10.
+- cup_with_handle: `extremes` 2/10.
+- bull_flag: `pole_max_length` 2/2, `down_slope` 1/1, `flag_max_retrace` 1/6, `pole_min_rise` 0/1.
+
+The suggested labels agreed with the human labels in 79.7% of the cases.
+
+### What separated real from false doubles
+
+Bar-level features were computed on the dev DB for every labelled double, and the false cases were viewed as charts. Four failure modes accounted for most `not_a_pattern` labels:
+
+1. **The first extreme does not end a move.** It is a pullback low inside a rise, or a lower high inside a range, with a more extreme bar shortly before. Measured as how far any bar of the previous 40 sessions goes beyond the first extreme: 15 of 24 false double bottoms go beyond it, against 2 of 16 real ones, and those two by less than 1.5%.
+2. **The middle point is glued to one extreme.** The second extreme is a sudden plunge or spike just after the middle point (positions 0.07–0.11 and 0.86–0.96, never seen in real cases).
+3. **Lone wicks.** An extreme lies 9–13% away from the closes around it; the real cases stay at or under 5.1%.
+4. **The price already closed beyond the pattern extreme** while the figure was still shown as forming. The old invalidation margin was 3%.
+
+Rules rejected for lack of separation:
+- A cap on how far the second low may undercut the first. It would also drop 3 real bottoms, including a `clear` one.
+- A tighter cup rim tolerance (+3%). Its signal rests on 15 cases and it drops 2 real cups.
+- Relaxing the double-top `min_depth`. The type is already the noisiest.
+
+### Parameter changes (engine `rules.py`, tests in `engine/tests/test_patterns.py`)
+
+| Change | Constant | Before | After |
+| --- | --- | --- | --- |
+| First extreme ends the prior move: no bar of the previous 40 sessions more than 1.5% beyond it | `DOUBLE_ANCHOR_LOOKBACK`, `DOUBLE_ANCHOR_TOLERANCE` | none | 40, 0.015 |
+| Middle point between 12% and 85% of the span | `DOUBLE_MIDDLE_POSITION` | none | (0.12, 0.85) |
+| Each extreme within 8% of the extreme close within 2 bars | `DOUBLE_MAX_WICK`, `DOUBLE_WICK_BARS` | none | 0.08, 2 |
+| Invalidation margin beyond the pattern extreme | `DOUBLE_INVALIDATION` | 0.03 | 0.0 |
+| Maximum pole length (bull flag) | `POLE_MAX_LENGTH` | 15 | 20 |
+
+**Invalidation choice.** A sweep of the margin (0, 0.5%, 1%, 1.5%, 2% and 3%), re-run on the labelled cases, showed the following. At 0: double tops 22 good / 3 false, double bottoms 14 / 6. At 3%: tops 22 / 5, bottoms 16 / 7. The strict value costs 2 acceptable bottoms (MCHP, AMAT, which undercut their low by under 3% and recovered) and removes 3 false cases. It is also the simplest rule to explain.
+
+**Near-miss scan.** It gained the matching relaxations: `anchor` 1.5%→3%, `middle_position` minimum 12%→5%, `max_wick` 8%→12%, and the flag `pole_max_length` relaxation moves from 20 to 25.
+
+**Tests.** New: `test_double_top_first_peak_must_end_the_rise`, `test_double_bottom_first_low_must_end_the_decline`, `test_double_middle_point_is_not_glued_to_an_extreme`, `test_double_extremes_are_not_lone_wicks` and `test_double_top_invalidated_by_any_close_above_the_tops`. Changed: `test_flag_never_rises_above_the_pole_top` now asserts that the original flag is gone, because a 20-session pole lets the spike start a new, later pole.
+
+### Result on the labelled sample (engine re-run at each case's as-of date)
+
+| Type | Real kept | False kept | Precision | Real lost | False removed | Other instance found |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| double_top | 22 | 3 | **88.0%** | 0 | 12 | 3 |
+| double_bottom | 14 | 6 | **70.0%** (low confidence) | 2 | 16 | 2 |
+| cup_with_handle | 9 | 6 | **60.0%** (low confidence, unchanged) | 0 | 0 | 0 |
+| bull_flag | 3 | 0 | 100% (3 cases) | 0 | 0 | 0 |
+
+"Other instance found" means that, after a case is rejected, the detector now returns a different, unlabelled instance of the same type for that instrument.
+
+**Low confidence.** `double_bottom` and `cup_with_handle` stay under the 80% target and are documented as low confidence, as the acceptance allows. Most of the remaining false double bottoms are bottoms inside downtrends whose second low undercuts the first by 2–3%. The false cups are irregular ranges and handles still falling on the as-of bar.
+
+### Frequency over the universe (dev DB, as-of 2026-10-02, 494 instruments)
+
+| Type | Before phase 2 (forming / confirmed) | After |
+| --- | --- | --- |
+| double_top | 84 / 13 (97) | 45 / 10 (55) |
+| double_bottom | 52 / 9 (61) | 29 / 5 (34) |
+| cup_with_handle | 14 / 1 (15) | 14 / 1 (15) |
+| bull_flag | 2 / 1 (3) | 4 / 1 (5) |
+| total | 176 | 109 |
+
+Double tops are 50% of detections, above the 40% guide. The labelled sample confirms them at 88%, which the acceptance accepts as justification.
+
+### Not done (by user decision)
+
+- No second, fresh sample to validate the tuned rules out of sample. This is the main remaining risk.
+- No cup or double-bottom tuning beyond the above.
+- Roll-out (step 6) happens with the next deploy: `patterns:detect` and `screener:refresh` run in the next daily pipeline.

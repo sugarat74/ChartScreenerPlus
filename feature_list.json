@@ -1154,7 +1154,7 @@
       "chart-patterns-ui",
       "screener-precomputed"
     ],
-    "status": "in_progress",
+    "status": "passing",
     "verification": [
       "patterns:review-sample exports detected and near-miss cases with charts and a CSV for labelling (Admin/CLI only)",
       "patterns:calibration-report gives precision per type, miss rate and frequency for a labelled CSV",
@@ -1166,9 +1166,13 @@
       "2026-10-16 phase 1, near misses: PatternParams + near_misses.py (one rule relaxed at a time, fixed table), POST /patterns/near-misses and GET /patterns/parameters; 4 engine tests (single rule reported, none for detected types, detection unchanged, endpoints + 422). Engine pytest 77 passed, ruff clean.",
       "2026-10-16 phase 1, commands: patterns:review-sample and patterns:calibration-report (CLI only); tests/Feature/PatternCalibrationCommandsTest.php 4 tests / 86 assertions with fixture tests/Fixtures/pattern-calibration/. Same seed gives a byte-identical sample.csv on the real data.",
       "2026-10-16 real export on a migrated copy of the dev SQLite (494 instruments, as-of 2026-10-02) with the local engine: docs/calibration/sample-2026-10-16/ (seed 20261016, 138 cases: DT 27 forming/13 confirmed + 10 near misses, DB 31/9 + 10, CWH 14/1 + 10, BF 2/1 + 10). Frequency before/after the fixes: DT 97/97, DB 61/61, CWH 17/15, BF 3/3, total 178/176. suggested_label filled by Claude from Edge-rendered PNGs (label left empty).",
-      "2026-10-16 .\\init.ps1 exit 0: Laravel 384 passed / 6 skipped (3172 assertions), Vitest 154 + lint + build, engine 77 passed."
+      "2026-10-16 .\\init.ps1 exit 0: Laravel 384 passed / 6 skipped (3172 assertions), Vitest 154 + lint + build, engine 77 passed.",
+      "2026-10-21 phase 2: 138 human labels (docs/calibration/sample-2026-10-16/sample.csv, merged back from an Excel re-save; 10 near-miss 'acceptable/clear' counted as missed). Report: precision DT 57.5%, DB 40.0%, CWH 60.0%, BF 3/3; missed near misses DT min_depth 2/2, BF pole_max_length 2/2.",
+      "2026-10-21 phase 2 tuning (labels + bar features + charts): double anchor (no bar of the prior 40 sessions >1.5% beyond the first extreme), middle point 12-85% of the span, wick <=8% vs closes within 2 bars, invalidation on any close beyond the extreme (0.03 -> 0.0, chosen by a margin sweep), POLE_MAX_LENGTH 15 -> 20. 5 new engine tests + 1 adjusted; engine 82 passed, ruff clean.",
+      "2026-10-21 engine re-run on every labelled case at its as-of: DT 22 good / 3 false kept (88.0%), DB 14/6 (70.0%, low confidence), CWH 9/6 (60.0%, low confidence, unchanged), BF 3/0. Universe as-of 2026-10-02: 176 -> 109 patterns (DT 97 -> 55, DB 61 -> 34, CWH 15, BF 3 -> 5). Same-sample numbers; no fresh validation sample by user decision.",
+      "2026-10-21 .\\init.ps1 exit 0 (worktree rebased on main dd0c35b): Laravel 542 passed / 6 skipped (4246 assertions), Vitest 206 + lint + build, engine 82 passed. How it works texts (es/en) updated for the new double, cup and flag rules."
     ],
-    "notes": "Added 2026-10-12 at user request, to develop later. Spec: docs/specs/chart-patterns-calibration.md. Motivation: 97 of 178 local detections were double tops with the initial parameters. Not backtesting (out of scope). 2026-10-16: phase 1 done (rule fixes, review-sample, calibration-report, real sample with suggested labels). Stays in_progress: acceptance needs phase 2 (a person labels docs/calibration/sample-2026-10-16/sample.csv, then the report, parameter tuning and roll-out)."
+    "notes": "Added 2026-10-12 at user request, to develop later. Spec: docs/specs/chart-patterns-calibration.md. Motivation: 97 of 178 local detections were double tops with the initial parameters. Not backtesting (out of scope). 2026-10-16: phase 1 done (rule fixes, review-sample, calibration-report, real sample with suggested labels). 2026-10-21: phase 2 done on the human labels (rules tuned for doubles and the flag pole; double_bottom and cup_with_handle documented as low confidence). The user declined a second labelling round for now."
   },
   {
     "id": "alerts-patterns",

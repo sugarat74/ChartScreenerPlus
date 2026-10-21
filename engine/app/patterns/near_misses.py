@@ -27,6 +27,9 @@ RELAXATIONS: dict[str, tuple[tuple[str, str, float | int | bool], ...]] = {
         ("min_depth", "double_min_depth", 0.07),
         ("prior_move", "double_prior_move", 0.10),
         ("min_gap", "double_min_gap", 10),
+        ("anchor", "double_anchor_tolerance", 0.03),
+        ("middle_position", "double_middle_min", 0.05),
+        ("max_wick", "double_max_wick", 0.12),
         ("extremes", "double_extremes", False),
     ),
     "double_bottom": (
@@ -34,6 +37,9 @@ RELAXATIONS: dict[str, tuple[tuple[str, str, float | int | bool], ...]] = {
         ("min_depth", "double_min_depth", 0.07),
         ("prior_move", "double_prior_move", 0.10),
         ("min_gap", "double_min_gap", 10),
+        ("anchor", "double_anchor_tolerance", 0.03),
+        ("middle_position", "double_middle_min", 0.05),
+        ("max_wick", "double_max_wick", 0.12),
         ("extremes", "double_extremes", False),
     ),
     "cup_with_handle": (
@@ -50,7 +56,7 @@ RELAXATIONS: dict[str, tuple[tuple[str, str, float | int | bool], ...]] = {
     ),
     "bull_flag": (
         ("pole_min_rise", "pole_min_rise", 0.10),
-        ("pole_max_length", "pole_max_length", 20),
+        ("pole_max_length", "pole_max_length", 25),
         ("flag_max_retrace", "flag_max_retrace", 0.618),
         ("flag_max_length", "flag_max_length", 25),
         ("down_slope", "flag_down_slope", False),

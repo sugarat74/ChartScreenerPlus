@@ -190,27 +190,27 @@ export const guideEs: GuideTexts = {
       entries: [
         {
           term: 'Doble suelo',
-          summary: 'Dos mínimos parecidos (diferencia de hasta un 3 %), separados entre 15 y 120 sesiones, tras una caída de al menos un 15 % en las 60 sesiones previas, con un rebote intermedio de al menos un 10 %.',
+          summary: 'Dos mínimos parecidos (diferencia de hasta un 3 %), separados entre 15 y 120 sesiones, tras una caída de al menos un 15 % en las 60 sesiones previas que termina en el primer suelo (sin un mínimo más bajo en las 40 sesiones anteriores), con un rebote intermedio de al menos un 10 % que no esté pegado a ninguno de los suelos. Ningún suelo puede ser una mecha aislada lejos de los cierres.',
           illustration: { kind: 'doubleBottom', alt: 'Precio con dos suelos similares y una subida que supera el nivel horizontal de la cresta intermedia.' },
-          details: ['Nivel de ruptura: el máximo entre los dos suelos. Se confirma con un cierre por encima; se invalida con un cierre más de un 3 % por debajo de los suelos.'],
+          details: ['Nivel de ruptura: el máximo entre los dos suelos. Se confirma con un cierre por encima; se invalida con cualquier cierre por debajo de los suelos.'],
         },
         {
           term: 'Doble techo',
-          summary: 'Dos máximos parecidos (hasta un 3 % de diferencia), separados entre 15 y 120 sesiones, tras una subida de al menos un 15 % en las 60 sesiones previas, con una caída intermedia de al menos un 10 %.',
+          summary: 'Dos máximos parecidos (hasta un 3 % de diferencia), separados entre 15 y 120 sesiones, tras una subida de al menos un 15 % en las 60 sesiones previas que termina en el primer techo (sin un máximo más alto en las 40 sesiones anteriores), con una caída intermedia de al menos un 10 % que no esté pegada a ninguno de los techos. Ningún techo puede ser una mecha aislada lejos de los cierres.',
           illustration: { kind: 'doubleTop', alt: 'Precio con dos techos similares y una caída que cruza por debajo del valle intermedio.' },
-          details: ['Nivel de ruptura: el mínimo entre los dos techos. Se confirma con un cierre por debajo; se invalida con un cierre más de un 3 % por encima de los techos.'],
+          details: ['Nivel de ruptura: el mínimo entre los dos techos. Se confirma con un cierre por debajo; se invalida con cualquier cierre por encima de los techos.'],
         },
         {
           term: 'Taza con asa',
-          summary: 'Una taza de 30 a 325 sesiones, con una profundidad de entre el 12 % y el 35 %, el fondo entre el 20 % y el 80 % de su duración, sin picos intermedios por encima del borde más bajo y bordes de altura parecida (hasta un 5 %), seguida de un asa de 5 a 25 sesiones que retrocede como mucho un 12 % y no baja de la mitad de la taza.',
+          summary: 'Una taza de 30 a 325 sesiones, con una profundidad de entre el 12 % y el 35 %, el fondo entre el 20 % y el 80 % de su duración, sin picos intermedios por encima del borde más bajo y bordes de altura parecida (hasta un 5 %), seguida de un asa de 5 a 25 sesiones que retrocede como mucho un 12 %, no baja de la mitad de la taza y no sube más de un 3 % por encima del borde derecho.',
           illustration: { kind: 'cupWithHandle', alt: 'Precio con base redondeada, un asa corta y una subida por encima del máximo del asa.' },
-          details: ['Nivel de ruptura: el máximo del asa. Se confirma con un cierre por encima y un volumen relativo de 1,5× o más.'],
+          details: ['Nivel de ruptura: el máximo del asa. Se confirma con un cierre por encima y un volumen relativo de 1,5× o más; un cierre por encima del borde sin ese volumen, o un cierre posterior por debajo del mínimo del asa, la invalida.'],
         },
         {
           term: 'Bandera alcista',
-          summary: 'Un mástil (subida de al menos un 15 % en 15 sesiones o menos) seguido de una bandera de 5 a 20 sesiones que corrige sin subir, con menos volumen y sin retroceder más de la mitad del mástil.',
+          summary: 'Un mástil (subida de al menos un 15 % en 20 sesiones o menos) seguido de una bandera de 5 a 20 sesiones que corrige sin subir, con menos volumen y sin retroceder más de la mitad del mástil.',
           illustration: { kind: 'bullFlag', alt: 'Precio que sube con fuerza, desciende dentro de un canal estrecho y rompe al alza.' },
-          details: ['Nivel de ruptura: el máximo de la bandera. Se confirma con un cierre por encima.'],
+          details: ['Nivel de ruptura: el máximo de la bandera. Se confirma con un cierre por encima; un cierre posterior por debajo del mínimo de la bandera la invalida.'],
         },
       ],
       notes: [

@@ -1,5 +1,25 @@
 # Progress Log
 
+## Pattern calibration (`chart-patterns-calibration`, passing) — 2026-10-21
+
+- Phase 1 (2026-10-16, previously only on the WIP branch, now rebased on `main`):
+  - Rule fixes for cup and flag.
+  - `PatternParams` and the near-miss scan.
+  - The `patterns:review-sample` and `patterns:calibration-report` commands.
+  - The sample `docs/calibration/sample-2026-10-16/` (138 cases).
+  - Details are in the spec.
+- Phase 2, at the user's request ("ajusta lo que puedas pero no quiero volver a calibrar ahora"):
+  - The human labels were merged back into the export format (Excel had re-saved the file).
+  - Report on the initial rules: double top 57.5%, double bottom 40%, cup 60%, flag 3/3.
+- Tuning from the labels, bar features and charts:
+  - Double top/bottom: the first extreme must end the prior move (40 sessions, 1.5%); the middle point must sit at 12–85% of the span; a wick may be at most 8% from the nearby closes; any close beyond the extreme invalidates.
+  - Flag pole up to 20 sessions.
+- Engine re-run on the labelled cases: double top 88%; double bottom 70% and cup 60% (low confidence, documented); flag 3/3.
+- Universe as-of 2026-10-02: 176 → 109 patterns (double top 97 → 55).
+- These are same-sample numbers. No fresh validation sample, by user decision.
+- How it works (es/en) states the new rules.
+- `.\init.ps1` exit 0: Laravel 542 passed / 6 skipped, Vitest 206, SPA lint + build, engine 82.
+
 ## Dark mode (`ui-dark-mode`, accepted) — 2026-10-21
 
 - User request: "añade un modo oscuro al diseño web seleccionable en la portada del sitio". Spec `docs/specs/ui-dark-mode.md`; feature entry added.

@@ -32,7 +32,16 @@ DOUBLE_MIN_DEPTH = 0.10
 DOUBLE_PRIOR_LOOKBACK = 60
 DOUBLE_PRIOR_MOVE = 0.15
 DOUBLE_MAX_AGE = 60
-DOUBLE_INVALIDATION = 0.03
+DOUBLE_INVALIDATION = 0.0
+# Calibration 2026-10-21 (docs/calibration/sample-2026-10-16): the first
+# extreme ends a move (no bar of the previous ANCHOR_LOOKBACK sessions goes
+# more than ANCHOR_TOLERANCE beyond it), the middle point is not glued to
+# either extreme, and no key extreme is a lone wick far from the closes.
+DOUBLE_ANCHOR_LOOKBACK = 40
+DOUBLE_ANCHOR_TOLERANCE = 0.015
+DOUBLE_MIDDLE_POSITION = (0.12, 0.85)
+DOUBLE_MAX_WICK = 0.08
+DOUBLE_WICK_BARS = 2
 
 # cup_with_handle
 CUP_MIN_LENGTH = 30
@@ -48,7 +57,7 @@ HANDLE_MAX_RISE = 0.03
 CUP_BREAKOUT_RVOL = 1.5
 
 # bull_flag
-POLE_MAX_LENGTH = 15
+POLE_MAX_LENGTH = 20
 POLE_MIN_RISE = 0.15
 FLAG_MIN_LENGTH = 5
 FLAG_MAX_LENGTH = 20
@@ -73,6 +82,11 @@ class PatternParams:
     double_prior_move: float = DOUBLE_PRIOR_MOVE
     double_max_age: int = DOUBLE_MAX_AGE
     double_invalidation: float = DOUBLE_INVALIDATION
+    double_anchor_lookback: int = DOUBLE_ANCHOR_LOOKBACK
+    double_anchor_tolerance: float = DOUBLE_ANCHOR_TOLERANCE
+    double_middle_min: float = DOUBLE_MIDDLE_POSITION[0]
+    double_middle_max: float = DOUBLE_MIDDLE_POSITION[1]
+    double_max_wick: float = DOUBLE_MAX_WICK
     double_extremes: bool = True
     cup_min_length: int = CUP_MIN_LENGTH
     cup_max_length: int = CUP_MAX_LENGTH
@@ -141,6 +155,13 @@ def double_top(
             prior_low = min(bar.low for bar in bars[max(0, t1 - params.double_prior_lookback) : t1 + 1])
             if h1 < (1 + params.double_prior_move) * prior_low:
                 continue
+            anchor = bars[max(0, t1 - params.double_anchor_lookback) : t1]
+            if anchor and max(bar.high for bar in anchor) > h1 * (1 + params.double_anchor_tolerance):
+                continue
+            if not params.double_middle_min <= (trough_index - t1) / gap <= params.double_middle_max:
+                continue
+            if max(_wick(bars, t1, i, high=True), _wick(bars, t2, i, high=True)) > params.double_max_wick:
+                continue
 
             breakout, invalid = None, False
             for j in range(t2 + 1, i + 1):
@@ -207,6 +228,13 @@ def double_bottom(
             # Prior decline: the lookback includes bar t1 (``high[t1-60 .. t1]``).
             prior_high = max(bar.high for bar in bars[max(0, t1 - params.double_prior_lookback) : t1 + 1])
             if l1 > (1 - params.double_prior_move) * prior_high:
+                continue
+            anchor = bars[max(0, t1 - params.double_anchor_lookback) : t1]
+            if anchor and min(bar.low for bar in anchor) < l1 * (1 - params.double_anchor_tolerance):
+                continue
+            if not params.double_middle_min <= (peak_index - t1) / gap <= params.double_middle_max:
+                continue
+            if max(_wick(bars, t1, i, high=False), _wick(bars, t2, i, high=False)) > params.double_max_wick:
                 continue
 
             breakout, invalid = None, False
@@ -479,6 +507,19 @@ def _pattern(
         points=[PatternPoint(date=bars[index].date, price=price, role=role) for index, price, role in ordered],
         metadata=metadata,
     )
+
+
+def _wick(bars: list[Bar], t: int, i: int, *, high: bool) -> float:
+    """How far the extreme of bar ``t`` lies from the nearest closes (fraction).
+
+    Compares the high (or low) with the highest (lowest) close within
+    ``DOUBLE_WICK_BARS`` sessions on each side, never reading past ``i``.
+    """
+
+    closes = [bar.close for bar in bars[max(0, t - DOUBLE_WICK_BARS) : min(i, t + DOUBLE_WICK_BARS) + 1]]
+    if high:
+        return (bars[t].high - max(closes)) / bars[t].high
+    return (min(closes) - bars[t].low) / bars[t].low
 
 
 def _argmin_low(bars: list[Bar], first: int, last: int) -> int:

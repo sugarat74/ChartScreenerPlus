@@ -190,27 +190,27 @@ export const guideEn: GuideTexts = {
       entries: [
         {
           term: 'Double bottom',
-          summary: 'Two similar lows (up to 3% apart), 15 to 120 sessions apart, after a fall of at least 15% over the previous 60 sessions, with a rebound of at least 10% between them.',
+          summary: 'Two similar lows (up to 3% apart), 15 to 120 sessions apart, after a fall of at least 15% over the previous 60 sessions that ends at the first low (no lower low in the 40 sessions before it), with a rebound of at least 10% between them that is not glued to either low. Neither low may be a lone wick far from the closes.',
           illustration: { kind: 'doubleBottom', alt: 'Price with two similar bottoms and a rise above the intermediate peak level.' },
-          details: ['Breakout level: the high between the two bottoms. Confirmed by a close above it; invalidated by a close more than 3% below the bottoms.'],
+          details: ['Breakout level: the high between the two bottoms. Confirmed by a close above it; invalidated by any close below the bottoms.'],
         },
         {
           term: 'Double top',
-          summary: 'Two similar highs (up to 3% apart), 15 to 120 sessions apart, after a rise of at least 15% over the previous 60 sessions, with a drop of at least 10% between them.',
+          summary: 'Two similar highs (up to 3% apart), 15 to 120 sessions apart, after a rise of at least 15% over the previous 60 sessions that ends at the first top (no higher high in the 40 sessions before it), with a drop of at least 10% between them that is not glued to either top. Neither top may be a lone wick far from the closes.',
           illustration: { kind: 'doubleTop', alt: 'Price with two similar tops and a fall below the intermediate trough level.' },
-          details: ['Breakout level: the low between the two tops. Confirmed by a close below it; invalidated by a close more than 3% above the tops.'],
+          details: ['Breakout level: the low between the two tops. Confirmed by a close below it; invalidated by any close above the tops.'],
         },
         {
           term: 'Cup with handle',
-          summary: 'A cup of 30 to 325 sessions, 12% to 35% deep, with its low between 20% and 80% of its length, no intermediate peaks above the lower rim and rims of similar height (within 5%), followed by a handle of 5 to 25 sessions that pulls back at most 12% and stays above the middle of the cup.',
+          summary: 'A cup of 30 to 325 sessions, 12% to 35% deep, with its low between 20% and 80% of its length, no intermediate peaks above the lower rim and rims of similar height (within 5%), followed by a handle of 5 to 25 sessions that pulls back at most 12%, stays above the middle of the cup and does not rise more than 3% above the right rim.',
           illustration: { kind: 'cupWithHandle', alt: 'Price tracing a rounded base, a short handle and a rise above the handle high.' },
-          details: ['Breakout level: the high of the handle. Confirmed by a close above it with relative volume of 1.5× or more.'],
+          details: ['Breakout level: the high of the handle. Confirmed by a close above it with relative volume of 1.5× or more; a close above the rim without that volume, or a later close below the handle low, invalidates it.'],
         },
         {
           term: 'Bull flag',
-          summary: 'A pole (a rise of at least 15% in 15 sessions or fewer) followed by a flag of 5 to 20 sessions that drifts without rising, on lower volume and without retracing more than half of the pole.',
+          summary: 'A pole (a rise of at least 15% in 20 sessions or fewer) followed by a flag of 5 to 20 sessions that drifts without rising, on lower volume and without retracing more than half of the pole.',
           illustration: { kind: 'bullFlag', alt: 'Price rising sharply, drifting down within a narrow channel and then breaking upward.' },
-          details: ['Breakout level: the high of the flag. Confirmed by a close above it.'],
+          details: ['Breakout level: the high of the flag. Confirmed by a close above it; a later close below the flag low invalidates it.'],
         },
       ],
       notes: [
