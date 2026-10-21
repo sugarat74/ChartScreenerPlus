@@ -51,6 +51,7 @@ return [
         'limit' => 'Puedes tener como máximo :max alertas.',
         'duplicate' => 'Ya tienes esta alerta.',
         'not_found' => 'Alerta no encontrada.',
+        'email_unavailable' => 'El resumen diario por email todavía no está disponible.',
     ],
     'screener' => [
         'signal_unknown_types' => 'El parámetro signal solo puede contener tipos de señal conocidos.',

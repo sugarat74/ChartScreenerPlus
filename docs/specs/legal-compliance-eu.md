@@ -53,6 +53,7 @@ logrotate and the Laravel `daily` log channel).
 | User account | name, email, password hash | create and run the account | contract (6.1.b) | while the account exists; deletion on request |
 | Saved Screeners and Watchlist | filters, tickers linked to the account | the requested feature | contract (6.1.b) | while the account exists |
 | Alerts and in-app notifications (since 2026-10-10) | alert settings; notifications with tickers and reasons | tell the user about changes they asked to follow | contract (6.1.b) | alerts while kept; notifications 90 days |
+| Daily alert email (alerts-email-digest; only while active) | email address, opt-in time, email language, digest content; ledger (as-of, item count, sent time) | send the alert summary the user asked for | contract (6.1.b), explicit Portal opt-in | opt-in until withdrawn (Portal or signed unsubscribe link); ledger 90 days. Processor: the sending provider named by `ALERT_EMAIL_PROVIDER` / `ALERT_EMAIL_PROVIDER_LOCATION`; the privacy policy shows these paragraphs only while the feature is active |
 | Sessions and sign-in activity | IP, user agent, last activity; sign-ins, failures (typed email), sign-outs, Admin revocations | security, Admin session control | legitimate interest in security (6.1.f) | sessions: lifetime; activity: 90 days |
 | Server and application logs | IP, date, URL, referer, user agent, errors | operation and security | legitimate interest (6.1.f) | 14 days |
 | Backups | full database copy | recovery | legitimate interest (6.1.f) | 14 days |

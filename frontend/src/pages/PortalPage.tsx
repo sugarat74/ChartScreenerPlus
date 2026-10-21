@@ -17,6 +17,7 @@ import PortalSavedScreeners from '../components/portal/PortalSavedScreeners.tsx'
 import { usePortalAlerts } from '../components/portal/usePortalAlerts.ts'
 import WatchlistAlertForm from '../components/portal/WatchlistAlertForm.tsx'
 import WatchlistPatternAlertForm from '../components/portal/WatchlistPatternAlertForm.tsx'
+import AlertEmailOptIn from '../components/portal/AlertEmailOptIn.tsx'
 import WatchlistTable from '../components/watchlist/WatchlistTable.tsx'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, watchlistApi } from '../lib/api.ts'
@@ -276,6 +277,7 @@ function PortalContent() {
             onSaved={alerts.upsert}
             onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}
           />
+          <AlertEmailOptIn />
         </div>
       </div>
     </section>

@@ -20,4 +20,25 @@ return [
 
     'notification_retention_days' => (int) env('ALERTS_NOTIFICATION_RETENTION_DAYS', 90),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Daily email digest (docs/specs/alerts-email-digest.md)
+    |--------------------------------------------------------------------------
+    |
+    | Off by default. The digest is available only when `enabled` is true AND
+    | the sending provider and its data location are both set: the privacy
+    | policy names them from these values, so no email can go out before the
+    | legal text covers it. The transport itself is Laravel's mail
+    | configuration (MAIL_MAILER, MAIL_HOST…, MAIL_FROM_ADDRESS).
+    |
+    */
+
+    'email_digest' => [
+        'enabled' => (bool) env('ALERT_EMAIL_DIGEST_ENABLED', false),
+        'provider' => env('ALERT_EMAIL_PROVIDER'),
+        'provider_location' => env('ALERT_EMAIL_PROVIDER_LOCATION'),
+        'max_items' => 50,
+        'ledger_retention_days' => (int) env('ALERT_EMAIL_LEDGER_RETENTION_DAYS', 90),
+    ],
+
 ];

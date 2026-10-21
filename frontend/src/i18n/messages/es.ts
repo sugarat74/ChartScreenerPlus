@@ -518,6 +518,14 @@ export const es = {
     deleting: 'Eliminando…',
     adminCannotDelete: 'Una cuenta de administración no puede eliminarse desde aquí.',
   },
+  alertEmail: {
+    title: 'Resumen diario por email',
+    intro: 'Recibe un único email al día con los avisos de tus alertas, después de la actualización diaria de datos.',
+    label: 'Quiero recibir el resumen diario de mis alertas por email',
+    hint: 'Desactivado salvo que lo marques. Sin seguimiento; puedes darte de baja desde el propio email.',
+    privacy: 'Política de privacidad',
+    on: 'Activado: recibirás el resumen los días en que tus alertas detecten algo.',
+  },
   alerts: {
     sectionTitle: 'Alertas',
     sectionIntro:

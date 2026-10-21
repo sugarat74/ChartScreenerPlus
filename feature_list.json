@@ -1086,15 +1086,21 @@
       "alerts-ui",
       "legal-compliance-eu"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Opt-in defaults to off; one digest per user per as-of (ledger); queued with retries; mail failures never break the pipeline",
       "Signed unsubscribe link and RFC 8058 one-click POST work without a session",
       "HTML and text parts in es/en with disclaimer and privacy link, no tracking pixels",
       "Privacy texts and deploy docs (SMTP, SPF/DKIM/DMARC) updated; .\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-email-digest.md. Production sending blocked until the owner has a chartiko.com mailbox and an SMTP/API provider (DPA and data location to record in the privacy policy)."
+    "evidence": [
+      "2026-10-21 backend: migration 2026_10_21_000001 (users.alert_email_opt_in_at + preferred_locale; alert_email_digests unique user_id+as_of, FK cascade); AlertEmailDigestAvailability (flag + provider + location); GET/PUT /api/alerts/email (409 opt-in while unavailable); AlertDigestSender called by alerts:evaluate in try/catch; SendAlertDigest job (3 tries, backoff 60/300, sent_at after send, re-checks opt-in); AlertDigest mailable (HTML + text, List-Unsubscribe + List-Unsubscribe-Post); signed:relative GET page + one-click POST under /api/email/alerts/unsubscribe/{user}; ledger in model:prune (90 days) and account export (alert_emails); /api/legal email_digest + retention.email_digest_days.",
+      "tests/Feature/AlertEmailDigestTest.php 14 tests: one email per user per as-of with every notification and re-run silent; alerts:evaluate queues after evaluation; not opted in / nothing for the as-of -> nothing; unavailable (flag off, no provider, no location, switched off after queueing) -> nothing; preference API default off, explicit opt-in records time + Accept-Language locale, 401/422; opt-in refused 409 while unavailable, opt-out always; signed GET page in the user's language, tampered and foreign id 403, one-click POST 204 without session, idempotent; transport failure keeps alerts:evaluate exit 0 and sends once on retry; es/en HTML + text with disclaimer, privacy and unsubscribe links, escaping, no <img>; raw array-transport message with List-Unsubscribe headers and multipart/alternative; 50-item cap; ledger prune + cascade; legal API provider only while active. AccountSelfServiceTest coverage allowlist + export keys updated.",
+      "SPA: AlertEmailOptIn on the Portal (hidden while unavailable, unticked by default, status and error), alertEmailApi, legal emailDigest paragraphs (es/en) shown only with email_digest; Vitest AlertEmailOptIn.test.tsx 3 + LegalPage provider test; Vitest 220.",
+      "Rendered es (640 px) and en (390 px) emails in Edge: no images, 0 px overflow. Browser QA with the feature enabled on a QA DB (1280 es light, 390 en dark): box unticked, tick stores opt-in + page locale, privacy names the configured provider and location. Real server: signed GET 200 (user's language), tampered 403, one-click POST 204, opt-in cleared.",
+      "2026-10-21 .\\init.ps1 exit 0: Laravel 560 passed / 6 skipped (4397 assertions), Vitest 220 + lint + build, engine 101."
+    ],
+    "notes": "Planned 2026-10-10; implemented 2026-10-21 at user request. Spec: docs/specs/alerts-email-digest.md. Shipped OFF: production sending needs the owner's chartiko.com mailbox, an SMTP/API provider with DPA, SPF/DKIM/DMARC and the env vars of the deploy/README.md checklist (ALERT_EMAIL_DIGEST_ENABLED + ALERT_EMAIL_PROVIDER + ALERT_EMAIL_PROVIDER_LOCATION); the privacy policy names the provider from the same variables."
   },
   {
     "id": "screener-pagination",

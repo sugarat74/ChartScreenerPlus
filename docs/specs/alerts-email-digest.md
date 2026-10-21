@@ -5,7 +5,7 @@
 - `id`: `alerts-email-digest`
 - `area`: `backend` + `ops`
 - `depends_on`: `alerts-engine`, `alerts-ui`, `legal-compliance-eu`
-- `status`: `not_started` (planned 2026-10-10). **Blocked for production** until the owner has a sending mailbox/domain on `chartiko.com` and chooses an SMTP/API provider.
+- `status`: implemented 2026-10-21 at the user's request ("ok realiza alerts-email-digest"). Shipped **off**: production sending still waits for the owner's mailbox and SMTP/API provider, and is enabled by configuration only (see Implementation Findings).
 - `source`: `feature_list.json`
 
 ## Goal
@@ -82,11 +82,11 @@ so I notice relevant setups even if I don't open Chartiko that day.
 
 ## Implementation Tasks
 
-- [ ] Opt-in column + locale, API and Portal checkbox (unticked default).
-- [ ] `AlertDigest` mailable (HTML + text, es/en, disclaimer, privacy link, no tracking).
-- [ ] `DigestSender` with ledger idempotence and 50-item cap; queue + retries.
-- [ ] Signed unsubscribe GET + one-click POST + headers.
-- [ ] Legal and deploy docs; tests; evidence.
+- [x] Opt-in column + locale, API and Portal checkbox (unticked default).
+- [x] `AlertDigest` mailable (HTML + text, es/en, disclaimer, privacy link, no tracking).
+- [x] `DigestSender` with ledger idempotence and 50-item cap; queue + retries.
+- [x] Signed unsubscribe GET + one-click POST + headers.
+- [x] Legal and deploy docs; tests; evidence.
 
 ## Verification Plan
 
@@ -107,10 +107,41 @@ so I notice relevant setups even if I don't open Chartiko that day.
 
 ## Validator Checklist
 
-- [ ] Opt-in default off; one digest per user per as-of; no tracking; signed unsubscribe and one-click work.
-- [ ] Mail failures never break the pipeline; tests offline (`Mail::fake`).
-- [ ] Legal texts updated before any production send; docs and `init.ps1` OK.
+- [x] Opt-in default off; one digest per user per as-of; no tracking; signed unsubscribe and one-click work.
+- [x] Mail failures never break the pipeline; tests offline (`Mail::fake`).
+- [x] Legal texts updated before any production send; docs and `init.ps1` OK.
 
 ## Review note — 2026-10-12
 
 Still valid after `screener-precomputed`, `screener-pagination` and the header/homepage changes: the files and routes named above exist (the Screener now lives at `/`, which this spec does not touch). Screener alerts evaluated by `alerts-engine` read the precomputed `screener_rows`, refreshed by the pipeline before `alerts:evaluate`; nothing changes for this spec. Pattern alerts are a separate later feature: `docs/specs/alerts-patterns.md`.
+
+## Implementation Findings
+
+Recorded 2026-10-21.
+
+1. **Shipped off, enabled by configuration.** There is still no provider (production has `MAIL_MAILER=log`), so the feature is code-complete but unavailable. `AlertEmailDigestAvailability::available()` requires `ALERT_EMAIL_DIGEST_ENABLED=true` **and** `ALERT_EMAIL_PROVIDER` **and** `ALERT_EMAIL_PROVIDER_LOCATION`. While it is unavailable:
+   - the Portal hides the control;
+   - `PUT /api/alerts/email` refuses an opt-in with `409` (opting out always works);
+   - `alerts:evaluate` queues nothing;
+   - a job already queued sends nothing.
+
+   The go-live checklist is in `deploy/README.md` ("Email del resumen diario de alertas").
+2. **Privacy text tied to the same switch.** The provider is not known yet, so the privacy policy cannot name it statically. `GET /api/legal` returns `email_digest: {provider, provider_location}` only while the feature is available. The new `emailDigest` paragraphs of the legal texts (es/en; sections "Alertas y notificaciones" and "Destinatarios y transferencias internacionales") render only then, with `{emailProvider}`, `{emailProviderLocation}` and `{emailDigestDays}`. No email can go out unless the policy describes it. `config/legal.php` `updated_at` must be bumped in the go-live deploy (checklist step 6).
+3. **Unsubscribe under `/api`.** nginx sends only `/api` and `/sanctum` to Laravel, so the planned `/email/alerts/unsubscribe/{user}` is `/api/email/alerts/unsubscribe/{user}`:
+   - GET shows a small self-contained page (`resources/views/alert-email-unsubscribed.blade.php`) in the user's language, with light/dark styling and `noindex`.
+   - POST is the one-click endpoint (`204`).
+   - The signature is **relative** (`signed:relative`) and the link is rooted at `APP_URL`, so it is valid from the queue worker (no request host) and behind the proxy.
+4. **Job, not a queued mailable.** `SendAlertDigest` (3 tries, backoff 60/300 s) marks `sent_at` only after a successful send. It re-checks the opt-in and availability, so an unsubscribe between queueing and sending is honoured, and logs only the ledger id on final failure (no address). The ledger row is created before dispatch: with the unique `(user_id, as_of)` index, a re-run or a concurrent run queues nothing more.
+5. **Notification read in PHP.** `notifications.data` is a text column, so filtering by `as_of` in SQL would need dialect-specific JSON operators. The content builder reads the user's last 7 days of `AlertTriggered` rows and filters in PHP. It sorts by creation time, then by alert id, because notification ids are UUIDs.
+6. **Account data.**
+   - The export includes `profile.alert_email_opt_in_at`, `profile.preferred_locale` and `alert_emails` (the ledger).
+   - Deletion cascades through the foreign key.
+   - The coverage allowlist test lists `alert_email_digests.user_id`.
+   - The ledger is pruned by `model:prune` after 90 days (`ALERT_EMAIL_LEDGER_RETENTION_DAYS`).
+7. **Wording.** `lang/{es,en}/alert_email.php` mirrors the inbox texts of the SPA (signal and pattern labels, events, "Ruptura 53,79", "y 3 más"), so the email and the inbox say the same thing. There is no EOD wording, and the footer carries the not-investment-advice disclaimer, why the email was sent, the unsubscribe link and the privacy link.
+8. **Evidence.**
+   - Rendered es (640 px) and en (390 px) emails viewed in Edge: no images, no horizontal overflow.
+   - A raw message from the `array` transport shows `List-Unsubscribe: <https://www.chartiko.com/api/email/alerts/unsubscribe/{id}?signature=…>`, `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, a localized subject and the `multipart/alternative` text and HTML parts.
+   - Browser QA with the feature enabled locally (1280 es light, 390 en dark): the Portal box starts unticked, ticking stores the opt-in and the page language, there is no overflow, and the privacy policy names the configured provider and location.
+   - The real server answered the signed GET (200, page in the user's language), a tampered signature (403) and the one-click POST (204), and the opt-in was cleared.
+9. **Not done.** Production sending (owner action: provider, DNS authentication, env vars), and a real-inbox deliverability check (spam score, rendering in Gmail and Outlook), which needs the provider.

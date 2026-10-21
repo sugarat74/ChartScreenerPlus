@@ -228,3 +228,27 @@ describe('both pages published once every owner field is configured', () => {
     expect(notice.textContent).toMatch(/aceptas las condiciones de uso/)
   })
 })
+
+describe('daily alert email in the privacy policy (alerts-email-digest)', () => {
+  it('describes the email and names its provider only while the feature is active', async () => {
+    mockApi(PRIVACY_ONLY)
+    renderAt('/privacidad')
+    await screen.findByRole('heading', { name: 'Alertas y notificaciones' })
+    expect(document.body.textContent).not.toMatch(/resumen diario por email/)
+    cleanup()
+    resetLegalInfoCache()
+
+    mockApi({
+      ...PRIVACY_ONLY,
+      retention: { ...RETENTION, email_digest_days: 90 },
+      email_digest: { provider: 'Acme Mail', provider_location: 'UE (Irlanda)' },
+    })
+    renderAt('/privacidad')
+    await screen.findByRole('heading', { name: 'Alertas y notificaciones' })
+    expect(document.body.textContent).toMatch(/resumen diario por email \(está desactivado si no lo eliges\)/)
+    expect(document.body.textContent).toMatch(/se borra a los 90 días/)
+    expect(document.body.textContent).toMatch(/se envían a Acme Mail, el proveedor de envío de correo/)
+    expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE \(Irlanda\)/)
+    expectNoMailtoOrPlaceholders()
+  })
+})

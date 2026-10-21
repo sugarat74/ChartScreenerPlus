@@ -1,5 +1,20 @@
 # Progress Log
 
+## Daily alert email digest (`alerts-email-digest`, passing) — 2026-10-21
+
+- User request: "ok realiza alerts-email-digest".
+- Implemented end to end but shipped **off**: there is no sending provider yet (production `MAIL_MAILER=log`).
+  - It turns on only with `ALERT_EMAIL_DIGEST_ENABLED=true` plus `ALERT_EMAIL_PROVIDER` and `ALERT_EMAIL_PROVIDER_LOCATION`. The privacy policy names the provider from those same variables, so nothing can be sent before the policy describes it.
+  - Go-live checklist (provider, SPF/DKIM/DMARC, env, legal date): `deploy/README.md`.
+- What it does:
+  - The Portal opt-in starts unticked.
+  - One email per user per as-of date after `alerts:evaluate`, recorded in a ledger. It is queued with 3 tries and never affects the pipeline.
+  - Email: HTML and text, es/en, same wording as the inbox, no tracking.
+  - Unsubscribe without a session: a signed link and an RFC 8058 one-click POST.
+  - The account export and deletion cover the new data; the ledger is pruned after 90 days.
+- Tests: 14 new Laravel tests, 4 new Vitest tests. Rendered emails, Portal QA and the unsubscribe endpoints were checked on a local server.
+- `.\init.ps1` exit 0: Laravel 560 passed / 6 skipped, Vitest 220, SPA lint + build, engine 101.
+
 ## More chartist patterns (`chart-patterns-extended`, accepted) — 2026-10-21
 
 - **Independent validator: ACCEPT** (round 2).

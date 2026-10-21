@@ -50,6 +50,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'alert_email_opt_in_at' => 'datetime',
         ];
     }
 
@@ -135,6 +136,24 @@ class User extends Authenticatable
     public function screenerQueries(): HasMany
     {
         return $this->hasMany(AiScreenerQuery::class);
+    }
+
+    /**
+     * Ledger of the daily alert emails sent to this account (alerts-email-digest).
+     *
+     * @return HasMany<AlertEmailDigest, $this>
+     */
+    public function alertEmailDigests(): HasMany
+    {
+        return $this->hasMany(AlertEmailDigest::class);
+    }
+
+    /**
+     * Whether this account asked for the daily alert email (explicit opt-in).
+     */
+    public function wantsAlertEmails(): bool
+    {
+        return $this->alert_email_opt_in_at !== null;
     }
 
     /**

@@ -1006,6 +1006,30 @@ export type UpdateAlertPayload = {
  * scoped server-side to the session user: another user's id is a `404`, a
  * guest a `401`, the per-user limit and duplicates a localized `422`.
  */
+/** The session user's daily alert email preference (alerts-email-digest). */
+export type AlertEmailPreference = {
+  /** False while the feature is off: the Portal hides the control. */
+  available: boolean
+  opted_in: boolean
+  opted_in_at: string | null
+  locale: string | null
+}
+
+export const alertEmailApi = {
+  async get(): Promise<AlertEmailPreference> {
+    return request<AlertEmailPreference>('/api/alerts/email')
+  },
+
+  /** Explicit opt-in (records the page language) or opt-out. */
+  async update(optIn: boolean): Promise<AlertEmailPreference> {
+    await ensureCsrfCookie()
+    return request<AlertEmailPreference>('/api/alerts/email', {
+      method: 'PUT',
+      body: JSON.stringify({ opt_in: optIn }),
+    })
+  },
+}
+
 export const alertsApi = {
   async list(): Promise<Alert[]> {
     const payload = await request<{ alerts: Alert[] }>('/api/alerts')
@@ -1120,7 +1144,14 @@ export type LegalInfo = {
     ai_card_log_days?: number
     /** Absent from older deployments. */
     ai_screener_log_days?: number
+    /** Absent from older deployments. */
+    email_digest_days?: number
   }
+  /**
+   * The daily alert email (alerts-email-digest) and its sending provider;
+   * null (or absent on older deployments) while the feature is off.
+   */
+  email_digest?: { provider: string; provider_location: string } | null
 }
 
 export const legalApi = {

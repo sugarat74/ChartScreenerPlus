@@ -33,6 +33,9 @@ export const legalEn: LegalTexts = {
         paragraphs: [
           'If you create alerts we store their settings (the Saved Screener or the signal or pattern types you choose for your Watchlist) and, after each daily data update, the notifications listing the instruments that triggered them.',
         ],
+        emailDigest: [
+          'If you turn on the daily email summary in your Portal (it is off unless you choose it), we store when you turned it on and the email language, and after each daily update we send one email with your alert notices to your email address. The email has no tracking pixels or tracking links. You can unsubscribe with the link in the email itself, without signing in, or from your Portal. We keep a record of each send (data date, number of notices and send time) that is deleted after {emailDigestDays} days.',
+        ],
         items: [
           'Purpose: to let you know inside Chartiko about the changes you asked to follow.',
           'Legal basis: performance of the terms of use of the service (Art. 6(1)(b) GDPR).',
@@ -106,6 +109,9 @@ export const legalEn: LegalTexts = {
           'We do not share your data with third parties unless required by law. The hosting provider, OVH, processes the data on behalf of Chartiko as a data processor.',
           'If you use the Screener AI search, the text you type is sent to DevExpert Inference, the AI provider, only to return the filters (see "AI features"); that is why we ask you not to include personal data.',
           'The server is located in Canada (Beauharnois, Quebec). The European Commission recognises an adequate level of protection in Canada (Decision 2002/2/EC), on which this international transfer relies.',
+        ],
+        emailDigest: [
+          'If you turn on the daily email summary, your email address and the email content are sent to {emailProvider}, the email delivery provider, which processes them on behalf of Chartiko as a data processor. Processing location: {emailProviderLocation}.',
         ],
       },
       {
