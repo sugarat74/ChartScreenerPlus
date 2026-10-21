@@ -167,7 +167,7 @@ export default function AdminPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border-2 border-outline bg-primary p-4 text-on-primary shadow-[4px_4px_0px_#ffcc00]">
+      <div className="terminal-panel flex flex-wrap items-center justify-between gap-4 rounded-md border-2 border-outline bg-primary p-4 text-on-primary shadow-[4px_4px_0px_#ffcc00]">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded border-2 border-primary-container bg-primary-container font-headline text-lg font-black text-on-primary-container">
             ▮
