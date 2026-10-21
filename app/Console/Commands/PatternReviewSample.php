@@ -53,11 +53,18 @@ class PatternReviewSample extends Command
 
     public const CSV_HEADER = ['id', 'ticker', 'type', 'status', 'as_of', 'points', 'suggested_label', 'label', 'notes'];
 
-    private const PREFIXES = [
+    /** One case-id prefix per `ChartPattern::TYPES` entry (a test asserts full coverage). */
+    public const PREFIXES = [
         'double_top' => 'DT',
         'double_bottom' => 'DB',
         'cup_with_handle' => 'CWH',
         'bull_flag' => 'BF',
+        'triple_top' => 'TT',
+        'triple_bottom' => 'TB',
+        'inverse_cup_with_handle' => 'ICWH',
+        'bear_flag' => 'BRF',
+        'bull_pennant' => 'BLP',
+        'bear_pennant' => 'BRP',
     ];
 
     /**

@@ -10,7 +10,7 @@ import pytest
 
 from app.indicators.core import rvol
 from app.patterns.detect import detect_patterns
-from app.patterns.extended import BEARISH, BULLISH, bull_pennant
+from app.patterns.extended import BEARISH, BULLISH, bear_flag, bull_pennant
 from app.patterns.rules import DETECTORS, bull_flag, double_bottom, double_top
 from tests.test_patterns import FLAG, POLE_VOLUME, found, series
 
@@ -53,7 +53,7 @@ def test_triple_top_forming_confirmed_gone_invalidated():
         "left_trough",
         "middle_peak",
         "right_trough",
-        "right_peak",
+        "third_peak",
     ]
     # The neckline is the lower of the two troughs.
     assert forming.breakout_level == pytest.approx(85 * 0.998)
@@ -74,7 +74,7 @@ def test_triple_bottom_forming_confirmed_invalidated():
         "left_crest",
         "middle_low",
         "right_crest",
-        "right_low",
+        "third_low",
     ]
     # The neckline is the higher of the two crests.
     assert forming.breakout_level == pytest.approx(115 * 1.002)
@@ -250,3 +250,47 @@ def test_a_pole_ends_at_its_own_extreme():
         if pattern is not None:
             top = next(point for point in pattern.points if point.role == "pole_top")
             assert top.date == bars[80].date
+
+
+def test_bear_pennant_hides_the_bear_flag_on_the_same_pole():
+    body = [(81, 51.1), (84, 54.2), (87, 51.6), (90, 53.6), (93, 52.4), (96, 53.2), (97, 53.0)]
+    bars = series(BEAR_FLAG[:-1] + body, volumes=POLE_VOLUME)
+    assert run(bear_flag, bars) is not None  # the flag rules alone also match
+    types = [pattern.type for pattern in detect_patterns(bars)]
+    assert "bear_pennant" in types and "bear_flag" not in types
+
+
+def test_pennant_invalidations():
+    # Bull: a close back below the pennant low after the breakout.
+    assert found(series(BULL_PENNANT + [(98, 72), (102, 64)], volumes=POLE_VOLUME), "bull_pennant") is None
+    # Bull: the pennant retraces more than half of the pole.
+    deep = FLAG[:-1] + [(81, 68.9), (84, 63), (87, 68.5), (90, 66.8), (93, 68), (96, 67.2), (97, 67.3)]
+    assert found(series(deep, volumes=POLE_VOLUME), "bull_pennant") is None
+    # Bear: a close back above the pennant high after the breakout.
+    assert found(series(BEAR_PENNANT + [(98, 48), (102, 56)], volumes=POLE_VOLUME), "bear_pennant") is None
+    # Bear: the pennant recovers more than half of the pole.
+    high = BEAR_FLAG[:-1] + [(81, 51.1), (84, 57), (87, 51.5), (90, 53.2), (93, 52), (96, 52.6), (97, 52.3)]
+    assert found(series(high, volumes=POLE_VOLUME), "bear_pennant") is None
+
+
+def test_pennant_extreme_beyond_the_pole_end_drops_that_pole():
+    bars = series(BULL_PENNANT, volumes=POLE_VOLUME)
+    bars[87] = bars[87].model_copy(update={"high": 70.5})  # above the pole top (70 * 1.002)
+    pattern = found(bars, "bull_pennant")
+    assert pattern is None or next(p for p in pattern.points if p.role == "pole_top").date != bars[80].date
+
+    bars = series(BEAR_PENNANT, volumes=POLE_VOLUME)
+    bars[87] = bars[87].model_copy(update={"low": 49.5})  # below the pole bottom (50 * 0.998)
+    pattern = found(bars, "bear_pennant")
+    assert pattern is None or next(p for p in pattern.points if p.role == "pole_bottom").date != bars[80].date
+
+
+def test_breakouts_older_than_ten_sessions_are_gone():
+    assert found(series(TRIPLE_BOTTOM + [(195, 120), (215, 130)]), "triple_bottom") is None
+    volumes = {155: 3000}
+    cup = INVERSE_CUP + [(152, 103), (156, 99)]
+    assert found(series(cup, volumes=volumes), "inverse_cup_with_handle") is not None
+    assert found(series(cup + [(175, 90)], volumes=volumes), "inverse_cup_with_handle") is None
+    assert found(series(BEAR_FLAG + [(97, 48), (115, 40)], volumes=POLE_VOLUME), "bear_flag") is None
+    assert found(series(BULL_PENNANT + [(98, 72), (115, 80)], volumes=POLE_VOLUME), "bull_pennant") is None
+    assert found(series(BEAR_PENNANT + [(98, 48), (115, 40)], volumes=POLE_VOLUME), "bear_pennant") is None

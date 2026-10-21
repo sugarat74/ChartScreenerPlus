@@ -200,6 +200,7 @@ const HIGH_ROLES = new Set([
   'pole_top',
   // chart-patterns-extended
   'middle_peak',
+  'third_peak',
   'left_crest',
   'right_crest',
   'cup_top',

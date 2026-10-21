@@ -71,10 +71,12 @@ Unchanged from `chart-patterns-ui` and `alerts-patterns`:
 
    | Role | Side | es (long / short) | en (long / short) |
    | --- | --- | --- | --- |
-   | `middle_peak` | high | Techo central / T2 | Middle peak / P2 |
+   | `middle_peak` | high | Segundo techo / T2 | Second top / T2 |
+   | `third_peak` | high | Tercer techo / T3 | Third top / T3 |
    | `left_trough` | low | Primer valle / V1 | First trough / V1 |
    | `right_trough` | low | Segundo valle / V2 | Second trough / V2 |
-   | `middle_low` | low | Suelo central / S2 | Middle low / L2 |
+   | `middle_low` | low | Segundo suelo / S2 | Second bottom / B2 |
+   | `third_low` | low | Tercer suelo / S3 | Third bottom / B3 |
    | `left_crest` | high | Primera cresta / C1 | First crest / C1 |
    | `right_crest` | high | Segunda cresta / C2 | Second crest / C2 |
    | `rim_left_low` | low | Borde izquierdo / B1 | Left rim / R1 |
@@ -87,7 +89,7 @@ Unchanged from `chart-patterns-ui` and `alerts-patterns`:
    | `pennant_low` | low | Mínimo del banderín / D | Pennant low / N |
    | `pennant_high` | high | Máximo del banderín / D | Pennant high / N |
 
-   In a triple top, the third peak keeps the existing `right_peak` role and the first keeps `left_peak`. Triple bottoms use `left_low`, `middle_low` and `right_low`. The bull pennant reuses `pole_start` and `pole_top`. Short labels follow the style of the existing `rolesShort`; the implementer may adjust them if two labels collide on the same pattern.
+   In a triple top the extremes are `left_peak`, `middle_peak` and `third_peak` (shown T1/T2/T3); triple bottoms use `left_low`, `middle_low` and `third_low`. The third extreme has its own role so its short label can read 3 without changing the doubles' `right_*` labels (validator note). The bull pennant reuses `pole_start` and `pole_top`. Short labels follow the style of the existing `rolesShort`; the implementer may adjust them if two labels collide on the same pattern.
 
 ### Pattern rule definitions (fixed contract, initial parameters)
 
@@ -108,7 +110,7 @@ All percentages are relative to the referenced price, and `i` is the as-of index
 - Triples: `depth_pct` (the shallower of the two), `span_sessions`.
 - Inverse cup: `height_pct`, `cup_sessions`, `handle_sessions`.
 - Bear flag: `pole_drop_pct`, `flag_sessions`.
-- Pennants: `pole_rise_pct` or `pole_drop_pct`, plus `pennant_sessions` and `end_width_ratio`.
+- Pennants: `pole_rise_pct` or `pole_drop_pct`, plus `pennant_sessions` and `width_ratio`.
 - Every type: `breakout_close` when the pattern is confirmed.
 
 ## Acceptance Scenarios

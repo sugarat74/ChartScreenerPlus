@@ -119,7 +119,7 @@ describe('pattern chart helpers', () => {
         { date: dates[1], price: 85, role: 'left_trough' },
         { date: dates[2], price: 100.5, role: 'middle_peak' },
         { date: dates[3], price: 85.5, role: 'right_trough' },
-        { date: dates[4], price: 100.2, role: 'right_peak' },
+        { date: dates[4], price: 100.2, role: 'third_peak' },
       ],
     }
     expect(patternMarkers([triple], loaded, (role) => role).map((marker) => marker.position)).toEqual([
@@ -135,7 +135,7 @@ describe('pattern chart helpers', () => {
     expect(sides(['pole_peak', 'pole_bottom', 'flag_high'])).toEqual(['aboveBar', 'belowBar', 'aboveBar'])
     expect(sides(['pole_peak', 'pole_bottom', 'pennant_high'])).toEqual(['aboveBar', 'belowBar', 'aboveBar'])
     expect(sides(['pole_start', 'pole_top', 'pennant_low'])).toEqual(['belowBar', 'aboveBar', 'belowBar'])
-    expect(sides(['left_low', 'left_crest', 'middle_low', 'right_crest', 'right_low'])).toEqual([
+    expect(sides(['left_low', 'left_crest', 'middle_low', 'right_crest', 'third_low'])).toEqual([
       'belowBar', 'aboveBar', 'belowBar', 'aboveBar', 'belowBar',
     ])
   })

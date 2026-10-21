@@ -152,10 +152,10 @@ export default function WatchlistPatternAlertForm({ alert, disabled, onSaved, on
           <legend className={LEGEND_CLASS}>{t('alerts.patternTypesLegend')}</legend>
           <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
             {SCREENER_PATTERN_GROUPS.map((group) => (
-              <div key={group.direction} className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] uppercase text-on-surface-variant">
+              <fieldset key={group.direction} className="flex min-w-0 flex-col gap-1.5">
+                <legend className="mb-1.5 font-mono text-[10px] uppercase text-on-surface-variant">
                   {t(`patterns.groups.${group.direction}`)}
-                </span>
+                </legend>
                 {group.types.map((type) => (
                   <label key={type} className="flex items-center gap-2 text-sm text-on-surface">
                     <input
@@ -167,7 +167,7 @@ export default function WatchlistPatternAlertForm({ alert, disabled, onSaved, on
                     {patternLabel(type, t)}
                   </label>
                 ))}
-              </div>
+              </fieldset>
             ))}
           </div>
         </fieldset>

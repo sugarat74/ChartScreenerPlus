@@ -259,8 +259,13 @@ export default function ScreenerFilterPanel({
               : t('patterns.legend')}
           </legend>
           {SCREENER_PATTERN_GROUPS.map((group) => (
-            <div key={group.direction} role="group" aria-label={t(`patterns.groups.${group.direction}`)} className="flex flex-col gap-1">
-              <span className="font-mono text-[10px] uppercase text-on-surface-variant">
+            <div
+              key={group.direction}
+              role="group"
+              aria-labelledby={`pattern-group-${group.direction}`}
+              className="flex flex-col gap-1"
+            >
+              <span id={`pattern-group-${group.direction}`} className="font-mono text-[10px] uppercase text-on-surface-variant">
                 {t(`patterns.groups.${group.direction}`)}
               </span>
               <div className="flex flex-wrap gap-2">

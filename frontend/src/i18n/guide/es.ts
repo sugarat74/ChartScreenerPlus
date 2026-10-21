@@ -240,13 +240,13 @@ export const guideEs: GuideTexts = {
           term: 'Banderín alcista',
           summary: 'El mástil de la bandera alcista seguido de un banderín de 5 a 20 sesiones que se estrecha: su segunda mitad tiene un máximo más bajo, un mínimo más alto y un rango de como mucho el 70 % del de la primera, con menos volumen y sin retroceder más de la mitad del mástil.',
           illustration: { kind: 'bullPennant', alt: 'Precio que sube con fuerza, se estrecha entre dos líneas convergentes y rompe al alza.' },
-          details: ['Nivel de ruptura: el máximo del banderín. Se confirma con un cierre por encima. Si el mismo mástil forma también una bandera alcista, solo se muestra el banderín.'],
+          details: ['Nivel de ruptura: el máximo del banderín. Se confirma con un cierre por encima; un cierre posterior por debajo del mínimo del banderín lo invalida. Si el mismo mástil forma también una bandera alcista, solo se muestra el banderín.'],
         },
         {
           term: 'Banderín bajista',
           summary: 'El mástil de la bandera bajista seguido de un banderín de 5 a 20 sesiones que se estrecha del mismo modo, con menos volumen y sin recuperar más de la mitad del mástil.',
           illustration: { kind: 'bearPennant', alt: 'Precio que cae con fuerza, se estrecha entre dos líneas convergentes y rompe a la baja.' },
-          details: ['Nivel de ruptura: el mínimo del banderín. Se confirma con un cierre por debajo. Si el mismo mástil forma también una bandera bajista, solo se muestra el banderín.'],
+          details: ['Nivel de ruptura: el mínimo del banderín. Se confirma con un cierre por debajo; un cierre posterior por encima del máximo del banderín lo invalida. Si el mismo mástil forma también una bandera bajista, solo se muestra el banderín.'],
         },
       ],
       notes: [

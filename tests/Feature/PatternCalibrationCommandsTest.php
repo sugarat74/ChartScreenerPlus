@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Console\Commands\PatternReviewSample;
 use App\Models\ChartPattern;
 use App\Models\DailyBar;
 use App\Models\Instrument;
@@ -182,6 +183,27 @@ class PatternCalibrationCommandsTest extends TestCase
         $this->artisan('patterns:review-sample', ['--per-type' => 2, '--negatives' => 3, '--seed' => 7, '--out' => $this->out, '--force' => true])
             ->assertExitCode(0);
         $this->assertSame($first, File::get($this->out.'/sample.csv'));
+    }
+
+    public function test_review_sample_covers_every_pattern_type(): void
+    {
+        // chart-patterns-extended: every type in the vocabulary has a case-id prefix.
+        $this->assertSame(ChartPattern::TYPES, array_keys(PatternReviewSample::PREFIXES));
+
+        $universe = Universe::factory()->create(['slug' => 'sp500']);
+        $this->storedPattern($this->member($universe, 'ICW'), 'inverse_cup_with_handle', 'forming');
+        $this->storedPattern($this->member($universe, 'BRP'), 'bear_pennant', 'confirmed');
+        Http::fake([
+            '*/patterns/near-misses' => Http::response(['near_misses' => []]),
+            '*/patterns/parameters' => Http::response(['parameters' => ['pennant_max_width_ratio' => 0.7]]),
+        ]);
+
+        $this->artisan('patterns:review-sample', ['--per-type' => 2, '--negatives' => 0, '--seed' => 7, '--out' => $this->out])
+            ->expectsOutputToContain('inverse_cup_with_handle: 1 forming, 0 confirmed')
+            ->assertExitCode(0);
+
+        $ids = array_column($this->csvRows($this->out.'/sample.csv'), 'id');
+        $this->assertEqualsCanonicalizing(['ICWH-001', 'BRP-001'], $ids);
     }
 
     public function test_review_sample_fails_on_unknown_universe_or_engine_failure(): void

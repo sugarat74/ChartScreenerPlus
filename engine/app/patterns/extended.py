@@ -166,11 +166,11 @@ def _triple(
 
     m1, m2 = middles
     if top:
-        roles = ("left_peak", "left_trough", "middle_peak", "right_trough", "right_peak")
+        roles = ("left_peak", "left_trough", "middle_peak", "right_trough", "third_peak")
         depths = [(min(extreme[k], extreme[k + 1]) - bars[m].low) / min(extreme[k], extreme[k + 1]) for k, m in enumerate(middles)]
         middle_prices = (bars[m1].low, bars[m2].low)
     else:
-        roles = ("left_low", "left_crest", "middle_low", "right_crest", "right_low")
+        roles = ("left_low", "left_crest", "middle_low", "right_crest", "third_low")
         depths = [(bars[m].high - max(extreme[k], extreme[k + 1])) / max(extreme[k], extreme[k + 1]) for k, m in enumerate(middles)]
         middle_prices = (bars[m1].high, bars[m2].high)
 

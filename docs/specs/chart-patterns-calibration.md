@@ -237,3 +237,7 @@ Double tops are 50% of detections, above the 40% guide. The labelled sample conf
 - No second, fresh sample to validate the tuned rules out of sample. This is the main remaining risk.
 - No cup or double-bottom tuning beyond the above.
 - Roll-out (step 6) happens with the next deploy: `patterns:detect` and `screener:refresh` run in the next daily pipeline.
+
+### Second batch of types (chart-patterns-extended, 2026-10-21)
+
+`patterns:review-sample` exports every type of `ChartPattern::TYPES`. New case-id prefixes: `TT`, `TB`, `ICWH`, `BRF`, `BLP`, `BRP`; a test asserts that every type has one. Near misses still exist only for the first four types: the second batch has no relaxations yet. The mirrored types read the same `PatternParams` fields as their counterparts, so a value tuned here applies to both directions. The inverse cup with handle (34% of local detections) is the first candidate for the next labelled sample.

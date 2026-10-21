@@ -35,8 +35,8 @@ def detect_patterns(bars: list[Bar]) -> list[Pattern]:
 # hides the double whose two extremes are among its three; a pennant hides
 # the flag of the same direction on the same pole (chart-patterns-extended).
 PRECEDENCE: tuple[tuple[str, str, tuple[str, ...], tuple[str, ...]], ...] = (
-    ("triple_top", "double_top", ("left_peak", "middle_peak", "right_peak"), ("left_peak", "right_peak")),
-    ("triple_bottom", "double_bottom", ("left_low", "middle_low", "right_low"), ("left_low", "right_low")),
+    ("triple_top", "double_top", ("left_peak", "middle_peak", "third_peak"), ("left_peak", "right_peak")),
+    ("triple_bottom", "double_bottom", ("left_low", "middle_low", "third_low"), ("left_low", "right_low")),
     ("bull_pennant", "bull_flag", ("pole_top",), ("pole_top",)),
     ("bear_pennant", "bear_flag", ("pole_bottom",), ("pole_bottom",)),
 )

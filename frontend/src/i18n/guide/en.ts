@@ -240,13 +240,13 @@ export const guideEn: GuideTexts = {
           term: 'Bullish pennant',
           summary: 'The bull flag pole followed by a pennant of 5 to 20 sessions that narrows: its second half has a lower high, a higher low and a range of at most 70% of the first half, on lower volume and without retracing more than half of the pole.',
           illustration: { kind: 'bullPennant', alt: 'Price rising sharply, narrowing between two converging lines and then breaking upward.' },
-          details: ['Breakout level: the high of the pennant. Confirmed by a close above it. When the same pole also forms a bull flag, only the pennant is shown.'],
+          details: ['Breakout level: the high of the pennant. Confirmed by a close above it; a later close below the pennant low invalidates it. When the same pole also forms a bull flag, only the pennant is shown.'],
         },
         {
           term: 'Bearish pennant',
           summary: 'The bear flag pole followed by a pennant of 5 to 20 sessions that narrows the same way, on lower volume and without retracing more than half of the pole.',
           illustration: { kind: 'bearPennant', alt: 'Price falling sharply, narrowing between two converging lines and then breaking downward.' },
-          details: ['Breakout level: the low of the pennant. Confirmed by a close below it. When the same pole also forms a bear flag, only the pennant is shown.'],
+          details: ['Breakout level: the low of the pennant. Confirmed by a close below it; a later close above the pennant high invalidates it. When the same pole also forms a bear flag, only the pennant is shown.'],
         },
       ],
       notes: [
