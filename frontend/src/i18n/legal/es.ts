@@ -34,7 +34,7 @@ export const legalEs: LegalTexts = {
           'Si creas alertas guardamos su configuración (el Screener guardado o los tipos de señal o de patrón que eliges para tu Watchlist) y, tras cada actualización diaria de datos, las notificaciones con los instrumentos que las han activado.',
         ],
         emailDigest: [
-          'Si activas en tu Portal el resumen diario por email (está desactivado si no lo eliges), guardamos cuándo lo activaste y el idioma del email, y tras cada actualización diaria te enviamos a tu dirección de correo un único email con los avisos de tus alertas. El email no lleva píxeles ni enlaces de seguimiento. Puedes darte de baja con el enlace del propio email, sin iniciar sesión, o desde tu Portal. Guardamos un registro de cada envío (fecha de los datos, número de avisos y hora de envío) que se borra a los {emailDigestDays} días.',
+          'Si activas en tu Portal el resumen diario por email (está desactivado si no lo eliges), guardamos cuándo lo activaste y el idioma del email, y los días en que tus alertas detectan algo te enviamos a tu dirección de correo un único email con sus avisos, después de la actualización diaria de datos. El email no lleva píxeles ni enlaces de seguimiento. Puedes darte de baja con el enlace del propio email, sin iniciar sesión, o desde tu Portal. Guardamos un registro de cada envío (fecha de los datos, número de avisos y hora de envío) que se borra a los {emailDigestDays} días.',
         ],
         items: [
           'Finalidad: avisarte dentro de Chartiko de los cambios que has pedido seguir.',

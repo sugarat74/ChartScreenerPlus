@@ -128,10 +128,11 @@ Recorded 2026-10-21.
    The go-live checklist is in `deploy/README.md` ("Email del resumen diario de alertas").
 2. **Privacy text tied to the same switch.** The provider is not known yet, so the privacy policy cannot name it statically. `GET /api/legal` returns `email_digest: {provider, provider_location}` only while the feature is available. The new `emailDigest` paragraphs of the legal texts (es/en; sections "Alertas y notificaciones" and "Destinatarios y transferencias internacionales") render only then, with `{emailProvider}`, `{emailProviderLocation}` and `{emailDigestDays}`. No email can go out unless the policy describes it. `config/legal.php` `updated_at` must be bumped in the go-live deploy (checklist step 6).
 3. **Unsubscribe under `/api`.** nginx sends only `/api` and `/sanctum` to Laravel, so the planned `/email/alerts/unsubscribe/{user}` is `/api/email/alerts/unsubscribe/{user}`:
-   - GET shows a small self-contained page (`resources/views/alert-email-unsubscribed.blade.php`) in the user's language, with light/dark styling and `noindex`.
-   - POST is the one-click endpoint (`204`).
+   - GET is side-effect free: link scanners and previewers fetch links on their own, and RFC 8058 asks for a confirmation step. It shows a small self-contained page (`resources/views/alert-email-unsubscribed.blade.php`) in the user's language, with light/dark styling, `noindex` and `no-store`, and a confirm button that posts to the same signed URL.
+   - POST unsubscribes. It answers with the confirmation page for the button's form and with `204` for the one-click body (`List-Unsubscribe=One-Click`).
+   - The path is exempt from CSRF (`bootstrap/app.php`); the signature protects it. Without the exemption, a POST carrying the site's Origin got `419` from Sanctum's `statefulApi`.
    - The signature is **relative** (`signed:relative`) and the link is rooted at `APP_URL`, so it is valid from the queue worker (no request host) and behind the proxy.
-4. **Job, not a queued mailable.** `SendAlertDigest` (3 tries, backoff 60/300 s) marks `sent_at` only after a successful send. It re-checks the opt-in and availability, so an unsubscribe between queueing and sending is honoured, and logs only the ledger id on final failure (no address). The ledger row is created before dispatch: with the unique `(user_id, as_of)` index, a re-run or a concurrent run queues nothing more.
+4. **Job, not a queued mailable.** `SendAlertDigest` (3 tries, backoff 60/300 s) marks `sent_at` only after a successful send. It re-checks the opt-in and availability, so an unsubscribe between queueing and sending is honoured, and logs only the ledger id and the exception class on final failure: SMTP errors often quote the recipient address. The ledger row is created before dispatch: with the unique `(user_id, as_of)` index, a re-run or a concurrent run queues nothing more.
 5. **Notification read in PHP.** `notifications.data` is a text column, so filtering by `as_of` in SQL would need dialect-specific JSON operators. The content builder reads the user's last 7 days of `AlertTriggered` rows and filters in PHP. It sorts by creation time, then by alert id, because notification ids are UUIDs.
 6. **Account data.**
    - The export includes `profile.alert_email_opt_in_at`, `profile.preferred_locale` and `alert_emails` (the ledger).
@@ -145,3 +146,9 @@ Recorded 2026-10-21.
    - Browser QA with the feature enabled locally (1280 es light, 390 en dark): the Portal box starts unticked, ticking stores the opt-in and the page language, there is no overflow, and the privacy policy names the configured provider and location.
    - The real server answered the signed GET (200, page in the user's language), a tampered signature (403) and the one-click POST (204), and the opt-in was cleared.
 9. **Not done.** Production sending (owner action: provider, DNS authentication, env vars), and a real-inbox deliverability check (spam score, rendering in Gmail and Outlook), which needs the provider.
+10. **Validator round 1 (revise), fixed.**
+    - A GET or HEAD on the link unsubscribed at once; now only POST does.
+    - The CSRF exemption is checked on a real server: HEAD 200 and GET 200 leave the opt-in; a form POST with `Origin: https://www.chartiko.com` returns 200 and unsubscribes (no 419); the one-click POST returns 204; a tampered signature returns 403; `PUT /api/alerts/email` without a token still returns 419.
+    - The failure log keeps only the exception class.
+    - The privacy text says the email goes out only on days your alerts find something.
+    - New tests cover these, plus an opt-out between queueing and sending.

@@ -66,10 +66,11 @@ class SendAlertDigest implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        // No address or content in the log: the ledger id is enough to trace it.
+        // No address or content in the log: transport messages often quote the
+        // recipient, so only the ledger id and the exception class are kept.
         Log::warning('Alert email digest failed after retries.', [
             'alert_email_digest_id' => $this->digestId,
-            'error' => $exception?->getMessage(),
+            'error' => $exception === null ? null : $exception::class,
         ]);
     }
 }

@@ -208,29 +208,78 @@ class AlertEmailDigestTest extends TestCase
         $this->get(str_replace('/unsubscribe/'.$user->id, '/unsubscribe/'.($user->id + 1), $path))->assertForbidden();
         $this->assertNotNull($user->fresh()->alert_email_opt_in_at);
 
+        // GET (and HEAD, as link scanners do) is side-effect free: a page with
+        // a confirm button posting to the same signed URL.
+        $this->call('HEAD', $path)->assertOk();
         $this->get($path)
             ->assertOk()
             ->assertHeader('Content-Language', 'en')
-            ->assertSee('You will no longer receive the daily summary')
+            ->assertSee('Stop receiving the daily summary?')
+            ->assertSee('<form method="post" action="'.e($path).'">', false)
             ->assertSee('https://www.chartiko.com/', false);
-        $this->assertNull($user->fresh()->alert_email_opt_in_at);
-        $this->get($path)->assertOk(); // idempotent
+        $this->assertNotNull($user->fresh()->alert_email_opt_in_at);
 
-        // RFC 8058 one-click POST, no session, no CSRF token.
+        // The button's form POST unsubscribes and shows the confirmation page.
+        $this->post($path)
+            ->assertOk()
+            ->assertSee('You will no longer receive the daily summary');
+        $this->assertNull($user->fresh()->alert_email_opt_in_at);
+        $this->post($path)->assertOk(); // idempotent
+
+        // RFC 8058 one-click POST from a mail client: no session, no CSRF token.
         $user->forceFill(['alert_email_opt_in_at' => now()])->save();
         $this->post($path, ['List-Unsubscribe' => 'One-Click'])->assertNoContent();
         $this->assertNull($user->fresh()->alert_email_opt_in_at);
         $this->post(str_replace('signature=', 'signature=0', $path))->assertForbidden();
     }
 
-    public function test_the_unsubscribe_page_follows_the_users_language(): void
+    public function test_the_unsubscribe_pages_follow_the_users_language(): void
     {
         $user = $this->optedIn('es');
         $path = substr(AlertDigest::unsubscribeUrl($user), strlen('https://www.chartiko.com'));
 
         $this->withHeader('Accept-Language', 'en')->get($path)
             ->assertOk()
+            ->assertSee('¿Dejar de recibir el resumen diario?')
+            ->assertSee('Darme de baja');
+        $this->withHeader('Accept-Language', 'en')->post($path)
+            ->assertOk()
             ->assertSee('Ya no recibirás el resumen diario');
+    }
+
+    public function test_the_unsubscribe_post_is_exempt_from_csrf_for_same_site_forms(): void
+    {
+        // PHPUnit skips CSRF unless the middleware runs for real; the path is
+        // listed in the exemption, so a stateful (same-origin) POST passes.
+        $middleware = app(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+        $request = \Illuminate\Http\Request::create('/api/email/alerts/unsubscribe/1?signature=x', 'POST');
+        $method = new \ReflectionMethod($middleware, 'inExceptArray');
+        $this->assertTrue($method->invoke($middleware, $request));
+        $this->assertFalse($method->invoke($middleware, \Illuminate\Http\Request::create('/api/alerts/email', 'PUT')));
+    }
+
+    public function test_a_queued_digest_is_not_sent_after_the_user_opted_out(): void
+    {
+        Queue::fake();
+        $user = $this->optedIn();
+        $this->twoNotifications($user);
+        app(AlertDigestSender::class)->queue(self::AS_OF);
+        $user->forceFill(['alert_email_opt_in_at' => null])->save();
+
+        Mail::fake();
+        (new SendAlertDigest(AlertEmailDigest::query()->sole()->id))->handle();
+        Mail::assertNothingSent();
+        $this->assertNull(AlertEmailDigest::query()->sole()->sent_at);
+    }
+
+    public function test_the_final_failure_log_holds_no_address(): void
+    {
+        \Illuminate\Support\Facades\Log::spy();
+        (new SendAlertDigest(7))->failed(new RuntimeException('<ana@example.com>: Recipient address rejected'));
+
+        \Illuminate\Support\Facades\Log::shouldHaveReceived('warning')->once()->withArgs(
+            fn (string $message, array $context): bool => $context === ['alert_email_digest_id' => 7, 'error' => RuntimeException::class],
+        );
     }
 
     public function test_scenario_4_a_transport_failure_never_fails_the_pipeline_and_never_duplicates(): void

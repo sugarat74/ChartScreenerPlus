@@ -45,11 +45,12 @@ Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throt
 Route::get('/legal', [LegalController::class, 'show'])->middleware('throttle:60,1,legal');
 
 // Daily alert email unsubscribe (alerts-email-digest): no session, a valid
-// signature over the user id instead (403 otherwise). GET shows a page, POST
-// is the RFC 8058 one-click endpoint of the List-Unsubscribe-Post header.
+// signature over the user id instead (403 otherwise). GET only shows a page
+// with a confirm button (link scanners must not unsubscribe anyone); POST
+// unsubscribes: the button's form or the RFC 8058 one-click request.
 Route::get('/email/alerts/unsubscribe/{user}', [AlertEmailUnsubscribeController::class, 'show'])
     ->whereNumber('user')->middleware(['signed:relative', 'throttle:30,1,alert-email-unsubscribe'])->name('alert-email.unsubscribe');
-Route::post('/email/alerts/unsubscribe/{user}', [AlertEmailUnsubscribeController::class, 'oneClick'])
+Route::post('/email/alerts/unsubscribe/{user}', [AlertEmailUnsubscribeController::class, 'unsubscribe'])
     ->whereNumber('user')->middleware(['signed:relative', 'throttle:30,1,alert-email-unsubscribe'])->name('alert-email.unsubscribe.one-click');
 
 Route::middleware('auth:sanctum')->group(function () {

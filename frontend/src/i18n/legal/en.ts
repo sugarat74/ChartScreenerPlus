@@ -34,7 +34,7 @@ export const legalEn: LegalTexts = {
           'If you create alerts we store their settings (the Saved Screener or the signal or pattern types you choose for your Watchlist) and, after each daily data update, the notifications listing the instruments that triggered them.',
         ],
         emailDigest: [
-          'If you turn on the daily email summary in your Portal (it is off unless you choose it), we store when you turned it on and the email language, and after each daily update we send one email with your alert notices to your email address. The email has no tracking pixels or tracking links. You can unsubscribe with the link in the email itself, without signing in, or from your Portal. We keep a record of each send (data date, number of notices and send time) that is deleted after {emailDigestDays} days.',
+          'If you turn on the daily email summary in your Portal (it is off unless you choose it), we store when you turned it on and the email language, and on days when your alerts find something we send one email with their notices to your email address, after the daily data update. The email has no tracking pixels or tracking links. You can unsubscribe with the link in the email itself, without signing in, or from your Portal. We keep a record of each send (data date, number of notices and send time) that is deleted after {emailDigestDays} days.',
         ],
         items: [
           'Purpose: to let you know inside Chartiko about the changes you asked to follow.',
