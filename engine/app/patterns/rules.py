@@ -385,7 +385,7 @@ def cup_with_handle(
 def bull_flag(
     bars: list[Bar], rvol: list[float | None], start: int, params: PatternParams = DEFAULT_PARAMS
 ) -> Pattern | None:
-    """A ≥15% pole in ≤15 sessions, then a shallow down-sloping flag on lower volume.
+    """A ≥15% pole in ≤20 sessions, then a shallow down-sloping flag on lower volume.
 
     Flag sessions are the bars after the pole top and before the breakout bar
     (or up to the as-of bar while forming). After the breakout, a close below

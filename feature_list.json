@@ -1154,7 +1154,7 @@
       "chart-patterns-ui",
       "screener-precomputed"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "patterns:review-sample exports detected and near-miss cases with charts and a CSV for labelling (Admin/CLI only)",
       "patterns:calibration-report gives precision per type, miss rate and frequency for a labelled CSV",
@@ -1170,7 +1170,8 @@
       "2026-10-21 phase 2: 138 human labels (docs/calibration/sample-2026-10-16/sample.csv, merged back from an Excel re-save; 10 near-miss 'acceptable/clear' counted as missed). Report: precision DT 57.5%, DB 40.0%, CWH 60.0%, BF 3/3; missed near misses DT min_depth 2/2, BF pole_max_length 2/2.",
       "2026-10-21 phase 2 tuning (labels + bar features + charts): double anchor (no bar of the prior 40 sessions >1.5% beyond the first extreme), middle point 12-85% of the span, wick <=8% vs closes within 2 bars, invalidation on any close beyond the extreme (0.03 -> 0.0, chosen by a margin sweep), POLE_MAX_LENGTH 15 -> 20. 5 new engine tests + 1 adjusted; engine 82 passed, ruff clean.",
       "2026-10-21 engine re-run on every labelled case at its as-of: DT 22 good / 3 false kept (88.0%), DB 14/6 (70.0%, low confidence), CWH 9/6 (60.0%, low confidence, unchanged), BF 3/0. Universe as-of 2026-10-02: 176 -> 109 patterns (DT 97 -> 55, DB 61 -> 34, CWH 15, BF 3 -> 5). Same-sample numbers; no fresh validation sample by user decision.",
-      "2026-10-21 .\\init.ps1 exit 0 (worktree rebased on main dd0c35b): Laravel 542 passed / 6 skipped (4246 assertions), Vitest 206 + lint + build, engine 82 passed. How it works texts (es/en) updated for the new double, cup and flag rules."
+      "2026-10-21 .\\init.ps1 exit 0 (worktree rebased on main dd0c35b): Laravel 542 passed / 6 skipped (4246 assertions), Vitest 206 + lint + build, engine 82 passed. How it works texts (es/en) updated for the new double, cup and flag rules.",
+      "2026-10-21 independent validator ACCEPT: init.ps1 exit 0 (Laravel 542 / 6 skipped, Vitest 206, engine 82); recheck reproduced DT 88%, DB 70%, CWH 60%, BF 3/3 and universe 109 exactly; label merge verified row by row against the original export and the Excel copy; no look-ahead in _wick/anchor; CLI-only commands; docs consistent. Nits applied: bull_flag docstring (20 sessions), 'initial parameters' wording in ARCHITECTURE and the detect spec, How it works anchor wording (1.5%)."
     ],
     "notes": "Added 2026-10-12 at user request, to develop later. Spec: docs/specs/chart-patterns-calibration.md. Motivation: 97 of 178 local detections were double tops with the initial parameters. Not backtesting (out of scope). 2026-10-16: phase 1 done (rule fixes, review-sample, calibration-report, real sample with suggested labels). 2026-10-21: phase 2 done on the human labels (rules tuned for doubles and the flag pole; double_bottom and cup_with_handle documented as low confidence). The user declined a second labelling round for now."
   },

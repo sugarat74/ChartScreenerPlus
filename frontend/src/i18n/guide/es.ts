@@ -190,13 +190,13 @@ export const guideEs: GuideTexts = {
       entries: [
         {
           term: 'Doble suelo',
-          summary: 'Dos mínimos parecidos (diferencia de hasta un 3 %), separados entre 15 y 120 sesiones, tras una caída de al menos un 15 % en las 60 sesiones previas que termina en el primer suelo (sin un mínimo más bajo en las 40 sesiones anteriores), con un rebote intermedio de al menos un 10 % que no esté pegado a ninguno de los suelos. Ningún suelo puede ser una mecha aislada lejos de los cierres.',
+          summary: 'Dos mínimos parecidos (diferencia de hasta un 3 %), separados entre 15 y 120 sesiones, tras una caída de al menos un 15 % en las 60 sesiones previas que termina en el primer suelo (nada más de un 1,5 % por debajo en las 40 sesiones anteriores), con un rebote intermedio de al menos un 10 % que no esté pegado a ninguno de los suelos. Ningún suelo puede ser una mecha aislada lejos de los cierres.',
           illustration: { kind: 'doubleBottom', alt: 'Precio con dos suelos similares y una subida que supera el nivel horizontal de la cresta intermedia.' },
           details: ['Nivel de ruptura: el máximo entre los dos suelos. Se confirma con un cierre por encima; se invalida con cualquier cierre por debajo de los suelos.'],
         },
         {
           term: 'Doble techo',
-          summary: 'Dos máximos parecidos (hasta un 3 % de diferencia), separados entre 15 y 120 sesiones, tras una subida de al menos un 15 % en las 60 sesiones previas que termina en el primer techo (sin un máximo más alto en las 40 sesiones anteriores), con una caída intermedia de al menos un 10 % que no esté pegada a ninguno de los techos. Ningún techo puede ser una mecha aislada lejos de los cierres.',
+          summary: 'Dos máximos parecidos (hasta un 3 % de diferencia), separados entre 15 y 120 sesiones, tras una subida de al menos un 15 % en las 60 sesiones previas que termina en el primer techo (nada más de un 1,5 % por encima en las 40 sesiones anteriores), con una caída intermedia de al menos un 10 % que no esté pegada a ninguno de los techos. Ningún techo puede ser una mecha aislada lejos de los cierres.',
           illustration: { kind: 'doubleTop', alt: 'Precio con dos techos similares y una caída que cruza por debajo del valle intermedio.' },
           details: ['Nivel de ruptura: el mínimo entre los dos techos. Se confirma con un cierre por debajo; se invalida con cualquier cierre por encima de los techos.'],
         },

@@ -41,7 +41,7 @@ so the screener and chart can later show them consistently and explainably.
 5. **Breakout level** is the single price line the pattern exposes (neckline or pivot). No target is computed or stored.
 6. **Replace semantics per instrument** (fetch from engine first, then delete + insert in one transaction), as in `signals-detect`.
 
-### Pattern rule definitions (fixed contract, initial parameters)
+### Pattern rule definitions (fixed contract; parameters calibrated by chart-patterns-calibration)
 
 All percentages are relative to the referenced price. `i` = as-of index.
 

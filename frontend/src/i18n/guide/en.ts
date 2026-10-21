@@ -190,13 +190,13 @@ export const guideEn: GuideTexts = {
       entries: [
         {
           term: 'Double bottom',
-          summary: 'Two similar lows (up to 3% apart), 15 to 120 sessions apart, after a fall of at least 15% over the previous 60 sessions that ends at the first low (no lower low in the 40 sessions before it), with a rebound of at least 10% between them that is not glued to either low. Neither low may be a lone wick far from the closes.',
+          summary: 'Two similar lows (up to 3% apart), 15 to 120 sessions apart, after a fall of at least 15% over the previous 60 sessions that ends at the first low (nothing more than 1.5% lower in the 40 sessions before it), with a rebound of at least 10% between them that is not glued to either low. Neither low may be a lone wick far from the closes.',
           illustration: { kind: 'doubleBottom', alt: 'Price with two similar bottoms and a rise above the intermediate peak level.' },
           details: ['Breakout level: the high between the two bottoms. Confirmed by a close above it; invalidated by any close below the bottoms.'],
         },
         {
           term: 'Double top',
-          summary: 'Two similar highs (up to 3% apart), 15 to 120 sessions apart, after a rise of at least 15% over the previous 60 sessions that ends at the first top (no higher high in the 40 sessions before it), with a drop of at least 10% between them that is not glued to either top. Neither top may be a lone wick far from the closes.',
+          summary: 'Two similar highs (up to 3% apart), 15 to 120 sessions apart, after a rise of at least 15% over the previous 60 sessions that ends at the first top (nothing more than 1.5% higher in the 40 sessions before it), with a drop of at least 10% between them that is not glued to either top. Neither top may be a lone wick far from the closes.',
           illustration: { kind: 'doubleTop', alt: 'Price with two similar tops and a fall below the intermediate trough level.' },
           details: ['Breakout level: the low between the two tops. Confirmed by a close below it; invalidated by any close above the tops.'],
         },

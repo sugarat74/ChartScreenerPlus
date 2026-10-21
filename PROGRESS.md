@@ -1,6 +1,8 @@
 # Progress Log
 
-## Pattern calibration (`chart-patterns-calibration`, passing) — 2026-10-21
+## Pattern calibration (`chart-patterns-calibration`, accepted) — 2026-10-21
+
+- **Independent validator: ACCEPT.** It reran the gate, reproduced the recheck numbers exactly and verified the label merge row by row. Its nits are applied: docstring, "initial parameters" wording, and the How it works anchor wording. Remaining risk: no out-of-sample check.
 
 - Phase 1 (2026-10-16, previously only on the WIP branch, now rebased on `main`):
   - Rule fixes for cup and flag.
