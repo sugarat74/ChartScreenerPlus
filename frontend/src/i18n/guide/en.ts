@@ -251,7 +251,7 @@ export const guideEn: GuideTexts = {
       ],
       notes: [
         'The illustrations use fictional data; they are not real detected patterns or price targets.',
-        'The rules use initial parameters that will be calibrated over time. Always check the figure on the chart.',
+        'The parameters of the first four patterns were calibrated against a sample of real charts reviewed by a person; double bottoms, cups and the six newer patterns are still low confidence. Always check the figure on the chart.',
       ],
     },
     {

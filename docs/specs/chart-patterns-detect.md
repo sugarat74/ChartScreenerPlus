@@ -12,7 +12,7 @@
 
 Detect a first, closed set of geometric Chartist Patterns per Instrument from stored Daily Bars and persist the **current active set**, exactly like Signals: the Python engine owns deterministic, auditable rules (stdlib only) and returns the patterns that are forming or recently confirmed as of the latest bar; Laravel replaces the instrument's pattern rows. The daily pipeline runs the new stage after `signals:detect`.
 
-First vocabulary (fixed strings, the shared contract): `double_top`, `double_bottom`, `cup_with_handle`, `bull_flag`.
+First vocabulary (fixed strings, the shared contract): `double_top`, `double_bottom`, `cup_with_handle`, `bull_flag`. The second batch (`triple_top`, `triple_bottom`, `inverse_cup_with_handle`, `bear_flag`, `bull_pennant`, `bear_pennant`) is specified in `docs/specs/chart-patterns-extended.md`.
 
 ## Non-Goals
 

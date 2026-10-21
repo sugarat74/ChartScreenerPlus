@@ -1,5 +1,32 @@
 # Progress Log
 
+## More chartist patterns (`chart-patterns-extended`, passing) — 2026-10-21
+
+- User request: "implementa las 4 figuras que decias eran faciles". Spec `docs/specs/chart-patterns-extended.md`, built on the accepted calibration.
+- Six new types:
+  - `triple_top`, `triple_bottom`;
+  - `inverse_cup_with_handle`;
+  - `bear_flag`;
+  - `bull_pennant`, `bear_pennant`.
+- Engine (`engine/app/patterns/extended.py`):
+  - The new detectors reuse `PatternParams`; the only new parameter is the pennant width ratio, 0.7.
+  - Precedence: a triple hides its double, a pennant hides the flag on the same pole.
+  - Fixes found while building:
+    - The pennant uses a half-range rule (least-squares lines cannot see convergence).
+    - A pole must end at its own extreme (also applied to `bull_flag`).
+- Full surface:
+  - Screener filter chips grouped bullish/bearish.
+  - Saved screeners and Watchlist pattern alerts.
+  - AI screener: schema limit 10, prompt in es/en.
+  - Chart markers and panel.
+  - How it works: six entries with schematics.
+  - es/en, light/dark.
+- No migration.
+- Real-data smoke (dev DB, as-of 2026-10-02): 176 patterns.
+  - The inverse cup with handle is 34% (59). The geometry is valid, but it is unlabelled; documented as low confidence and the first candidate for the next labelling sample.
+- Edge QA: 1280/390 px, es/en, light/dark, 0 px overflow (details in `feature_list.json`).
+- `.\init.ps1` exit 0: Laravel 544 passed / 6 skipped, Vitest 215, SPA lint + build, engine 97.
+
 ## Pattern calibration (`chart-patterns-calibration`, accepted) — 2026-10-21
 
 - **Independent validator: ACCEPT.** It reran the gate, reproduced the recheck numbers exactly and verified the label merge row by row. Its nits are applied: docstring, "initial parameters" wording, and the How it works anchor wording. Remaining risk: no out-of-sample check.

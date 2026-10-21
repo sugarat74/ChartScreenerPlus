@@ -173,7 +173,7 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
     case 'bearFlag':
       return <>
         <path d="M18 36 L48 40 L77 57 L107 121 L128 130 L151 111 L175 114 L198 98 L220 103 L241 91 L261 112 L289 136" stroke={INK} strokeWidth="3" fill="none" />
-        <path d="M125 129 L245 96 M143 90 L250 58" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <path d="M140 108 L245 84 M125 131 L250 102" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
         <circle cx="261" cy="112" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
     case 'bullPennant':

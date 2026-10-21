@@ -5,7 +5,7 @@
 - `id`: `chart-patterns-extended`
 - `area`: `engine`
 - `depends_on`: `chart-patterns-detect`, `chart-patterns-ui`, `alerts-patterns`, `ai-screener-natural-language`, `how-it-works-manual` (all accepted)
-- `status`: `not_started` (planned 2026-10-21 at the user's explicit request: "realiza la spec de la primera tanda (las 4 faciles)")
+- `status`: implemented 2026-10-21 (planned the same day at the user's explicit request: "realiza la spec de la primera tanda (las 4 faciles)"; implementation requested with "implementa las 4 figuras que decias eran faciles"). See Implementation Findings for deviations.
 - `source`: `feature_list.json`
 
 ## Goal
@@ -58,7 +58,7 @@ Unchanged from `chart-patterns-ui` and `alerts-patterns`:
    - Replace semantics.
    - The 330-bar window, with 60 bars as the minimum.
    - Any `null` input means a pattern cannot confirm; it never produces a false pattern.
-4. **Shared parameters.** Each mirrored type uses the *same* named constants as its counterpart (`DOUBLE_*`, `CUP_*`, `HANDLE_*`, `POLE_*`, `FLAG_*`), so the calibration spec tunes both directions at once. Pennants add only `PENNANT_MAX_END_WIDTH`.
+4. **Shared parameters.** Each mirrored type uses the *same* named constants as its counterpart (`DOUBLE_*`, `CUP_*`, `HANDLE_*`, `POLE_*`, `FLAG_*`), so the calibration spec tunes both directions at once. Pennants add only `PENNANT_MAX_WIDTH_RATIO` (see Findings 1).
 5. **Extreme rule applies to every new type.** A pattern's own extremes are the extremes of its span, as in `chart-patterns-detect` Findings 1:
    - No higher high between the triple-top peaks, and no lower low between the triple-bottom lows.
    - Nothing inside the inverse cup below the lower rim, and no intermediate swing low below the higher rim.
@@ -95,14 +95,14 @@ All percentages are relative to the referenced price, and `i` is the as-of index
 
 | Type | Geometry | Breakout level | Confirmed when | Invalidated when |
 | --- | --- | --- | --- | --- |
-| `triple_top` | Swing highs `H1` (t1) < `H2` (t2) < `H3` (t3); each gap `t2-t1`, `t3-t2` in `[DOUBLE_MIN_GAP, DOUBLE_MAX_GAP]` (15–120); `(max(H)-min(H))/max(H) <= DOUBLE_PEAK_TOLERANCE` (3%); troughs `L1 = min(low[t1..t2])`, `L2 = min(low[t2..t3])`, each at least `DOUBLE_MIN_DEPTH` (10%) below the lower of its two adjacent peaks; prior rise `H1 >= 1.15 * min(low[t1-60 .. t1])` (lookback includes t1 when calibration fixes it, as for double top); `i - t3 <= DOUBLE_MAX_AGE` (60); no high in `[t1, t3]` above `max(H)` | `min(L1, L2)` (lowest trough, horizontal neckline) | a close `< min(L1, L2)` after `t3` | any close `> max(H) * 1.03` after `t3` |
-| `triple_bottom` | Mirror on swing lows `L1 < L2 < L3` in index; crests `C1 = max(high[t1..t2])`, `C2 = max(high[t2..t3])`, each at least 10% above the higher of its two adjacent lows; prior decline `L1 <= 0.85 * max(high[t1-60 .. t1])`; no low in `[t1, t3]` below `min(L)` | `max(C1, C2)` | a close `> max(C1, C2)` after `t3` | any close `< min(L) * 0.97` after `t3` |
+| `triple_top` | Swing highs `H1` (t1) < `H2` (t2) < `H3` (t3); each gap `t2-t1`, `t3-t2` in `[DOUBLE_MIN_GAP, DOUBLE_MAX_GAP]` (15–120); `(max(H)-min(H))/max(H) <= DOUBLE_PEAK_TOLERANCE` (3%); troughs `L1 = min(low[t1..t2])`, `L2 = min(low[t2..t3])`, each at least `DOUBLE_MIN_DEPTH` (10%) below the lower of its two adjacent peaks; prior rise `H1 >= 1.15 * min(low[t1-60 .. t1])`; the calibrated double rules for the first extreme (anchor), each middle point (12–85% of its gap) and every extreme (wick ≤ 8%); `i - t3 <= DOUBLE_MAX_AGE` (60); no high in `[t1, t3]` above `max(H)` | `min(L1, L2)` (lowest trough, horizontal neckline) | a close `< min(L1, L2)` after `t3` | any close `> max(H) * (1 + DOUBLE_INVALIDATION)` after `t3` (0%, calibrated) |
+| `triple_bottom` | Mirror on swing lows `L1 < L2 < L3` in index; crests `C1 = max(high[t1..t2])`, `C2 = max(high[t2..t3])`, each at least 10% above the higher of its two adjacent lows; prior decline `L1 <= 0.85 * max(high[t1-60 .. t1])`; same anchor, middle-point and wick rules; no low in `[t1, t3]` below `min(L)` | `max(C1, C2)` | a close `> max(C1, C2)` after `t3` | any close `< min(L) * (1 - DOUBLE_INVALIDATION)` after `t3` |
 | `inverse_cup_with_handle` | Left rim swing low `A` (ta), cup top `B = max(high[ta..tc])` at tb, right rim swing low `C` (tc): length `30 <= tc-ta <= 325`; height `12% <= (B-A)/A <= 35%`; `0.95A <= C <= 1.05A`; `tb` in the middle 20–80% of `[ta, tc]`; no low inside below the lower rim and no intermediate swing low below the higher rim. Handle: it lasts 5–25 sessions after `tc` (up to the breakout), its high `D <= A + (B-A)/2`, and `(D-C)/C <= 12%` | pivot `P = min(low[tc..breakout-1])` (C when no handle low is lower) | a close `< P` with `rvol >= 1.5`, after at least 5 handle sessions | handle high rises above `A + (B-A)/2` or more than 12% above `C`, or the handle exceeds 25 sessions without a breakout |
-| `bear_flag` | Pole from swing high `S` (ts) to swing low `T` (tt): `tt-ts <= 15`, drop `(S-T)/S >= 15%`; flag of 5–20 sessions after `tt`; flag high `<= T + 0.5*(S-T)`; least-squares slope of the flag closes `>= 0`; mean flag volume `<` mean pole volume; no flag low under `T` before the breakout | `F = min(low` over the flag`)` | a close `< F` after at least 5 flag sessions | flag high `> T + 0.5*(S-T)`, a low under `T`, or the flag lasts more than 20 sessions without a breakout |
-| `bull_pennant` | Same pole as `bull_flag` (swing low `S` to swing high `T`, `<= 15` sessions, `>= +15%`); consolidation of 5–20 sessions after `tt` (the pennant bars, up to the breakout) with: least-squares slope of the pennant **highs** `< 0` **and** of the **lows** `> 0` (converging); fitted width at the last pennant bar `<= PENNANT_MAX_END_WIDTH` (50%) of the fitted width at the first; pennant low `>= T - 0.5*(T-S)`; no pennant high above `T`; mean pennant volume `<` mean pole volume | `max(high` over the pennant`)` | a close `>` it after at least 5 pennant sessions | pennant low under the 50% floor, a high above `T`, or the pennant lasts more than 20 sessions without a breakout |
+| `bear_flag` | Pole from swing high `S` (ts) to swing low `T` (tt): `tt-ts <= POLE_MAX_LENGTH` (20, calibrated), no low inside the pole under `T`, drop `(S-T)/S >= 15%`; flag of 5–20 sessions after `tt`; flag high `<= T + 0.5*(S-T)`; least-squares slope of the flag closes `>= 0`; mean flag volume `<` mean pole volume; no flag low under `T` before the breakout | `F = min(low` over the flag`)` | a close `< F` after at least 5 flag sessions | flag high `> T + 0.5*(S-T)`, a low under `T`, or the flag lasts more than 20 sessions without a breakout |
+| `bull_pennant` | Same pole as `bull_flag` (swing low `S` to swing high `T`, `<= 20` sessions, `>= +15%`, no high inside the pole above `T`); consolidation of 5–20 sessions after `tt` (the pennant bars, up to the breakout) whose second half has a lower highest high **and** a higher lowest low than the first half (converging), with a high-low range of at most `PENNANT_MAX_WIDTH_RATIO` (70%) of the first half's; pennant low `>= T - 0.5*(T-S)`; no pennant high above `T`; mean pennant volume `<` mean pole volume | `max(high` over the pennant`)` | a close `>` it after at least 5 pennant sessions | pennant low under the 50% floor, a high above `T`, or the pennant lasts more than 20 sessions without a breakout |
 | `bear_pennant` | Mirror of `bull_pennant` on the `bear_flag` pole (swing high to swing low, `>= 15%` drop): highs slope `< 0`, lows slope `> 0`, the same width rule, pennant high `<= T + 0.5*(S-T)`, no low under `T`, volume lower than the pole | `min(low` over the pennant`)` | a close `<` it after at least 5 pennant sessions | pennant high above the 50% ceiling, a low under `T`, or longer than 20 sessions without a breakout |
 
-**Pennant width.** Fit lines `u(x)` and `l(x)` by least squares on the pennant highs and lows (`x` = 0 … n-1). The width is `u(x) - l(x)`. The pennant is valid only when `u(0) - l(0) > 0` and `(u(n-1) - l(n-1)) <= PENNANT_MAX_END_WIDTH * (u(0) - l(0))`. A non-positive starting width means there is no pennant.
+**Pennant width (as built).** The pennant bars are split in two halves (the first gets the middle bar when the count is odd). With `U1, L1` the highest high and lowest low of the first half and `U2, L2` those of the second, the pennant is valid only when `U2 < U1`, `L2 > L1` and `(U2 - L2) / (U1 - L1) <= PENNANT_MAX_WIDTH_RATIO` (0.7). The originally planned least-squares lines were dropped (Findings 1).
 
 **Metadata.** Numeric only, as today:
 - Triples: `depth_pct` (the shallower of the two), `span_sessions`.
@@ -127,7 +127,7 @@ Given fixtures that each violate one rule, for example:
 - a bear pole of only -10%;
 - a bear flag retracing 60%;
 - a pennant with parallel (non-converging) lines;
-- a pennant whose end width is 70% of its start width;
+- a pennant whose second half is still more than 70% as wide as its first half;
 When the engine detects patterns,
 Then that type is absent.
 
@@ -216,8 +216,8 @@ and the status paragraph no longer singles out the double top. It explains that 
 ## Technical Approach
 
 1. **Engine (`rules.py`).**
-   - Add `triple_top`, `triple_bottom`, `inverse_cup_with_handle`, `bear_flag`, `bull_pennant` and `bear_pennant` as separate functions, reusing the existing constants. The only new constant is `PENNANT_MAX_END_WIDTH = 0.5`.
-   - Add a `_fit(values) -> (slope, intercept)` helper next to `_slope`.
+   - Add `triple_top`, `triple_bottom`, `inverse_cup_with_handle`, `bear_flag`, `bull_pennant` and `bear_pennant` as separate functions, reusing the existing constants. The only new constant is `PENNANT_MAX_WIDTH_RATIO = 0.7` (Findings 1).
+   - Add a `_width_ratio(body)` helper for the pennant halves (Findings 1).
    - Append the six detectors to `DETECTORS` in vocabulary order.
    - Add `DIRECTION: dict[str, Literal["bullish", "bearish"]]` for documentation and tests. It is not sent over the API.
    - Shared pole and flag loops may be factored into private helpers only if the existing `bull_flag` tests stay unchanged.
@@ -279,16 +279,16 @@ and the status paragraph no longer singles out the double top. It explains that 
 
 ## Implementation Tasks
 
-- [ ] `bear_flag`, `bull_pennant` and `bear_pennant` detectors with the pole, retracement, slope, width and volume rules.
-- [ ] `triple_top` and `triple_bottom` detectors with the gap, tolerance, depth, prior move, age and extreme rules.
-- [ ] `inverse_cup_with_handle` detector with the handle, the `rvol >= 1.5` breakout and the extreme rules.
-- [ ] `PENNANT_MAX_END_WIDTH` and `_fit`; `DETECTORS` extended in vocabulary order.
-- [ ] Precedence post-filter in `detect.py` with tests (triple over double, pennant over flag, both directions).
-- [ ] `ChartPattern::TYPES` extended; `MAX_PATTERNS` derived; AI prompt in es and en.
-- [ ] Backend tests per surface (screener filter, saved screener, alerts, detect command, AI schema).
-- [ ] SPA vocabulary, `PATTERN_DIRECTION`, display order, `HIGH_ROLES`, and i18n types, roles and rolesShort in es and en.
-- [ ] How it works: six entries in es and en, six themed schematics, status paragraph generalised.
-- [ ] Docs listed above; `PROGRESS.md`, `feature_list.json`.
+- [x] `bear_flag`, `bull_pennant` and `bear_pennant` detectors with the pole, retracement, slope, width and volume rules.
+- [x] `triple_top` and `triple_bottom` detectors with the gap, tolerance, depth, prior move, age and extreme rules.
+- [x] `inverse_cup_with_handle` detector with the handle, the `rvol >= 1.5` breakout and the extreme rules.
+- [x] `PENNANT_MAX_WIDTH_RATIO` and `_width_ratio`; `ALL_DETECTORS` in vocabulary order.
+- [x] Precedence post-filter in `detect.py` with tests (triple over double, pennant over flag, both directions).
+- [x] `ChartPattern::TYPES` extended; `MAX_PATTERNS` derived; AI prompt in es and en.
+- [x] Backend tests per surface (screener filter, saved screener, alerts, detect command, AI schema).
+- [x] SPA vocabulary, `PATTERN_DIRECTION`, display order, `HIGH_ROLES`, and i18n types, roles and rolesShort in es and en.
+- [x] How it works: six entries in es and en, six themed schematics, status paragraph generalised.
+- [x] Docs listed above; `PROGRESS.md`, `feature_list.json`.
 
 ## Verification Plan
 
@@ -324,8 +324,37 @@ and the status paragraph no longer singles out the double top. It explains that 
 ## Validator Checklist
 
 - [ ] Exactly six new types, with the strings and canonical order as specified. No migration. Existing stored lists keep their order.
-- [ ] Rules and parameters match the table. Mirrored types reuse the shared constants. Only `PENNANT_MAX_END_WIDTH` is new. No targets.
+- [ ] Rules and parameters match the table. Mirrored types reuse the shared constants. Only `PENNANT_MAX_WIDTH_RATIO` is new. No targets.
 - [ ] Each new type has positive, near-miss, invalidation and status tests. The extreme rules hold. There is no look-ahead.
 - [ ] Precedence is tested both ways. The existing four types' tests are unchanged.
 - [ ] Screener, Saved Screener, alerts, the AI Screener (enum and `MAX_PATTERNS`), chart markers and sides, panel, filters and alert chips, and How it works all work with the new types in es and en and in light and dark.
 - [ ] Docs updated (`CONSTRAINTS.md` vocabulary rule, `ARCHITECTURE.md`, `CONTEXT.md`, `AGENTS.md`, the calibration spec). Smoke counts recorded. `init.ps1` exits 0. `feature_list.json` and `PROGRESS.md` updated.
+
+## Implementation Findings
+
+Recorded 2026-10-21. Built on top of `chart-patterns-calibration` phase 2, so the mirrored types inherit the calibrated values: invalidation on any close beyond the extreme, the anchor, middle-point and wick rules for the triples, and a 20-session pole.
+
+1. **Pennant convergence rule changed.** The planned least-squares lines on every pennant high and low cannot detect convergence. Daily highs and lows follow the closes, so both fitted lines track the centre of the price and always get the same slope. The detector instead compares the two halves of the consolidation: a lower highest high, a higher lowest low, and a range of at most 70% (`PENNANT_MAX_WIDTH_RATIO`). A perfect triangle that reaches its apex scores about 0.5; one that breaks out at two thirds to three quarters of the way scores about 0.6–0.7. Tests cover parallel channels, widening shapes and a 0.72 near miss.
+2. **A pole must end at its own extreme.** A pole running from a low to a later, lower rally top was accepted, with the real top (higher) left inside the pole. The 20-session pole from calibration made this possible for `bull_flag` too. The rule now applies to every pole, `bull_flag` included, behind the `flag_extremes` switch. Test: `test_a_pole_ends_at_its_own_extreme`. Every existing bull flag test still passes, and the universe count of bull flags did not change (4 / 1).
+3. **Module layout.** The six detectors live in `engine/app/patterns/extended.py` (`ALL_DETECTORS` = first batch + second batch), so `rules.py` keeps the first four untouched. `detect.py` applies `apply_precedence`. `near_misses.py` scans every type but has relaxations only for the first four.
+4. **SPA canonical order.** `SCREENER_PATTERN_TYPES` is now the bullish group, then the bearish one, so a URL lists `cup_with_handle,double_top` in that order. The API and the stored lists keep the backend order of `ChartPattern::TYPES`, and the SPA normalizes both. One assertion in `patterns.test.ts` was updated.
+5. **Local smoke** (dev SQLite, 503 instruments, as-of 2026-10-02, about 3.5 s):
+
+| Type | Forming | Confirmed |
+| --- | ---: | ---: |
+| double_top | 35 | 7 |
+| double_bottom | 22 | 5 |
+| cup_with_handle | 14 | 1 |
+| bull_flag | 3 | 1 |
+| triple_top | 12 | 1 |
+| triple_bottom | 8 | 0 |
+| inverse_cup_with_handle | 51 | 8 |
+| bear_flag | 3 | 1 |
+| bull_pennant | 1 | 1 |
+| bear_pennant | 1 | 1 |
+| **total** | | **176** |
+
+   - The triples absorbed 13 double tops and 7 double bottoms through the precedence rule.
+   - **The inverse cup with handle is 34% of all detections.** Six random instances were plotted. All are geometrically valid mirrors (a rise and a return to the starting level, with a small upward handle), and some are broad hills rather than rounded tops. The count fits the current regime, a market that rolled over: double tops 42 against double bottoms 27, and only 15 bullish cups. Following the calibration policy, it is not tuned by eye. It is documented as **unlabelled, low confidence** and is the first candidate for the next labelling sample.
+   - In some triples the breakout level (the lowest trough or highest crest) lies far from the price, because one middle point was a one-day collapse or spike. This is recorded for the next labelling round.
+6. **Persistent E2E.** None exists. The flow is covered by engine, Laravel and Vitest tests plus the browser QA recorded in `PROGRESS.md`.

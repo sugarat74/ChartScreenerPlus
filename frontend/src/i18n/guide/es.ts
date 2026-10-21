@@ -251,7 +251,7 @@ export const guideEs: GuideTexts = {
       ],
       notes: [
         'Las imágenes son esquemas con datos ficticios; no son formaciones detectadas en un valor real ni objetivos de precio.',
-        'Las reglas usan parámetros iniciales que se irán calibrando. Revisa siempre la figura en el gráfico.',
+        'Los parámetros de los cuatro primeros patrones se calibraron con una muestra de gráficos reales revisada por una persona; el doble suelo, la taza y los seis patrones nuevos siguen siendo de confianza baja. Revisa siempre la figura en el gráfico.',
       ],
     },
     {
