@@ -1,6 +1,10 @@
 # Progress Log
 
-## Daily alert email digest (`alerts-email-digest`, passing) — 2026-10-21
+## Daily alert email digest (`alerts-email-digest`, accepted) — 2026-10-21
+
+- **Independent validator: ACCEPT** (round 2).
+  - Round 1 was `revise`. GET on the unsubscribe link unsubscribed at once, the form POST got CSRF 419, and the failure log could hold the address.
+  - All fixed in `46fbb16`. Verified on a real server.
 
 - User request: "ok realiza alerts-email-digest".
 - Implemented end to end but shipped **off**: there is no sending provider yet (production `MAIL_MAILER=log`).
