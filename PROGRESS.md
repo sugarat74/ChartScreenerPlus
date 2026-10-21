@@ -1,5 +1,11 @@
 # Progress Log
 
+## Nginx cache headers for the SPA — 2026-10-21
+
+- After the flicker fix (#50) a browser that had visited before still loaded the old bundle: `index.html` had no `Cache-Control`, so browsers cached it heuristically and did not revalidate after a deploy.
+- New `deploy/update-nginx-cache.sh` (root, Certbot site, backup + rollback, like `update-nginx-metadata.sh`) and `deploy/nginx.conf`: `location /assets/` sends `public, max-age=31536000, immutable` and returns 404 for a missing asset (it used to return `index.html`); `location /` sends `no-cache`. Both repeat `X-Robots-Tag`, because a location-level `add_header` drops the server-level one; `Cache-Control` has no `always`, so errors are not cached.
+- Applied on the VPS on 2026-10-21 (backup `/root/chartiko-nginx-20261021T060228Z.conf`). Checked: `/`, `/?rsi_max=30` and `/favicon.svg` `no-cache`; `/login` and `/portal` keep `noindex, follow`; JS/CSS immutable; `/assets/nope.js` 404; `If-None-Match` on `/` gives 304; HTTP still redirects to HTTPS; `/api/legal` unchanged.
+
 ## Fix: home page flicker — 2026-10-20
 
 - User report: the home page still flickers. Measured in production (Playwright, 1280 px, Visitor): layout shift 0.069 when `/api/user` answers, because the AI box and the saved-screeners link rendered nothing while auth loaded; on a cold load the unstyled `index.html` fallback showed for about 1 s before React mounted.
