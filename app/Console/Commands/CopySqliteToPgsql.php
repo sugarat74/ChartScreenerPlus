@@ -61,6 +61,8 @@ class CopySqliteToPgsql extends Command
         // Alerts and their notifications postdate the one-time SQLite cut-over.
         'alerts',
         'notifications',
+        // Daily alert email digests postdate the one-time SQLite cut-over.
+        'alert_email_digests',
         // Precomputed Screener rows, rebuilt by `screener:refresh`.
         'screener_rows',
         // Experimental forecasts postdate the one-time SQLite cut-over.
