@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\DailyBar;
 use App\Models\IndicatorSnapshot;
 use App\Models\Instrument;
+use App\Models\MacroObservation;
+use App\Models\MacroSeries;
 use App\Models\MarketBreadthSnapshot;
 use App\Models\MarketSectorSnapshot;
 use App\Models\Signal;
@@ -154,6 +156,33 @@ class MarketDataSchemaTest extends TestCase
 
         $breadth->universe->delete();
         $this->assertDatabaseCount('market_breadth_snapshots', 0);
+    }
+
+    public function test_macro_observations_are_unique_per_series_and_date_keep_six_decimals_and_cascade(): void
+    {
+        $observation = MacroObservation::factory()->create(['date' => '2026-10-20', 'value' => '6755639.1234567']);
+
+        $this->assertSame('6755639.123457', $observation->fresh()->value);
+        $this->assertSame('2026-10-20', $observation->fresh()->date->toDateString());
+        $this->assertSame($observation->macro_series_id, $observation->series->id);
+
+        try {
+            // A savepoint (PostgreSQL-safe), as above.
+            DB::transaction(fn () => MacroObservation::factory()->create(['date' => '2026-10-20', 'macro_series_id' => $observation->macro_series_id]));
+            $this->fail('A duplicate (macro_series_id, date) was accepted.');
+        } catch (QueryException) {
+            // Expected.
+        }
+
+        try {
+            DB::transaction(fn () => MacroSeries::factory()->create(['code' => $observation->series->code]));
+            $this->fail('A duplicate series code was accepted.');
+        } catch (QueryException) {
+            // Expected.
+        }
+
+        $observation->series->delete();
+        $this->assertDatabaseCount('macro_observations', 0);
     }
 
     public function test_universe_and_instrument_pivot_resolves_both_ways(): void

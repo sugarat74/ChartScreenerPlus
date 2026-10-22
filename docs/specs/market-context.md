@@ -64,10 +64,15 @@ so I can judge the setup in its context with rules I can read.
    - **Macro Series:** a public time series fetched from FRED and stored with its own dates.
    - **Put/Call Ratio (Ratio put/call):** put option volume divided by call option volume on a session. Added with Feature 6.
 2. **Dates.** Every reading carries its own date. Market readings use the last session. Macro series keep the date of their last observation, which can be weeks old for monthly data, and the UI shows it. Public labels never say EOD or "end of day" (AGENTS.md rule); they use "Datos del {date}" / "Data as of {date}".
-3. **Staleness.** A reading is *stale* when it is older than its frequency allows: daily over 7 calendar days, weekly over 16 days, monthly over 75 days. Stale readings are shown with a "desactualizado" / "stale" badge and **do not count** in the regime.
+3. **Staleness.** A reading is *stale* when it is older than its frequency allows: daily over 7 calendar days, weekly over 16 days, monthly over 100 days (corrected from 75 on 2026-10-22: monthly observations are dated the 1st and published about 45–50 days later, so 75 flagged them every month; see `docs/specs/macro-series-fred.md`). Stale readings are shown with a "desactualizado" / "stale" badge and **do not count** in the regime.
 4. **No advice.** No Market Context text contains buy, sell, target, probability or recommendation wording. Each card has a short educational "¿Qué significa?" / "What does it mean?" text in `frontend/src/i18n/messages/*.ts`.
 5. **Isolation.** A failure in any Market Context step is logged and shown in Admin, but it never fails the ingestion pipeline, the Screener refresh or the alert evaluation.
-6. **Sources and attribution.** Every card names its source. Each FRED series is checked before it is enabled: public-domain government data (Treasury, Federal Reserve, BLS, Census, DOL) is fine. Series with third-party copyright stay disabled until their terms are cleared. The FRED API terms notice is shown on the page; verify its current wording when implementing.
+6. **Sources and attribution.** Every card names its source. Each FRED series is checked before it is enabled: public-domain government data (Treasury, Federal Reserve, BLS, Census, DOL) is fine. Series with third-party copyright stay disabled until their terms are cleared. The FRED API terms (checked 2026-10-22) require three things:
+   - the page shows "This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.";
+   - the page links to the FRED API Terms of Use;
+   - Chartiko's own terms of use state that users agree to be bound by them.
+
+   FRED also prohibits using its content with AI/machine-learning systems, so no FRED data is ever sent to the AI provider.
 
 ---
 
@@ -136,51 +141,54 @@ Implementation contract, exact edge-case rules and resolved ambiguities: `docs/s
 
 ## Feature 2 — `macro-series-fred`
 
+Implementation contract, the per-series verification done on FRED on 2026-10-22, exact formulas and resolved ambiguities: `docs/specs/macro-series-fred.md`. That spec wins where it is more precise; the items below were corrected to match it.
+
 ### Scope
 
 1. **Opt-in configuration.** `config/macro.php` with `enabled` (`MACRO_ENABLED`, default `false`) and `fred_api_key` (`FRED_API_KEY`). The key is free, set only on the server and never committed. When disabled, every macro command is a no-op that logs once.
-2. **Closed series list.** Defined in `config/macro.php`. The implementer verifies each ID, its units and its copyright note on FRED before enabling it:
+2. **Closed series list.** Defined in `config/macro.php`, verified on FRED on 2026-10-22:
 
-   | Group | FRED id | Meaning | Frequency |
+   | Category | FRED id | Meaning | Frequency |
    | --- | --- | --- | --- |
    | rates | `DGS3MO`, `DGS2`, `DGS10` | US Treasury yields 3m / 2y / 10y (%) | daily |
-   | curve | `T10Y2Y`, `T10Y3M` | 10y−2y and 10y−3m spreads (pp) | daily |
+   | curve | — (computed: `DGS10 − DGS2`, `DGS10 − DGS3MO`) | 10y−2y and 10y−3m spreads (pp). `T10Y2Y`/`T10Y3M` are not fetched: they carry St. Louis Fed copyright | daily |
    | policy | `DFEDTARL`, `DFEDTARU` | Fed funds target range (%) | daily |
-   | policy | `ECBDFR` | ECB deposit facility rate (%) | daily |
-   | liquidity | `WALCL` | Fed total assets | weekly |
-   | liquidity | `WTREGEN` | Treasury General Account | weekly |
-   | liquidity | `RRPONTSYD` | Overnight reverse repo | daily |
+   | policy | `ECBDFR` | ECB deposit facility rate (%); ECB reuse policy, "Source: ECB statistics" | daily |
+   | liquidity | `WALCL` | Fed total assets (Wednesday level) | weekly |
+   | liquidity | `WDTGAL` | Treasury General Account (Wednesday level; replaces the week-average `WTREGEN`) | weekly |
+   | liquidity | `WLRRAOL` | Reverse repos, others (Wednesday level; replaces the NY Fed's copyrighted `RRPONTSYD`) | weekly |
    | leading | `ICSA` | Initial jobless claims | weekly |
    | leading | `PERMIT` | Building permits (SAAR) | monthly |
-   | leading | `NFCI` | Chicago Fed National Financial Conditions Index | weekly |
-   | optional | `VIXCLS` | VIX close | daily — **disabled until Cboe terms are cleared** |
-   | optional | OECD composite leading indicator (US) | — | monthly — **only if a currently updated free source is found** (FRED's OECD series or the OECD API); otherwise omitted |
+   | leading | `USALOLITOAASTSAM` | OECD composite leading indicator, US, amplitude adjusted (current on FRED; OECD CC BY 4.0) | monthly |
+   | leading | `NFCI` | Chicago Fed National Financial Conditions Index. **Off by default** (`MACRO_NFCI_ENABLED`): the Chicago Fed allows only non-commercial reproduction without written permission | weekly |
+   | volatility | `VIXCLS` | VIX close. **Off by default** (`MACRO_VIXCLS_ENABLED`) until Cboe terms are cleared | daily |
 
-   Units are read from the FRED series metadata and normalized to billions of USD for the liquidity group.
+   Values are stored as published. The liquidity group is converted from millions to billions of USD in the derived reading.
 3. **Storage.**
-   - `macro_series`: `code` unique, `group`, `units`, `frequency`, `source`, `last_observation_date`, `last_refreshed_at`, `last_error`.
+   - `macro_series`: `code` unique, `source` (`fred`; `cboe` in Feature 6), `category`, `frequency`, `title`, `units`, `last_observation_date`, `source_updated_at`, `last_attempted_at`, `last_refreshed_at`, `last_error` (a code, never a message).
    - `macro_observations`: `macro_series_id`, `date`, `value decimal(20,6)`; unique `(macro_series_id, date)`.
    - FRED's missing values (`"."`) are skipped, never stored as 0.
-4. **Command.** `macro:refresh {--series=} {--backfill}`:
-   - Fetches observations since the last stored date, or the last 5 years with `--backfill`.
-   - Upserts them, records per-series success or error, and throttles and retries like the existing HTTP sources.
+4. **Command.** `macro:refresh {--series=*} {--backfill}`:
+   - Fetches observations from the last stored date minus a revision window, or the last 5 years on the first run and with `--backfill`.
+   - Upserts them and records per-series success or error. The Laravel `FredClient` spaces and retries its requests like the SEC client.
    - Run by the pipeline before `market-regime:compute` (Feature 3), and also scheduled daily so weekly releases are picked up on days without a market session.
 5. **Derived readings** (`MacroSnapshotService`, pure and testable):
-   - Curve: `inverted` when `T10Y3M < 0`.
+   - Curve: `inverted` when the computed 10y−3m spread `< 0`.
    - Change in the 10-year yield over 20 observations.
-   - **Net liquidity** = `WALCL − WTREGEN − RRPONTSYD`, aligned on the weekly `WALCL` date (using the latest RRP value on or before it), plus its 4-week and 13-week % change.
+   - **Net liquidity** = `WALCL − WDTGAL − WLRRAOL` on the same Wednesday (a Wednesday missing a leg is skipped), plus its 4-week and 13-week % change.
    - Claims: 4-week average and its distance from the 52-week minimum.
    - Permits: 3-month % change.
-   - NFCI: last value (positive means tighter than average).
+   - NFCI: last value (positive means tighter than average), when enabled.
+   - OECD CLI: last value and 1-month change.
 6. **Central banks.**
    - Current Fed range and ECB rate come from the series.
-   - The **last move** (raise / cut / hold, with its date) is the last date the value changed.
-   - The **next meeting** comes from `config/central_banks.php`: FOMC and ECB monetary policy meeting dates copied by hand from the official calendars, with a test that fails when no future date is left, as a reminder to update it.
+   - The **last change** (raise or cut, with its effective date) is the last date the value changed. No "hold" is inferred; the last and next meeting dates are shown next to it.
+   - The meetings come from `config/central_banks.php`: FOMC and ECB monetary policy meeting dates for 2026–2027, copied by hand from the official calendars. A test fails when either bank has no meeting at least 60 days ahead, as a reminder to update it.
    - No market-implied probabilities.
 
 ### Acceptance
 
-- Recorded FRED JSON fixtures (no network in tests) produce the expected stored observations and derived readings, including `"."` gaps and the weekly/daily alignment for net liquidity.
+- FRED JSON fixtures (no network in tests) produce the expected stored observations and derived readings, including `"."` gaps and the exact-Wednesday alignment for net liquidity.
 - With `MACRO_ENABLED=false` nothing calls FRED and the pipeline stays green.
 - An HTTP error on one series records `last_error` for it and does not stop the other series or the pipeline.
 - No API key appears in logs, exceptions or the repository.
@@ -198,8 +206,8 @@ Implementation contract, exact edge-case rules and resolved ambiguities: `docs/s
    | `breadth` | `pct_above_sma200 >= 60` | `<= 40` | 0 |
    | `index_trend` | `spy_trend = uptrend` | `downtrend` | 0 |
    | `sector_participation` | sectors in `uptrend >= 7` | `<= 3` | 0 |
-   | `yield_curve` | `T10Y3M >= 0.5` | `< 0` (inverted) | 0 |
-   | `financial_conditions` | `NFCI < −0.25` | `> 0` | 0 |
+   | `yield_curve` | 10y−3m spread (`DGS10 − DGS3MO`) `>= 0.5` | `< 0` (inverted) | 0 |
+   | `financial_conditions` (only if `NFCI` is enabled) | `NFCI < −0.25` | `> 0` | 0 |
    | `liquidity` | net liquidity 13-week change `>= +2 %` | `<= −2 %` | 0 |
    | `volatility` (only if `VIXCLS` is enabled) | `< 18` | `> 28` | 0 |
    | `options_sentiment` (added by Feature 6, only if enabled) | percentile `>= 90` | percentile `<= 10` | 0 |
@@ -238,7 +246,13 @@ Implementation contract, exact edge-case rules and resolved ambiguities: `docs/s
 
       Each card has its source, its `as_of` date, a stale badge when stale, and a "¿Qué significa?" disclosure.
    4. **History charts** (sparkline or small line chart per card) for Registered Users. Visitors see a sign-in prompt in their place, as with the other auth-only panels.
-   5. Footer: "Información descriptiva, no es asesoramiento de inversión" / "Descriptive information, not investment advice" and the FRED notice.
+   5. Footer:
+      - "Información descriptiva, no es asesoramiento de inversión" / "Descriptive information, not investment advice";
+      - the FRED notice, verbatim in English: "This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.";
+      - a link to `https://fred.stlouisfed.org/docs/api/terms_of_use.html`;
+      - per-card attribution from `config('macro.series.*.attribution')`.
+
+      Before going public, Chartiko's terms of use (legal texts) must state that users agree to be bound by the FRED API Terms of Use.
 3. **Admin.** A "Contexto de mercado" section in the existing Admin ingestion area showing:
    - the last `market-context:compute` and `market-regime:compute` runs;
    - per series: last observation date, last refresh and last error;
@@ -338,14 +352,16 @@ Fixed thresholds no longer work: since 2020, same-day-expiry options and heavy r
 - In-app and email alerts when the Market Regime changes.
 - Context at the pattern's detection date (historical join) and pattern statistics by regime (ideas 3 and 4 of the differentiators doc).
 - A public, indexable "Estado del mercado hoy" landing and a weekly email or Telegram post generated from it.
-- AI-written weekly summary of the Market Context (facts only).
+- AI-written weekly summary of the Market Context (facts only). It may not include FRED data: FRED's terms prohibit using its content with AI systems.
 - More markets (Europe/IBEX sector proxies) once a licensed data source exists.
 
 ## Risks And Open Questions
 
 - **Market data licence:** the ETFs come through the same unofficial source as the stocks (see `docs/risks-and-open-questions.md`). Publishing them carries the same pending licence issue.
-- **FRED terms:** per-series copyright must be checked, VIX is disabled by default, and the API terms notice must be shown.
-- **OECD CLI availability** through a free, current source is unverified.
+- **FRED terms:** per-series copyright was checked on 2026-10-22 (`docs/specs/macro-series-fred.md`).
+  - VIX and NFCI are off by default. NFCI needs the Chicago Fed's written permission, or the owner's confirmation that Chartiko's use is non-commercial.
+  - Feature 4 must show the API notice and the Terms of Use link, and add the ToU clause to Chartiko's terms of use.
+- **OECD CLI availability:** resolved. `USALOLITOAASTSAM` is current on FRED (Sep 2026) and is included. FRED shows no next release date, so staleness covers a possible discontinuation.
 - **Central bank calendar** is maintained by hand once a year; the test in Feature 2 makes a missing update fail loudly.
 - **Cboe terms (Feature 6):** the daily statistics page is governed by Cboe's website terms, and Cboe's data agreements limit use to personal or internal purposes. Public display needs written permission or a licensed source; ask Cboe and OCC, and ask the market data providers being quoted whether they include it.
 - **Put/call source coverage:** Cboe's figures cover only volume traded on Cboe exchanges. OCC publishes a put/call report on cleared volume across all US options exchanges and is the fallback if its terms are clearer.

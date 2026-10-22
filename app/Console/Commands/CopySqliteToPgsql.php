@@ -80,6 +80,10 @@ class CopySqliteToPgsql extends Command
         // they postdate the cut-over.
         'market_sector_snapshots',
         'market_breadth_snapshots',
+        // FRED Macro Series postdate the cut-over and are fetched again by
+        // `macro:refresh` (it backfills by itself).
+        'macro_series',
+        'macro_observations',
     ];
 
     private const CHUNK = 500;

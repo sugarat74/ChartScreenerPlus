@@ -1606,20 +1606,31 @@
     "id": "macro-series-fred",
     "area": "backend",
     "title": "Daily FRED macro series and central bank calendar (opt-in)",
-    "user_visible_behavior": "No visible change yet; when MACRO_ENABLED and FRED_API_KEY are set, a daily command stores Treasury yields and curve spreads, Fed and ECB policy rates, Fed balance sheet/TGA/reverse repo (net liquidity), initial claims, building permits and NFCI, and derives the readings used by the market regime; next FOMC/ECB meetings come from a hand-maintained config.",
+    "user_visible_behavior": "No visible change yet; when MACRO_ENABLED and FRED_API_KEY are set, a daily command (and an isolated pipeline stage) stores Treasury yields, Fed and ECB policy rates, Fed balance sheet/TGA/reverse repo (H.4.1 Wednesday levels), initial claims, building permits and the OECD leading indicator from FRED, and derives the readings used by the market regime (curve spreads computed locally, net liquidity, claims/permit changes, last rate change); next FOMC/ECB meetings come from a hand-maintained config. NFCI and VIXCLS stay off until their terms are cleared.",
     "depends_on": [
       "ingestion-scheduler"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
-      "Recorded FRED JSON fixtures (no network) give the expected observations and derived readings, including '.' gaps and weekly/daily net-liquidity alignment",
+      "Recorded FRED JSON fixtures (no network) give the expected observations and derived readings, including '.' gaps, revisions and exact-Wednesday net-liquidity alignment (WALCL - WDTGAL - WLRRAOL)",
       "With MACRO_ENABLED=false nothing calls FRED and the pipeline stays green",
       "An HTTP error on one series records last_error for it only; other series and the pipeline continue",
       "No API key in logs, exceptions or the repository; central bank calendar test fails when no future meeting is left",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-10-22 at user request (same request as market-context-sectors). Spec: docs/specs/market-context.md (Feature 2). Needs a free FRED API key set on the server by the owner. VIXCLS disabled until Cboe terms are cleared; OECD CLI only if a current free source is verified. Excluded by feasibility review: X sentiment, Conference Board LEI, ISM, FedWatch, fiscal deficits."
+    "evidence": [
+      "2026-10-22 independent validator: accept (round 1). .\\init.ps1 exit 0 rerun (Laravel 626 passed / 6 skipped, Vitest 223, SPA lint + build, engine 101); focused filter 62 passed / 6 skipped; configure-macro-env.py offline no-op on empty stdin and key-format rejection; readings recomputed independently from fixtures (DGS10 20-obs change 0.16, spreads 0.33/0.86, net liquidity 5869.615 bn with +2.0898 %/-1.2996 %, claims 4w 197,750, permits +1.8923 %, Fed raise effective 2026-09-17); probe tests: URL-bearing connection errors never leak the key and stay within the run budget (~314 s fake clock), point-in-time release lag hides unpublished claims. PostgreSQL pending CI test-pgsql.",
+      "2026-10-22 implementer self-verification (not yet independently validated). Spec: docs/specs/macro-series-fred.md.",
+      "Schema: macro_series (code unique, source, category, frequency, title, units, last_observation_date, source_updated_at, last_attempted_at, last_refreshed_at, last_error code) and macro_observations (FK cascade, date, decimal(20,6), unique macro_series_id+date); both in CopySqliteToPgsql::SKIPPED_TABLES.",
+      "config/macro.php (closed list: DGS3MO, DGS2, DGS10, DFEDTARL, DFEDTARU, ECBDFR, WALCL, WDTGAL, WLRRAOL, ICSA, PERMIT, USALOLITOAASTSAM enabled; NFCI and VIXCLS restricted, off behind MACRO_NFCI_ENABLED / MACRO_VIXCLS_ENABLED) and config/central_banks.php (FOMC + ECB 2026-2027). FredClient (0.6 s spacing via Sleeper, 2 retries 5 s/20 s, no redirects, code-only FredUnavailable, connection exceptions swallowed), MacroSeriesRefresher, MacroSnapshotService, CentralBankCalendar, macro:refresh {--series=*} {--backfill}, isolated runMacro() stage after the Market Context block, macro-refresh event daily 10:00 America/New_York when enabled.",
+      "Deviation recorded in the spec (11): run_budget_seconds = 300 so the first production run (5-year backfill, key already set by hand) can never hold the pipeline long; worst case ~470 s < 900 s lock TTL. CI step 'Configure FRED macro series key' exits 0 before SSH when the FRED_API_KEY secret is empty; deploy/configure-macro-env.py also leaves shared/.env untouched on empty stdin (checked offline: empty stdin -> 'No FRED key provided; server environment unchanged.', exit 0; build_env replaces only FRED_API_KEY/MACRO_ENABLED and rejects malformed keys).",
+      "New tests (36): MacroRefreshCommandTest 15 (disabled inert + Log::info once, malformed key, unknown/disabled --series, 5-year backfill from real public-domain fixtures with '.' holiday skipped and 0.6 s spacing asserted, revision window starts + revised value + '.' deletion + identical rerun writes nothing, --series/--backfill, VIXCLS only when flagged, DGS2 500 x3 with 5/20 s backoff keeps old data, all failing exit 1, invalid_key stops after 1 request, every error code, key never in logs/output/table/reported exceptions with Http::failedConnection, held lock, time budget, hand-computed readings from the stored fixtures); MacroSnapshotServiceTest 12 (Scenario 6 incl. spread 0 vs -0.01, missing WLRRAOL Wednesday fallback, missing 4w base, claims gap, stale 7/8 16/17 100/101, pointInTime, Fed raise/cut/unchanged, ECB cut, restricted flags); CentralBankCalendarTest 4 (incl. real-clock 60-day reminder); MacroScheduleTest 1; IngestionPipelineCommandTest +3 (disabled skip with 4 requests, FRED connection failure exit 0 + Log::warning stage/exit + no key + nothing reported, throwing refresher exit 0 + reported + lock released); MarketDataSchemaTest +1 (unique, cascade, decimal:6, savepoints).",
+      "php artisan test --filter=\"Macro|CentralBankCalendar|IngestionPipelineCommand|IngestionSchedule|MarketDataSchema|CopySqliteToPgsql\": 62 passed, 6 skipped (the pgsql copy scenarios need PostgreSQL; CI test-pgsql runs them).",
+      ".\\init.ps1 exit 0: Laravel 626 passed / 6 skipped (4994 assertions), Vitest 30 files / 223 tests, SPA lint + build, engine 101 passed.",
+      "php artisan schedule:list shows '0 14 * * * php artisan macro:refresh' (10:00 New York shown in UTC); php artisan macro:refresh with the default .env prints 'Macro series are disabled (MACRO_ENABLED=false); nothing was requested.' exit 0, no request. Secret scan (grep for 32-char lower-case alphanumerics in config, deploy, tests, app, routes, .env.example) finds only the documented fake key. vendor/bin/pint --test passed on the changed PHP files.",
+      "Not verified: real FRED data (no key in development; production smoke after deploy, see docs/risks-and-open-questions.md) and PostgreSQL locally (CI test-pgsql is the confirming check)."
+    ],
+    "notes": "Planned 2026-10-22 at user request (same request as market-context-sectors). Spec: docs/specs/market-context.md (Feature 2). Needs a free FRED API key set on the server by the owner. VIXCLS disabled until Cboe terms are cleared; OECD CLI resolved (USALOLITOAASTSAM, CC BY 4.0); NFCI off (Chicago Fed non-commercial terms). Implementation spec: docs/specs/macro-series-fred.md. Production: the owner already set FRED_API_KEY and MACRO_ENABLED=true by hand in shared/.env (no CI secret). Excluded by feasibility review: X sentiment, Conference Board LEI, ISM, FedWatch, fiscal deficits."
   },
   {
     "id": "market-regime",
@@ -1696,5 +1707,24 @@
     ],
     "evidence": [],
     "notes": "Planned 2026-10-22 at user request ('En la parte macro estudia incluir ratio put call de las opciones', then 'si, apúntalo en la spec y añade la feature'). Spec: docs/specs/market-context.md (Feature 6). Not on FRED; source is Cboe's public daily statistics page behind a replaceable source interface (OCC or a licensed provider as alternatives). Must stay disabled in production until Cboe gives written permission or a licensed source is used. Contrarian reading; percentiles instead of fixed levels because post-2020 levels drifted."
+  },
+  {
+    "id": "screener-company-classification",
+    "area": "screener",
+    "title": "Sector, industry and country of each stock in the Screener",
+    "user_visible_behavior": "The Screener candidate list shows each stock's sector, industry (GICS sub-industry) and country next to its ticker and company name, translated where the labels are fixed lists (sectors), on desktop and in a compact form on mobile.",
+    "depends_on": [
+      "screener-precomputed",
+      "screener-filters-ui"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Every S&P 500 instrument has industry and country after the seeder runs; unknown values stay null and render as a dash, never a guess",
+      "screener_rows and the Screener API carry sector, industry and country; ETFs still never appear",
+      "Vitest: the three values render in the candidate table on desktop and mobile, es/en, no hardcoded text",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-22 for later ('añade a implementar a futuro añadir sector, industria y pais de cada stock mostrado en el screener'); not planned yet, needs a spec (planner). Current state: instruments.sector (GICS) is already stored and returned by the Screener API but not shown in the candidate table. Proposed source, no new feed: the same Wikipedia 'List of S&P 500 companies' table used for database/data/sp500.csv also has 'GICS Sub-Industry' and 'Headquarters Location' (country derived from it; US state means United States). SEC submissions (sic_description, business address) is an alternative but company-fundamentals-sec is scoped to the Company Card only. Sector/industry/country Screener filters are a possible follow-up, out of this feature unless requested."
   }
 ]

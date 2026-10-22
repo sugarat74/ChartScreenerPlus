@@ -1,0 +1,22 @@
+{
+ "realtime_start": "2026-10-22",
+ "realtime_end": "2026-10-22",
+ "seriess": [
+  {
+   "id": "WDTGAL",
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "title": "Liabilities and Capital: Liabilities: Deposits with F.R. Banks, Other Than Reserve Balances: U.S. Treasury, General Account: Wednesday Level",
+   "observation_start": "2002-12-18",
+   "observation_end": "2026-10-22",
+   "frequency": "Weekly, As of Wednesday",
+   "frequency_short": "W",
+   "units": "Millions of U.S. Dollars",
+   "units_short": "Mil. of U.S. $",
+   "seasonal_adjustment": "Not Seasonally Adjusted",
+   "seasonal_adjustment_short": "NSA",
+   "last_updated": "2026-10-16 15:31:05-05",
+   "popularity": 50
+  }
+ ]
+}

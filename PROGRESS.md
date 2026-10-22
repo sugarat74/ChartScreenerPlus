@@ -1,5 +1,25 @@
 # Progress Log
 
+## FRED macro series and central bank calendar (`macro-series-fred`, accepted) — 2026-10-22
+
+- Feature 2 of the Market Context plan; spec `docs/specs/macro-series-fred.md`. Accepted by the independent validator in round 1.
+- What it does (no UI, API or AI use yet):
+  - `macro_series` / `macro_observations` tables; `config/macro.php` with the closed series list (12 enabled; NFCI and VIXCLS off behind their own flags) and `config/central_banks.php` (FOMC and ECB 2026–2027).
+  - `FredClient` (Laravel, the only FRED caller): 0.6 s spacing, 2 retries (5 s, 20 s), no redirects, code-only errors. Guzzle connection errors, whose message holds the URL and the key, are swallowed.
+  - `macro:refresh {--series=*} {--backfill}`: the first run backfills 5 years by itself. Later runs re-read a revision window (14/56/186 days), update revisions and delete dates now `"."`. A failing series only records `last_error`; `invalid_key` stops the run. Disabled means no request, exit 0.
+  - Runs daily at 10:00 New York (`macro-refresh`, only when enabled) and as an isolated `ingestion:pipeline` stage after the Market Context block. It never changes the exit code or skips the Screener refresh or the alerts.
+  - `MacroSnapshotService` (rates, locally computed curve spreads, net liquidity on complete Wednesdays, claims/permits/OECD changes, Fed/ECB last change and meetings, staleness, point-in-time mode) and `CentralBankCalendar`.
+- Production safety: the owner has already set `FRED_API_KEY` and `MACRO_ENABLED=true` by hand, so the first run after deploy fetches real data.
+  - That run is throttled (24 requests) and isolated.
+  - It is bounded by the new `run_budget_seconds` = 300 (deviation 11 in the spec): about 470 s worst case during an outage.
+  - The CI step is a no-op without the optional `FRED_API_KEY` secret and never touches the hand-set key. `deploy/README.md` step 8 documents both ways to set the key.
+- Fixtures: real public-domain values copied from the keyless FRED website CSV download (not the API, no key); ECB, OECD, NFCI and VIX values are synthetic (see `tests/fixtures/fred/README.md`).
+- Tests: 36 new or changed Laravel tests (details in `feature_list.json`).
+- `.\init.ps1` exit 0: Laravel 626 passed / 6 skipped, Vitest 223, SPA lint + build, engine 101. `schedule:list` shows `macro-refresh`; disabled `macro:refresh` prints the disabled line; the secret scan finds only the fake key.
+- Not verified: real FRED data (after deploy: check `macro_series.last_error` and spot-check readings) and PostgreSQL (CI `test-pgsql`).
+- Validator round 1: `accept`. Reran `.\init.ps1` (exit 0), recomputed the derived readings from the fixtures, ran the configure script offline and two probe tests (the key never leaks on URL-bearing connection errors; the point-in-time release lag hides unpublished data). Low notes: a future `FRED_API_KEY` CI secret re-enables `MACRO_ENABLED` on every deploy; `market-regime` should build a fresh `MacroSnapshotService` after `macro:refresh` (per-instance cache).
+- Next: PR and green CI (incl. `test-pgsql`); after deploy, check `macro_series.last_error` and spot-check readings against FRED. Next feature: `market-regime` (planner).
+
 ## Planned: options put/call ratio (`options-put-call`, not started) — 2026-10-22
 
 - User request: "En la parte macro estudia incluir ratio put call de las opciones", then "si, apúntalo en la spec y añade la feature".

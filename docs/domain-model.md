@@ -18,6 +18,8 @@
 - **Company Fundamentals:** verified financial inputs for one Instrument computed from its SEC 10-K/10-Q filings (EDGAR companyfacts), with provenance and the latest/pending filing; one row per Instrument, rebuilt by `fundamentals:refresh`. Metrics that need a price are derived at read time from our latest close. Each attempted generation leaves a Company Card Generation log row (requesting account, status, token counts; no text), kept 90 days.
 - **Sector Snapshot:** one sector ETF's readings on one session: returns over 5/20/60 sessions, relative strength vs SPY (20/60), rank by 60-session relative strength, trend (uptrend / downtrend / mixed) and sector Breadth (% of the sector's S&P 500 stocks above their SMA200). Derived, rebuilt by `market-context:compute`.
 - **Breadth Snapshot:** the S&P 500 Universe's Breadth on one session: members with data, % above SMA50/SMA200, new 52-week highs/lows, advancers/decliners and SPY's trend. Derived, rebuilt by `market-context:compute`.
+- **Macro Series:** one public series of the closed FRED list (code, source, category, frequency, title, units) with its refresh state (last observation date, FRED's last update, last attempt, last success, last error code). Rebuilt by `macro:refresh`.
+- **Macro Observation:** one published value of a Macro Series on its own date, stored as published (no conversion); FRED's missing value is never stored and revisions replace the old value.
 - **User:** Visitor (anonymous), Registered User, or Admin.
 
 ## Relationships
@@ -31,6 +33,7 @@
 - An **Instrument** has many **Company Cards**, at most one per language and schema version.
 - An **Instrument** has at most one **Company Fundamentals** row; Instruments of one company (GOOG/GOOGL) share the same CIK and figures.
 - A sector **ETF** has one **Sector Snapshot** per session; it maps to the S&P 500 stocks of the same GICS sector. A **Universe** (the main one) has one **Breadth Snapshot** per session.
+- A **Macro Series** has many **Macro Observations**, at most one per date.
 
 ## States and Lifecycles
 

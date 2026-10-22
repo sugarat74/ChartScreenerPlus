@@ -1,0 +1,22 @@
+{
+ "realtime_start": "2026-10-22",
+ "realtime_end": "2026-10-22",
+ "seriess": [
+  {
+   "id": "USALOLITOAASTSAM",
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "title": "Leading Indicators OECD: Composite Leading Indicator: Amplitude Adjusted for United States",
+   "observation_start": "1955-01-01",
+   "observation_end": "2026-10-22",
+   "frequency": "Monthly",
+   "frequency_short": "M",
+   "units": "Index",
+   "units_short": "Index",
+   "seasonal_adjustment": "Seasonally Adjusted",
+   "seasonal_adjustment_short": "SA",
+   "last_updated": "2026-10-15 13:52:01-05",
+   "popularity": 50
+  }
+ ]
+}
