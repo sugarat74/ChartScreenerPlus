@@ -5,21 +5,28 @@ namespace Tests\Feature;
 use App\Enums\IngestionRunStatus;
 use App\Models\IngestionRun;
 use App\Models\Instrument;
+use App\Models\MacroSeries;
 use App\Models\MarketBreadthSnapshot;
 use App\Models\MarketSectorSnapshot;
 use App\Models\Universe;
+use App\Services\Macro\MacroSeriesRefresher;
 use App\Services\MarketContext\MarketContextComputer;
 use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
+use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Tests\Concerns\FakesFred;
 use Tests\TestCase;
 
 class IngestionPipelineCommandTest extends TestCase
 {
+    use FakesFred;
     use RefreshDatabase;
 
     /**
@@ -483,5 +490,84 @@ class IngestionPipelineCommandTest extends TestCase
 
         $this->assertDatabaseCount('market_breadth_snapshots', 0);
         Log::shouldHaveReceived('warning')->with('Market context stage failed.', ['stage' => 'market-context:compute', 'exit' => 1])->once();
+    }
+
+    public function test_a_disabled_macro_stage_is_skipped_without_requests(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->fakeEngine();
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Macro series disabled; skipped.')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->assertExitCode(0);
+
+        // Only the four engine stage requests: nothing reached FRED.
+        Http::assertSentCount(4);
+        Http::assertNotSent(fn (Request $request): bool => str_contains($request->url(), 'stlouisfed'));
+        $this->assertDatabaseCount('macro_series', 0);
+    }
+
+    public function test_a_failing_macro_stage_never_changes_the_exit_code_nor_leaks_the_key(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->enableFred();
+        $this->fakeEngine();
+        // Every FRED request fails with Guzzle's connection error, whose
+        // message carries the full URL and the key.
+        Http::fake(['api.stlouisfed.org/*' => Http::failedConnection()]);
+        $this->fakeMacroSleeper();
+        Exceptions::fake();
+        $logged = [];
+        Event::listen(MessageLogged::class, function (MessageLogged $event) use (&$logged): void {
+            $logged[] = ['message' => $event->message, 'context' => $event->context];
+        });
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Macro stage macro:refresh failed (exit 1); the pipeline continues.')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->doesntExpectOutputToContain(self::FRED_TEST_KEY)
+            ->assertExitCode(0);
+
+        // The Screener rows were refreshed after the macro stage.
+        $this->assertDatabaseHas('screener_rows', ['ticker' => 'AAA', 'date' => '2026-09-03']);
+        $this->assertSame('unavailable', MacroSeries::query()->where('code', 'DGS10')->value('last_error'));
+        $this->assertContains(['message' => 'Macro stage failed.', 'context' => ['stage' => 'macro:refresh', 'exit' => 1]], $logged);
+        $this->assertStringNotContainsString(self::FRED_TEST_KEY, json_encode($logged));
+        Exceptions::assertNothingReported();
+    }
+
+    public function test_a_throwing_macro_stage_never_changes_the_exit_code(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->enableFred();
+        $this->fakeEngine();
+        $this->app->instance(MacroSeriesRefresher::class, new class extends MacroSeriesRefresher
+        {
+            public function __construct() {}
+
+            public function refresh(string $code, bool $backfill = false): array
+            {
+                throw new \LogicException('refresh exploded');
+            }
+        });
+        Exceptions::fake();
+        Log::spy();
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Macro stage macro:refresh failed (exit 1); the pipeline continues.')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->assertExitCode(0);
+
+        Exceptions::assertReported(\LogicException::class);
+        Log::shouldHaveReceived('warning')->with('Macro stage failed.', ['stage' => 'macro:refresh', 'exit' => 1])->once();
+        // The macro lock was released despite the exception.
+        $this->assertTrue(Cache::lock('macro:refresh', 10)->get());
     }
 }

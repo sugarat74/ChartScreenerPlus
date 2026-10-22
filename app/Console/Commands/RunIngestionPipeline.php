@@ -11,7 +11,7 @@ use Throwable;
 
 /**
  * Run the full EOD pipeline in order: ingestion -> indicators -> signals -> patterns
- * -> Market Context -> screener rows -> alerts.
+ * -> Market Context -> Macro Series -> screener rows -> alerts.
  *
  * This is a thin composition wrapper: it never reimplements any stage and
  * delegates to the `ingestion:run`, `indicators:compute`, `signals:detect`,
@@ -40,6 +40,13 @@ use Throwable;
  * printed and logged (`Log::warning`, stage and exit code only) but never
  * changes the exit code nor skips the Screener refresh or the alerts; an
  * unseeded universe skips the block with one info line.
+ *
+ * Macro stage (docs/specs/macro-series-fred.md): right after the Market
+ * Context block, `macro:refresh` fetches the FRED Macro Series. It is isolated
+ * the same way (a non-zero exit or an exception is printed and logged with
+ * stage and exit only, never changing the exit code or skipping later
+ * stages) and skipped with one info line when `MACRO_ENABLED=false`.
+ * `market-regime:compute` (market-regime) will follow it.
  */
 class RunIngestionPipeline extends Command
 {
@@ -94,6 +101,7 @@ class RunIngestionPipeline extends Command
             $signals = $this->call('signals:detect', ['--universe' => $universe]);
             $patterns = $this->call('patterns:detect', ['--universe' => $universe]);
             $this->runMarketContext();
+            $this->runMacro();
             // The Screener and the alerts read the precomputed rows, so they are
             // rebuilt from whatever the stages above stored.
             $screener = $this->call('screener:refresh');
@@ -152,6 +160,32 @@ class RunIngestionPipeline extends Command
                 $this->warn("Market context stage {$stage} failed (exit {$exit}); the pipeline continues.");
                 Log::warning('Market context stage failed.', ['stage' => $stage, 'exit' => $exit]);
             }
+        }
+    }
+
+    /**
+     * Refresh the FRED Macro Series. Failures never reach the exit code.
+     * `FredClient` never lets a key-bearing message out, so a reported
+     * exception cannot leak the key.
+     */
+    private function runMacro(): void
+    {
+        if (! config('macro.enabled')) {
+            $this->info('Macro series disabled; skipped.');
+
+            return;
+        }
+
+        try {
+            $exit = $this->call('macro:refresh');
+        } catch (Throwable $exception) {
+            report($exception);
+            $exit = self::FAILURE;
+        }
+
+        if ($exit !== self::SUCCESS) {
+            $this->warn("Macro stage macro:refresh failed (exit {$exit}); the pipeline continues.");
+            Log::warning('Macro stage failed.', ['stage' => 'macro:refresh', 'exit' => $exit]);
         }
     }
 }

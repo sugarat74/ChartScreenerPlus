@@ -33,6 +33,8 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    Claves de proveedores (entorno `production`): `TYPESAFE_API_KEY` (Jev) y `AI_API_KEY`
    (ficha IA). En cada despliegue se instalan en `shared/.env` mediante
    `configure-jev-env.py` y `configure-ai-env.py`, sin imprimirlas. Si falta alguna, el despliegue falla.
+   Opcional: `FRED_API_KEY` (series macro FRED, paso 8). Si existe, `configure-macro-env.py` la instala
+   con `MACRO_ENABLED=true`; si no existe, ese paso no hace nada y el despliegue no falla.
    `configure-fundamentals-env.py` activa los fundamentales SEC y fija `SEC_USER_AGENT`. No usa
    ningún secreto, porque el contacto que exige la SEC no es confidencial.
    `configure-legal-env.py` fija el responsable y el email de la política de privacidad y los logs
@@ -68,6 +70,27 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
 
    Las fechas más antiguas del relleno pueden tener `new_highs`/`new_lows` nulos (exigen 251 sesiones
    previas). Los ETF salen de la misma fuente no oficial que las acciones (mismo riesgo de licencia).
+8. Series macro FRED (`macro-series-fred`, `docs/specs/macro-series-fred.md`): desactivadas por defecto.
+   Se activan con `MACRO_ENABLED=true` y una clave de la API de FRED en `FRED_API_KEY`. La clave es gratuita:
+   crea una cuenta en `https://fredaccount.stlouisfed.org` y pide una en *API Keys* (32 letras minúsculas y
+   dígitos). Hay dos formas de instalarla; nunca va al repositorio ni a la línea de comandos:
+   - **A mano** en `shared/.env` (`FRED_API_KEY="…"` y `MACRO_ENABLED=true`). El siguiente despliegue ejecuta
+     `config:cache`; para aplicarla antes, `php artisan config:cache` como `deploy` (con `umask 007`) y recarga
+     PHP-FPM. Sin el secret, ningún despliegue toca esas líneas.
+   - **Con el secret** `FRED_API_KEY` del entorno `production`: en cada despliegue
+     `configure-macro-env.py` la recibe por stdin, valida el formato, escribe `FRED_API_KEY` y
+     `MACRO_ENABLED=true` y no imprime nada. Sustituye una clave puesta a mano.
+
+   `MACRO_NFCI_ENABLED` y `MACRO_VIXCLS_ENABLED` siguen en `false` (Chicago Fed y Cboe no permiten uso
+   comercial sin permiso). Con la clave puesta, `macro:refresh` corre cada día a las 10:00 (Nueva York, también
+   en fin de semana) y como etapa aislada de `ingestion:pipeline` tras el contexto de mercado. **La primera
+   ejecución rellena 5 años por sí sola**: 12 series, 24 peticiones espaciadas 0,6 s (unos 15–30 s). Cada
+   ejecución tiene un presupuesto de 300 s: si FRED falla o va lento, las series pendientes quedan para la
+   siguiente. Un fallo se guarda como código en `macro_series.last_error` (p. ej. `unavailable`,
+   `invalid_key`) y nunca cambia el código de salida del pipeline ni salta el Screener o las alertas.
+   Comprobación (como `deploy`, en `current`): `php artisan macro:refresh --series=DGS10` imprime
+   `DGS10: N stored (…), latest AAAA-MM-DD`; `invalid_key` indica una clave mal copiada. Nada de FRED se
+   muestra todavía en la web (lo hará `market-context-ui`, con el aviso que exigen los términos de FRED).
 
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno

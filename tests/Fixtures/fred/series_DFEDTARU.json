@@ -1,0 +1,22 @@
+{
+ "realtime_start": "2026-10-22",
+ "realtime_end": "2026-10-22",
+ "seriess": [
+  {
+   "id": "DFEDTARU",
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "title": "Federal Funds Target Range - Upper Limit",
+   "observation_start": "2008-12-16",
+   "observation_end": "2026-10-22",
+   "frequency": "Daily, 7-Day",
+   "frequency_short": "D",
+   "units": "Percent",
+   "units_short": "%",
+   "seasonal_adjustment": "Not Seasonally Adjusted",
+   "seasonal_adjustment_short": "NSA",
+   "last_updated": "2026-10-22 09:01:03-05",
+   "popularity": 50
+  }
+ ]
+}

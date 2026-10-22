@@ -70,6 +70,27 @@ Schedule::command('fundamentals:refresh')
 
 /*
 |--------------------------------------------------------------------------
+| Macro Series (FRED)
+|--------------------------------------------------------------------------
+|
+| Daily at config('macro.schedule_time') in the market timezone, weekends
+| included, so weekly releases are picked up without a market session. Only
+| when MACRO_ENABLED is true (the command also needs a valid FRED_API_KEY).
+| The EOD pipeline runs the same command as an isolated stage; both share the
+| command's own lock. See docs/specs/macro-series-fred.md.
+|
+*/
+
+Schedule::command('macro:refresh')
+    ->name('macro-refresh')
+    ->dailyAt(config('macro.schedule_time'))
+    ->timezone($timezone)
+    ->when(fn (): bool => (bool) config('macro.enabled'))
+    ->withoutOverlapping(30)
+    ->runInBackground();
+
+/*
+|--------------------------------------------------------------------------
 | Personal-data retention
 |--------------------------------------------------------------------------
 |

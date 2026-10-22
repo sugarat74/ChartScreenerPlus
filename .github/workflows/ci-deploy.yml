@@ -157,6 +157,18 @@ jobs:
           test -n "$AI_API_KEY"
           printf '%s' "$AI_API_KEY" | ssh -F "$SSH_DIRECTORY/config" chartiko-vps \
             "python3 /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/configure-ai-env.py"
+      - name: Configure FRED macro series key in private server environment
+        # Optional secret: the key may be set by hand in shared/.env instead.
+        # Without the secret this step is a no-op and never touches the server.
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          if [ -z "$FRED_API_KEY" ]; then
+            echo "FRED_API_KEY secret not set; server macro settings left unchanged."
+            exit 0
+          fi
+          printf '%s' "$FRED_API_KEY" | ssh -F "$SSH_DIRECTORY/config" chartiko-vps \
+            "python3 /var/www/alphapulse/releases/${GITHUB_SHA::10}/deploy/configure-macro-env.py"
       - name: Configure SEC fundamentals in private server environment
         run: |
           ssh -F "$SSH_DIRECTORY/config" chartiko-vps \

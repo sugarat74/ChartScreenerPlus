@@ -106,7 +106,11 @@ The share of the S&P 500 Universe that meets a condition on a session (for examp
 
 ### Macro Series
 
-A public time series fetched from FRED and stored with its own dates (Treasury yields, curve spreads, policy rates, liquidity, leading data).
+A public time series from the closed list in `config/macro.php`, fetched from FRED and stored as published with its own dates (Treasury yields, policy rates, liquidity, leading data). Curve spreads (10y−2y, 10y−3m) and net liquidity are computed by Chartiko from those series, not fetched. Cboe series (put/call ratio) will join the same store later with `source = cboe`.
+
+### Central Bank Calendar
+
+The Fed (FOMC) and ECB monetary policy meeting dates, copied by hand from the official calendars into `config/central_banks.php`. It gives each bank's last and next meeting; Chartiko never infers a "hold" or a probability from it.
 
 ### Admin (Operator)
 

@@ -32,5 +32,9 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="MACRO_ENABLED" value="false"/>
+        <env name="FRED_API_KEY" value=""/>
+        <env name="MACRO_NFCI_ENABLED" value="false"/>
+        <env name="MACRO_VIXCLS_ENABLED" value="false"/>
     </php>
 </phpunit>

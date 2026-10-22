@@ -1,0 +1,22 @@
+{
+ "realtime_start": "2026-10-22",
+ "realtime_end": "2026-10-22",
+ "seriess": [
+  {
+   "id": "PERMIT",
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "title": "New Privately-Owned Housing Units Authorized in Permit-Issuing Places: Total Units",
+   "observation_start": "1960-01-01",
+   "observation_end": "2026-10-22",
+   "frequency": "Monthly",
+   "frequency_short": "M",
+   "units": "Thousands of Units",
+   "units_short": "Thous. of Units",
+   "seasonal_adjustment": "Seasonally Adjusted Annual Rate",
+   "seasonal_adjustment_short": "SAAR",
+   "last_updated": "2026-10-17 08:01:03-05",
+   "popularity": 50
+  }
+ ]
+}

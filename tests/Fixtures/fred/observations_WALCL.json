@@ -1,0 +1,112 @@
+{
+ "realtime_start": "2026-10-22",
+ "realtime_end": "2026-10-22",
+ "observation_start": "2026-07-01",
+ "observation_end": "9999-12-31",
+ "units": "lin",
+ "output_type": 1,
+ "file_type": "json",
+ "order_by": "observation_date",
+ "sort_order": "asc",
+ "count": 16,
+ "offset": 0,
+ "limit": 100000,
+ "observations": [
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-07-01",
+   "value": "6724564"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-07-08",
+   "value": "6735609"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-07-15",
+   "value": "6743028"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-07-22",
+   "value": "6747378"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-07-29",
+   "value": "6738190"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-08-05",
+   "value": "6748567"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-08-12",
+   "value": "6759955"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-08-19",
+   "value": "6745699"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-08-26",
+   "value": "6730912"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-09-02",
+   "value": "6737204"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-09-09",
+   "value": "6740619"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-09-16",
+   "value": "6746548"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-09-23",
+   "value": "6747704"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-09-30",
+   "value": "6743031"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-10-07",
+   "value": "6747560"
+  },
+  {
+   "realtime_start": "2026-10-22",
+   "realtime_end": "2026-10-22",
+   "date": "2026-10-14",
+   "value": "6755639"
+  }
+ ]
+}
