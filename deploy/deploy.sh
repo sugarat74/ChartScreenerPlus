@@ -32,6 +32,9 @@ $APP/shared/venv/bin/pip install -q -r engine/requirements.txt
 # On pgsql with DB_DIRECT_PORT, Laravel runs migrations on the direct
 # PostgreSQL endpoint (5432); the cached runtime config uses PgBouncer (6432).
 php artisan migrate --force
+# Market Context universe (SPY + sector ETFs): offline and idempotent, so it
+# runs on every deploy; it also refreshes the Screener rows (stocks only).
+php artisan db:seed --class=MarketContextUniverseSeeder --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

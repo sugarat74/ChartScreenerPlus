@@ -8,7 +8,10 @@
  * already bootstrapped session inside the component: the watchlist toggle
  * offers a Visitor a plain sign-in link, while the forecast and Company Card
  * panels render nothing for a Visitor or while auth is loading (never a
- * redirect or prompt), so the chart remains browseable. The Company Card
+ * redirect or prompt), so the chart remains browseable. A Market Context ETF
+ * (`instrument.kind === 'etf'`) shows the chart and its signal/pattern panels
+ * but none of the stock-only elements (watchlist toggle, forecast, Company
+ * Card), which its API endpoints refuse anyway. The Company Card
  * panel itself handles the `#ai-company-card` deep-link scroll (the Candidate
  * row "AI card" link). The page consumes the frozen
  * `GET /api/instruments/{ticker}?limit=252` payload and owns loading / ready /
@@ -230,6 +233,16 @@ export default function InstrumentChartPage() {
   const needsHistory = current !== null && insufficientHistory(current.bars, current.snapshot)
 
   const heading = current?.instrument.ticker ?? normalizedTicker ?? t('nav.chart')
+  // A missing `kind` (older deployments) is a stock.
+  const isEtf = current?.instrument.kind === 'etf'
+  // Company, sector and exchange are data; a missing one is skipped, never
+  // printed as an empty "· ·".
+  const details =
+    current === null
+      ? ''
+      : [current.instrument.company, current.instrument.sector, current.instrument.exchange]
+          .filter((part): part is string => typeof part === 'string' && part !== '')
+          .join(' · ')
 
   return (
     <section className="flex flex-col gap-6">
@@ -249,10 +262,7 @@ export default function InstrumentChartPage() {
               {heading}
             </h1>
             {current !== null ? (
-              <p className="mt-1 text-sm text-on-surface-variant">
-                {current.instrument.company} · {current.instrument.sector} ·{' '}
-                {current.instrument.exchange}
-              </p>
+              <p className="mt-1 text-sm text-on-surface-variant">{details}</p>
             ) : (
               <p className="mt-1 max-w-2xl text-sm text-on-surface-variant">{t('chart.intro')}</p>
             )}
@@ -269,7 +279,7 @@ export default function InstrumentChartPage() {
                 {t('chart.lastSession', { date: formatMarketDate(current.meta.latest_bar_date) })}
               </span>
             ) : null}
-            {current !== null ? <WatchlistButton ticker={current.instrument.ticker} /> : null}
+            {current !== null && !isEtf ? <WatchlistButton ticker={current.instrument.ticker} /> : null}
             <ScreenerLink />
           </div>
         </div>
@@ -361,8 +371,12 @@ export default function InstrumentChartPage() {
 
           <SignalLevelsPanel signals={current.signals} />
           <PatternPanel patterns={current.patterns ?? []} />
-          <ForecastPanel key={current.instrument.ticker} ticker={current.instrument.ticker} />
-          <CompanyCardPanel key={`card-${current.instrument.ticker}`} ticker={current.instrument.ticker} />
+          {isEtf ? null : (
+            <>
+              <ForecastPanel key={current.instrument.ticker} ticker={current.instrument.ticker} />
+              <CompanyCardPanel key={`card-${current.instrument.ticker}`} ticker={current.instrument.ticker} />
+            </>
+          )}
         </>
       ) : null}
     </section>

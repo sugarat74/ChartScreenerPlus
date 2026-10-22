@@ -13,9 +13,11 @@ use Illuminate\Support\Facades\DB;
 /**
  * Rebuilds `screener_rows` from the stored market data (screener-precomputed).
  *
- * Every Instrument with a latest Daily Bar and a latest Indicator Snapshot gets
- * one row holding exactly what the Candidate payload and the SQL filters need;
- * instruments that no longer qualify lose their row. The values are computed
+ * Every stock Instrument with a latest Daily Bar and a latest Indicator Snapshot
+ * gets one row holding exactly what the Candidate payload and the SQL filters
+ * need; instruments that no longer qualify lose their row. ETFs (`kind = etf`,
+ * the Market Context universe) never get a row: this builder is not
+ * universe-scoped, so the `kind` filter here is the Screener's real gate. The values are computed
  * with the same rules the Screener used per request (previous close = second
  * latest bar by date, change % in PHP, nulls kept), so results do not change.
  * Run after every data update: `ingestion:pipeline`, `RunIngestionJob`, deploy.
@@ -33,6 +35,7 @@ class ScreenerRowBuilder
         $rows = [];
 
         Instrument::query()
+            ->stocks()
             ->with(['latestBar', 'latestSnapshot', 'signals', 'chartPatterns'])
             ->chunkById(self::CHUNK, function (EloquentCollection $instruments) use (&$rows, $now): void {
                 $members = $instruments->filter(fn (Instrument $instrument): bool => $instrument->latestBar !== null
@@ -54,14 +57,18 @@ class ScreenerRowBuilder
             }
 
             // Rows of instruments that no longer qualify (no bar or no
-            // snapshot any more) go; deleted instruments cascade by FK. The
-            // rule is a correlated check, so it never binds every id.
+            // snapshot any more, or not a stock) go; deleted instruments
+            // cascade by FK. The rule is a correlated check, so it never
+            // binds every id.
             ScreenerRow::query()
                 ->where(fn ($query) => $query
                     ->whereNotExists(fn ($bars) => $bars->selectRaw('1')->from('daily_bars')
                         ->whereColumn('daily_bars.instrument_id', 'screener_rows.instrument_id'))
                     ->orWhereNotExists(fn ($snapshots) => $snapshots->selectRaw('1')->from('indicator_snapshots')
-                        ->whereColumn('indicator_snapshots.instrument_id', 'screener_rows.instrument_id')))
+                        ->whereColumn('indicator_snapshots.instrument_id', 'screener_rows.instrument_id'))
+                    ->orWhereExists(fn ($instruments) => $instruments->selectRaw('1')->from('instruments')
+                        ->whereColumn('instruments.id', 'screener_rows.instrument_id')
+                        ->where('instruments.kind', '!=', Instrument::KIND_STOCK)))
                 ->delete();
         });
 

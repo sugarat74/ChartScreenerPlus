@@ -14,6 +14,7 @@
 return [
     'instrument_not_found' => 'Instrument not found.',
     'instrument_unknown' => 'Unknown instrument.',
+    'instrument_not_followable' => 'This instrument cannot be added to your watchlist.',
     'not_in_watchlist' => 'Instrument is not in your watchlist.',
     'screener_not_found' => 'Screener not found.',
     'universe_not_found' => 'Universe not found.',

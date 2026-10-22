@@ -4,17 +4,49 @@ namespace App\Models;
 
 use Database\Factories\InstrumentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['ticker', 'company', 'sector', 'exchange', 'active'])]
+#[Fillable(['ticker', 'company', 'sector', 'exchange', 'active', 'kind'])]
 class Instrument extends Model
 {
     /** @use HasFactory<InstrumentFactory> */
     use HasFactory;
+
+    /**
+     * A listed company: the only kind the stock features (Screener rows,
+     * Watchlist, alerts, Company Card, fundamentals, forecast) handle.
+     */
+    public const KIND_STOCK = 'stock';
+
+    /**
+     * An exchange-traded fund of the Market Context universe (SPY and the
+     * sector ETFs); it has bars and indicators but never reaches stock features.
+     */
+    public const KIND_ETF = 'etf';
+
+    /**
+     * Only stock Instruments.
+     *
+     * @param  Builder<Instrument>  $query
+     */
+    public function scopeStocks(Builder $query): void
+    {
+        $query->where($query->qualifyColumn('kind'), self::KIND_STOCK);
+    }
+
+    /**
+     * Whether this Instrument is an ETF. A model built in memory without a
+     * `kind` is a stock, like the column default.
+     */
+    public function isEtf(): bool
+    {
+        return ($this->kind ?? self::KIND_STOCK) === self::KIND_ETF;
+    }
 
     /**
      * Get the attributes that should be cast.

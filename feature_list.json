@@ -1581,7 +1581,7 @@
       "indicators-compute",
       "screener-precomputed"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Fixture with SPY, two sector ETFs and a few stocks gives the hand-computed ret_*, rs_*, rs_rank, trend, breadth_200 and breadth figures; null sma200 gives a null trend",
       "market-context:compute is idempotent and --from backfills past sessions",
@@ -1589,7 +1589,17 @@
       "A failing market-context ingestion does not fail the main universe, screener:refresh or alerts:evaluate, and is recorded",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-22 implementer self-verification (not yet independently validated).",
+      "Schema: instruments.kind (stock default, etf), market_sector_snapshots (unique date+instrument_id), market_breadth_snapshots (unique universe_id+date); both classified in CopySqliteToPgsql::SKIPPED_TABLES.",
+      "MarketContextUniverseSeeder (SPY + 11 SPDR, kind etf, NYSE Arca, GICS sectors of sp500.csv) run by DatabaseSeeder and deploy/deploy.sh; MarketContextComputer + market-context:compute {--date=} {--from=} (default last 5 sessions); isolated Market Context block in ingestion:pipeline between patterns:detect and screener:refresh.",
+      "ETF exclusions: ScreenerRowBuilder (stocks only, deletes non-stock rows), POST /api/watchlist 422 messages.instrument_not_followable, Company Card GET/POST and forecast 404, FundamentalsRefresher both paths, AlertEvaluator::asOf and watchlist signal/pattern states; instrument payload gains kind; SPA hides Watchlist/forecast/Company Card for ETFs and skips null sector/exchange.",
+      "New tests: MarketContextComputeCommandTest (8, hand-computed fixture incl. 251-bar window edge, nulls, idempotence, --from backfill, coverage rule, SPY missing, validation exits), MarketContextUniverseSeederTest (3), EtfExclusionTest (8, one per surface), IngestionPipelineCommandTest +4 (unseeded skip, success, failed ETF ingestion exit 0 + failed run + Log::warning, throwing compute exit 0), ScreenerRowBuilderTest +1, MarketDataSchemaTest +3, InstrumentDetailApiTest kind; Vitest InstrumentChartPage.test.tsx (3).",
+      "Real-data smoke on a scratch copy of an older dev DB (stocks to 2026-10-02) with the local engine: ingestion:run --universe=market-context 12/12 in 7.9 s, indicators:compute 6012 snapshots in 6.3 s, market-context:compute --from=2025-10-02 = 252 sessions, 2772 sector rows, 252 breadth rows in 2.7 s; rerun unchanged counts; latest 2026-10-02: XLE rank 1, XLK rank 2 (ret_20 7.4421 = 199.81/185.97 - 1 by hand; close > sma50 186.30 > sma200 164.94 -> uptrend), breadth members 440, >SMA50 24.7727 %, >SMA200 42.6941 %, highs 9, lows 17, adv 257, dec 180, spy_trend uptrend; screener:refresh 494 rows, 0 ETF rows.",
+      ".\\init.ps1 exit 0: Laravel 590 passed / 6 skipped (4600 assertions), Vitest 30 files / 223 tests, SPA lint + build, engine 101 passed.",
+      "Validator round 1 REVISE fix: MarketDataSchemaTest uniqueness tests use savepoints (PostgreSQL-safe; DB::transaction around the duplicate insert, as ForecastBacktestTest); deploy/README warns never to run ingestion:pipeline --universe=market-context. No production code change. Rerun: php artisan test --filter=MarketDataSchemaTest 7 passed; .\\init.ps1 exit 0 (Laravel 590 passed / 6 skipped, Vitest 223, SPA lint + build, engine 101).",
+      "independent validator accept (2026-10-22, round 2): reran .\\init.ps1 exit 0 (Laravel 590 passed / 6 skipped, Vitest 223, engine 101); round 1 independent Python recomputation on a scratch DB copy matched every stored sector and breadth value for 2026-10-02, 2026-03-16 and 2025-10-02; savepoint fix reviewed; dev DB md5 unchanged. PostgreSQL not runnable locally: CI test-pgsql on the PR is the confirming check. Open low notes: no code guard against ingestion:pipeline --universe=market-context (documented), rollback window to pre-feature releases, no rs_rank tie test."
+    ],
     "notes": "Planned 2026-10-22 at user request (\"creame en docs una documentacion ampliada de esta funcionalidad, solo los de viabilidad facil y creame una features\"). Spec: docs/specs/market-context.md (Feature 1). Same unofficial market data source and licence risk as the stocks."
   },
   {

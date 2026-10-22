@@ -102,6 +102,19 @@ class ScreenerRowBuilderTest extends TestCase
         $this->assertSame(0, ScreenerRow::query()->count());
     }
 
+    public function test_etfs_never_get_a_row_and_lose_one_when_they_become_etfs(): void
+    {
+        $this->instrument('AAA', ['2026-10-02' => 10]);
+        $etf = $this->instrument('XLK', ['2026-10-02' => 20]);
+
+        $this->artisan('screener:refresh')->expectsOutputToContain('2 instrument(s)')->assertExitCode(0);
+
+        $etf->update(['kind' => Instrument::KIND_ETF]);
+        $this->artisan('screener:refresh')->expectsOutputToContain('1 instrument(s)')->assertExitCode(0);
+
+        $this->assertSame(['AAA'], ScreenerRow::query()->pluck('ticker')->all());
+    }
+
     public function test_a_screener_request_reads_the_rows_not_live_data(): void
     {
         $instrument = $this->instrument('AAA', ['2026-10-02' => 10]);

@@ -71,6 +71,8 @@ so I can judge the setup in its context with rules I can read.
 
 ## Feature 1 — `market-context-sectors`
 
+Implementation contract, exact edge-case rules and resolved ambiguities: `docs/specs/market-context-sectors.md`.
+
 ### Scope
 
 1. **Instrument kind.** Migration adding `instruments.kind` (`string 16`, default `stock`, values `stock`|`etf`). Existing rows stay `stock`.
@@ -98,11 +100,11 @@ so I can judge the setup in its context with rules I can read.
 
    Signals and patterns are **not** computed for this universe. Failures follow decision 5.
 4. **ETFs stay out of stock features.**
-   - Not in the Screener, which is already universe-scoped. `ScreenerRowBuilder` must not build rows for `kind = etf`.
-   - Not in Watchlist search or alerts.
-   - No Company Card or fundamentals (the endpoints return 404 for `kind = etf`).
+   - Not in the Screener. `CandidateQuery` is universe-scoped, but `ScreenerRowBuilder` iterates every Instrument, so it must not build rows for `kind = etf` (and removes any).
+   - Not addable to the Watchlist (`POST /api/watchlist` returns 422; there is no Watchlist search) and not in alerts.
+   - No Company Card, fundamentals or forecast (the endpoints return 404 for `kind = etf`; the forecast state reads Signals, which ETFs never get).
    - `/instruments/XLK` stays reachable and shows the chart without those panels.
-5. **Sector snapshot.** Table `market_sector_snapshots`: `date`, `instrument_id`, `sector`, `ret_5`, `ret_20`, `ret_60`, `rs_20`, `rs_60`, `rs_rank`, `trend`, `breadth_200`, timestamps; unique `(date, instrument_id)`. Definitions for date `d`:
+5. **Sector snapshot.** Table `market_sector_snapshots`, one row per **sector ETF** (SPY has none; its trend is `spy_trend` in item 6): `date`, `instrument_id`, `sector`, `ret_5`, `ret_20`, `ret_60`, `rs_20`, `rs_60`, `rs_rank`, `trend`, `breadth_200`, timestamps; unique `(date, instrument_id)`. Definitions for date `d`:
    - `ret_n`: % change of the close over `n` sessions.
    - `rs_n`: `ret_n(ETF) - ret_n(SPY)`, in percentage points.
    - `rs_rank`: 1 to 11 by `rs_60` descending, ties broken by ticker.
@@ -112,7 +114,7 @@ so I can judge the setup in its context with rules I can read.
      - otherwise `mixed`;
      - `null` when `sma200` is null.
    - `breadth_200`: % of the sector's S&P 500 members with data on `d` whose close is above their `sma200`.
-6. **Market breadth.** Table `market_breadth_snapshots`: `date` (unique), `universe_id`, `members`, `pct_above_sma50`, `pct_above_sma200`, `new_highs`, `new_lows`, `advancers`, `decliners`, `spy_trend` (same rule as `trend`), timestamps. Definitions:
+6. **Market breadth.** Table `market_breadth_snapshots`: `date`, `universe_id` (unique together), `members`, `pct_above_sma50`, `pct_above_sma200`, `new_highs`, `new_lows`, `advancers`, `decliners`, `spy_trend` (same rule as `trend`), timestamps. Definitions:
    - A new high is `high[d] >=` the max high of the previous 251 sessions; members with less history are excluded from both counts. New lows mirror it.
    - Advancers and decliners compare the close to the previous session's close; unchanged closes count in neither.
 7. **Command.** `market-context:compute {--date=} {--from=}`:
@@ -125,7 +127,7 @@ so I can judge the setup in its context with rules I can read.
 - A fixture with SPY, two sector ETFs and a handful of stocks produces the exact hand-computed `ret_*`, `rs_*`, `rs_rank`, `trend`, `breadth_200` and breadth figures.
 - A missing `sma200` gives a `null` trend, not a false one.
 - Rerunning the command for the same date changes nothing (idempotent).
-- ETFs never appear in Screener results, screener rows, Watchlist search, alerts, Company Card or fundamentals. Tests cover each.
+- ETFs never appear in Screener results, screener rows, the Watchlist, alerts, Company Card, fundamentals or forecast. Tests cover each.
 - A pipeline run where the market-context ingestion fails still completes the main universe, the Screener refresh and the alerts, and the failure is recorded.
 
 ---

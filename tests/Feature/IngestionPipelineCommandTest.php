@@ -5,13 +5,17 @@ namespace Tests\Feature;
 use App\Enums\IngestionRunStatus;
 use App\Models\IngestionRun;
 use App\Models\Instrument;
+use App\Models\MarketBreadthSnapshot;
+use App\Models\MarketSectorSnapshot;
 use App\Models\Universe;
+use App\Services\MarketContext\MarketContextComputer;
 use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class IngestionPipelineCommandTest extends TestCase
@@ -347,5 +351,137 @@ class IngestionPipelineCommandTest extends TestCase
         $this->assertDatabaseCount('indicator_snapshots', 3);
         $this->assertDatabaseCount('signals', 1);
         $this->assertDatabaseCount('chart_patterns', 1);
+    }
+
+    /**
+     * Seed the `market-context` universe with SPY and XLK (the
+     * MarketContextUniverseSeeder shape, reduced).
+     */
+    private function marketContextUniverse(): Universe
+    {
+        $universe = Universe::factory()->create(['slug' => 'market-context', 'name' => 'Market Context']);
+        $universe->instruments()->attach([
+            Instrument::factory()->etf()->create(['ticker' => 'SPY', 'sector' => null])->id,
+            Instrument::factory()->etf()->create(['ticker' => 'XLK', 'sector' => 'Information Technology'])->id,
+        ]);
+
+        return $universe;
+    }
+
+    /**
+     * Engine fakes for the main universe plus the ETFs; `$etfStatus` makes
+     * every ETF bar request fail.
+     */
+    private function fakeEngineWithEtfs(?int $etfStatus = null): void
+    {
+        $etf = fn (string $symbol) => $etfStatus === null
+            ? Http::response($this->barsResponse($symbol, 3))
+            : Http::response(['detail' => 'Upstream failed.'], $etfStatus);
+
+        Http::fake([
+            '*/eod/AAA' => Http::response($this->barsResponse('AAA', 3)),
+            '*/eod/SPY' => $etf('SPY'),
+            '*/eod/XLK' => $etf('XLK'),
+            '*/indicators/compute' => Http::response($this->snapshotsResponse(3)),
+            '*/signals/detect' => Http::response($this->signalsResponse()),
+            '*/patterns/detect' => Http::response($this->patternsResponse()),
+        ]);
+    }
+
+    public function test_an_unseeded_market_context_universe_skips_the_block_without_requests(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->fakeEngine();
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Market context universe not seeded; skipped.')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->assertExitCode(0);
+
+        Http::assertSentCount(4);
+        $this->assertDatabaseCount('market_breadth_snapshots', 0);
+    }
+
+    public function test_the_market_context_block_ingests_the_etfs_and_stores_the_snapshots(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $market = $this->marketContextUniverse();
+        $this->fakeEngineWithEtfs();
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Market context computed for 3 session(s)')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->assertExitCode(0);
+
+        // Its own ingestion run, bars and snapshots; no signals or patterns.
+        $run = IngestionRun::query()->where('universe_id', $market->id)->sole();
+        $this->assertSame(IngestionRunStatus::Completed, $run->status);
+        $this->assertSame(2, $run->total);
+        $this->assertDatabaseCount('daily_bars', 9);
+        $this->assertDatabaseCount('indicator_snapshots', 9);
+        $this->assertDatabaseCount('signals', 1);
+        $this->assertDatabaseCount('chart_patterns', 1);
+
+        $this->assertSame(3, MarketBreadthSnapshot::query()->count());
+        $this->assertSame(3, MarketSectorSnapshot::query()->count());
+        // The Screener rows stay stock-only.
+        $this->assertDatabaseHas('screener_rows', ['ticker' => 'AAA']);
+        $this->assertDatabaseMissing('screener_rows', ['ticker' => 'XLK']);
+        $this->assertDatabaseMissing('screener_rows', ['ticker' => 'SPY']);
+
+        // AAA: 4 stage requests; ETFs: 2 bar + 2 indicator requests, so no
+        // signal or pattern request was made for them.
+        Http::assertSentCount(8);
+    }
+
+    public function test_a_failed_etf_ingestion_never_changes_the_exit_code_or_skips_alerts(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $market = $this->marketContextUniverse();
+        $this->fakeEngineWithEtfs(etfStatus: 502);
+        Log::spy();
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Market context stage ingestion:run failed (exit 1); the pipeline continues.')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->assertExitCode(0);
+
+        $run = IngestionRun::query()->where('universe_id', $market->id)->sole();
+        $this->assertSame(IngestionRunStatus::Failed, $run->status);
+        $this->assertSame(2, $run->failed);
+        // The main universe completed and the Screener rows were refreshed.
+        $this->assertSame(IngestionRunStatus::Completed, IngestionRun::query()->where('universe_id', '!=', $market->id)->sole()->status);
+        $this->assertDatabaseHas('screener_rows', ['ticker' => 'AAA', 'date' => '2026-09-03']);
+        Log::shouldHaveReceived('warning')->with('Market context stage failed.', ['stage' => 'ingestion:run', 'exit' => 1])->once();
+    }
+
+    public function test_a_throwing_market_context_compute_never_changes_the_exit_code(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->marketContextUniverse();
+        $this->fakeEngineWithEtfs();
+        $this->app->instance(MarketContextComputer::class, new class extends MarketContextComputer
+        {
+            public function compute(array $dates): array
+            {
+                throw new \LogicException('compute exploded');
+            }
+        });
+        Log::spy();
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Market context stage market-context:compute failed (exit 1); the pipeline continues.')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseCount('market_breadth_snapshots', 0);
+        Log::shouldHaveReceived('warning')->with('Market context stage failed.', ['stage' => 'market-context:compute', 'exit' => 1])->once();
     }
 }

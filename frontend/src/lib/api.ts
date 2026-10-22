@@ -707,9 +707,15 @@ export type InstrumentDetailResponse = {
   instrument: {
     ticker: string
     company: string
-    sector: string
-    exchange: string
+    sector: string | null
+    exchange: string | null
     active: boolean
+    /**
+     * `etf` for the Market Context ETFs (SPY and the sector SPDRs), which have
+     * no Watchlist, forecast or Company Card. Absent from older deployments:
+     * treat as `stock`.
+     */
+    kind?: 'stock' | 'etf'
   }
   bars: InstrumentBar[]
   snapshot: InstrumentSnapshot | null

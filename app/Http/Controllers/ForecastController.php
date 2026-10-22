@@ -17,7 +17,8 @@ class ForecastController extends Controller
             'horizon' => ['required', 'integer', Rule::in(config('forecast.horizons'))],
             'minimum_probability' => ['required', 'numeric', 'between:0,100'],
         ]);
-        $instrument = Instrument::query()->where('ticker', strtoupper($ticker))->firstOrFail();
+        // Stocks only: the forecast state reads Signals, which ETFs never get.
+        $instrument = Instrument::query()->stocks()->where('ticker', strtoupper($ticker))->firstOrFail();
 
         try {
             return response()->json(['forecast' => $service->predict($instrument, (int) $validated['horizon'], (float) $validated['minimum_probability'])]);
