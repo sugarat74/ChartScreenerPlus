@@ -1,5 +1,13 @@
 # Progress Log
 
+## Planned: Market Context panel (5 features, not started) — 2026-10-22
+
+- User request: "creame en docs una documentacion ampliada de esta funcionalidad, solo los de viabilidad facil y creame una features o varias si es necesario pra ir implementando".
+- Umbrella spec `docs/specs/market-context.md`; features appended to `feature_list.json` in order: `market-context-sectors` → `macro-series-fred` → `market-regime` → `market-context-ui` → `market-context-patterns`. Scope paragraph added to `AGENTS.md`.
+- Only "easy" sources: sector ETFs and breadth from the existing pipeline, public FRED series, hand-maintained central bank calendar. Excluded: X sentiment, Conference Board LEI, ISM, FedWatch, fiscal deficits.
+- Owner actions before `macro-series-fred` can run in production: a free FRED API key on the server. Open risks: market data licence (ETFs), FRED per-series terms, VIX (Cboe) and OECD CLI availability.
+- No code changed; no verification run (docs and planning only).
+
 ## Planned: production activation of the daily alert email (`alerts-email-golive`, not started) — 2026-10-21
 
 - User decision: "dejalo como feature a implementar".

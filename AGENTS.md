@@ -65,6 +65,8 @@ Also in scope since 2026-10-15 (explicit user decision): verified company fundam
 
 Also in scope since 2026-10-19 (explicit user request): the natural-language Screener (`ai-screener-natural-language`): a Registered User's stand-alone free-text request is translated by the same AI provider into the existing Screener filters only (strict schema, no chat, memory, new filters or advice); the text is never stored or logged.
 
+Also in scope since 2026-10-22 (explicit user request, planned, not started): the Market Context panel, as specified in `docs/specs/market-context.md` (`market-context-sectors`, `macro-series-fred`, `market-regime`, `market-context-ui`, `market-context-patterns`): US sector ETFs (SPY + 11 SPDR) in a separate `market-context` universe, S&P 500 breadth, a closed list of public FRED macro series (opt-in, the only macro feed allowed), a hand-maintained FOMC/ECB calendar and a rule-based descriptive Market Regime. No social sentiment, proprietary indicators (LEI, ISM, FedWatch), fiscal data, forecasts or advice.
+
 Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, other fundamentals data feeds and news, real-time or push/SMS notifications, non-US markets, native apps, AI Copilot (chat or free-text AI), paid plans.
 
 ## Startup Workflow
