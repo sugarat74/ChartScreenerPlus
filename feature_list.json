@@ -1696,5 +1696,24 @@
     ],
     "evidence": [],
     "notes": "Planned 2026-10-22 at user request ('En la parte macro estudia incluir ratio put call de las opciones', then 'si, apúntalo en la spec y añade la feature'). Spec: docs/specs/market-context.md (Feature 6). Not on FRED; source is Cboe's public daily statistics page behind a replaceable source interface (OCC or a licensed provider as alternatives). Must stay disabled in production until Cboe gives written permission or a licensed source is used. Contrarian reading; percentiles instead of fixed levels because post-2020 levels drifted."
+  },
+  {
+    "id": "screener-company-classification",
+    "area": "screener",
+    "title": "Sector, industry and country of each stock in the Screener",
+    "user_visible_behavior": "The Screener candidate list shows each stock's sector, industry (GICS sub-industry) and country next to its ticker and company name, translated where the labels are fixed lists (sectors), on desktop and in a compact form on mobile.",
+    "depends_on": [
+      "screener-precomputed",
+      "screener-filters-ui"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Every S&P 500 instrument has industry and country after the seeder runs; unknown values stay null and render as a dash, never a guess",
+      "screener_rows and the Screener API carry sector, industry and country; ETFs still never appear",
+      "Vitest: the three values render in the candidate table on desktop and mobile, es/en, no hardcoded text",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-22 for later ('añade a implementar a futuro añadir sector, industria y pais de cada stock mostrado en el screener'); not planned yet, needs a spec (planner). Current state: instruments.sector (GICS) is already stored and returned by the Screener API but not shown in the candidate table. Proposed source, no new feed: the same Wikipedia 'List of S&P 500 companies' table used for database/data/sp500.csv also has 'GICS Sub-Industry' and 'Headquarters Location' (country derived from it; US state means United States). SEC submissions (sic_description, business address) is an alternative but company-fundamentals-sec is scoped to the Company Card only. Sector/industry/country Screener filters are a possible follow-up, out of this feature unless requested."
   }
 ]
