@@ -1086,15 +1086,23 @@
       "alerts-ui",
       "legal-compliance-eu"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Opt-in defaults to off; one digest per user per as-of (ledger); queued with retries; mail failures never break the pipeline",
       "Signed unsubscribe link and RFC 8058 one-click POST work without a session",
       "HTML and text parts in es/en with disclaimer and privacy link, no tracking pixels",
       "Privacy texts and deploy docs (SMTP, SPF/DKIM/DMARC) updated; .\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-10-10. Spec: docs/specs/alerts-email-digest.md. Production sending blocked until the owner has a chartiko.com mailbox and an SMTP/API provider (DPA and data location to record in the privacy policy)."
+    "evidence": [
+      "2026-10-21 backend: migration 2026_10_21_000001 (users.alert_email_opt_in_at + preferred_locale; alert_email_digests unique user_id+as_of, FK cascade); AlertEmailDigestAvailability (flag + provider + location); GET/PUT /api/alerts/email (409 opt-in while unavailable); AlertDigestSender called by alerts:evaluate in try/catch; SendAlertDigest job (3 tries, backoff 60/300, sent_at after send, re-checks opt-in); AlertDigest mailable (HTML + text, List-Unsubscribe + List-Unsubscribe-Post); signed:relative GET page + one-click POST under /api/email/alerts/unsubscribe/{user}; ledger in model:prune (90 days) and account export (alert_emails); /api/legal email_digest + retention.email_digest_days.",
+      "tests/Feature/AlertEmailDigestTest.php 14 tests: one email per user per as-of with every notification and re-run silent; alerts:evaluate queues after evaluation; not opted in / nothing for the as-of -> nothing; unavailable (flag off, no provider, no location, switched off after queueing) -> nothing; preference API default off, explicit opt-in records time + Accept-Language locale, 401/422; opt-in refused 409 while unavailable, opt-out always; signed GET page in the user's language, tampered and foreign id 403, one-click POST 204 without session, idempotent; transport failure keeps alerts:evaluate exit 0 and sends once on retry; es/en HTML + text with disclaimer, privacy and unsubscribe links, escaping, no <img>; raw array-transport message with List-Unsubscribe headers and multipart/alternative; 50-item cap; ledger prune + cascade; legal API provider only while active. AccountSelfServiceTest coverage allowlist + export keys updated.",
+      "SPA: AlertEmailOptIn on the Portal (hidden while unavailable, unticked by default, status and error), alertEmailApi, legal emailDigest paragraphs (es/en) shown only with email_digest; Vitest AlertEmailOptIn.test.tsx 3 + LegalPage provider test; Vitest 220.",
+      "Rendered es (640 px) and en (390 px) emails in Edge: no images, 0 px overflow. Browser QA with the feature enabled on a QA DB (1280 es light, 390 en dark): box unticked, tick stores opt-in + page locale, privacy names the configured provider and location. Real server: signed GET 200 (user's language), tampered 403, one-click POST 204, opt-in cleared.",
+      "2026-10-21 .\\init.ps1 exit 0: Laravel 560 passed / 6 skipped (4397 assertions), Vitest 220 + lint + build, engine 101.",
+      "Validator round 1 revise: GET/HEAD on the unsubscribe link unsubscribed (link scanners); the form POST from the site origin got 419 (Sanctum CSRF); failure log could quote the address; privacy text said 'after each daily update'. Fixed: GET shows a confirm page with a POST button, POST unsubscribes (page or 204 for List-Unsubscribe=One-Click); CSRF exemption for api/email/alerts/unsubscribe/* in bootstrap/app.php; failed() logs the exception class only; privacy es/en 'on days your alerts find something'. Tests: 17 in AlertEmailDigestTest (HEAD/GET side-effect free, form POST, CSRF exemption list, opt-out after queueing, log without address). Real server: HEAD 200 / GET 200 keep the opt-in, form POST with Origin https://www.chartiko.com 200 and unsubscribes, one-click 204, tampered 403, PUT /api/alerts/email without token still 419.",
+      "2026-10-21 independent validator ACCEPT (round 2, 46fbb16): AlertEmailDigestTest 17 passed; real server (port 8019, QA SQLite) HEAD/GET 200 keep the opt-in, form POST with site Origin 200 clears it, one-click 204, tampered 403, PUT /api/alerts/email without token 419. Non-blocking notes: unsubscribe throttle 30/min/IP, same-day re-run notifications not emailed, Portal hides the setting while the feature is off; production go-live (provider + DPA, SPF/DKIM/DMARC, env, legal date) is the owner's step."
+    ],
+    "notes": "Planned 2026-10-10; implemented 2026-10-21 at user request. Spec: docs/specs/alerts-email-digest.md. Shipped OFF: production sending needs the owner's chartiko.com mailbox, an SMTP/API provider with DPA, SPF/DKIM/DMARC and the env vars of the deploy/README.md checklist (ALERT_EMAIL_DIGEST_ENABLED + ALERT_EMAIL_PROVIDER + ALERT_EMAIL_PROVIDER_LOCATION); the privacy policy names the provider from the same variables."
   },
   {
     "id": "screener-pagination",
@@ -1545,5 +1553,118 @@
       "2026-10-21 independent validator ACCEPT (round 2, bbf361a): init.ps1 exit 0 (Laravel 546 / 6 skipped, Vitest 216, engine 101); review-sample probe on an inverse_cup_with_handle row now passes; all round-1 findings verified fixed. Follow-up: inverse cup with handle is 34% of detections and unlabelled, first candidate for the next labelling sample."
     ],
     "notes": "Requested 2026-10-21 (\"realiza la spec de la primera tanda (las 4 faciles)\", then \"implementa las 4 figuras que decias eran faciles\"). Spec: docs/specs/chart-patterns-extended.md. Vocabulary appended after the current four, no migration. Built on chart-patterns-calibration phase 2 (accepted), so the mirrored types inherit the calibrated values."
+  },
+  {
+    "id": "alerts-email-golive",
+    "area": "ops",
+    "title": "Turn on the daily alert email in production (Brevo, free EU provider)",
+    "user_visible_behavior": "Registered Users see the daily email opt-in in their Portal and, once they tick it, receive the daily alert summary from alertas@chartiko.com; the privacy policy names Brevo (EU, France) as the sending provider.",
+    "depends_on": [
+      "alerts-email-digest"
+    ],
+    "status": "not_started",
+    "verification": [
+      "chartiko.com authenticated in Brevo (TXT + DKIM in Cloudflare), single SPF including spf.brevo.com, DMARC p=none; DPA accepted",
+      "Mail env written on the server by a prompt-only script (no secret in the repo or chat); legal updated_at bumped in the same deploy",
+      "Owner test: opt-in, one email delivered to the inbox with SPF/DKIM/DMARC pass, List-Unsubscribe headers, unsubscribe page and one-click work; no address in laravel.log"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-21 at user request (\"dejalo como feature a implementar\"). Spec: docs/specs/alerts-email-golive.md. Blocked on the owner: Brevo account, DNS records in Cloudflare, SMTP key. No application code changes expected."
+  },
+  {
+    "id": "market-context-sectors",
+    "area": "backend",
+    "title": "Sector ETF universe with daily sector and market breadth snapshots",
+    "user_visible_behavior": "No visible change yet; each daily run ingests SPY and the 11 SPDR sector ETFs into a separate market-context universe and stores per-sector returns, relative strength vs SPY, trend and sector breadth, plus S&P 500 breadth (above SMA50/SMA200, new highs/lows, advancers/decliners), without ETFs ever appearing in stock features.",
+    "depends_on": [
+      "ingestion-scheduler",
+      "indicators-compute",
+      "screener-precomputed"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Fixture with SPY, two sector ETFs and a few stocks gives the hand-computed ret_*, rs_*, rs_rank, trend, breadth_200 and breadth figures; null sma200 gives a null trend",
+      "market-context:compute is idempotent and --from backfills past sessions",
+      "ETFs (kind=etf) never appear in Screener results, screener rows, Watchlist search, alerts, Company Card or fundamentals (tests per surface)",
+      "A failing market-context ingestion does not fail the main universe, screener:refresh or alerts:evaluate, and is recorded",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-22 at user request (\"creame en docs una documentacion ampliada de esta funcionalidad, solo los de viabilidad facil y creame una features\"). Spec: docs/specs/market-context.md (Feature 1). Same unofficial market data source and licence risk as the stocks."
+  },
+  {
+    "id": "macro-series-fred",
+    "area": "backend",
+    "title": "Daily FRED macro series and central bank calendar (opt-in)",
+    "user_visible_behavior": "No visible change yet; when MACRO_ENABLED and FRED_API_KEY are set, a daily command stores Treasury yields and curve spreads, Fed and ECB policy rates, Fed balance sheet/TGA/reverse repo (net liquidity), initial claims, building permits and NFCI, and derives the readings used by the market regime; next FOMC/ECB meetings come from a hand-maintained config.",
+    "depends_on": [
+      "ingestion-scheduler"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Recorded FRED JSON fixtures (no network) give the expected observations and derived readings, including '.' gaps and weekly/daily net-liquidity alignment",
+      "With MACRO_ENABLED=false nothing calls FRED and the pipeline stays green",
+      "An HTTP error on one series records last_error for it only; other series and the pipeline continue",
+      "No API key in logs, exceptions or the repository; central bank calendar test fails when no future meeting is left",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-22 at user request (same request as market-context-sectors). Spec: docs/specs/market-context.md (Feature 2). Needs a free FRED API key set on the server by the owner. VIXCLS disabled until Cboe terms are cleared; OECD CLI only if a current free source is verified. Excluded by feasibility review: X sentiment, Conference Board LEI, ISM, FedWatch, fiscal deficits."
+  },
+  {
+    "id": "market-regime",
+    "area": "backend",
+    "title": "Rule-based daily Market Regime with visible components",
+    "user_visible_behavior": "No visible change yet; each daily run labels the market favourable, neutral, adverse or insufficient from breadth, index trend, sector participation, yield curve, financial conditions, net liquidity (and VIX if enabled), storing each component's score, value, date and staleness.",
+    "depends_on": [
+      "market-context-sectors",
+      "macro-series-fred"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Unit tests per component at, below and above each threshold, and for stale and missing inputs",
+      "Label boundaries +3/-3 and the insufficient rule (fewer than 4 available components) covered",
+      "Backfill for a past date ignores observations published after it (no look-ahead)",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-22 at user request. Spec: docs/specs/market-context.md (Feature 3). Thresholds are uncalibrated initial constants; descriptive only, never a forecast or advice."
+  },
+  {
+    "id": "market-context-ui",
+    "area": "frontend",
+    "title": "Public Market Context page (/mercado) with Admin status",
+    "user_visible_behavior": "Anyone can open /mercado from the header and see the market regime with its reasons, the 11 sectors ranked by relative strength, breadth, rates and yield curve, net liquidity, central banks (rate, last move, next meeting) and leading data, each with source, date and a 'what does it mean' note; Registered Users also see history charts; Admins see refresh status and can rerun the commands.",
+    "depends_on": [
+      "market-regime"
+    ],
+    "status": "not_started",
+    "verification": [
+      "GET /api/market-context public shape; history endpoint 401 for guests, 200 for Registered Users, 422 for unknown metric",
+      "Vitest: regime label and reasons in es/en from fixtures, stale badge, Visitor sign-in prompt instead of history, no EOD or advice wording, no hardcoded text",
+      "Admin section shows per-series refresh state and reruns commands (Admin only, server-side)",
+      ".\\init.ps1 passes; manual desktop/mobile check in light and dark mode"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-22 at user request. Spec: docs/specs/market-context.md (Feature 4). Route stays noindex; an indexable 'Estado del mercado hoy' landing is a separate marketing decision."
+  },
+  {
+    "id": "market-context-patterns",
+    "area": "frontend",
+    "title": "Sector and regime context on the chart and Screener sector filters",
+    "user_visible_behavior": "On a stock's chart page and next to each chartist pattern, users see its sector ETF, sector trend, relative-strength rank and the market regime, linking to /mercado; the Screener gains 'sector trend' and 'top N sectors by relative strength' filters, usable in Saved Screeners and the natural-language Screener.",
+    "depends_on": [
+      "market-context-ui",
+      "chart-patterns-ui"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Feature tests: sector_trend and sector_rs_rank_max return expected Candidates on a fixture, reject unknown values, round-trip in Saved Screeners and are accepted by the NL screener strict schema",
+      "Vitest: context strip renders for a stock, absent for an ETF, no advice wording, es/en",
+      "How it works manual and both locales updated",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-22 at user request. Spec: docs/specs/market-context.md (Feature 5). Context uses the latest snapshot; context at the pattern's detection date is listed under Later."
   }
 ]

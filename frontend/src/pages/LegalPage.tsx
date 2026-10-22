@@ -60,7 +60,7 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
         {document.sections.map((section) => (
           <section key={section.heading} className="flex flex-col gap-2">
             <h2 className="font-headline text-xl font-bold">{section.heading}</h2>
-            {section.paragraphs?.map((paragraph) => (
+            {[...(section.paragraphs ?? []), ...(state.info.email_digest ? (section.emailDigest ?? []) : [])].map((paragraph) => (
               <p key={paragraph} className="text-sm leading-6 text-on-surface-variant">
                 <Interpolate template={paragraph} values={values} />
               </p>
@@ -155,6 +155,13 @@ function placeholderValues(info: LegalInfo, cookiesLabel: string, privacyLabel: 
     // Older deployments omit it; 90 is the configured default.
     aiCardLogDays: info.retention.ai_card_log_days ?? 90,
     aiScreenerLogDays: info.retention.ai_screener_log_days ?? 90,
+    ...(info.email_digest
+      ? {
+          emailProvider: info.email_digest.provider,
+          emailProviderLocation: info.email_digest.provider_location,
+          emailDigestDays: info.retention.email_digest_days ?? 90,
+        }
+      : {}),
     cookiesLink: (
       <Link to={COOKIES_ROUTE} className={LINK_CLASS}>
         {cookiesLabel}

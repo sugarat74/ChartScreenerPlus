@@ -1,5 +1,38 @@
 # Progress Log
 
+## Planned: Market Context panel (5 features, not started) — 2026-10-22
+
+- User request: "creame en docs una documentacion ampliada de esta funcionalidad, solo los de viabilidad facil y creame una features o varias si es necesario pra ir implementando".
+- Umbrella spec `docs/specs/market-context.md`; features appended to `feature_list.json` in order: `market-context-sectors` → `macro-series-fred` → `market-regime` → `market-context-ui` → `market-context-patterns`. Scope paragraph added to `AGENTS.md`.
+- Only "easy" sources: sector ETFs and breadth from the existing pipeline, public FRED series, hand-maintained central bank calendar. Excluded: X sentiment, Conference Board LEI, ISM, FedWatch, fiscal deficits.
+- Owner actions before `macro-series-fred` can run in production: a free FRED API key on the server. Open risks: market data licence (ETFs), FRED per-series terms, VIX (Cboe) and OECD CLI availability.
+- No code changed; no verification run (docs and planning only).
+
+## Planned: production activation of the daily alert email (`alerts-email-golive`, not started) — 2026-10-21
+
+- User decision: "dejalo como feature a implementar".
+- Plan in `docs/specs/alerts-email-golive.md`: Brevo free plan (EU) and Cloudflare DNS records (TXT, DKIM, SPF edit, DMARC); the SMTP key is set by a prompt-only server script; the legal date is bumped in the same deploy; a test send to the owner.
+- Blocked on the owner's Brevo account and DNS changes.
+
+## Daily alert email digest (`alerts-email-digest`, accepted) — 2026-10-21
+
+- **Independent validator: ACCEPT** (round 2).
+  - Round 1 was `revise`. GET on the unsubscribe link unsubscribed at once, the form POST got CSRF 419, and the failure log could hold the address.
+  - All fixed in `46fbb16`. Verified on a real server.
+
+- User request: "ok realiza alerts-email-digest".
+- Implemented end to end but shipped **off**: there is no sending provider yet (production `MAIL_MAILER=log`).
+  - It turns on only with `ALERT_EMAIL_DIGEST_ENABLED=true` plus `ALERT_EMAIL_PROVIDER` and `ALERT_EMAIL_PROVIDER_LOCATION`. The privacy policy names the provider from those same variables, so nothing can be sent before the policy describes it.
+  - Go-live checklist (provider, SPF/DKIM/DMARC, env, legal date): `deploy/README.md`.
+- What it does:
+  - The Portal opt-in starts unticked.
+  - One email per user per as-of date after `alerts:evaluate`, recorded in a ledger. It is queued with 3 tries and never affects the pipeline.
+  - Email: HTML and text, es/en, same wording as the inbox, no tracking.
+  - Unsubscribe without a session: a signed link and an RFC 8058 one-click POST.
+  - The account export and deletion cover the new data; the ledger is pruned after 90 days.
+- Tests: 14 new Laravel tests, 4 new Vitest tests. Rendered emails, Portal QA and the unsubscribe endpoints were checked on a local server.
+- `.\init.ps1` exit 0: Laravel 560 passed / 6 skipped, Vitest 220, SPA lint + build, engine 101.
+
 ## More chartist patterns (`chart-patterns-extended`, accepted) — 2026-10-21
 
 - **Independent validator: ACCEPT** (round 2).

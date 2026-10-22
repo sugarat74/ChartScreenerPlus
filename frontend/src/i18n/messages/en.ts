@@ -515,6 +515,14 @@ export const en: Messages = {
     deleting: 'Deleting…',
     adminCannotDelete: 'An admin account cannot be deleted here.',
   },
+  alertEmail: {
+    title: 'Daily email summary',
+    intro: 'Get a single email a day with your alert notices, after the daily data update.',
+    label: 'I want to receive the daily summary of my alerts by email',
+    hint: 'Off unless you tick it. No tracking; you can unsubscribe from the email itself.',
+    privacy: 'Privacy policy',
+    on: 'On: you will get the summary on days your alerts find something.',
+  },
   alerts: {
     sectionTitle: 'Alerts',
     sectionIntro:

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Alert;
+use App\Services\Alerts\AlertDigestSender;
 use App\Services\Alerts\AlertEvaluator;
 use Illuminate\Console\Command;
 use Throwable;
@@ -26,7 +27,7 @@ class EvaluateAlerts extends Command
      */
     protected $description = 'Evaluate active alerts and create in-app notifications for new findings';
 
-    public function handle(AlertEvaluator $evaluator): int
+    public function handle(AlertEvaluator $evaluator, AlertDigestSender $digests): int
     {
         $asOf = $evaluator->asOf();
 
@@ -67,6 +68,18 @@ class EvaluateAlerts extends Command
             $counts[AlertEvaluator::SKIPPED],
             $failed,
         ));
+
+        // Daily email digest (alerts-email-digest): queued after the evaluation;
+        // a mail problem is reported but never changes this command's result.
+        try {
+            $queued = $digests->queue($asOf);
+            if ($queued > 0) {
+                $this->info("Queued {$queued} alert email digest(s).");
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->warn("Alert email digests not queued: {$exception->getMessage()}");
+        }
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }

@@ -9,11 +9,18 @@
  * docs/specs/legal-privacy-publication.md),
  * `{activityDays}` `{sessionMinutes}` `{backupDays}` `{logDays}` `{notificationDays}`
  * `{aiCardLogDays}` `{aiScreenerLogDays}`,
+ * `{emailProvider}` `{emailProviderLocation}` `{emailDigestDays}` (only in
+ * `emailDigest` paragraphs, rendered while the daily alert email is active),
  * `{cookiesLink}` `{privacyLink}` (in-app links).
  */
 export type LegalSection = {
   heading: string
   paragraphs?: string[]
+  /**
+   * Paragraphs about the daily alert email (alerts-email-digest), shown only
+   * while `GET /api/legal` reports it active and names its provider.
+   */
+  emailDigest?: string[]
   items?: string[]
 }
 

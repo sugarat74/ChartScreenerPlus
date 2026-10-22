@@ -50,6 +50,7 @@ return [
         'limit' => 'You can have at most :max alerts.',
         'duplicate' => 'You already have this alert.',
         'not_found' => 'Alert not found.',
+        'email_unavailable' => 'The daily email summary is not available yet.',
     ],
     'screener' => [
         'signal_unknown_types' => 'The signal parameter must contain only known signal types.',

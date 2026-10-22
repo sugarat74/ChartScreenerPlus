@@ -1,0 +1,57 @@
+<?php
+
+// Daily alert email digest and its unsubscribe page (alerts-email-digest).
+// Labels mirror frontend/src/i18n/messages/en.ts (signals, patterns, notifications).
+
+return [
+    'subject' => 'Chartiko: your alerts for :date',
+    'heading' => 'Your alerts for :date',
+    'intro' => 'This is what your alerts found in the daily data update.',
+    'kind_screener' => 'New candidates in “:name”',
+    'kind_screener_unnamed' => 'New candidates in a saved Screener',
+    'kind_watchlist' => 'New signals on your Watchlist',
+    'kind_watchlist_pattern' => 'Patterns on your Watchlist',
+    'reason_new_candidate' => 'New candidate',
+    'pattern_event' => [
+        'appears' => 'appears',
+        'confirmed' => 'confirmed',
+    ],
+    'pattern_already_confirmed' => 'already confirmed',
+    'breakout_level' => 'Breakout :price',
+    'more' => 'and :count more',
+    'open_inbox' => 'See all your notifications',
+    'manage' => 'Manage alerts and this email',
+    'why' => 'You receive this email because you turned on the daily alert summary in your Chartiko Portal.',
+    'unsubscribe' => 'Stop receiving this email',
+    'privacy' => 'Privacy policy',
+    'disclaimer' => 'Chartiko provides technical information for informational and educational purposes. It is not investment advice or a personal recommendation; investing involves risk of loss.',
+    'signals' => [
+        'golden_cross' => 'Golden cross',
+        'death_cross' => 'Death cross',
+        'ma_alignment_bullish' => 'Bullish alignment',
+        'ma_alignment_bearish' => 'Bearish alignment',
+        'pivot_breakout_rvol' => 'Pivot breakout + RVOL',
+        'rsi_overbought' => 'RSI overbought',
+        'rsi_oversold' => 'RSI oversold',
+        'macd_bullish_cross' => 'MACD bullish',
+        'macd_bearish_cross' => 'MACD bearish',
+    ],
+    'patterns' => [
+        'double_top' => 'Double top',
+        'double_bottom' => 'Double bottom',
+        'cup_with_handle' => 'Cup with handle',
+        'bull_flag' => 'Bull flag',
+        'triple_top' => 'Triple top',
+        'triple_bottom' => 'Triple bottom',
+        'inverse_cup_with_handle' => 'Inverse cup with handle',
+        'bear_flag' => 'Bear flag',
+        'bull_pennant' => 'Bullish pennant',
+        'bear_pennant' => 'Bearish pennant',
+    ],
+    'confirm_title' => 'Stop receiving the daily summary?',
+    'confirm_body' => 'Confirm to turn off the daily alert email for your account. Your alerts stay active inside Chartiko.',
+    'confirm_button' => 'Unsubscribe me',
+    'unsubscribed_title' => 'You will no longer receive the daily summary',
+    'unsubscribed_body' => 'We have turned off the daily alert email for your account. Your alerts stay active and their notices will still appear in Chartiko. You can turn it back on from your Portal.',
+    'back_to_site' => 'Go to Chartiko',
+];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Alerts\AlertEmailDigestAvailability;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -52,7 +53,14 @@ class LegalController extends Controller
                 'notification_days' => (int) config('alerts.notification_retention_days'),
                 'ai_card_log_days' => (int) config('ai_card.log_retention_days'),
                 'ai_screener_log_days' => (int) config('ai_screener.log_retention_days'),
+                'email_digest_days' => (int) config('alerts.email_digest.ledger_retention_days'),
             ],
+            // alerts-email-digest: the privacy policy describes the daily email
+            // and names its sending provider only while the feature is active.
+            'email_digest' => AlertEmailDigestAvailability::available() ? [
+                'provider' => AlertEmailDigestAvailability::provider(),
+                'provider_location' => AlertEmailDigestAvailability::providerLocation(),
+            ] : null,
         ]);
     }
 

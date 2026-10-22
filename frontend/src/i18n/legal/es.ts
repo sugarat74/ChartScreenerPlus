@@ -33,6 +33,9 @@ export const legalEs: LegalTexts = {
         paragraphs: [
           'Si creas alertas guardamos su configuración (el Screener guardado o los tipos de señal o de patrón que eliges para tu Watchlist) y, tras cada actualización diaria de datos, las notificaciones con los instrumentos que las han activado.',
         ],
+        emailDigest: [
+          'Si activas en tu Portal el resumen diario por email (está desactivado si no lo eliges), guardamos cuándo lo activaste y el idioma del email, y los días en que tus alertas detectan algo te enviamos a tu dirección de correo un único email con sus avisos, después de la actualización diaria de datos. El email no lleva píxeles ni enlaces de seguimiento. Puedes darte de baja con el enlace del propio email, sin iniciar sesión, o desde tu Portal. Guardamos un registro de cada envío (fecha de los datos, número de avisos y hora de envío) que se borra a los {emailDigestDays} días.',
+        ],
         items: [
           'Finalidad: avisarte dentro de Chartiko de los cambios que has pedido seguir.',
           'Base jurídica: ejecución del contrato de uso del servicio (art. 6.1.b RGPD).',
@@ -106,6 +109,9 @@ export const legalEs: LegalTexts = {
           'No cedemos tus datos a terceros salvo obligación legal. El proveedor de alojamiento, OVH, trata los datos por cuenta de Chartiko como encargado del tratamiento.',
           'Si usas la búsqueda con IA del Screener, el texto que escribes se envía a DevExpert Inference, el proveedor de IA, solo para devolver los filtros (véase «Funciones de IA»); por eso te pedimos que no incluyas datos personales.',
           'El servidor está situado en Canadá (Beauharnois, Quebec). La Comisión Europea reconoce a Canadá un nivel de protección adecuado (Decisión 2002/2/CE), en el que se basa esta transferencia internacional.',
+        ],
+        emailDigest: [
+          'Si activas el resumen diario por email, tu dirección de correo y el contenido del email se envían a {emailProvider}, el proveedor de envío de correo, que los trata por cuenta de Chartiko como encargado del tratamiento. Ubicación del tratamiento: {emailProviderLocation}.',
         ],
       },
       {

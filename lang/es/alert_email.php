@@ -1,0 +1,57 @@
+<?php
+
+// Daily alert email digest and its unsubscribe page (alerts-email-digest).
+// Labels mirror frontend/src/i18n/messages/es.ts (signals, patterns, notifications).
+
+return [
+    'subject' => 'Chartiko: tus alertas del :date',
+    'heading' => 'Tus alertas del :date',
+    'intro' => 'Esto es lo que han detectado tus alertas en la actualización diaria de datos.',
+    'kind_screener' => 'Nuevos candidatos en «:name»',
+    'kind_screener_unnamed' => 'Nuevos candidatos en un Screener guardado',
+    'kind_watchlist' => 'Nuevas señales en tu Watchlist',
+    'kind_watchlist_pattern' => 'Patrones en tu Watchlist',
+    'reason_new_candidate' => 'Nuevo candidato',
+    'pattern_event' => [
+        'appears' => 'aparece',
+        'confirmed' => 'confirmado',
+    ],
+    'pattern_already_confirmed' => 'ya confirmado',
+    'breakout_level' => 'Ruptura :price',
+    'more' => 'y :count más',
+    'open_inbox' => 'Ver todas tus notificaciones',
+    'manage' => 'Gestionar alertas y este email',
+    'why' => 'Recibes este email porque activaste el resumen diario de alertas en tu Portal de Chartiko.',
+    'unsubscribe' => 'Dejar de recibir este email',
+    'privacy' => 'Política de privacidad',
+    'disclaimer' => 'Chartiko ofrece información técnica con fines informativos y educativos. No es asesoramiento de inversión ni una recomendación personalizada; invertir conlleva riesgo de pérdida.',
+    'signals' => [
+        'golden_cross' => 'Cruce dorado',
+        'death_cross' => 'Cruce de la muerte',
+        'ma_alignment_bullish' => 'Alineación alcista',
+        'ma_alignment_bearish' => 'Alineación bajista',
+        'pivot_breakout_rvol' => 'Ruptura pivote + RVOL',
+        'rsi_overbought' => 'RSI sobrecompra',
+        'rsi_oversold' => 'RSI sobreventa',
+        'macd_bullish_cross' => 'MACD alcista',
+        'macd_bearish_cross' => 'MACD bajista',
+    ],
+    'patterns' => [
+        'double_top' => 'Doble techo',
+        'double_bottom' => 'Doble suelo',
+        'cup_with_handle' => 'Taza con asa',
+        'bull_flag' => 'Bandera alcista',
+        'triple_top' => 'Triple techo',
+        'triple_bottom' => 'Triple suelo',
+        'inverse_cup_with_handle' => 'Taza con asa invertida',
+        'bear_flag' => 'Bandera bajista',
+        'bull_pennant' => 'Banderín alcista',
+        'bear_pennant' => 'Banderín bajista',
+    ],
+    'confirm_title' => '¿Dejar de recibir el resumen diario?',
+    'confirm_body' => 'Confirma para desactivar el email diario de alertas de tu cuenta. Tus alertas seguirán activas dentro de Chartiko.',
+    'confirm_button' => 'Darme de baja',
+    'unsubscribed_title' => 'Ya no recibirás el resumen diario',
+    'unsubscribed_body' => 'Hemos desactivado el email diario de alertas de tu cuenta. Tus alertas siguen activas y sus avisos seguirán apareciendo en Chartiko. Puedes volver a activarlo desde tu Portal.',
+    'back_to_site' => 'Ir a Chartiko',
+];

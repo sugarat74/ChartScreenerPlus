@@ -220,3 +220,35 @@ almacenamiento externo con credenciales solo en el VPS); nunca en el repositorio
 
 PostgreSQL y PgBouncer no se exponen: usa un túnel SSH
 (`ssh -L 15432:127.0.0.1:5432 deploy@<VPS>`) y conecta a `127.0.0.1:15432`.
+
+## Email del resumen diario de alertas
+
+El resumen diario por email (`alerts-email-digest`) está **desactivado** por defecto: la casilla del Portal no aparece y no se envía nada. Para activarlo, en este orden:
+
+1. **Proveedor y buzón.** Elige un proveedor SMTP o API (por ejemplo, uno con servidores en la UE), firma su contrato de encargado del tratamiento (DPA) y crea el remitente, por ejemplo `alertas@chartiko.com`.
+2. **Autenticación del dominio** en el DNS de `chartiko.com`, siguiendo las instrucciones del proveedor:
+   - **SPF:** incluye al proveedor en el registro TXT `v=spf1 …` (un único registro SPF por dominio).
+   - **DKIM:** publica las claves que te dé el proveedor.
+   - **DMARC:** como mínimo `_dmarc.chartiko.com TXT "v=DMARC1; p=none; rua=mailto:…"`, y endurécelo después a `quarantine`.
+   - Comprueba los tres con la herramienta del proveedor antes de seguir.
+3. **Variables en `shared/.env`** (nunca en el repositorio):
+
+   ```dotenv
+   MAIL_MAILER=smtp
+   MAIL_HOST=…
+   MAIL_PORT=587
+   MAIL_USERNAME=…
+   MAIL_PASSWORD=…
+   MAIL_FROM_ADDRESS=alertas@chartiko.com
+   MAIL_FROM_NAME=Chartiko
+   ALERT_EMAIL_PROVIDER="Nombre del proveedor"
+   ALERT_EMAIL_PROVIDER_LOCATION="UE (Irlanda)"
+   ALERT_EMAIL_DIGEST_ENABLED=true
+   ```
+
+   La función solo se activa con las tres variables `ALERT_EMAIL_*` rellenas. La política de privacidad nombra automáticamente al proveedor y su ubicación desde esas variables.
+4. **Aplicar:** `php artisan config:cache` como `deploy` (con `umask 007`) y reinicia el worker de colas (`systemctl restart alphapulse-queue`). Los emails se envían desde la cola `database`, con 3 intentos.
+5. **Prueba:** activa la casilla con una cuenta propia en el Portal y espera al siguiente `alerts:evaluate` (o ejecútalo a mano). Comprueba la entrega, las cabeceras `List-Unsubscribe` y `List-Unsubscribe-Post`, el enlace de baja y el texto en español e inglés.
+6. **Legal:** sube `updated_at` en `config/legal.php` en el mismo despliegue en que actives la función, porque la política de privacidad cambia en ese momento.
+
+Para desactivarlo, pon `ALERT_EMAIL_DIGEST_ENABLED=false`, ejecuta `config:cache` y reinicia el worker. No se envía nada más y las preferencias de los usuarios se conservan.

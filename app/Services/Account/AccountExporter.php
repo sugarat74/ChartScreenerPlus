@@ -4,6 +4,7 @@ namespace App\Services\Account;
 
 use App\Models\AiCompanyCardGeneration;
 use App\Models\AiScreenerQuery;
+use App\Models\AlertEmailDigest;
 use App\Models\Alert;
 use App\Models\Instrument;
 use App\Models\LoginEvent;
@@ -43,6 +44,8 @@ class AccountExporter
                 'created_at' => self::date($user->created_at),
                 'updated_at' => self::date($user->updated_at),
                 'email_verified_at' => self::date($user->email_verified_at),
+                'alert_email_opt_in_at' => self::date($user->alert_email_opt_in_at),
+                'preferred_locale' => $user->preferred_locale,
             ],
             'watchlist' => $user->watchlist()
                 ->orderBy('watchlist_items.created_at')
@@ -143,6 +146,17 @@ class AccountExporter
                     'outcome' => $query->outcome,
                     'unsupported_count' => $query->unsupported_count,
                     'created_at' => self::date($query->created_at),
+                ])
+                ->values()
+                ->all(),
+            // alerts-email-digest ledger: which daily emails were queued and sent.
+            'alert_emails' => $user->alertEmailDigests()
+                ->orderBy('as_of')
+                ->get()
+                ->map(fn (AlertEmailDigest $digest): array => [
+                    'as_of' => $digest->as_of->toDateString(),
+                    'items' => $digest->items,
+                    'sent_at' => self::date($digest->sent_at),
                 ])
                 ->values()
                 ->all(),

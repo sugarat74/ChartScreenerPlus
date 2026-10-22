@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // First-party SPA auth: apply Sanctum's stateful middleware
         // (session cookie + CSRF) to requests from SANCTUM_STATEFUL_DOMAINS.
         $middleware->statefulApi();
+        // The daily alert email unsubscribe (alerts-email-digest) is protected by
+        // its signature, not a session: its confirmation form and RFC 8058
+        // one-click POSTs from mail clients must not need a CSRF token.
+        $middleware->validateCsrfTokens(except: ['api/email/alerts/unsubscribe/*']);
 
         // Localize API messages from Accept-Language before any other API
         // middleware (auth/admin aborts included) can produce a message.

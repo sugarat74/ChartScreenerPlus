@@ -2,6 +2,7 @@
 
 use App\Models\AiCompanyCardGeneration;
 use App\Models\AiScreenerQuery;
+use App\Models\AlertEmailDigest;
 use App\Models\LoginEvent;
 use App\Services\Market\MarketCalendar;
 use Illuminate\Foundation\Inspiring;
@@ -80,14 +81,15 @@ Schedule::command('fundamentals:refresh')
 | response text) is pruned after config('ai_card.log_retention_days') (90),
 | and the natural-language Screener log (account id, length, outcome, token
 | counts; never the query text) after config('ai_screener.log_retention_days')
-| (90).
+| (90). The daily alert email ledger (account id, as-of date, item count,
+| sent time) after config('alerts.email_digest.ledger_retention_days') (90).
 | Daily server log files (`laravel-YYYY-MM-DD.log`, which may hold personal
 | data) older than config('legal.server_log_retention_days') (14) are deleted
 | by logs:prune, because Monolog keeps a number of files, not of days.
 |
 */
 
-Schedule::command('model:prune', ['--model' => [LoginEvent::class, AiCompanyCardGeneration::class, AiScreenerQuery::class]])
+Schedule::command('model:prune', ['--model' => [LoginEvent::class, AiCompanyCardGeneration::class, AiScreenerQuery::class, AlertEmailDigest::class]])
     ->name('prune-login-events')
     ->dailyAt('03:15')
     ->withoutOverlapping();

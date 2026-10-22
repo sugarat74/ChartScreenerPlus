@@ -225,10 +225,11 @@ class AccountSelfServiceTest extends TestCase
         $this->assertSame([
             'format', 'generated_at', 'profile', 'watchlist', 'saved_screeners', 'alerts',
             'notifications', 'sign_in_activity', 'active_sessions', 'ai_card_requests', 'ai_screener_requests',
+            'alert_emails',
         ], array_keys($export));
         $this->assertSame('chartiko-account-export-v1', $export['format']);
         $this->assertSame(
-            ['name', 'email', 'role', 'created_at', 'updated_at', 'email_verified_at'],
+            ['name', 'email', 'role', 'created_at', 'updated_at', 'email_verified_at', 'alert_email_opt_in_at', 'preferred_locale'],
             array_keys($export['profile']),
         );
         $this->assertSame('ana@example.com', $export['profile']['email']);
@@ -420,6 +421,7 @@ class AccountSelfServiceTest extends TestCase
             'login_events.actor_id' => 'nulled by FK; Admin-only action, Admins cannot self-delete',
             'ai_company_card_generations.user_id' => 'nulled by FK; exported as ai_card_requests',
             'ai_screener_queries.user_id' => 'nulled by FK; exported as ai_screener_requests',
+            'alert_email_digests.user_id' => 'FK cascade; exported as alert_emails',
             'forecast_backtest_runs.requested_by' => 'Admin-only; Admins cannot self-delete',
             'personal_access_tokens.tokenable_id' => 'deleted explicitly; no tokens are issued',
         ];
