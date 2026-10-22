@@ -2,7 +2,7 @@
 
 ## Source Features
 
-This umbrella spec covers five features, implemented in this order. Each one ships, is verified and is accepted on its own.
+This umbrella spec covers six features, implemented in this order. Each one ships, is verified and is accepted on its own.
 
 | Order | `id` | `area` | `depends_on` | Summary |
 | --- | --- | --- | --- | --- |
@@ -11,8 +11,9 @@ This umbrella spec covers five features, implemented in this order. Each one shi
 | 3 | `market-regime` | backend | `market-context-sectors`, `macro-series-fred` | Rule-based daily Market Regime with visible reasons |
 | 4 | `market-context-ui` | frontend | `market-regime` | Public `/mercado` page, API and Admin status |
 | 5 | `market-context-patterns` | frontend | `market-context-ui`, `chart-patterns-ui` | Sector and regime context on the chart and two Screener filters |
+| 6 | `options-put-call` | backend | `market-context-ui` | Opt-in Cboe equity put/call ratio: sentiment card on `/mercado` and a low-weight regime component |
 
-- `status`: planned 2026-10-22 at the user's explicit request: "creame en docs una documentacion ampliada de esta funcionalidad, solo los de viabilidad facil y creame una features o varias si es necesario pra ir implementando".
+- `status`: planned 2026-10-22 at the user's explicit request: "creame en docs una documentacion ampliada de esta funcionalidad, solo los de viabilidad facil y creame una features o varias si es necesario pra ir implementando". Feature 6 added the same day at the user's request: "En la parte macro estudia incluir ratio put call de las opciones", then "si, apúntalo en la spec y añade la feature".
 - `source`: `feature_list.json`. Product rationale: `docs/marketing/2026-10-22-funcionalidades-diferenciales.md` (idea 15).
 
 ## Goal
@@ -33,7 +34,7 @@ Excluded by the feasibility review (2026-10-22):
 
 Also excluded:
 
-- No non-US equity data, no intraday data, no new market data vendor beyond FRED.
+- No non-US equity data, no intraday data, no new market data vendor beyond FRED. The only exception is the opt-in Cboe put/call ratio of Feature 6, which stays disabled in production until Cboe's terms are cleared.
 - No forecasts, no "probability of recession", no targets and no buy/sell wording.
 - No regime-change alerts or emails (listed under Later).
 - No AI-written commentary (listed under Later).
@@ -61,6 +62,7 @@ so I can judge the setup in its context with rules I can read.
    - **Market Regime (Entorno de mercado):** a rule-based label (favourable / neutral / adverse) computed from Market Context components. It is descriptive, never a forecast or advice.
    - **Breadth (Amplitud):** the share of the S&P 500 Universe that meets a condition (for example, close above SMA200).
    - **Macro Series:** a public time series fetched from FRED and stored with its own dates.
+   - **Put/Call Ratio (Ratio put/call):** put option volume divided by call option volume on a session. Added with Feature 6.
 2. **Dates.** Every reading carries its own date. Market readings use the last session. Macro series keep the date of their last observation, which can be weeks old for monthly data, and the UI shows it. Public labels never say EOD or "end of day" (AGENTS.md rule); they use "Datos del {date}" / "Data as of {date}".
 3. **Staleness.** A reading is *stale* when it is older than its frequency allows: daily over 7 calendar days, weekly over 16 days, monthly over 75 days. Stale readings are shown with a "desactualizado" / "stale" badge and **do not count** in the regime.
 4. **No advice.** No Market Context text contains buy, sell, target, probability or recommendation wording. Each card has a short educational "¿Qué significa?" / "What does it mean?" text in `frontend/src/i18n/messages/*.ts`.
@@ -200,6 +202,7 @@ Implementation contract, exact edge-case rules and resolved ambiguities: `docs/s
    | `financial_conditions` | `NFCI < −0.25` | `> 0` | 0 |
    | `liquidity` | net liquidity 13-week change `>= +2 %` | `<= −2 %` | 0 |
    | `volatility` (only if `VIXCLS` is enabled) | `< 18` | `> 28` | 0 |
+   | `options_sentiment` (added by Feature 6, only if enabled) | percentile `>= 90` | percentile `<= 10` | 0 |
 
 2. **Label.** Score = sum of the available components.
    - `favourable` when the score is `>= +3`; `adverse` when `<= −3`; otherwise `neutral`.
@@ -272,6 +275,64 @@ Implementation contract, exact edge-case rules and resolved ambiguities: `docs/s
 
 ---
 
+## Feature 6 — `options-put-call`
+
+### Why
+
+The put/call ratio measures sentiment from what traders actually pay for, not from posts or surveys. It fills the gap left by excluding social sentiment. It is read **contrarian**: extreme fear has tended to coincide with lows and extreme complacency with highs. The **equity** ratio (stock options, mostly retail) is the useful one. The index ratio is dominated by institutional hedging and is stored for reference only.
+
+Fixed thresholds no longer work: since 2020, same-day-expiry options and heavy retail call buying have shifted the "normal" levels. The ratio is therefore read as a **10-session average** compared with its **own percentile over the last year**.
+
+### Scope
+
+1. **Opt-in, off by default.** `put_call.enabled` in `config/macro.php` (`PUT_CALL_ENABLED`, default `false`), separate from `MACRO_ENABLED`. When disabled:
+   - nothing is fetched;
+   - the `/mercado` card is not shown;
+   - the regime component is not available.
+
+   It is enabled in production **only after written permission** from Cboe, or after switching to a licensed source that includes it. Until then it may run in development only.
+2. **Source.** Cboe's public daily market statistics (`https://www.cboe.com/us/options/market_statistics/daily/`). The implementer:
+   - finds the stable machine-readable response behind that page, or parses the page if there is none;
+   - records the exact URL and format in this spec;
+   - covers the parser with recorded fixtures (no network in tests).
+
+   Fetched in the Python engine like the other HTTP sources, throttled and retried, behind a source interface so OCC or a licensed provider can replace it without touching storage or the UI.
+3. **Storage.** Reuses `macro_series` and `macro_observations` from Feature 2, with `source = cboe` and `frequency = daily`. Three closed series codes:
+   - `CBOE_PC_EQUITY`: equity put/call, the one that is used;
+   - `CBOE_PC_INDEX`: index put/call, for reference;
+   - `CBOE_PC_TOTAL`: total put/call, for reference.
+
+   A missing value is skipped, never stored as 0.
+4. **Command.** `put-call:refresh {--date=} {--from=}`:
+   - Idempotent (upsert).
+   - `--from` backfills one request per session, throttled. The free historical CSV ends in 2019, so the backfill reads the daily page for each past date. On first deploy it loads at least 13 months, enough for the one-year percentile.
+   - Run by the pipeline before `market-regime:compute` and isolated like the rest (decision 5).
+5. **Derived readings** (pure and testable, next to `MacroSnapshotService`):
+   - `pc_equity_10`: average of the last 10 equity values.
+   - `pc_equity_pct_1y`: percentile rank of today's `pc_equity_10` among the `pc_equity_10` values of the last 252 sessions, from 0 to 100. It is `null` with fewer than 200 values, never a guessed number.
+   - Reading band: `fear` when the percentile is `>= 80`, `complacency` when it is `<= 20`, otherwise `normal`.
+6. **Regime component.** `options_sentiment` in the Feature 3 table:
+   - It only scores at the extremes: `+1` at percentile `>= 90` (extreme fear, contrarian) and `−1` at `<= 10` (extreme complacency). It is `0` the rest of the time, so its weight is low by design.
+   - Stale (decision 3) or `null` means not available.
+   - Thresholds are named constants, uncalibrated, like the other components.
+7. **UI.** A "Sentimiento en opciones" / "Options sentiment" card on `/mercado`:
+   - the 10-session equity ratio, its 1-year percentile and the band chip (fear / normal / complacency), with source "Cboe" and the date;
+   - index and total ratios as secondary values;
+   - a "¿Qué significa?" text that explains the contrarian reading without advice wording;
+   - for Registered Users, history in the existing history endpoint with metric `pc_equity_10`.
+8. **Admin.** The series appear in the Feature 4 Admin section with their last date, last refresh and last error, and a button to rerun the command.
+
+### Acceptance
+
+- Recorded Cboe fixtures (no network) parse to the expected equity, index and total values. A changed or empty page records `last_error` and stores nothing.
+- `pc_equity_10`, the percentile (including the fewer-than-200-values `null`) and the bands match hand-computed values on a fixture.
+- `options_sentiment` scores at, below and above 90 and 10, and is unavailable when stale or disabled.
+- With `PUT_CALL_ENABLED=false` nothing calls Cboe, the card is absent, the regime ignores the component and the pipeline stays green.
+- Vitest: card in es and en, band chip, no advice wording, no hardcoded text.
+- `.\init.ps1` green.
+
+---
+
 ## Later (not planned as features)
 
 - In-app and email alerts when the Market Regime changes.
@@ -286,6 +347,9 @@ Implementation contract, exact edge-case rules and resolved ambiguities: `docs/s
 - **FRED terms:** per-series copyright must be checked, VIX is disabled by default, and the API terms notice must be shown.
 - **OECD CLI availability** through a free, current source is unverified.
 - **Central bank calendar** is maintained by hand once a year; the test in Feature 2 makes a missing update fail loudly.
+- **Cboe terms (Feature 6):** the daily statistics page is governed by Cboe's website terms, and Cboe's data agreements limit use to personal or internal purposes. Public display needs written permission or a licensed source; ask Cboe and OCC, and ask the market data providers being quoted whether they include it.
+- **Put/call source coverage:** Cboe's figures cover only volume traded on Cboe exchanges. OCC publishes a put/call report on cleared volume across all US options exchanges and is the fallback if its terms are clearer.
+- **Put/call scraping fragility:** the page format can change without notice; the fixtures and `last_error` make a break visible in Admin.
 - **Thresholds** in Feature 3 are initial values without calibration. A later calibration, similar to `chart-patterns-calibration`, should check them against history before they are used in marketing.
 
 ## Documentation Updates
@@ -294,4 +358,4 @@ Implementation contract, exact edge-case rules and resolved ambiguities: `docs/s
 - `AGENTS.md`: MVP Scope Guard paragraph (added with this plan).
 - `docs/risks-and-open-questions.md`: FRED terms, VIX, OECD availability.
 - "Cómo funciona" manual: a short Market Context section with Feature 4 and the filters with Feature 5.
-- Legal/privacy: no personal data is involved. Check that the legal notice lists FRED as a data source.
+- Legal/privacy: no personal data is involved. Check that the legal notice lists FRED as a data source, and Cboe once Feature 6 is enabled.

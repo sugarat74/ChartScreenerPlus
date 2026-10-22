@@ -1676,5 +1676,25 @@
     ],
     "evidence": [],
     "notes": "Planned 2026-10-22 at user request. Spec: docs/specs/market-context.md (Feature 5). Context uses the latest snapshot; context at the pattern's detection date is listed under Later."
+  },
+  {
+    "id": "options-put-call",
+    "area": "backend",
+    "title": "Opt-in Cboe equity put/call ratio: sentiment card and low-weight regime component",
+    "user_visible_behavior": "When PUT_CALL_ENABLED is set, /mercado shows an 'Options sentiment' card with the 10-session equity put/call ratio, its 1-year percentile and a fear / normal / complacency chip (index and total ratios as secondary values), and the market regime gains an options_sentiment component that only scores at the 90th/10th percentile extremes; disabled by default, so nothing changes until Cboe's terms are cleared.",
+    "depends_on": [
+      "market-context-ui"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Recorded Cboe fixtures (no network) parse to the expected equity, index and total values; a changed or empty page records last_error and stores nothing",
+      "pc_equity_10, the 1-year percentile (null with fewer than 200 values) and the bands match hand-computed fixture values",
+      "options_sentiment scores at, below and above the 90/10 percentile thresholds and is unavailable when stale or disabled",
+      "With PUT_CALL_ENABLED=false nothing calls Cboe, the card is absent, the regime ignores the component and the pipeline stays green",
+      "Vitest: card in es/en, band chip, no advice wording, no hardcoded text",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-22 at user request ('En la parte macro estudia incluir ratio put call de las opciones', then 'si, apúntalo en la spec y añade la feature'). Spec: docs/specs/market-context.md (Feature 6). Not on FRED; source is Cboe's public daily statistics page behind a replaceable source interface (OCC or a licensed provider as alternatives). Must stay disabled in production until Cboe gives written permission or a licensed source is used. Contrarian reading; percentiles instead of fixed levels because post-2020 levels drifted."
   }
 ]
