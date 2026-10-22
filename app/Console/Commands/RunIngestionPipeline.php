@@ -2,13 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Universe;
 use App\Services\Market\MarketCalendar;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Run the full EOD pipeline in order: ingestion -> indicators -> signals -> patterns
- * -> screener rows -> alerts.
+ * -> Market Context -> screener rows -> alerts.
  *
  * This is a thin composition wrapper: it never reimplements any stage and
  * delegates to the `ingestion:run`, `indicators:compute`, `signals:detect`,
@@ -28,6 +31,15 @@ use Illuminate\Support\Facades\Cache;
  * If a later stage fails, the remaining stages are still attempted and the command
  * exits `1` so the scheduler records the failure. Alerts run last and only when
  * signals succeeded, so users are never notified from a partial signal set.
+ *
+ * Market Context block (docs/specs/market-context-sectors.md): after the main
+ * universe's patterns and before the Screener refresh, the `market-context`
+ * universe (SPY + sector ETFs) is ingested and its indicators computed, then
+ * `market-context:compute` stores the sector and Breadth snapshots. No signals
+ * or patterns run for it. The block is isolated: a failed or throwing stage is
+ * printed and logged (`Log::warning`, stage and exit code only) but never
+ * changes the exit code nor skips the Screener refresh or the alerts; an
+ * unseeded universe skips the block with one info line.
  */
 class RunIngestionPipeline extends Command
 {
@@ -81,6 +93,7 @@ class RunIngestionPipeline extends Command
             $indicators = $this->call('indicators:compute', ['--universe' => $universe]);
             $signals = $this->call('signals:detect', ['--universe' => $universe]);
             $patterns = $this->call('patterns:detect', ['--universe' => $universe]);
+            $this->runMarketContext();
             // The Screener and the alerts read the precomputed rows, so they are
             // rebuilt from whatever the stages above stored.
             $screener = $this->call('screener:refresh');
@@ -104,6 +117,41 @@ class RunIngestionPipeline extends Command
             return self::SUCCESS;
         } finally {
             $lock->release();
+        }
+    }
+
+    /**
+     * Ingest the Market Context universe, compute its indicators and the
+     * snapshots. Every stage is attempted; failures never reach the exit code.
+     */
+    private function runMarketContext(): void
+    {
+        $slug = (string) config('market_context.universe');
+
+        if (! Universe::query()->where('slug', $slug)->exists()) {
+            $this->info('Market context universe not seeded; skipped.');
+
+            return;
+        }
+
+        $stages = [
+            'ingestion:run' => ['--universe' => $slug],
+            'indicators:compute' => ['--universe' => $slug],
+            'market-context:compute' => [],
+        ];
+
+        foreach ($stages as $stage => $arguments) {
+            try {
+                $exit = $this->call($stage, $arguments);
+            } catch (Throwable $exception) {
+                report($exception);
+                $exit = self::FAILURE;
+            }
+
+            if ($exit !== self::SUCCESS) {
+                $this->warn("Market context stage {$stage} failed (exit {$exit}); the pipeline continues.");
+                Log::warning('Market context stage failed.', ['stage' => $stage, 'exit' => $exit]);
+            }
         }
     }
 }

@@ -15,6 +15,7 @@
 return [
     'instrument_not_found' => 'Instrumento no encontrado.',
     'instrument_unknown' => 'Instrumento desconocido.',
+    'instrument_not_followable' => 'Este instrumento no se puede añadir a tu watchlist.',
     'not_in_watchlist' => 'El instrumento no está en tu watchlist.',
     'screener_not_found' => 'Screener no encontrado.',
     'universe_not_found' => 'Universo no encontrado.',

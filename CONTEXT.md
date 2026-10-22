@@ -14,11 +14,11 @@ Daily closing data. Chartiko works exclusively with end-of-day values, never int
 
 ### Instrument (Ticker / Symbol)
 
-A listed security identified by a ticker (e.g. `NVDA`). Carries company name, sector and exchange.
+A listed security identified by a ticker (e.g. `NVDA`). Carries company name, sector and exchange. An Instrument is a **stock** (a listed company, the default) or an **ETF** (an exchange-traded fund of the Market Context universe: SPY and the sector ETFs). ETFs have a chart but never appear in the Screener, the Watchlist, alerts, the Company Card, Fundamentals or the forecast.
 
 ### Universe
 
-A named, curated set of Instruments that a Screener runs against. The first real Universe is the **S&P 500**. Other universes (NASDAQ 100, Russell 2000, IBEX 35) are future scope.
+A named, curated set of Instruments that a Screener runs against. The first real Universe is the **S&P 500**. Other universes (NASDAQ 100, Russell 2000, IBEX 35) are future scope. The `market-context` Universe (SPY and the 11 SPDR sector ETFs) is ingested daily for Market Context; it is not a Screener universe.
 
 ### Daily Bar (OHLCV)
 
@@ -91,6 +91,22 @@ A sheet for one Instrument with two clearly separated parts: the key financial m
 ### Fundamentals (Fundamentales SEC)
 
 Company Fundamentals: per-Instrument financial inputs (revenue, operating income, D&A, EPS, debt, cash, equity, shares, dividends) computed by Chartiko from the company's own 10-K/10-Q filings in SEC EDGAR, with the period they refer to (trailing twelve months, fiscal year or balance-sheet date). Ratios that use a price (P/E, market cap, dividend yield) combine them with our latest close at read time. Refreshed by a daily command separate from the EOD pipeline; a newer filing not yet in SEC data is shown as pending. Not used by the Screener or alerts.
+
+### Market Context (Contexto de mercado)
+
+The daily set of sector, Breadth and macro readings around the market, each with its own date. Descriptive only: never a forecast, a target or advice.
+
+### Market Regime (Entorno de mercado)
+
+A rule-based label (favourable / neutral / adverse) computed from Market Context components, with its reasons visible. It is descriptive, never a forecast or advice.
+
+### Breadth (Amplitud)
+
+The share of the S&P 500 Universe that meets a condition on a session (for example, close above its SMA200), plus counts such as new highs/lows and advancers/decliners. A **sector Breadth** applies the same condition to the stocks of one sector.
+
+### Macro Series
+
+A public time series fetched from FRED and stored with its own dates (Treasury yields, curve spreads, policy rates, liquidity, leading data).
 
 ### Admin (Operator)
 

@@ -2,8 +2,8 @@
 
 ## Core Concepts
 
-- **Instrument (Ticker):** a listed security (`NVDA`), with company, sector and exchange.
-- **Universe:** a named set of Instruments a Screener runs against. First real Universe: S&P 500.
+- **Instrument (Ticker):** a listed security (`NVDA`), with company, sector, exchange and a **kind**: `stock` (default) or `etf` (Market Context ETFs; chart only, never in stock features).
+- **Universe:** a named set of Instruments a Screener runs against. First real Universe: S&P 500. The `market-context` Universe holds SPY and the 11 SPDR sector ETFs and is not a Screener universe.
 - **Daily Bar (OHLCV):** one trading day for one Instrument. Stored per Instrument and date.
 - **Indicator Snapshot:** computed indicators for an Instrument on a given Daily Bar (SMA/EMA, RSI, MACD, ADX, Bollinger, RVOL...).
 - **Signal:** deterministic condition derived from Indicators (e.g. Golden Cross, Breakout with RVOL). Belongs to an Instrument and a Daily Bar.
@@ -16,6 +16,8 @@
 - **Notification:** what an Alert produces when it finds additions; owned by the user, kept 90 days.
 - **Company Card (Ficha IA):** the AI-generated, unverified part of the company sheet for one Instrument (sector/industry, description, qualitative 3-month outlook grounded on Company Fundamentals; no figures of its own since `company-card-v2`). Shared system data per Instrument, language and schema version; no owner; remembers the SEC filing it was grounded on.
 - **Company Fundamentals:** verified financial inputs for one Instrument computed from its SEC 10-K/10-Q filings (EDGAR companyfacts), with provenance and the latest/pending filing; one row per Instrument, rebuilt by `fundamentals:refresh`. Metrics that need a price are derived at read time from our latest close. Each attempted generation leaves a Company Card Generation log row (requesting account, status, token counts; no text), kept 90 days.
+- **Sector Snapshot:** one sector ETF's readings on one session: returns over 5/20/60 sessions, relative strength vs SPY (20/60), rank by 60-session relative strength, trend (uptrend / downtrend / mixed) and sector Breadth (% of the sector's S&P 500 stocks above their SMA200). Derived, rebuilt by `market-context:compute`.
+- **Breadth Snapshot:** the S&P 500 Universe's Breadth on one session: members with data, % above SMA50/SMA200, new 52-week highs/lows, advancers/decliners and SPY's trend. Derived, rebuilt by `market-context:compute`.
 - **User:** Visitor (anonymous), Registered User, or Admin.
 
 ## Relationships
@@ -28,6 +30,7 @@
 - An **Ingestion Run** processes a whole **Universe** and produces Daily Bars, Snapshots and Signals.
 - An **Instrument** has many **Company Cards**, at most one per language and schema version.
 - An **Instrument** has at most one **Company Fundamentals** row; Instruments of one company (GOOG/GOOGL) share the same CIK and figures.
+- A sector **ETF** has one **Sector Snapshot** per session; it maps to the S&P 500 stocks of the same GICS sector. A **Universe** (the main one) has one **Breadth Snapshot** per session.
 
 ## States and Lifecycles
 

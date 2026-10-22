@@ -116,6 +116,7 @@ class InstrumentDetailApiTest extends TestCase
             ->assertJsonPath('instrument.sector', 'Information Technology')
             ->assertJsonPath('instrument.exchange', 'NASDAQ')
             ->assertJsonPath('instrument.active', true)
+            ->assertJsonPath('instrument.kind', 'stock')
             ->assertJsonCount(3, 'bars')
             ->assertJsonPath('bars.0.date', '2026-09-01')
             ->assertJsonPath('bars.1.date', '2026-09-02')
@@ -336,7 +337,7 @@ class InstrumentDetailApiTest extends TestCase
         );
 
         $this->assertSame(
-            ['ticker', 'company', 'sector', 'exchange', 'active'],
+            ['ticker', 'company', 'sector', 'exchange', 'active', 'kind'],
             array_keys($payload['instrument']),
         );
 

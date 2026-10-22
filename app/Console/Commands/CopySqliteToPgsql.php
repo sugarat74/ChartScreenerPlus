@@ -76,6 +76,10 @@ class CopySqliteToPgsql extends Command
         'ai_screener_queries',
         // Derived from SEC filings, rebuilt by `fundamentals:refresh`.
         'company_fundamentals',
+        // Market Context snapshots: derived, rebuilt by `market-context:compute`;
+        // they postdate the cut-over.
+        'market_sector_snapshots',
+        'market_breadth_snapshots',
     ];
 
     private const CHUNK = 500;

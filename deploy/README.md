@@ -50,6 +50,24 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    lanzas a mano `indicators:compute`, `signals:detect` o `patterns:detect`, ejecuta después
    `php artisan screener:refresh`. Tras un rollback manual (cambiar `current` sin `deploy.sh`), ejecuta
    también `php artisan screener:refresh`; una release anterior a `screener-precomputed` ignora la tabla.
+7. Contexto de mercado (`market-context-sectors`): tras `migrate`, cada despliegue ejecuta
+   `php artisan db:seed --class=MarketContextUniverseSeeder --force` (sin red e idempotente: universo
+   `market-context` con SPY y los 11 ETF sectoriales SPDR, `kind = etf`). A partir de ahí,
+   `ingestion:pipeline` ingiere esos ETF, calcula sus indicadores y ejecuta `market-context:compute`
+   (las 5 últimas sesiones) antes de `screener:refresh`; un fallo de ese bloque se registra pero no cambia
+   el código de salida ni salta el Screener ni las alertas. No ejecutes nunca
+   `ingestion:pipeline --universe=market-context`: correría señales y patrones sobre los ETF; para ese
+   universo usa los comandos sueltos de abajo. **Una sola vez** tras el primer despliegue,
+   rellena al menos un año de historia (como `deploy`, en `current`):
+
+   ```bash
+   php artisan ingestion:run --universe=market-context
+   php artisan indicators:compute --universe=market-context
+   php artisan market-context:compute --from=$(date -d '1 year ago' +%F)
+   ```
+
+   Las fechas más antiguas del relleno pueden tener `new_highs`/`new_lows` nulos (exigen 251 sesiones
+   previas). Los ETF salen de la misma fuente no oficial que las acciones (mismo riesgo de licencia).
 
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno

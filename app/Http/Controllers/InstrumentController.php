@@ -127,6 +127,9 @@ class InstrumentController extends Controller
             'sector' => $instrument->sector,
             'exchange' => $instrument->exchange,
             'active' => $instrument->active,
+            // Additive: `stock` or `etf` (Market Context); the SPA hides the
+            // stock-only panels for an ETF.
+            'kind' => $instrument->kind ?? Instrument::KIND_STOCK,
         ];
     }
 

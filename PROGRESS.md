@@ -1,5 +1,30 @@
 # Progress Log
 
+## Planned: options put/call ratio (`options-put-call`, not started) — 2026-10-22
+
+- User request: "En la parte macro estudia incluir ratio put call de las opciones", then "si, apúntalo en la spec y añade la feature".
+- Added as Feature 6 of `docs/specs/market-context.md` and appended to `feature_list.json` (depends on `market-context-ui`). Scope paragraph in `AGENTS.md`, risk entry in `docs/risks-and-open-questions.md` and idea 15 of the differentiators doc updated.
+- Design: Cboe equity put/call ratio (index and total for reference), 10-session average and 1-year percentile, contrarian `options_sentiment` regime component that only scores at the 90th/10th percentile extremes. Not on FRED.
+- Ships disabled (`PUT_CALL_ENABLED=false`); production needs written permission from Cboe or a licensed source (OCC report as fallback).
+- No code changed; no verification run (docs and planning only).
+
+## Sector ETFs and market breadth (`market-context-sectors`, accepted) — 2026-10-22
+
+- Feature 1 of the Market Context plan; spec `docs/specs/market-context-sectors.md`. Accepted by the independent validator in round 2.
+- What it does:
+  - `instruments.kind` (`stock`/`etf`). `MarketContextUniverseSeeder` adds the `market-context` universe: SPY and the 11 SPDR sector ETFs. It runs from `DatabaseSeeder` and on every deploy.
+  - `market-context:compute {--date=} {--from=}` fills `market_sector_snapshots` and `market_breadth_snapshots` (returns, relative strength vs SPY, rank, trend, sector and S&P 500 breadth). By default it recomputes the last 5 sessions.
+  - `ingestion:pipeline` ingests the ETFs, computes their indicators and runs the compute between `patterns:detect` and `screener:refresh`. A failure is logged only: the exit code, the Screener refresh and the alerts are unaffected. An unseeded universe skips the block.
+  - ETFs never reach screener rows, the Watchlist (422), alerts, Company Card, fundamentals or forecast (404). The chart payload gains `kind` and the SPA hides the stock-only panels for ETFs.
+- Tests: 27 new or changed Laravel tests and 3 Vitest tests (details in `feature_list.json`).
+- Real-data smoke on a scratch copy of an older dev DB: the one-year backfill took 2.7 s (252 sessions); the hand check of XLK `ret_20` and trend matched.
+- `.\init.ps1` exit 0: Laravel 590 passed / 6 skipped, Vitest 223, SPA lint + build, engine 101.
+- **Incident (local only):** while checking the new migrations, the implementer ran `php artisan migrate:fresh --env=testing` without a `.env.testing`, which reset the **local dev database** `database/database.sqlite` (now migrated but empty). Production and the VPS were not touched. The closest copy is `.claude/worktrees/agent-a1dc2bde67b7206da/database/database.sqlite` (2026-10-16 snapshot: 503 instruments, 246,304 bars, bars up to 2026-10-02). Restoring it was blocked by the permission system, so the owner decides: copy it over `database/database.sqlite` and run `php artisan migrate`, or re-seed and re-ingest. Anything added to the dev DB after 2026-10-16 is lost.
+- Validator round 1: `revise`. The two new uniqueness tests in `MarketDataSchemaTest` kept querying after a failed insert, which aborts the transaction on PostgreSQL. Fixed: MarketDataSchemaTest uniqueness tests use savepoints (PostgreSQL-safe). `deploy/README.md` now says never to run `ingestion:pipeline --universe=market-context`. No production code changed. Rerun: `php artisan test --filter=MarketDataSchemaTest` 7 passed; `.\init.ps1` exit 0 (Laravel 590 passed / 6 skipped, Vitest 223, SPA lint + build, engine 101).
+- Validator round 2: `accept` (`.\init.ps1` exit 0; savepoint fix reviewed; dev DB untouched). PostgreSQL could not run locally, so the CI `test-pgsql` job on the PR is the confirming check.
+- PR #55 (stacked on #54): CI green on SQLite and PostgreSQL (`test-pgsql` confirms the savepoint fix). The same run exposed that #54 had left `alert_email_digests` out of the `db:copy-sqlite-to-pgsql` skip list; fixed on #54's branch.
+- Next: after deploy, run the one-time backfill in `deploy/README.md`. Next feature: `macro-series-fred` (planner).
+
 ## Planned: Market Context panel (5 features, not started) — 2026-10-22
 
 - User request: "creame en docs una documentacion ampliada de esta funcionalidad, solo los de viabilidad facil y creame una features o varias si es necesario pra ir implementando".

@@ -83,7 +83,7 @@ Notas técnicas:
 
 | # | Idea | Qué es | Esfuerzo |
 |---|---|---|---|
-| 15 | **Panel de contexto de mercado** | Página `/mercado` dentro de Chartiko (no como app aparte): semáforo de entorno de mercado con reglas visibles, sectores (ETFs SPDR) por fuerza relativa, amplitud del S&P 500, tipos y curva, liquidez neta de la Fed, bancos centrales y datos adelantados públicos (FRED). Se conecta con los patrones: cada patrón muestra la tendencia de su sector y el entorno. **Planificada** como 5 features; spec: `docs/specs/market-context.md`. Descartado por coste o licencia: sentimiento en X, LEI de Conference Board, ISM, FedWatch, déficits. | M (5 features, ~5–7 semanas en total) |
+| 15 | **Panel de contexto de mercado** | Página `/mercado` dentro de Chartiko (no como app aparte): semáforo de entorno de mercado con reglas visibles, sectores (ETFs SPDR) por fuerza relativa, amplitud del S&P 500, tipos y curva, liquidez neta de la Fed, bancos centrales, datos adelantados públicos (FRED) y ratio put/call de opciones (Cboe, pendiente de permiso). Se conecta con los patrones: cada patrón muestra la tendencia de su sector y el entorno. **Planificada** como 6 features; spec: `docs/specs/market-context.md`. Descartado por coste o licencia: sentimiento en X, LEI de Conference Board, ISM, FedWatch, déficits. | M (6 features, ~6–8 semanas en total) |
 
 ## Priorización propuesta
 

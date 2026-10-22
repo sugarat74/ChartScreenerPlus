@@ -35,6 +35,7 @@ class InstrumentFactory extends Factory
             ]),
             'exchange' => fake()->randomElement(['NYSE', 'NASDAQ']),
             'active' => true,
+            'kind' => Instrument::KIND_STOCK,
         ];
     }
 
@@ -45,6 +46,17 @@ class InstrumentFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'active' => false,
+        ]);
+    }
+
+    /**
+     * A Market Context ETF (no stock features).
+     */
+    public function etf(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'kind' => Instrument::KIND_ETF,
+            'exchange' => 'NYSE Arca',
         ]);
     }
 }

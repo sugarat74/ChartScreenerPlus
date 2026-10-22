@@ -56,14 +56,14 @@ class FundamentalsRefresher
                 $wanted[] = str_replace('-', '.', $ticker);
             }
 
-            return Instrument::query()->whereIn('ticker', array_unique($wanted))->orderBy('ticker')->get();
+            return Instrument::query()->stocks()->whereIn('ticker', array_unique($wanted))->orderBy('ticker')->get();
         }
 
         $universe = Universe::query()->where('slug', (string) config('ingestion.universe'))->first();
 
         return $universe === null
             ? new Collection
-            : $universe->instruments()->where('active', true)->orderBy('ticker')->get();
+            : $universe->instruments()->stocks()->where('active', true)->orderBy('ticker')->get();
     }
 
     /**

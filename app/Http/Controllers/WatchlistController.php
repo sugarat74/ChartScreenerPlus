@@ -57,6 +57,14 @@ class WatchlistController extends Controller
             ]);
         }
 
+        // Market Context ETFs have a chart but are not followable: the
+        // Watchlist feeds alerts, which are stock-only.
+        if ($instrument->isEtf()) {
+            throw ValidationException::withMessages([
+                'ticker' => __('messages.instrument_not_followable'),
+            ]);
+        }
+
         $attached = $request->user()->watchlist()->syncWithoutDetaching([$instrument->id]);
 
         return response()->json(

@@ -23,6 +23,12 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST** write schema/persistence tests with `RefreshDatabase` against the in-memory SQLite connection configured in `phpunit.xml`. Reason: tests stay isolated and need no local DB file.
 - Market-data Eloquent models **MUST** follow the Laravel 13 style: `#[Fillable([...])]` attributes, a `casts()` method, `HasFactory`, and the relationships defined in `docs/domain-model.md`. Reason: keeps Eloquent code consistent with `app/Models/User.php` and avoids legacy `$fillable` arrays.
 
+## Market Context
+
+- ETFs (`instruments.kind = etf`, the `market-context` universe) **MUST NOT** reach screener rows or Screener results, the Watchlist, alerts (as-of date and watchlist states), the Company Card, fundamentals or the forecast; new stock features **MUST** filter with `Instrument::stocks()` / `kind = stock`. Reason: ETFs get bars and indicators but no signals, patterns or SEC filings, and `ScreenerRowBuilder` is not universe-scoped.
+- Market Context stages in `ingestion:pipeline` **MUST NOT** change the pipeline exit code or gate later stages (Screener refresh, alerts); failures are printed and logged only. Reason: a sector/breadth reading is optional context, never a reason to skip the stock pipeline or the alerts (umbrella decision 5).
+- `market_sector_snapshots` and `market_breadth_snapshots` are derived data computed **only** in Laravel (`market-context:compute`) from `daily_bars` and `indicator_snapshots`; they **MUST NOT** be written elsewhere or by the engine. Reason: one rule set, reproducible and idempotent.
+
 ## Dataset And Seeding
 
 - The S&P 500 constituent dataset **MUST** live at `database/data/sp500.csv` with the header `ticker,company,sector,exchange` (UTF-8) and one row per constituent. Reason: a committed dataset keeps the universe reproducible without an external list at runtime.

@@ -58,9 +58,12 @@ class CompanyCardController extends Controller
         }
     }
 
+    /**
+     * The stock Instrument for `$ticker`; an ETF has no Company Card (404).
+     */
     private function instrument(string $ticker): ?Instrument
     {
-        return Instrument::query()->where('ticker', strtoupper(trim($ticker)))->first();
+        return Instrument::query()->stocks()->where('ticker', strtoupper(trim($ticker)))->first();
     }
 
     private function notFound(): JsonResponse

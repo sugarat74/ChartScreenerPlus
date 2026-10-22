@@ -36,11 +36,15 @@ class AlertEvaluator
     public function __construct(private readonly CandidateQuery $candidates) {}
 
     /**
-     * The as-of date of the stored data (`Y-m-d`), or null when there is none.
+     * The as-of date of the stored stock data (`Y-m-d`), or null when there is
+     * none. Market Context ETF bars never move it.
      */
     public function asOf(): ?string
     {
-        $latest = DB::table('daily_bars')->max('date');
+        $latest = DB::table('daily_bars')
+            ->join('instruments', 'instruments.id', '=', 'daily_bars.instrument_id')
+            ->where('instruments.kind', Instrument::KIND_STOCK)
+            ->max('daily_bars.date');
 
         return $latest === null ? null : substr((string) $latest, 0, 10);
     }
@@ -123,7 +127,7 @@ class AlertEvaluator
     private function watchlistState(Alert $alert): array
     {
         $types = is_array($alert->signal_types) ? $alert->signal_types : [];
-        $instrumentIds = $alert->user->watchlist()->pluck('instruments.id');
+        $instrumentIds = $alert->user->watchlist()->where('instruments.kind', Instrument::KIND_STOCK)->pluck('instruments.id');
 
         if ($types === [] || $instrumentIds->isEmpty()) {
             return ['signals' => []];
@@ -230,7 +234,7 @@ class AlertEvaluator
     {
         $chosen = is_array($alert->pattern_types) ? $alert->pattern_types : [];
         $types = array_values(array_filter(ChartPattern::TYPES, fn (string $type): bool => in_array($type, $chosen, true)));
-        $instrumentIds = $alert->user->watchlist()->pluck('instruments.id');
+        $instrumentIds = $alert->user->watchlist()->where('instruments.kind', Instrument::KIND_STOCK)->pluck('instruments.id');
 
         if ($types === [] || $instrumentIds->isEmpty()) {
             return ['patterns' => []];
