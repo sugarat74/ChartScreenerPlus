@@ -10,7 +10,7 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\MessageConverter;
 use Throwable;
 
-/** Send Chartiko's transactional mail through Brevo without an SMTP credential. */
+/** Send plain-text transactional mail through Brevo without an SMTP credential. */
 final class BrevoTransport extends AbstractTransport
 {
     public function __construct(private readonly string $apiKey)
@@ -26,12 +26,15 @@ final class BrevoTransport extends AbstractTransport
             throw new TransportException('Brevo transport does not support attachments.');
         }
 
+        if (!$email->getTextBody()) {
+            throw new TransportException('Brevo transport requires a plain-text body.');
+        }
+
         $from = $email->getFrom()[0] ?? $message->getEnvelope()->getSender();
         $payload = [
             'sender' => $this->address($from),
             'to' => array_map($this->address(...), $email->getTo()),
             'subject' => $email->getSubject(),
-            'htmlContent' => $email->getHtmlBody(),
             'textContent' => $email->getTextBody(),
         ];
 

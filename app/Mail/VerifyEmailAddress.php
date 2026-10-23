@@ -15,7 +15,8 @@ use Throwable;
  * The email that confirms a new account's address
  * (docs/specs/auth-email-verification.md, D6).
  *
- * Queued, HTML + plain text, in the locale of the request that sent it. It
+ * Queued, HTML + plain text (Brevo sends the text part only), in the locale
+ * of the request that sent it. It
  * carries no user-supplied text (not even the name), no images, no tracking
  * and no List-Unsubscribe header (transactional, not list mail). The signed
  * URL is built at request time, so its 24 h run from "create" or "resend".

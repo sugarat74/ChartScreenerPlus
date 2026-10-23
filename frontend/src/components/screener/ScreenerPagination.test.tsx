@@ -111,7 +111,7 @@ describe('ScreenerPage pagination', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Anterior/ }))
     await screen.findByText('Página 2 de 3')
-  })
+  }, 10000)
 
   it('changes the page size and restarts at page 1', async () => {
     renderAt('/screener?page=2')

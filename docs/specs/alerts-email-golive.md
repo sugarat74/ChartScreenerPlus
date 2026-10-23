@@ -30,10 +30,16 @@ supersedes the earlier Bird and SMTP plans for this feature.
 
 ## Transport contract
 
-- Laravel's `brevo` mailer converts the existing HTML/text mailables to
+- Laravel's `brevo` mailer sends only the text part of existing mailables to
   `POST /v3/smtp/email`, sends `contactPixelTrackingConsent=false` for every
   recipient and forwards the digest's `List-Unsubscribe` and
   `List-Unsubscribe-Post` headers.
+- A live Brevo HTML test on 2026-10-23 rewrote both Chartiko links to a
+  `sendibt2.com/tr/cl/` tracking host despite pixel consent `false`.
+  A text-only test preserved the direct Chartiko URL and showed no tracking
+  domain or image in Brevo's stored copy. Therefore production Brevo mail
+  must remain text-only. If Brevo changes that behavior, stop sending until
+  the privacy promise has been rechecked.
 - It rejects attachments, which neither current mail flow uses. It never
   includes the provider response body, email addresses or signed links in a
   transport error. A non-201 result fails the queued job.
@@ -49,7 +55,7 @@ supersedes the earlier Bird and SMTP plans for this feature.
 
 ## Acceptance and verification
 
-1. Offline transport tests cover the payload, the unsubscribe headers,
+1. Offline transport tests cover the text-only payload, unsubscribe headers,
    pixel consent and a redacted failure. The deploy script's missing-key,
    installed-key and bad-key cases are verified. `./init.ps1` passes.
 2. Production stays dormant until a release contains the transport. Install
@@ -58,9 +64,10 @@ supersedes the earlier Bird and SMTP plans for this feature.
 3. Run `php artisan mail:test` to the owner's address. Brevo must report
    delivery; inspect received headers for SPF, DKIM and DMARC and the body
    for direct links without a tracking pixel.
-4. Review Brevo's transactional tracking configuration and DPA. The API
-   payload opts each recipient out of pixel tracking; the received message
-   must confirm that links are not rewritten.
+4. Review Brevo's DPA and transactional tracking configuration. The API
+   payload opts each recipient out of pixel tracking, but that did not stop
+   HTML link rewriting. The received text-only message must confirm direct
+   links and no HTML/pixel part.
 5. Set both flags true only after the test above, bump `config/legal.php`
    `updated_at`, rebuild config and restart the queue/FPM. Verify `/api/legal`
    names Brevo / UE. Register a throwaway account and test confirmation,

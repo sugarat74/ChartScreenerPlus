@@ -1571,8 +1571,12 @@
       "Flags on only after delivery and tracking checks: /api/legal names Brevo / UE for account_email and email_digest; privacy es/en no longer says alert emails are not sent; the digest is unavailable without a delivering transport",
       "Throwaway account: confirmation email delivered, link verifies, resend works, account deleted; owner digest opt-in delivers one email with List-Unsubscribe headers and a working unsubscribe; no address in Laravel logs, no failed jobs; .\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Owner changed Bird to Brevo on 2026-10-23 and supplied API and Cloudflare credentials. Spec: docs/specs/alerts-email-golive.md. Brevo uses the transactional HTTP API, not SMTP; the supplied MCP token is not used by the application. DNS and Brevo domain authentication completed; direct API test delivered. Laravel transport, deploy script and tests are in progress. Production flags remain off pending release, live application test and tracking/header review."
+    "evidence": [
+      "2026-10-23 Brevo domain chartiko.com authenticated (code, both DKIM and DMARC true); Cloudflare Bird records retired and MX/SPF unchanged; direct API and Laravel mail:test events delivered.",
+      "2026-10-23 Brevo stored HTML test had sendibt2.com/tr/cl tracking links despite consent=false; text-only test preserved direct chartiko.com URL with no image/tracking domain. Transport changed to text-only.",
+      "Follow-up ./init.ps1 exit 0: Laravel 842 passed / 6 skipped, Vitest 346/43, SPA lint/build, engine 101; focused Brevo/command tests 10 passed."
+    ],
+    "notes": "Owner changed Bird to Brevo on 2026-10-23 and supplied API and Cloudflare credentials. Spec: docs/specs/alerts-email-golive.md. Brevo uses the transactional HTTP API, not SMTP; the supplied MCP token is not used by the application. DNS and Brevo domain authentication completed; direct API and local Laravel tests delivered. PR 61 merged with flags off. A live HTML email had tracked/replaced links despite contactPixelTrackingConsent=false; a text-only email preserved the direct URL with no image or tracking domain in Brevo's stored copy. Follow-up fix makes the transport text-only before go-live. Production flags remain off pending deployment and final header/DPA checks."
   },
   {
     "id": "market-context-sectors",
