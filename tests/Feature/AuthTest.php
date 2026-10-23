@@ -50,6 +50,37 @@ class AuthTest extends TestCase
         $this->assertArrayNotHasKey('remember_token', $response->json('user'));
     }
 
+    public function test_registration_while_verification_is_dormant_stamps_the_account_as_verified(): void
+    {
+        $this->postJson('/api/register', [
+            'name' => 'Ada Lovelace',
+            'email' => 'ada@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('user.email_verification_pending', false);
+
+        $this->assertNotNull(User::query()->where('email', 'ada@example.com')->sole()->email_verified_at);
+    }
+
+    public function test_registration_is_limited_to_ten_attempts_per_hour_per_ip(): void
+    {
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson('/api/register', ['name' => 'X', 'email' => 'not-an-email', 'password' => 'x'])
+                ->assertUnprocessable();
+        }
+
+        $this->postJson('/api/register', [
+            'name' => 'Ada Lovelace',
+            'email' => 'ada@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ])->assertTooManyRequests();
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
     public function test_registration_keeps_the_session_for_follow_up_requests(): void
     {
         $this->postJson('/api/register', [

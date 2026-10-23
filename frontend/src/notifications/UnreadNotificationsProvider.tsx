@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
+import { useEmailVerificationPending } from '../auth/useEmailVerificationPending.ts'
 import { notificationsApi } from '../lib/api.ts'
 import { UnreadNotificationsContext } from './context.ts'
 
@@ -16,7 +17,10 @@ import { UnreadNotificationsContext } from './context.ts'
 export function UnreadNotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const { pathname } = useLocation()
-  const userId = user?.id ?? null
+  // An account that still has to confirm its email (auth-email-verification)
+  // has no access to notifications: it is treated like a Visitor here.
+  const pending = useEmailVerificationPending()
+  const userId = pending ? null : (user?.id ?? null)
   const [count, setStoredCount] = useState(0)
   const [reloadToken, setReloadToken] = useState(0)
   // Bumped whenever the count is set locally, so an older in-flight fetch

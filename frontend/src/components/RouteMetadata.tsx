@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router'
 import { useI18n } from '../i18n/useI18n.ts'
 import type { MessageKey } from '../i18n/translate.ts'
+import { VERIFY_EMAIL_ROUTE } from '../nav.ts'
 
 const ROUTE_METADATA: Record<string, { title: MessageKey; description: MessageKey }> = {
   '/screener': { title: 'meta.screenerTitle', description: 'meta.screenerDescription' },
@@ -17,6 +18,12 @@ const ROUTE_METADATA: Record<string, { title: MessageKey; description: MessageKe
   '/privacidad': { title: 'meta.privacyTitle', description: 'meta.privacyDescription' },
   '/aviso-legal': { title: 'meta.legalNoticeTitle', description: 'meta.legalNoticeDescription' },
   '/cookies': { title: 'meta.cookiesTitle', description: 'meta.cookiesDescription' },
+}
+
+/** The email confirmation page (auth-email-verification), matched by prefix; never indexed. */
+const VERIFY_EMAIL_METADATA: { title: MessageKey; description: MessageKey } = {
+  title: 'meta.verifyEmailTitle',
+  description: 'meta.verifyEmailDescription',
 }
 
 /**
@@ -35,7 +42,13 @@ export default function RouteMetadata() {
     const isHome = isHomePath && search === ''
     const tickerMatch = pathname.match(/^\/instruments\/([a-z0-9.-]+)$/i)
     const ticker = tickerMatch ? tickerMatch[1].toUpperCase() : null
-    const keys = ROUTE_METADATA[pathname] ?? (pathname.startsWith('/admin/') ? ROUTE_METADATA['/admin'] : undefined)
+    const keys =
+      ROUTE_METADATA[pathname] ??
+      (pathname.startsWith('/admin/')
+        ? ROUTE_METADATA['/admin']
+        : pathname.startsWith(`${VERIFY_EMAIL_ROUTE}/`)
+          ? VERIFY_EMAIL_METADATA
+          : undefined)
     const routeMetadata = keys
       ? { title: t(keys.title), description: t(keys.description) }
       : ticker !== null

@@ -21,7 +21,7 @@
 - **Macro Series:** one public series of the closed FRED list (code, source, category, frequency, title, units) with its refresh state (last observation date, FRED's last update, last attempt, last success, last error code). Rebuilt by `macro:refresh`.
 - **Macro Observation:** one published value of a Macro Series on its own date, stored as published (no conversion); FRED's missing value is never stored and revisions replace the old value.
 - **Regime Snapshot:** the Market Regime of one session: label (favourable / neutral / adverse / insufficient), score, number of available components, the rules version and each component's status (ok / stale / missing / disabled), score, value and date. Derived, rebuilt by `market-regime:compute`; no text.
-- **User:** Visitor (anonymous), Registered User, or Admin.
+- **User:** Visitor (anonymous), Registered User, or Admin. `users.email_verified_at` means "verified, or created while email verification was not required" (`auth-email-verification`, D2): the release migration backfilled every existing account and registration stamps it while verification is dormant, so only accounts created after the go-live can be pending. A Registered User with a null value while verification is required is **pending email verification** (Admins never are).
 
 ## Relationships
 

@@ -57,6 +57,32 @@ export const NOTIFICATIONS_ROUTE = '/portal/notificaciones'
 export const ACCOUNT_ROUTE = '/portal/cuenta'
 
 /**
+ * The page the confirmation email links to (auth-email-verification):
+ * `/verificar-correo/:userId/:hash?expires=…&signature=…`. It POSTs the link
+ * to the API; a GET of the API never verifies anything.
+ */
+export const VERIFY_EMAIL_ROUTE = '/verificar-correo'
+
+/**
+ * Paths a signed-in account that still has to confirm its email can open
+ * (auth-email-verification, D7): the legal pages, the Account page (export or
+ * delete the account) and the verify page. Every other path shows the
+ * "confirm your email" notice instead (a UI affordance; the API enforces it).
+ */
+export const EMAIL_VERIFICATION_EXEMPT_ROUTES: readonly string[] = [
+  PRIVACY_ROUTE,
+  LEGAL_NOTICE_ROUTE,
+  COOKIES_ROUTE,
+  ACCOUNT_ROUTE,
+]
+
+/** Whether `pathname` stays reachable while the account is pending verification. */
+export function isEmailVerificationExempt(pathname: string): boolean {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname
+  return EMAIL_VERIFICATION_EXEMPT_ROUTES.includes(path) || path.startsWith(`${VERIFY_EMAIL_ROUTE}/`)
+}
+
+/**
  * react-router nested routes must be relative; `NAV_ITEMS`/auth routes store
  * absolute paths for links. Strip the leading slash when declaring a child.
  */

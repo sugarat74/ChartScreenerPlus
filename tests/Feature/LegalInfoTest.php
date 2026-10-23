@@ -183,6 +183,21 @@ class LegalInfoTest extends TestCase
         $this->getJson('/api/legal')->assertOk()->assertHeaderMissing('Set-Cookie');
     }
 
+    public function test_account_email_is_named_only_while_email_verification_is_required(): void
+    {
+        // auth-email-verification: dormant by default.
+        $this->getJson('/api/legal')->assertOk()->assertJsonPath('account_email', null);
+
+        config(['auth.verification.enabled' => true, 'mail.provider' => 'Brevo', 'mail.provider_location' => 'UE (Francia)']);
+        $this->getJson('/api/legal')->assertOk()
+            ->assertJsonPath('account_email.provider', 'Brevo')
+            ->assertJsonPath('account_email.provider_location', 'UE (Francia)');
+
+        // The flag alone, without a provider location, is still dormant.
+        config(['mail.provider_location' => '']);
+        $this->getJson('/api/legal')->assertOk()->assertJsonPath('account_email', null);
+    }
+
     public function test_market_context_follows_the_go_live_flag(): void
     {
         config(['market_context.public' => false]);

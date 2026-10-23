@@ -72,6 +72,31 @@ class MarketContextAccessTest extends TestCase
         $this->assertTrue(Gate::forUser($admin)->allows('view-market-context'));
     }
 
+    public function test_an_account_pending_email_verification_is_denied_even_with_the_flag_on(): void
+    {
+        // auth-email-verification (D4): the ability also answers outside the
+        // `verified` route group (public Screener filters, alerts, capability).
+        config([
+            'market_context.public' => true,
+            'auth.verification.enabled' => true,
+            'mail.provider' => 'Acme Mail',
+            'mail.provider_location' => 'UE (Francia)',
+        ]);
+        $pending = User::factory()->unverified()->create();
+        $pendingAdmin = User::factory()->admin()->unverified()->create();
+
+        $this->assertSame(404, Gate::forUser($pending)->inspect('view-market-context')->status());
+        $this->assertTrue(Gate::forUser($pendingAdmin)->allows('view-market-context'));
+        $this->assertTrue(Gate::forUser(User::factory()->create())->allows('view-market-context'));
+
+        $this->actingAs($pending)->getJson('/api/market-context')
+            ->assertForbidden()
+            ->assertJsonPath('code', 'email_verification.required');
+
+        config(['auth.verification.enabled' => false]);
+        $this->assertTrue(Gate::forUser($pending)->allows('view-market-context'));
+    }
+
     public function test_the_capability_follows_the_ability_in_every_auth_payload(): void
     {
         $this->withHeader('Origin', self::ORIGIN);

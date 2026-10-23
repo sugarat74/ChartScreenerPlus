@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\AuthUserPayload;
+use App\Support\EmailVerification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,16 +33,33 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
+        $verificationRequired = EmailVerification::required();
+
         // Keep the write and the session write atomic so a failed session step
         // can never leave an orphaned user row behind.
-        return DB::transaction(function () use ($request, $validated): JsonResponse {
-            $user = User::create($validated);
+        $user = DB::transaction(function () use ($request, $validated, $verificationRequired): User {
+            $user = new User($validated);
+            // auth-email-verification (D2): while verification is not
+            // required, an account counts as verified from the start, so the
+            // go-live can never lock out accounts created before it.
+            if (! $verificationRequired) {
+                $user->forceFill(['email_verified_at' => now()]);
+            }
+            $user->save();
 
             Auth::guard('web')->login($user);
             $request->session()->regenerate();
 
-            return response()->json(['user' => AuthUserPayload::make($user)], 201);
+            return $user;
         });
+
+        // Only after the commit: the email is queued and must never point at
+        // a rolled-back account. A mail failure never fails registration.
+        if ($verificationRequired) {
+            $user->sendEmailVerificationNotification();
+        }
+
+        return response()->json(['user' => AuthUserPayload::make($user)], 201);
     }
 
     /**

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\Alerts\AlertEmailDigestAvailability;
+use App\Support\EmailVerification;
+use App\Support\OutboundMail;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -60,6 +62,13 @@ class LegalController extends Controller
             'email_digest' => AlertEmailDigestAvailability::available() ? [
                 'provider' => AlertEmailDigestAvailability::provider(),
                 'provider_location' => AlertEmailDigestAvailability::providerLocation(),
+            ] : null,
+            // auth-email-verification: the privacy policy describes the account
+            // emails and names their provider only while they are sent
+            // (auth-password-reset widens this condition).
+            'account_email' => EmailVerification::required() ? [
+                'provider' => OutboundMail::provider(),
+                'provider_location' => OutboundMail::providerLocation(),
             ] : null,
             // market-context-ui: the Market Context go-live switch. The SPA
             // shows the header link and the FRED clauses of the legal notice

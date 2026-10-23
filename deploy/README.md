@@ -319,16 +319,25 @@ El resumen diario por email (`alerts-email-digest`) está **desactivado** por de
    MAIL_PORT=587
    MAIL_USERNAME=…
    MAIL_PASSWORD=…
-   MAIL_FROM_ADDRESS=alertas@chartiko.com
+   MAIL_FROM_ADDRESS=no-reply@chartiko.com
    MAIL_FROM_NAME=Chartiko
-   ALERT_EMAIL_PROVIDER="Nombre del proveedor"
-   ALERT_EMAIL_PROVIDER_LOCATION="UE (Irlanda)"
+   MAIL_REPLY_TO_ADDRESS=contacto@chartiko.com
+   MAIL_PROVIDER="Nombre del proveedor"
+   MAIL_PROVIDER_LOCATION="UE (Irlanda)"
    ALERT_EMAIL_DIGEST_ENABLED=true
    ```
 
-   La función solo se activa con las tres variables `ALERT_EMAIL_*` rellenas. La política de privacidad nombra automáticamente al proveedor y su ubicación desde esas variables.
+   `MAIL_PROVIDER` y `MAIL_PROVIDER_LOCATION` nombran al proveedor para todos los emails (cuenta y alertas); `ALERT_EMAIL_PROVIDER*`, si están vacías, toman esos valores. El resumen solo se activa con el interruptor y el proveedor y su ubicación rellenos. La política de privacidad nombra automáticamente al proveedor y su ubicación desde esas variables.
 4. **Aplicar:** `php artisan config:cache` como `deploy` (con `umask 007`) y reinicia el worker de colas (`systemctl restart alphapulse-queue`). Los emails se envían desde la cola `database`, con 3 intentos.
 5. **Prueba:** activa la casilla con una cuenta propia en el Portal y espera al siguiente `alerts:evaluate` (o ejecútalo a mano). Comprueba la entrega, las cabeceras `List-Unsubscribe` y `List-Unsubscribe-Post`, el enlace de baja y el texto en español e inglés.
 6. **Legal:** sube `updated_at` en `config/legal.php` en el mismo despliegue en que actives la función, porque la política de privacidad cambia en ese momento.
 
 Para desactivarlo, pon `ALERT_EMAIL_DIGEST_ENABLED=false`, ejecuta `config:cache` y reinicia el worker. No se envía nada más y las preferencias de los usuarios se conservan.
+
+### Confirmación del email al registrarse (`auth-email-verification`)
+
+La confirmación del email de las cuentas nuevas se despliega **dormida**: el despliegue normal no cambia nada en el `.env`, la migración marca como verificadas todas las cuentas existentes y, mientras no esté activa, las cuentas nuevas también nacen verificadas, no se envía ningún email y `GET /api/legal` devuelve `account_email: null`.
+
+- **Se activa** en el mismo despliegue que el proveedor real (`alerts-email-golive`), con `AUTH_EMAIL_VERIFICATION_ENABLED=true` además de las variables `MAIL_*` y `MAIL_PROVIDER*` de arriba. Solo surte efecto si `MAIL_PROVIDER` y `MAIL_PROVIDER_LOCATION` están rellenas y `MAIL_MAILER` no es `log` ni `array` (con `log`, las direcciones y los enlaces acabarían en `laravel.log`). Sube `updated_at` en `config/legal.php` en ese despliegue (la política de privacidad describe el email de confirmación), ejecuta `config:cache` y **reinicia `alphapulse-queue`**: los emails de confirmación salen de la cola.
+- **Prueba:** registra una cuenta de prueba, comprueba que solo ve «Confirma tu correo», que llega un email (es/en, sin imágenes ni seguimiento, Reply-To `contacto@`) y que su enlace `https://www.chartiko.com/verificar-correo/…` confirma la cuenta (también en una ventana privada).
+- **Marcha atrás:** `AUTH_EMAIL_VERIFICATION_ENABLED=false`, `config:cache` y reinicia el worker. Las cuentas pendientes pasan a tener acceso completo al momento; no hace falta tocar la base de datos.

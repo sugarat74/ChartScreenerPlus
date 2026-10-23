@@ -64,6 +64,7 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
           const items = section.items ? [...section.items, ...fred] : undefined
           const paragraphs = [
             ...(section.paragraphs ?? []),
+            ...(state.info.account_email ? (section.accountEmail ?? []) : []),
             ...(state.info.email_digest ? (section.emailDigest ?? []) : []),
             ...(section.items ? [] : fred),
           ]
@@ -149,6 +150,7 @@ function placeholderValues(
   fredTermsLabel: string,
 ): Record<string, ReactNode> {
   const owner = info.owner
+  const emailProvider = info.account_email ?? info.email_digest ?? null
   return {
     ...(owner
       ? {
@@ -171,11 +173,13 @@ function placeholderValues(
     // Older deployments omit it; 90 is the configured default.
     aiCardLogDays: info.retention.ai_card_log_days ?? 90,
     aiScreenerLogDays: info.retention.ai_screener_log_days ?? 90,
-    ...(info.email_digest
+    ...(info.email_digest ? { emailDigestDays: info.retention.email_digest_days ?? 90 } : {}),
+    // One sending provider for account emails (auth-email-verification) and
+    // the daily alert email; either may be active on its own.
+    ...(emailProvider
       ? {
-          emailProvider: info.email_digest.provider,
-          emailProviderLocation: info.email_digest.provider_location,
-          emailDigestDays: info.retention.email_digest_days ?? 90,
+          emailProvider: emailProvider.provider,
+          emailProviderLocation: emailProvider.provider_location,
         }
       : {}),
     cookiesLink: (

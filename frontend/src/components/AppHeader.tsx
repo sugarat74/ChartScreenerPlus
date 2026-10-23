@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
+import { useEmailVerificationPending } from '../auth/useEmailVerificationPending.ts'
 import { useMarketContextAccess } from '../auth/useMarketContextAccess.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import { ACCOUNT_ROUTE, DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
@@ -13,6 +14,7 @@ export default function AppHeader() {
   const { user, status, logout } = useAuth()
   const { t } = useI18n()
   const marketAccess = useMarketContextAccess()
+  const verificationPending = useEmailVerificationPending()
   const [signingOut, setSigningOut] = useState(false)
   const isAdmin = user?.role === 'admin'
   // The Market Context link (market-context-patterns): for a session with
@@ -77,8 +79,9 @@ export default function AppHeader() {
             </div>
           ) : user ? (
             <>
-              {/* Only signed-in users have notifications; Visitors never see the bell. */}
-              <NotificationBell />
+              {/* Only signed-in users have notifications; Visitors never see the bell,
+                  nor does an account that still has to confirm its email. */}
+              {verificationPending ? null : <NotificationBell />}
               {/* The name chip opens the Account page (account-self-service). */}
               <Link
                 to={ACCOUNT_ROUTE}

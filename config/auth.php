@@ -114,4 +114,23 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email verification (docs/specs/auth-email-verification.md)
+    |--------------------------------------------------------------------------
+    |
+    | Off by default. Verification is required only when `enabled` is true AND
+    | outbound email is ready (App\Support\OutboundMail::ready(): provider and
+    | location named, and not the log/array mailer in production), so turning
+    | the flag on before a real transport exists changes nothing. The link is
+    | valid for `expire` minutes (24 h, the owner's choice). Rollback: set the
+    | flag to false; pending accounts get full access at once.
+    |
+    */
+
+    'verification' => [
+        'enabled' => (bool) env('AUTH_EMAIL_VERIFICATION_ENABLED', false),
+        'expire' => 1440,
+    ],
+
 ];

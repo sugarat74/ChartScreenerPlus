@@ -71,6 +71,12 @@ export default function RegisterPage() {
         <p className="mt-2 text-sm text-on-surface-variant">
           {t('auth.registerIntro')}
         </p>
+        {/* auth-email-verification: only while account emails are really sent. */}
+        {legal.status === 'ready' && legal.info.account_email ? (
+          <p data-testid="register-verify-hint" className="mt-2 text-sm text-on-surface-variant">
+            {t('auth.registerVerifyHint')}
+          </p>
+        ) : null}
       </div>
 
       <form
