@@ -14,6 +14,7 @@ use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\Admin\ForecastReportController;
 use App\Http\Controllers\Admin\ForecastBacktestController;
 use App\Http\Controllers\InstrumentController;
+use App\Http\Controllers\InstrumentMarketContextController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MarketContextController;
 use App\Http\Controllers\Admin\MarketContextAdminController;
@@ -45,12 +46,6 @@ Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throt
 // Public facts for the legal pages (owner identity once configured, retention
 // figures). Anonymous and throttled; see docs/specs/legal-compliance-eu.md.
 Route::get('/legal', [LegalController::class, 'show'])->middleware('throttle:60,1,legal');
-
-// Market Context (market-context-ui): anonymous and throttled once the owner
-// sets MARKET_CONTEXT_PUBLIC=true; until then `market-context.public` answers a
-// JSON 404 to everyone but Admins (a preview). A release gate, not authorization.
-Route::get('/market-context', [MarketContextController::class, 'show'])
-    ->middleware(['market-context.public', 'throttle:60,1,market-context']);
 
 // Daily alert email unsubscribe (alerts-email-digest): no session, a valid
 // signature over the user id instead (403 otherwise). GET only shows a page
@@ -109,10 +104,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/screeners', [SavedScreenerController::class, 'store']);
     Route::delete('/screeners/{screener}', [SavedScreenerController::class, 'destroy']);
 
-    // Market Context history (market-context-ui): Registered Users only, a
-    // closed metric list (422 otherwise), behind the same release gate.
-    Route::get('/market-context/history', [MarketContextController::class, 'history'])
-        ->middleware(['market-context.public', 'throttle:60,1,market-context-history']);
+    // Market Context (market-context-ui, market-context-patterns): Registered
+    // Users only, through the single `view-market-context` ability (guest 401
+    // from `auth:sanctum`; a user without access gets a JSON 404 while
+    // MARKET_CONTEXT_PUBLIC is off; Admins always, as a preview). The ability
+    // is the paid-plan seam: no route checks the role or the flag itself.
+    Route::middleware('can:view-market-context')->group(function () {
+        Route::get('/market-context', [MarketContextController::class, 'show'])
+            ->middleware('throttle:60,1,market-context');
+        // A closed metric list (422 otherwise).
+        Route::get('/market-context/history', [MarketContextController::class, 'history'])
+            ->middleware('throttle:60,1,market-context-history');
+        // A stock's sector ETF, sector trend and rank and the Market Regime
+        // (404 for an ETF or an unknown ticker).
+        Route::get('/instruments/{ticker}/market-context', [InstrumentMarketContextController::class, 'show'])
+            ->middleware('throttle:60,1,instrument-market-context');
+    });
 });
 
 // Admin-only boundary. `auth:sanctum` runs first (guests -> 401) and `admin`

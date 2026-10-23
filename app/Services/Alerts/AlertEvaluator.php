@@ -9,8 +9,10 @@ use App\Models\Signal;
 use App\Models\Universe;
 use App\Notifications\AlertTriggered;
 use App\Services\Screener\CandidateQuery;
+use App\Services\Screener\ScreenerFilterParser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Evaluates one Alert against the current data (docs/specs/alerts-engine.md).
@@ -58,6 +60,13 @@ class AlertEvaluator
             return self::SKIPPED;
         }
 
+        // A Saved Screener with sector context filters whose owner has lost
+        // Market Context access is skipped, never broadened: no notification
+        // and its state is untouched (market-context-patterns, C6).
+        if ($alert->kind === Alert::KIND_SCREENER && $this->lacksMarketContext($alert)) {
+            return self::SKIPPED;
+        }
+
         $current = match ($alert->kind) {
             Alert::KIND_SCREENER => $this->screenerState($alert),
             Alert::KIND_WATCHLIST => $this->watchlistState($alert),
@@ -96,6 +105,24 @@ class AlertEvaluator
         }
 
         return $items === [] ? self::UNCHANGED : self::NOTIFIED;
+    }
+
+    /**
+     * The Alert's Saved Screener uses sector context filters and its owner is
+     * denied `view-market-context`.
+     */
+    private function lacksMarketContext(Alert $alert): bool
+    {
+        $screener = $alert->savedScreener;
+
+        if ($screener === null) {
+            return false;
+        }
+
+        $filters = CandidateQuery::fromSaved(is_array($screener->filters) ? $screener->filters : []);
+
+        return ScreenerFilterParser::usesMarketContext($filters)
+            && Gate::forUser($alert->user)->denies('view-market-context');
     }
 
     /**

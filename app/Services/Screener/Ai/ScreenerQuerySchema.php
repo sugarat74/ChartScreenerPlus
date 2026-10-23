@@ -6,7 +6,7 @@ use App\Services\Screener\ScreenerFilterParser;
 use Illuminate\Validation\ValidationException;
 
 /**
- * The `screener-query-v1` JSON Schema sent to the provider and the
+ * The `screener-query-v2` JSON Schema sent to the provider and the
  * hand-written validator applied to every answer before it is used.
  *
  * The model can only fill the existing Screener filters (public API names of
@@ -20,7 +20,7 @@ use Illuminate\Validation\ValidationException;
  */
 class ScreenerQuerySchema
 {
-    public const NAME = 'screener_query_v1';
+    public const NAME = 'screener_query_v2';
 
     public const MAX_SIGNALS = 9;
 
@@ -38,7 +38,7 @@ class ScreenerQuerySchema
 
     private const FILTER_KEYS = [
         'signal', 'rsi_min', 'rsi_max', 'min_rvol', 'price_above_sma200',
-        'ma_cross', 'pattern', 'pattern_status', 'sort',
+        'ma_cross', 'pattern', 'pattern_status', 'sort', 'sector_trend', 'sector_rs_rank_max',
     ];
 
     private const KEYS = [...self::FILTER_KEYS, 'unsupported', 'explanation'];
@@ -93,6 +93,15 @@ class ScreenerQuerySchema
                     'enum' => ScreenerFilterParser::SORTS,
                     'description' => 'Ranking order. rvol_desc unless the user asks for another order.',
                 ],
+                'sector_trend' => [
+                    'type' => ['string', 'null'],
+                    'enum' => [...ScreenerFilterParser::SECTOR_TRENDS, null],
+                    'description' => 'Trend of the stock\'s sector ETF: uptrend, mixed, downtrend, or null.',
+                ],
+                'sector_rs_rank_max' => [
+                    'type' => ['integer', 'null'],
+                    'description' => 'Only stocks whose sector is among the N strongest of 11 by relative strength, 1 to 11, or null.',
+                ],
                 'unsupported' => [
                     'type' => 'array',
                     'items' => ['type' => 'string'],
@@ -111,7 +120,7 @@ class ScreenerQuerySchema
      * `ScreenerFilterParser`.
      *
      * @param  array<mixed>  $data
-     * @return array{filters: array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string}, unsupported: list<string>, explanation: string}
+     * @return array{filters: array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int}, unsupported: list<string>, explanation: string}
      *
      * @throws InvalidScreenerQuery
      */
@@ -135,6 +144,8 @@ class ScreenerQuerySchema
             'pattern' => self::enumList($data['pattern'], ScreenerFilterParser::PATTERN_TYPES, self::MAX_PATTERNS),
             'pattern_status' => self::enum($data['pattern_status'], ScreenerFilterParser::PATTERN_STATUSES),
             'sort' => self::enum($data['sort'], ScreenerFilterParser::SORTS),
+            'sector_trend' => self::nullableEnum($data['sector_trend'], ScreenerFilterParser::SECTOR_TRENDS),
+            'sector_rs_rank_max' => self::rank($data['sector_rs_rank_max']),
         ];
 
         try {
@@ -199,6 +210,22 @@ class ScreenerQuerySchema
         }
 
         return (float) $value;
+    }
+
+    /**
+     * `null` or an exact integer from 1 to 11 (a float such as 3.0, a string,
+     * 0 or 12 is invalid).
+     */
+    private static function rank(mixed $value): ?int
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (! is_int($value) || $value < 1 || $value > ScreenerFilterParser::SECTOR_RS_RANK_MAX) {
+            throw new InvalidScreenerQuery('rank');
+        }
+
+        return $value;
     }
 
     private static function boolean(mixed $value): bool

@@ -33,6 +33,13 @@ class RunMarketContextCommand implements ShouldQueue
     {
         $exit = Artisan::call($this->artisanCommand);
 
+        // The Screener's sector context columns come from the Sector
+        // Snapshots, so a successful compute refreshes the rows
+        // (market-context-patterns, C4).
+        if ($this->artisanCommand === 'market-context:compute' && $exit === 0) {
+            Artisan::call('screener:refresh');
+        }
+
         // A path that ran nothing never left `queued` (for example a malformed
         // FRED key): close the Admin's record with the command's exit code.
         if (MarketContextRunLog::storedStatus($this->artisanCommand) === MarketContextRunLog::QUEUED) {

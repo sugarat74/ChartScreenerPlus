@@ -63,5 +63,7 @@ return [
         'parameter_boolean' => 'El parámetro :parameter debe ser booleano (1/true/on/yes o 0/false/off/no).',
         'ma_cross_invalid' => 'El parámetro ma_cross debe ser bullish o bearish.',
         'sort_invalid' => 'El parámetro sort debe ser uno de: :values.',
+        'sector_trend_invalid' => 'El parámetro sector_trend debe ser uptrend, mixed o downtrend.',
+        'sector_rs_rank_max_invalid' => 'El parámetro sector_rs_rank_max debe ser un número entero del 1 al 11.',
     ],
 ];

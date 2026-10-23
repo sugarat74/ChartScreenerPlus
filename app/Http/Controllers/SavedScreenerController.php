@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\ChartPattern;
 use App\Models\SavedScreener;
+use App\Services\Screener\ScreenerFilterParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 /**
@@ -19,10 +21,11 @@ use Illuminate\Validation\Rule;
  * delete is a `404` (no existence leak). All three routes live inside the
  * `auth:sanctum` group, so a guest gets `401`.
  *
- * The stored `filters` JSON is the canonical seven-key definition in API param
+ * The stored `filters` JSON is the canonical eleven-key definition in API param
  * names (the same vocabulary as `GET /api/screener`), including `sort`, so
  * applying a Screener restores the exact filters and ranking. Create validation
- * whitelists the seven keys (`array:`), requires every one (`present`) and
+ * whitelists the eleven keys (`array:`), requires the original seven (`present`; the
+ * pattern and sector context keys are `sometimes` so older clients keep working) and
  * mirrors the frozen screener API's value rules; invalid input is rejected with
  * a `422`, never silently repaired or clamped.
  */
@@ -92,7 +95,7 @@ class SavedScreenerController extends Controller
             ],
             'filters' => [
                 'required',
-                'array:signal,rsi_min,rsi_max,min_rvol,price_above_sma200,ma_cross,pattern,pattern_status,sort',
+                'array:signal,rsi_min,rsi_max,min_rvol,price_above_sma200,ma_cross,pattern,pattern_status,sort,sector_trend,sector_rs_rank_max',
             ],
             'filters.signal' => ['present', 'array'],
             'filters.signal.*' => ['required', 'string', Rule::in(self::SIGNAL_TYPES)],
@@ -105,9 +108,17 @@ class SavedScreenerController extends Controller
             'filters.pattern.*' => ['required', 'string', Rule::in(ChartPattern::TYPES)],
             'filters.pattern_status' => ['sometimes', Rule::in(['any', 'forming', 'confirmed'])],
             'filters.sort' => ['present', Rule::in(self::SORTS)],
+            'filters.sector_trend' => ['sometimes', 'nullable', Rule::in(ScreenerFilterParser::SECTOR_TRENDS)],
+            'filters.sector_rs_rank_max' => ['sometimes', 'nullable', 'integer', 'between:1,'.ScreenerFilterParser::SECTOR_RS_RANK_MAX],
         ]);
 
         $filters = $this->canonicalFilters($validated['filters']);
+
+        // Sector context filters need the Market Context entitlement
+        // (market-context-patterns, C6); nothing is stored without it.
+        if (ScreenerFilterParser::usesMarketContext($filters) && Gate::forUser($request->user())->denies('view-market-context')) {
+            return response()->json(['message' => __('market_context.filter_unavailable')], 403);
+        }
 
         $screener = $request->user()->savedScreeners()->create([
             'name' => $validated['name'],
@@ -171,8 +182,9 @@ class SavedScreenerController extends Controller
     }
 
     /**
-     * The canonical nine-key filter object: signals deduped and ordered, and
-     * the pattern keys (added by chart-patterns-ui) defaulted when absent so
+     * The canonical eleven-key filter object: signals deduped and ordered, and
+     * the pattern keys (chart-patterns-ui) and the sector context keys
+     * (market-context-patterns) defaulted when absent so
      * Saved Screeners created before them keep loading.
      *
      * @param  array<string, mixed>  $filters
@@ -197,6 +209,13 @@ class SavedScreenerController extends Controller
                 ? $filters['pattern_status']
                 : 'any',
             'sort' => $filters['sort'] ?? 'rvol_desc',
+            // market-context-patterns (C6): null on rows saved before them.
+            'sector_trend' => in_array($filters['sector_trend'] ?? null, ScreenerFilterParser::SECTOR_TRENDS, true)
+                ? $filters['sector_trend']
+                : null,
+            'sector_rs_rank_max' => is_numeric($filters['sector_rs_rank_max'] ?? null)
+                ? (int) $filters['sector_rs_rank_max']
+                : null,
         ];
     }
 

@@ -23,6 +23,12 @@ export type AuthUser = {
   name: string
   email: string
   role: UserRole
+  /**
+   * Entitlements computed by the server (market-context-patterns, C1). They
+   * only drive UI: every API checks the same ability itself. Absent on older
+   * deployments (= no access).
+   */
+  capabilities?: { market_context: boolean }
 }
 
 export type RegisterPayload = {
@@ -482,6 +488,13 @@ export type ScreenerFilters = {
   /** OR-combined like `signals`; `patternStatus` narrows them. */
   patterns: ScreenerPatternType[]
   patternStatus: ScreenerPatternStatus
+  /**
+   * Sector context (market-context-patterns): the trend of the stock's sector
+   * ETF and "top N sectors by relative strength". Registered Users with Market
+   * Context access only; the page drops them for everyone else.
+   */
+  sectorTrend: MarketTrend | null
+  sectorRsRankMax: number | null
   sort: ScreenerSort
 }
 
@@ -547,6 +560,12 @@ function screenerQueryString(filters: ScreenerFilters): string {
       params.set('pattern_status', filters.patternStatus)
     }
   }
+  if (filters.sectorTrend !== null) {
+    params.set('sector_trend', filters.sectorTrend)
+  }
+  if (filters.sectorRsRankMax !== null) {
+    params.set('sector_rs_rank_max', String(filters.sectorRsRankMax))
+  }
   params.set('sort', filters.sort)
   return params.toString()
 }
@@ -598,10 +617,10 @@ export type ScreenerInterpretation = {
 }
 
 /**
- * The nine-key canonical definition stored with a Saved Screener. It uses the
+ * The eleven-key canonical definition stored with a Saved Screener. It uses the
  * API's own param names (snake_case) and includes `sort`, so applying a Screener
- * restores the exact filters and ranking the user saved. The pattern keys are
- * optional on read: Screeners saved before them come back with API defaults.
+ * restores the exact filters and ranking the user saved. The pattern and sector
+ * context keys are optional on read: older deployments may omit them.
  */
 export type SavedScreenerFilters = {
   signal: ScreenerSignalType[]
@@ -612,6 +631,8 @@ export type SavedScreenerFilters = {
   ma_cross: ScreenerMaCross | null
   pattern?: ScreenerPatternType[]
   pattern_status?: ScreenerPatternStatus
+  sector_trend?: MarketTrend | null
+  sector_rs_rank_max?: number | null
   sort: ScreenerSort
 }
 
@@ -1341,9 +1362,9 @@ export type MarketHistory = {
 }
 
 /**
- * Market Context API. `latest` is public once the owner turns
- * MARKET_CONTEXT_PUBLIC on (Admins preview it before; others get 404);
- * `history` is for Registered Users only (401 for a guest).
+ * Market Context API (Registered Users only: 401 for a guest). Behind the
+ * `view-market-context` ability: while MARKET_CONTEXT_PUBLIC is off only
+ * Admins get data (a preview); other users get 404.
  */
 export const marketContextApi = {
   async latest(): Promise<MarketContext> {
@@ -1353,6 +1374,34 @@ export const marketContextApi = {
   async history(metric: MarketHistoryMetric, range: MarketHistoryRange): Promise<MarketHistory> {
     const params = new URLSearchParams({ metric, range })
     return request<MarketHistory>(`/api/market-context/history?${params.toString()}`)
+  },
+}
+
+/**
+ * `GET /api/instruments/{ticker}/market-context` (market-context-patterns,
+ * C3): a stock's sector ETF, sector trend and rank and the Market Regime, each
+ * with its own date and stale flag. `sector` is null when the stock has no
+ * sector ETF; `rs_rank` is null when the sector has no relative strength.
+ */
+export type InstrumentMarketContext = {
+  ticker: string
+  as_of: string
+  sector: {
+    date: string
+    stale: boolean
+    etf: string
+    sector_key: SectorKey | null
+    trend: MarketTrend | null
+    rs_rank: number | null
+    rs_rank_of: number
+  } | null
+  regime: { date: string; stale: boolean; regime: MarketRegimeLabel } | null
+}
+
+/** Same access as the Market Context API; 404 for an ETF or unknown ticker. */
+export const instrumentMarketContextApi = {
+  async get(ticker: string, signal?: AbortSignal): Promise<InstrumentMarketContext> {
+    return request<InstrumentMarketContext>(`/api/instruments/${encodeURIComponent(ticker)}/market-context`, { signal })
   },
 }
 

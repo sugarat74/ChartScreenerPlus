@@ -7,10 +7,17 @@
  * issues the request and renders loading / refreshing / empty / error / result
  * states. The signed-in affordances (natural-language input, Saved Screeners)
  * live in their own components and only patch the URL like `update`.
+ *
+ * The sector context filters (market-context-patterns) need Market Context
+ * access: the page reads `useMarketContextAccess` (the bootstrapped session,
+ * no fetch, no redirect) and requests without them for anyone else, with a
+ * notice; the URL keeps them. While access is still loading, a URL with those
+ * keys waits instead of requesting twice.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { useMarketContextAccess } from '../auth/useMarketContextAccess.ts'
 import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
 import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
@@ -30,7 +37,10 @@ import {
   parseScreenerFilters,
   patchScreenerFilters,
   screenerFiltersKey,
+  usesMarketContext,
+  withoutMarketContext,
 } from '../lib/screenerFilters.ts'
+import { LOGIN_ROUTE } from '../nav.ts'
 import {
   parseScreenerPagination,
   patchScreenerPagination,
@@ -66,11 +76,19 @@ export default function ScreenerPage() {
   const { t } = useI18n()
   const tRef = useTranslateRef()
 
+  const access = useMarketContextAccess()
   // The URL is the single source of truth for the filter state.
   const filters = useMemo(() => parseScreenerFilters(searchParams), [searchParams])
+  // What is requested: the sector context keys only with Market Context access.
+  const allowed = access.status === 'allowed'
+  const effective = useMemo(() => (allowed ? filters : withoutMarketContext(filters)), [allowed, filters])
+  const sectorKeysInUrl = usesMarketContext(filters)
+  const dropped = sectorKeysInUrl && (access.status === 'signIn' || access.status === 'hidden') ? access.status : null
+  // A URL with sector keys waits for the access to resolve (one request, not two).
+  const waiting = sectorKeysInUrl && access.status === 'loading'
   const pagination = useMemo(() => parseScreenerPagination(searchParams), [searchParams])
   // The fetch key covers the filters and the page, so paging refetches too.
-  const filtersKey = `${screenerFiltersKey(filters)}|${pagination.page}|${pagination.limit}`
+  const filtersKey = waiting ? null : `${screenerFiltersKey(effective)}|${pagination.page}|${pagination.limit}`
   const resultsRef = useRef<HTMLDivElement | null>(null)
 
   const [status, setStatus] = useState<ScreenerStatus>('loading')
@@ -83,18 +101,21 @@ export default function ScreenerPage() {
 
   // Latest filters without making the fetch effect depend on the memo object
   // identity (which changes whenever any search param changes).
-  const filtersRef = useRef(filters)
+  const filtersRef = useRef(effective)
   const paginationRef = useRef(pagination)
   // react-router recreates `setSearchParams` on every URL change; reading it
   // through a ref keeps the fetch effect keyed on the query only.
   const setSearchParamsRef = useRef(setSearchParams)
   useEffect(() => {
-    filtersRef.current = filters
+    filtersRef.current = effective
     paginationRef.current = pagination
     setSearchParamsRef.current = setSearchParams
-  }, [filters, pagination, setSearchParams])
+  }, [effective, pagination, setSearchParams])
 
   useEffect(() => {
+    if (filtersKey === null) {
+      return
+    }
     // Suppress a duplicate identical query (the key is the canonical filters).
     if (lastKeyRef.current === filtersKey) {
       return
@@ -191,8 +212,8 @@ export default function ScreenerPage() {
     setRetryToken((token) => token + 1)
   }
 
-  const activeCount = countActiveFilters(filters)
-  const filtersActive = hasActiveFilters(filters)
+  const activeCount = countActiveFilters(effective)
+  const filtersActive = hasActiveFilters(effective)
 
   return (
     <section className="flex flex-col gap-6">
@@ -226,13 +247,34 @@ export default function ScreenerPage() {
       />
 
       <ScreenerFilterPanel
-        filters={filters}
+        filters={effective}
         activeCount={activeCount}
+        access={access}
         onChange={update}
         onClear={clearFilters}
       />
 
-      <SavedScreenersPanel filters={filters} onApply={applySavedFilters} />
+      <SavedScreenersPanel filters={effective} onApply={applySavedFilters} />
+
+      {dropped !== null ? (
+        <p
+          role="status"
+          className="rounded-md border-2 border-dashed border-outline-variant bg-surface-container px-3 py-2 text-xs text-on-surface-variant"
+        >
+          {dropped === 'signIn' ? t('screener.sectorContext.droppedSignIn') : t('screener.sectorContext.droppedUnavailable')}
+          {dropped === 'signIn' ? (
+            <>
+              {' '}
+              <Link
+                to={LOGIN_ROUTE}
+                className="font-mono font-bold text-on-surface underline underline-offset-4 focus:outline-2 focus:outline-offset-2 focus:outline-outline"
+              >
+                {t('screener.sectorContext.signIn')}
+              </Link>
+            </>
+          ) : null}
+        </p>
+      ) : null}
 
       <div ref={resultsRef} className="flex scroll-mt-4 flex-wrap items-center justify-between gap-3">
         {data !== null ? (
@@ -248,7 +290,7 @@ export default function ScreenerPage() {
           </p>
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
-          <ScreenerSortControl value={filters.sort} onChange={(sort) => update({ sort })} />
+          <ScreenerSortControl value={effective.sort} onChange={(sort) => update({ sort })} />
           {data !== null ? (
             <span
               title={t('screener.universeTitle')}

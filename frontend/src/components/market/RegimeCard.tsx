@@ -1,8 +1,8 @@
 import { useI18n } from '../../i18n/useI18n.ts'
-import type { MarketRegime, MarketRegimeLabel, RegimeComponent, RegimeComponentKey } from '../../lib/api.ts'
+import type { MarketRegime, RegimeComponent, RegimeComponentKey } from '../../lib/api.ts'
 import HistoryPanel from './HistoryPanel.tsx'
 import MarketCard, { NoData, StaleBadge } from './MarketCard.tsx'
-import { dateLine, reasonSentence, signed } from './marketText.ts'
+import { REGIME_LABEL_STYLE, dateLine, reasonSentence, signed } from './marketText.ts'
 
 const COMPONENT_KEYS: readonly RegimeComponentKey[] = [
   'breadth',
@@ -13,14 +13,6 @@ const COMPONENT_KEYS: readonly RegimeComponentKey[] = [
   'liquidity',
   'volatility',
 ]
-
-/** Icon + colour of each label; the text is always shown next to the icon. */
-const LABEL_STYLE: Record<MarketRegimeLabel, { icon: string; className: string }> = {
-  favourable: { icon: '▲', className: 'text-gain' },
-  neutral: { icon: '●', className: 'text-on-surface' },
-  adverse: { icon: '▼', className: 'text-secondary' },
-  insufficient: { icon: '?', className: 'text-on-surface-variant' },
-}
 
 function isComponentKey(key: string): key is RegimeComponentKey {
   return (COMPONENT_KEYS as readonly string[]).includes(key)
@@ -71,7 +63,7 @@ export default function RegimeCard({ regime }: { regime: MarketRegime | null }) 
     )
   }
 
-  const style = LABEL_STYLE[regime.regime]
+  const style = REGIME_LABEL_STYLE[regime.regime]
   const insufficient = regime.regime === 'insufficient'
   const reasons = Object.entries(regime.components).filter(
     (entry): entry is [RegimeComponentKey, RegimeComponent] => isComponentKey(entry[0]) && entry[1] !== undefined,

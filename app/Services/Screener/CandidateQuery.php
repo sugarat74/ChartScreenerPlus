@@ -21,7 +21,11 @@ use Illuminate\Database\Eloquent\Builder;
  * and paging all happen in SQL, so the cost per request does not grow with
  * the number of instruments. Rows are rebuilt by `ScreenerRowBuilder`.
  *
- * @phpstan-type Filters array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string}
+ * The sector context filters (`sector_trend`, `sector_rs_rank_max`,
+ * market-context-patterns C5) read the `screener_rows` sector columns; a null
+ * column never matches. Callers check the `view-market-context` ability first.
+ *
+ * @phpstan-type Filters array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int}
  */
 class CandidateQuery
 {
@@ -101,6 +105,14 @@ class CandidateQuery
                 ? $stored['pattern_status']
                 : 'any',
             'sort' => is_string($stored['sort'] ?? null) ? $stored['sort'] : 'rvol_desc',
+            'sector_trend' => in_array($stored['sector_trend'] ?? null, ScreenerFilterParser::SECTOR_TRENDS, true)
+                ? $stored['sector_trend']
+                : null,
+            'sector_rs_rank_max' => is_int($stored['sector_rs_rank_max'] ?? null)
+                && $stored['sector_rs_rank_max'] >= 1
+                && $stored['sector_rs_rank_max'] <= ScreenerFilterParser::SECTOR_RS_RANK_MAX
+                ? $stored['sector_rs_rank_max']
+                : null,
         ];
     }
 
@@ -135,7 +147,9 @@ class CandidateQuery
             ->when($filters['rsi_max'] !== null, fn (Builder $query) => $query->where('rsi14', '<=', $filters['rsi_max']))
             ->when($filters['min_rvol'] !== null, fn (Builder $query) => $query->where('rvol', '>=', $filters['min_rvol']))
             ->when($filters['price_above_sma200'], fn (Builder $query) => $query->where('price_above_sma200', true))
-            ->when($filters['ma_cross'] !== null, fn (Builder $query) => $query->where('ma_cross', $filters['ma_cross']));
+            ->when($filters['ma_cross'] !== null, fn (Builder $query) => $query->where('ma_cross', $filters['ma_cross']))
+            ->when(($filters['sector_trend'] ?? null) !== null, fn (Builder $query) => $query->where('sector_trend', $filters['sector_trend']))
+            ->when(($filters['sector_rs_rank_max'] ?? null) !== null, fn (Builder $query) => $query->where('sector_rs_rank', '<=', $filters['sector_rs_rank_max']));
     }
 
     /**

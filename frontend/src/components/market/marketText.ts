@@ -4,7 +4,7 @@
  * values stay raw numbers and ISO dates.
  */
 import type { I18nContextValue } from '../../i18n/context.ts'
-import type { MarketReading, MarketTrend, RegimeComponent, RegimeComponentKey } from '../../lib/api.ts'
+import type { MarketReading, MarketRegimeLabel, MarketTrend, RegimeComponent, RegimeComponentKey } from '../../lib/api.ts'
 
 type Fmt = Pick<I18nContextValue, 't' | 'formatNumber' | 'formatMarketDate' | 'formatMarketMonth'>
 
@@ -39,6 +39,17 @@ export function dateLine(fmt: Fmt, isoDate: string, monthly = false): string {
 /** A reading carries data only when its series is enabled and has a value. */
 export function hasValue(reading: MarketReading | null | undefined): reading is MarketReading & { value: number } {
   return reading !== null && reading !== undefined && reading.value !== null
+}
+
+/**
+ * Icon + colour of each Market Regime label; the text is always shown next to
+ * the icon (the regime card on /mercado and the chart strip).
+ */
+export const REGIME_LABEL_STYLE: Record<MarketRegimeLabel, { icon: string; className: string }> = {
+  favourable: { icon: '▲', className: 'text-gain' },
+  neutral: { icon: '●', className: 'text-on-surface' },
+  adverse: { icon: '▼', className: 'text-secondary' },
+  insufficient: { icon: '?', className: 'text-on-surface-variant' },
 }
 
 /** Icon shown before a trend label (always paired with its text). */

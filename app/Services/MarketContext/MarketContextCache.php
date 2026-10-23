@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
  *
  * The latest payload key also carries the day it was built for, so the stale
  * flags are recomputed every day even without a run. Nothing cached here holds
- * user data: guests, users and Admins share the same entries.
+ * user data: every allowed caller shares the same entries.
  */
 final class MarketContextCache
 {
@@ -56,6 +56,18 @@ final class MarketContextCache
     public static function history(string $metric, string $range, Closure $build): array
     {
         return Cache::remember(self::key("history:{$metric}:{$range}"), self::ttl(), $build);
+    }
+
+    /**
+     * The sector map and regime label shared by every stock's
+     * `GET /api/instruments/{ticker}/market-context` (market-context-patterns, C3).
+     *
+     * @param  Closure(): array<string, mixed>  $build
+     * @return array<string, mixed>
+     */
+    public static function instrumentContext(string $asOf, Closure $build): array
+    {
+        return Cache::remember(self::key("instrument-context:{$asOf}"), self::ttl(), $build);
     }
 
     private static function key(string $suffix): string

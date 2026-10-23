@@ -2,14 +2,16 @@
  * Screener filter helpers. Pure functions with no React dependency so the URL
  * round-trip (parse -> patch -> canonical key) is auditable and deterministic.
  *
- * The SPA owns exactly nine query keys, all named after the screener API
+ * The SPA owns exactly eleven query keys, all named after the screener API
  * params: the criteria (`signal`, `rsi_min`, `rsi_max`, `min_rvol`,
- * `price_above_sma200`, `ma_cross`, `pattern`, `pattern_status`) plus the
- * ranking key `sort`; any other query param (a campaign tag, a future `limit`)
- * is preserved untouched.
+ * `price_above_sma200`, `ma_cross`, `pattern`, `pattern_status`, and the
+ * sector context keys `sector_trend` and `sector_rs_rank_max` of
+ * market-context-patterns) plus the ranking key `sort`; any other query param
+ * (a campaign tag, a future `limit`) is preserved untouched.
  */
 
 import type {
+  MarketTrend,
   SavedScreenerFilters,
   ScreenerFilters,
   ScreenerMaCross,
@@ -59,6 +61,15 @@ export function patternDirection(type: ScreenerPatternType): PatternDirection {
 
 export const SCREENER_PATTERN_STATUSES: readonly ScreenerPatternStatus[] = ['any', 'forming', 'confirmed']
 
+/** `sector_trend` values (the trend of the stock's sector ETF), in display order. */
+export const SECTOR_TRENDS: readonly MarketTrend[] = ['uptrend', 'mixed', 'downtrend']
+
+/** Upper bound of `sector_rs_rank_max` (the 11 SPDR sectors). */
+export const SECTOR_RS_RANK_MAX = 11
+
+/** The selectable "top N sectors" values, 1 to 11. */
+export const SECTOR_RS_RANK_OPTIONS: readonly number[] = Array.from({ length: SECTOR_RS_RANK_MAX }, (_, index) => index + 1)
+
 /** Preset Min RVOL buttons; `+ Todos` (off) is handled by the control. */
 export const MIN_RVOL_PRESETS: readonly number[] = [1, 1.5, 2, 3]
 
@@ -84,6 +95,8 @@ export const EMPTY_SCREENER_FILTERS: ScreenerFilters = {
   maCross: null,
   patterns: [],
   patternStatus: 'any',
+  sectorTrend: null,
+  sectorRsRankMax: null,
   sort: DEFAULT_SCREENER_SORT,
 }
 
@@ -101,6 +114,8 @@ export const EMPTY_SCREENER_CRITERIA: Partial<ScreenerFilters> = {
   maCross: null,
   patterns: [],
   patternStatus: 'any',
+  sectorTrend: null,
+  sectorRsRankMax: null,
 }
 
 function isKnownSignalType(value: string): value is ScreenerSignalType {
@@ -125,6 +140,17 @@ export function normalizePatterns(values: readonly string[]): ScreenerPatternTyp
 
 function parsePatternStatus(raw: unknown): ScreenerPatternStatus {
   return raw === 'forming' || raw === 'confirmed' ? raw : 'any'
+}
+
+/** A known sector trend, otherwise `null` (off). */
+function parseSectorTrend(raw: unknown): MarketTrend | null {
+  return typeof raw === 'string' && (SECTOR_TRENDS as readonly string[]).includes(raw) ? (raw as MarketTrend) : null
+}
+
+/** A whole number from 1 to 11, otherwise `null` (off); never forwarded invalid. */
+function parseSectorRsRankMax(raw: unknown): number | null {
+  const value = typeof raw === 'number' ? raw : typeof raw === 'string' && /^\d{1,2}$/.test(raw) ? Number(raw) : Number.NaN
+  return Number.isInteger(value) && value >= 1 && value <= SECTOR_RS_RANK_MAX ? value : null
 }
 
 /**
@@ -185,6 +211,8 @@ export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
     patterns,
     // A status only narrows selected patterns; without them it is `any`.
     patternStatus: patterns.length > 0 ? parsePatternStatus(params.get('pattern_status')) : 'any',
+    sectorTrend: parseSectorTrend(params.get('sector_trend')),
+    sectorRsRankMax: parseSectorRsRankMax(params.get('sector_rs_rank_max')),
     sort: parseScreenerSort(params.get('sort')),
   }
 }
@@ -235,6 +263,13 @@ export function patchScreenerFilters(
   if (patch.patternStatus !== undefined) {
     setOrDelete(next, 'pattern_status', patch.patternStatus === 'any' ? null : patch.patternStatus)
   }
+  if (patch.sectorTrend !== undefined) {
+    setOrDelete(next, 'sector_trend', parseSectorTrend(patch.sectorTrend))
+  }
+  if (patch.sectorRsRankMax !== undefined) {
+    const rank = parseSectorRsRankMax(patch.sectorRsRankMax)
+    setOrDelete(next, 'sector_rs_rank_max', rank === null ? null : String(rank))
+  }
   if (patch.sort !== undefined) {
     setOrDelete(next, 'sort', patch.sort === DEFAULT_SCREENER_SORT ? null : patch.sort)
   }
@@ -250,7 +285,9 @@ export function hasActiveFilters(filters: ScreenerFilters): boolean {
     filters.minRvol !== null ||
     filters.priceAboveSma200 ||
     filters.maCross !== null ||
-    filters.patterns.length > 0
+    filters.patterns.length > 0 ||
+    filters.sectorTrend !== null ||
+    filters.sectorRsRankMax !== null
   )
 }
 
@@ -263,8 +300,23 @@ export function countActiveFilters(filters: ScreenerFilters): number {
     (filters.minRvol !== null ? 1 : 0) +
     (filters.priceAboveSma200 ? 1 : 0) +
     (filters.maCross !== null ? 1 : 0) +
-    filters.patterns.length
+    filters.patterns.length +
+    (filters.sectorTrend !== null ? 1 : 0) +
+    (filters.sectorRsRankMax !== null ? 1 : 0)
   )
+}
+
+/** The filters use a sector context key (needs Market Context access). */
+export function usesMarketContext(filters: ScreenerFilters): boolean {
+  return filters.sectorTrend !== null || filters.sectorRsRankMax !== null
+}
+
+/**
+ * The same filters without the sector context keys: what the page requests
+ * for a session without Market Context access (the URL keeps the keys).
+ */
+export function withoutMarketContext(filters: ScreenerFilters): ScreenerFilters {
+  return usesMarketContext(filters) ? { ...filters, sectorTrend: null, sectorRsRankMax: null } : filters
 }
 
 /** Deterministic serialization for effect deps + duplicate-request suppression. */
@@ -278,15 +330,17 @@ export function screenerFiltersKey(filters: ScreenerFilters): string {
     filters.maCross ?? '',
     filters.patterns.join(','),
     filters.patterns.length > 0 ? filters.patternStatus : 'any',
+    filters.sectorTrend ?? '',
+    filters.sectorRsRankMax ?? '',
     filters.sort,
   ].join('|')
 }
 
 /**
- * Serialize the live filter state into the canonical nine-key definition that
- * is stored with a Saved Screener (API param names, `sort` included). The SPA
- * always emits all nine keys, so a stored definition is always complete and
- * re-appliable without defaults.
+ * Serialize the live filter state into the canonical eleven-key definition
+ * that is stored with a Saved Screener (API param names, `sort` included). The
+ * SPA always emits all eleven keys, so a stored definition is always complete
+ * and re-appliable without defaults.
  */
 export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreenerFilters {
   return {
@@ -298,6 +352,8 @@ export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreene
     ma_cross: filters.maCross,
     pattern: normalizePatterns(filters.patterns),
     pattern_status: filters.patterns.length > 0 ? filters.patternStatus : 'any',
+    sector_trend: filters.sectorTrend,
+    sector_rs_rank_max: filters.sectorRsRankMax,
     sort: filters.sort,
   }
 }
@@ -332,6 +388,9 @@ export function deserializeScreenerFilters(
       payload.ma_cross === 'bullish' || payload.ma_cross === 'bearish' ? payload.ma_cross : null,
     patterns: storedPatterns,
     patternStatus: storedPatterns.length > 0 ? parsePatternStatus(payload.pattern_status) : 'any',
+    // Absent on Screeners saved before market-context-patterns: off.
+    sectorTrend: parseSectorTrend(payload.sector_trend),
+    sectorRsRankMax: parseSectorRsRankMax(payload.sector_rs_rank_max),
     sort: parseScreenerSort(typeof payload.sort === 'string' ? payload.sort : null),
   }
 }
@@ -383,6 +442,14 @@ export function describeSavedFilters(
     const labels = filters.pattern.map((type) => patternLabel(type, t)).join(', ')
     const status = filters.pattern_status
     parts.push(status === 'forming' || status === 'confirmed' ? `${labels} (${t(`patterns.status.${status}`)})` : labels)
+  }
+  const sectorTrend = parseSectorTrend(filters.sector_trend)
+  if (sectorTrend !== null) {
+    parts.push(t('screener.sectorContext.summaryTrend', { trend: t(`marketContext.trend.${sectorTrend}`) }))
+  }
+  const sectorRank = parseSectorRsRankMax(filters.sector_rs_rank_max)
+  if (sectorRank !== null) {
+    parts.push(t('screener.sectorContext.summaryRank', { n: sectorRank }))
   }
 
   const sort = SCREENER_SORT_OPTIONS.find((option) => option.value === filters.sort)

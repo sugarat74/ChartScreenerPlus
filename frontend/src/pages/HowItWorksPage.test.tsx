@@ -102,6 +102,20 @@ describe('manual stays consistent with the interface', () => {
         expect(filterTerms.toLowerCase(), label).toContain(label.toLowerCase())
       }
     })
+
+    it(`${locale}: explains the sector context filters and the chart strip (market-context-patterns)`, () => {
+      const sectorTerms = terms('filtros').filter((term) => term.startsWith(messages.screener.sectorContext.legend))
+      expect(sectorTerms).toHaveLength(2)
+      const filters = JSON.stringify(section('filtros'))
+      for (const label of [
+        messages.marketContext.trend.uptrend, messages.marketContext.trend.mixed, messages.marketContext.trend.downtrend,
+        messages.screener.sectorContext.trendAny, messages.screener.sectorContext.rankAll,
+        messages.screener.sectorContext.rankTop.replace('{n}', 'N'),
+      ]) {
+        expect(filters, label).toContain(label)
+      }
+      expect(terms('grafico')).toContain(messages.marketContext.strip.title)
+    })
   }
 
   it('never uses end-of-day wording in the public copy', () => {

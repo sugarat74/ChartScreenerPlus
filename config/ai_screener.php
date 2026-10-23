@@ -39,6 +39,6 @@ return [
 
     // Bump when the schema or the prompt changes (CONSTRAINTS.md); a bump
     // also invalidates the cache.
-    'schema_version' => 'screener-query-v1',
-    'prompt_version' => 'screener-query-prompt-v1',
+    'schema_version' => 'screener-query-v2',
+    'prompt_version' => 'screener-query-prompt-v2',
 ];

@@ -101,6 +101,20 @@ export const guideEn: GuideTexts = {
             'The status control ("Any", "Forming", "Confirmed") becomes available once a pattern is chosen and only narrows those patterns.',
           ],
         },
+        {
+          term: 'Sector context: trend',
+          summary: '"Uptrend", "Mixed" or "Downtrend" requires that trend in the SPDR sector ETF of each stock’s sector: uptrend when the ETF closes above its SMA 50 and that is above its SMA 200, downtrend the other way round and mixed otherwise. "Any" turns the filter off.',
+          details: [
+            'It uses the ETF’s latest session. A stock without a sector ETF, or with sector data more than 7 days older than its latest session, never matches. It needs an account.',
+          ],
+        },
+        {
+          term: 'Sector context: relative strength',
+          summary: '"Top N of 11" only shows stocks whose sector is among the N strongest of the 11 by 3-month return against the S&P 500 (the same ranking as the sector table on the Market page). "All sectors" turns the filter off.',
+          details: [
+            'A sector without a rank (no relative-strength data) never matches. The sector context filters can be saved in a screener and used in its alerts while the account has access; they need an account.',
+          ],
+        },
       ],
     },
     {
@@ -265,6 +279,13 @@ export const guideEn: GuideTexts = {
         { term: 'PIVOT line', summary: 'Shown when the "Pivot breakout + RVOL" signal is active, at the pivot level.' },
         { term: 'Patterns', summary: 'The key points of each active pattern are marked on the candles and its breakout level is drawn as a dotted line with the pattern name.' },
         { term: '"Active signals" and "Active patterns" panels', summary: 'Below the chart they list every signal and pattern in text with dates and levels, also for screen readers.' },
+        {
+          term: 'Market context',
+          summary: 'When signed in, a stock’s chart shows its sector ETF, the sector trend, its relative strength (rank among the sectors with data) and the market regime above the chart, with a link to the Market page. Each active pattern repeats them.',
+          details: [
+            'They are the latest session’s data, not the data at the pattern’s date. ETFs do not show it.',
+          ],
+        },
       ],
       notes: [
         'If averages are missing because the stock has little history, you will see the insufficient-history note; the chart is still shown.',
@@ -274,7 +295,7 @@ export const guideEn: GuideTexts = {
       id: 'mercado',
       title: 'Market context',
       paragraphs: [
-        'The Market page sums up the US market with fixed, public rules. Each block shows its date ("Data as of…" or, for monthly data, "Data for September 2026"), its source and a "What does it mean?" note. It is descriptive information: it does not say what the market will do and it is not advice.',
+        'The Market page sums up the US market with fixed, public rules and needs a signed-in account. Each block shows its date ("Data as of…" or, for monthly data, "Data for September 2026"), its source and a "What does it mean?" note. It is descriptive information: it does not say what the market will do and it is not advice.',
       ],
       entries: [
         {
@@ -294,7 +315,7 @@ export const guideEn: GuideTexts = {
         { term: 'Fed net liquidity', summary: 'Federal Reserve assets minus the Treasury General Account and reverse repos, every Wednesday, with its 4- and 13-week change.' },
         { term: 'Central banks', summary: 'The Fed funds rate range and the ECB deposit rate, their last change and the last and next meeting from the official calendars, checked by hand.' },
         { term: 'Leading data', summary: 'Initial jobless claims (and their 4-week average), building permits, the OECD leading indicator and the NFCI when its source is enabled.' },
-        { term: 'History', summary: 'When signed in, each block offers "Show history" with 1- and 3-year charts; without a session a sign-in prompt is shown.' },
+        { term: 'History', summary: 'Each block offers "Show history" with 1- and 3-year charts.' },
       ],
       notes: [
         'A reading is "Stale" when it is older than its frequency allows: 7 days for daily and session data, 16 for weekly and 100 for monthly data. Stale readings are shown but do not count in the regime.',

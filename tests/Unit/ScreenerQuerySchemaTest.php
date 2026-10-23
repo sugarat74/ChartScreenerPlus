@@ -11,8 +11,9 @@ use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 /**
- * `screener-query-v1` schema, validator and prompt, and the shared
- * `ScreenerFilterParser` (docs/specs/ai-screener-natural-language.md).
+ * `screener-query-v2` schema, validator and prompt, and the shared
+ * `ScreenerFilterParser` (docs/specs/ai-screener-natural-language.md; the
+ * sector context keys of docs/specs/market-context-patterns.md, C5 and C7).
  */
 class ScreenerQuerySchemaTest extends TestCase
 {
@@ -29,6 +30,8 @@ class ScreenerQuerySchemaTest extends TestCase
             'pattern' => ['cup_with_handle'],
             'pattern_status' => 'confirmed',
             'sort' => 'signal_count_desc',
+            'sector_trend' => null,
+            'sector_rs_rank_max' => null,
             'unsupported' => [],
             'explanation' => 'Golden cross or bullish MACD, RSI 40-65.5.',
         ];
@@ -42,8 +45,12 @@ class ScreenerQuerySchemaTest extends TestCase
         $this->assertSame(array_keys($schema['properties']), $schema['required']);
         $this->assertSame([
             'signal', 'rsi_min', 'rsi_max', 'min_rvol', 'price_above_sma200', 'ma_cross',
-            'pattern', 'pattern_status', 'sort', 'unsupported', 'explanation',
+            'pattern', 'pattern_status', 'sort', 'sector_trend', 'sector_rs_rank_max', 'unsupported', 'explanation',
         ], $schema['required']);
+        $this->assertSame('screener_query_v2', ScreenerQuerySchema::NAME);
+        $this->assertSame(['uptrend', 'mixed', 'downtrend', null], $schema['properties']['sector_trend']['enum']);
+        $this->assertSame(['string', 'null'], $schema['properties']['sector_trend']['type']);
+        $this->assertSame(['integer', 'null'], $schema['properties']['sector_rs_rank_max']['type']);
         $this->assertSame(ScreenerFilterParser::SIGNAL_TYPES, $schema['properties']['signal']['items']['enum']);
         $this->assertSame(ChartPattern::TYPES, $schema['properties']['pattern']['items']['enum']);
         // chart-patterns-extended: the AI may pick any number of the vocabulary.
@@ -52,8 +59,9 @@ class ScreenerQuerySchemaTest extends TestCase
         $this->assertSame(ScreenerFilterParser::SORTS, $schema['properties']['sort']['enum']);
         $this->assertSame(['bullish', 'bearish', null], $schema['properties']['ma_cross']['enum']);
         $this->assertSame(['number', 'null'], $schema['properties']['rsi_max']['type']);
-        // No price, sector, fundamentals or free-form filter can be expressed.
+        // No price, sector name, regime, fundamentals or free-form filter can be expressed.
         $this->assertArrayNotHasKey('sector', $schema['properties']);
+        $this->assertArrayNotHasKey('regime', $schema['properties']);
     }
 
     public function test_a_valid_answer_is_normalized_through_the_parser(): void
@@ -70,6 +78,8 @@ class ScreenerQuerySchemaTest extends TestCase
             'pattern' => ['cup_with_handle'],
             'pattern_status' => 'confirmed',
             'sort' => 'signal_count_desc',
+            'sector_trend' => null,
+            'sector_rs_rank_max' => null,
         ], $result['filters']);
         $this->assertSame([], $result['unsupported']);
     }
@@ -145,6 +155,73 @@ class ScreenerQuerySchemaTest extends TestCase
                 $this->fail('Expected ValidationException for '.json_encode($input));
             } catch (ValidationException $exception) {
                 $this->assertArrayHasKey(array_key_first($input), $exception->errors());
+            }
+        }
+    }
+
+    public function test_the_sector_context_keys_accept_null_and_exact_integers_1_to_11(): void
+    {
+        foreach (['uptrend', 'mixed', 'downtrend'] as $trend) {
+            $this->assertSame($trend, ScreenerQuerySchema::validate(array_merge($this->valid(), ['sector_trend' => $trend]))['filters']['sector_trend']);
+        }
+        foreach ([1, 3, 11] as $rank) {
+            $this->assertSame($rank, ScreenerQuerySchema::validate(array_merge($this->valid(), ['sector_rs_rank_max' => $rank]))['filters']['sector_rs_rank_max']);
+        }
+        $both = ScreenerQuerySchema::validate(array_merge($this->valid(), ['sector_trend' => 'uptrend', 'sector_rs_rank_max' => 3]))['filters'];
+        $this->assertSame(['uptrend', 3], [$both['sector_trend'], $both['sector_rs_rank_max']]);
+
+        foreach ([['sector_rs_rank_max' => 0], ['sector_rs_rank_max' => 12], ['sector_rs_rank_max' => 3.0], ['sector_rs_rank_max' => '3'],
+            ['sector_trend' => 'sideways'], ['sector_trend' => ['uptrend']]] as $override) {
+            try {
+                ScreenerQuerySchema::validate(array_merge($this->valid(), $override));
+                $this->fail('Expected InvalidScreenerQuery for '.json_encode($override));
+            } catch (InvalidScreenerQuery) {
+                $this->addToAssertionCount(1);
+            }
+        }
+
+        // Both keys are required, like every other property.
+        $missing = $this->valid();
+        unset($missing['sector_rs_rank_max']);
+        $this->expectException(InvalidScreenerQuery::class);
+        ScreenerQuerySchema::validate($missing);
+    }
+
+    public function test_the_prompt_describes_the_sector_context_keys_but_keeps_names_and_regime_unsupported(): void
+    {
+        $es = ScreenerQueryPrompt::messages('x', 'es')[0]['content'];
+        $en = ScreenerQueryPrompt::messages('x', 'en')[0]['content'];
+
+        foreach ([$es, $en] as $prompt) {
+            $this->assertStringContainsString('sector_trend', $prompt);
+            $this->assertStringContainsString('sector_rs_rank_max', $prompt);
+        }
+        $this->assertStringContainsString('«Sectores fuertes» o «sectores líderes» significa sector_rs_rank_max 3', $es);
+        $this->assertStringContainsString('"Strong sectors" or "leading sectors" means sector_rs_rank_max 3', $en);
+        $this->assertStringContainsString('(nombres de sectores o industrias, el entorno de mercado,', $es);
+        $this->assertStringContainsString('(sector or industry names, the market regime,', $en);
+    }
+
+    public function test_the_parser_resolves_the_sector_context_keys(): void
+    {
+        $parsed = ScreenerFilterParser::fromArray(['sector_trend' => 'uptrend', 'sector_rs_rank_max' => '3']);
+        $this->assertSame(['uptrend', 3], [$parsed['sector_trend'], $parsed['sector_rs_rank_max']]);
+        $this->assertTrue(ScreenerFilterParser::usesMarketContext($parsed));
+
+        $empty = ScreenerFilterParser::fromArray(['sector_trend' => '', 'sector_rs_rank_max' => '']);
+        $this->assertNull($empty['sector_trend']);
+        $this->assertNull($empty['sector_rs_rank_max']);
+        $this->assertFalse(ScreenerFilterParser::usesMarketContext($empty));
+        $this->assertTrue(ScreenerFilterParser::usesMarketContext(['sector_trend' => null, 'sector_rs_rank_max' => 11]));
+        $this->assertSame(11, ScreenerFilterParser::fromArray(['sector_rs_rank_max' => 11])['sector_rs_rank_max']);
+
+        foreach ([['sector_trend' => 'sideways'], ['sector_trend' => ['uptrend']], ['sector_rs_rank_max' => '0'], ['sector_rs_rank_max' => '12'],
+            ['sector_rs_rank_max' => '3.5'], ['sector_rs_rank_max' => 'abc'], ['sector_rs_rank_max' => ['3']], ['sector_rs_rank_max' => true], ['sector_rs_rank_max' => 3.0]] as $input) {
+            try {
+                ScreenerFilterParser::fromArray($input);
+                $this->fail('Expected ValidationException for '.json_encode($input));
+            } catch (ValidationException $exception) {
+                $this->assertSame([array_key_first($input)], array_keys($exception->errors()));
             }
         }
     }

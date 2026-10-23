@@ -15,8 +15,9 @@ export type NavItem = {
   /** Keep the tab active on nested routes (e.g. `/admin/users`). */
   readonly nested?: boolean
   /**
-   * Market Context (market-context-ui): shown only once `GET /api/legal`
-   * reports the page public, or to Admins (preview). UI affordance only.
+   * Market Context (market-context-ui, market-context-patterns): shown when
+   * `useMarketContextAccess` is `allowed` (the session has the capability) or
+   * `signIn` (a Visitor once the go-live flag is on). UI affordance only.
    */
   readonly marketContext?: boolean
 }

@@ -39,6 +39,8 @@ so I can judge the context with rules I can read.
 
 Admin endpoints are 401 for guests and 403 for non-admins in both modes. Hiding UI is never access control.
 
+> **Superseded access (owner decision 2026-10-23, implemented by `market-context-patterns`):** "quiero que la parte de mercado solo este accesible a usuarios registrados, a futuro quiero establecer algunas de las funcionalidades de pago". The Visitor column above no longer applies. `/mercado`, `GET /api/market-context` and its history require a Registered User with the `view-market-context` ability (Registered User AND (flag on OR Admin)). The ability replaces the `market-context.public` middleware (C6). Visitors get 401 from the APIs and a sign-in prompt on `/mercado` once the flag is on. The flag and option (b) are unchanged. Contract: `docs/specs/market-context-patterns.md` (C1, C2, "SPA → `/mercado` and header"). Scenarios 1 and 5 and the gate tests listed below change with it.
+
 ## Legal Gate (FRED terms) — decision
 
 Facts found on 2026-10-23:

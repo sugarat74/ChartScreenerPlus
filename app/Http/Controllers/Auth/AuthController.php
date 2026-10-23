@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\AuthUserPayload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -39,7 +40,7 @@ class AuthController extends Controller
             Auth::guard('web')->login($user);
             $request->session()->regenerate();
 
-            return response()->json(['user' => $user], 201);
+            return response()->json(['user' => AuthUserPayload::make($user)], 201);
         });
     }
 
@@ -64,7 +65,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return response()->json(['user' => $request->user()]);
+        return response()->json(['user' => AuthUserPayload::make($request->user())]);
     }
 
     /**
@@ -91,7 +92,7 @@ class AuthController extends Controller
      */
     public function user(Request $request): JsonResponse
     {
-        return response()->json(['user' => $request->user()]);
+        return response()->json(['user' => AuthUserPayload::make($request->user())]);
     }
 
     /**

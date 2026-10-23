@@ -12,8 +12,9 @@ use Tests\TestCase;
  *
  * The invariant under test is ownership: every query is scoped to
  * `$request->user()->savedScreeners()`, no endpoint accepts a `user_id`, the
- * stored definition is the canonical seven-key filter object (including
- * `sort`), and a duplicate name is a `422` on `errors.name`.
+ * stored definition is the canonical eleven-key filter object (including
+ * `sort` and the sector context keys of market-context-patterns), and a
+ * duplicate name is a `422` on `errors.name`.
  */
 class SavedScreenersApiTest extends TestCase
 {
@@ -74,6 +75,7 @@ class SavedScreenersApiTest extends TestCase
             ->assertJsonStructure([
                 'screener' => ['id', 'name', 'filters' => [
                     'signal', 'rsi_min', 'rsi_max', 'min_rvol', 'price_above_sma200', 'ma_cross', 'pattern', 'pattern_status', 'sort',
+                    'sector_trend', 'sector_rs_rank_max',
                 ]],
             ]);
 
@@ -92,6 +94,8 @@ class SavedScreenersApiTest extends TestCase
             'pattern' => [],
             'pattern_status' => 'any',
             'sort' => 'rsi_desc',
+            'sector_trend' => null,
+            'sector_rs_rank_max' => null,
         ], $saved->filters);
     }
 
@@ -341,5 +345,73 @@ class SavedScreenersApiTest extends TestCase
         $user->delete();
 
         $this->assertDatabaseCount('saved_screeners', 0);
+    }
+
+    public function test_sector_context_keys_round_trip_as_an_eleven_key_object(): void
+    {
+        config(['market_context.public' => true]);
+        $user = User::factory()->create();
+        $filters = self::FILTERS + ['sector_trend' => 'uptrend', 'sector_rs_rank_max' => 3];
+
+        $this->actingAs($user)->postJson('/api/screeners', $this->payload(['filters' => $filters]))
+            ->assertCreated()
+            ->assertJsonPath('screener.filters.sector_trend', 'uptrend')
+            ->assertJsonPath('screener.filters.sector_rs_rank_max', 3);
+
+        $listed = $this->actingAs($user)->getJson('/api/screeners')->assertOk()->json('screeners.0.filters');
+        $this->assertSame([
+            'signal' => [], 'rsi_min' => null, 'rsi_max' => null, 'min_rvol' => null, 'price_above_sma200' => false,
+            'ma_cross' => null, 'pattern' => [], 'pattern_status' => 'any', 'sort' => 'rvol_desc',
+            'sector_trend' => 'uptrend', 'sector_rs_rank_max' => 3,
+        ], $listed);
+    }
+
+    public function test_a_legacy_row_returns_both_sector_keys_as_null(): void
+    {
+        $user = User::factory()->create();
+        $user->savedScreeners()->create(['name' => 'Old', 'filters' => self::FILTERS]);
+
+        $filters = $this->actingAs($user)->getJson('/api/screeners')->assertOk()->json('screeners.0.filters');
+
+        $this->assertCount(11, $filters);
+        $this->assertNull($filters['sector_trend']);
+        $this->assertNull($filters['sector_rs_rank_max']);
+    }
+
+    public function test_invalid_sector_context_values_are_422(): void
+    {
+        config(['market_context.public' => true]);
+        $user = User::factory()->create();
+
+        foreach ([['sector_trend' => 'sideways'], ['sector_trend' => ['uptrend']], ['sector_rs_rank_max' => 0],
+            ['sector_rs_rank_max' => 12], ['sector_rs_rank_max' => 3.5], ['sector_rs_rank_max' => 'abc']] as $override) {
+            $this->actingAs($user)->postJson('/api/screeners', $this->payload(['filters' => array_merge(self::FILTERS, $override)]))
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors(['filters.'.array_key_first($override)]);
+        }
+
+        $this->assertDatabaseCount('saved_screeners', 0);
+    }
+
+    public function test_a_user_without_market_context_access_cannot_save_sector_filters(): void
+    {
+        config(['market_context.public' => false]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/api/screeners', $this->payload(['filters' => self::FILTERS + ['sector_trend' => 'uptrend']]))
+            ->assertForbidden()
+            ->assertExactJson(['message' => 'The sector context filters are not available for your account.']);
+        $this->assertDatabaseCount('saved_screeners', 0);
+
+        // Null sector keys need no access.
+        $this->actingAs($user)->postJson('/api/screeners', $this->payload(['filters' => self::FILTERS + ['sector_trend' => null, 'sector_rs_rank_max' => null]]))
+            ->assertCreated();
+
+        // An Admin previews them while the flag is off.
+        $this->app['auth']->forgetGuards();
+        $this->actingAs(User::factory()->admin()->create())
+            ->postJson('/api/screeners', $this->payload(['filters' => self::FILTERS + ['sector_rs_rank_max' => 11]]))
+            ->assertCreated()
+            ->assertJsonPath('screener.filters.sector_rs_rank_max', 11);
     }
 }

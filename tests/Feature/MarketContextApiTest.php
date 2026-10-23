@@ -13,12 +13,15 @@ use Tests\TestCase;
 
 /**
  * `GET /api/market-context` (docs/specs/market-context-ui.md, C1, C5, C6;
- * Scenarios 1, 4, 5, 6, 7) on the production-like fixture.
+ * Scenarios 1, 4, 5, 6, 7) on the production-like fixture. Registered Users
+ * only since market-context-patterns (C1-C2): guests get 401.
  */
 class MarketContextApiTest extends TestCase
 {
     use BuildsMarketContextFixture;
     use RefreshDatabase;
+
+    private ?User $user = null;
 
     protected function setUp(): void
     {
@@ -40,7 +43,7 @@ class MarketContextApiTest extends TestCase
     {
         $this->productionLikeFixture();
 
-        $response = $this->getJson('/api/market-context')->assertOk();
+        $response = $this->asUser()->getJson('/api/market-context')->assertOk();
         $body = $response->json();
 
         $this->assertSame(['as_of', 'public', 'regime', 'sectors', 'breadth', 'macro'], array_keys($body));
@@ -150,7 +153,7 @@ class MarketContextApiTest extends TestCase
         $rows['XLB'][0] = null;
         $this->sectorRows(self::LATEST, $rows);
 
-        $tickers = array_column($this->getJson('/api/market-context')->assertOk()->json('sectors.rows'), 'ticker');
+        $tickers = array_column($this->asUser()->getJson('/api/market-context')->assertOk()->json('sectors.rows'), 'ticker');
 
         $this->assertSame(['XLB', 'XLE'], array_slice($tickers, -2));
         $this->assertSame('XLK', $tickers[0]);
@@ -163,7 +166,7 @@ class MarketContextApiTest extends TestCase
         $this->breadthRow('2026-10-15');
         $this->sectorRows('2026-10-15');
 
-        $body = $this->getJson('/api/market-context')->assertOk()->json();
+        $body = $this->asUser()->getJson('/api/market-context')->assertOk()->json();
 
         $this->assertFalse($body['regime']['stale']);
         $this->assertTrue($body['breadth']['stale']);
@@ -179,7 +182,7 @@ class MarketContextApiTest extends TestCase
         $this->breadthRow('2026-10-14');
         $this->sectorRows('2026-10-14');
 
-        $body = $this->getJson('/api/market-context')->assertOk()->json();
+        $body = $this->asUser()->getJson('/api/market-context')->assertOk()->json();
 
         $this->assertSame('insufficient', $body['regime']['regime']);
         $this->assertNull($body['regime']['score']);
@@ -194,7 +197,7 @@ class MarketContextApiTest extends TestCase
         config(['macro.enabled' => false]);
         $this->productionLikeFixture();
 
-        $body = $this->getJson('/api/market-context')->assertOk()->json();
+        $body = $this->asUser()->getJson('/api/market-context')->assertOk()->json();
 
         $this->assertNull($body['macro']);
         $this->assertSame('neutral', $body['regime']['regime']);
@@ -202,7 +205,7 @@ class MarketContextApiTest extends TestCase
 
     public function test_empty_database_gives_nulls_and_empty_readings(): void
     {
-        $body = $this->getJson('/api/market-context')->assertOk()->json();
+        $body = $this->asUser()->getJson('/api/market-context')->assertOk()->json();
 
         $this->assertNull($body['regime']);
         $this->assertNull($body['sectors']);
@@ -212,19 +215,21 @@ class MarketContextApiTest extends TestCase
         $this->assertNull($body['macro']['leading']['nfci']);
     }
 
-    public function test_gate_off_hides_the_payload_from_guests_and_users_but_not_admins(): void
+    public function test_gate_off_is_401_for_guests_404_for_users_and_open_for_admins(): void
     {
-        config(['market_context.public' => false]);
+        // Production rendering (no debug trace): the ability's denyAsNotFound
+        // message is the whole JSON body.
+        config(['market_context.public' => false, 'app.debug' => false]);
         $this->productionLikeFixture();
 
-        $this->getJson('/api/market-context')
+        $this->getJson('/api/market-context')->assertUnauthorized();
+
+        $this->asUser()->getJson('/api/market-context')
             ->assertNotFound()
             ->assertExactJson(['message' => 'This page is not available yet.']);
-        $this->withHeader('Accept-Language', 'es')->getJson('/api/market-context')
+        $this->asUser()->withHeader('Accept-Language', 'es')->getJson('/api/market-context')
             ->assertNotFound()
-            ->assertJsonPath('message', 'Esta página aún no está disponible.');
-
-        $this->actingAs(User::factory()->create())->getJson('/api/market-context')->assertNotFound();
+            ->assertExactJson(['message' => 'Esta página aún no está disponible.']);
 
         // A fresh request in production; the test app keeps resolved guards.
         $this->app['auth']->forgetGuards();
@@ -239,48 +244,49 @@ class MarketContextApiTest extends TestCase
         config(['market_context.public' => false]);
         $admin = User::factory()->admin()->create();
 
-        // A first-party SPA request (stateful domain) without auth middleware on the route.
+        // A first-party SPA request (stateful domain): the session user passes `auth:sanctum`.
         $this->withHeaders(['Origin' => 'http://localhost', 'Referer' => 'http://localhost/'])
             ->actingAs($admin, 'web')
             ->getJson('/api/market-context')
             ->assertOk();
     }
 
-    public function test_gate_on_serves_guests(): void
+    public function test_gate_on_serves_registered_users_and_401s_guests(): void
     {
         $this->productionLikeFixture();
 
-        $this->getJson('/api/market-context')->assertOk()->assertJsonPath('public', true);
+        $this->getJson('/api/market-context')->assertUnauthorized();
+        $this->asUser()->getJson('/api/market-context')->assertOk()->assertJsonPath('public', true);
     }
 
     public function test_payload_is_cached_until_a_recording_command_finishes(): void
     {
         $this->productionLikeFixture();
-        $this->getJson('/api/market-context')->assertJsonPath('regime.regime', 'neutral');
+        $this->asUser()->getJson('/api/market-context')->assertJsonPath('regime.regime', 'neutral');
 
         DB::table('market_regime_snapshots')->update(['regime' => 'favourable', 'score' => 3]);
 
         // Still the cached payload.
-        $this->getJson('/api/market-context')->assertJsonPath('regime.regime', 'neutral');
+        $this->asUser()->getJson('/api/market-context')->assertJsonPath('regime.regime', 'neutral');
 
         // A recording command (here with nothing to compute) renews the version.
         config(['macro.enabled' => false]);
         Artisan::call('macro:refresh');
-        $this->getJson('/api/market-context')->assertJsonPath('regime.regime', 'neutral');
+        $this->asUser()->getJson('/api/market-context')->assertJsonPath('regime.regime', 'neutral');
 
         Artisan::call('market-regime:compute', ['--date' => '1999-01-01']);
-        $this->getJson('/api/market-context')->assertJsonPath('regime.regime', 'favourable');
+        $this->asUser()->getJson('/api/market-context')->assertJsonPath('regime.regime', 'favourable');
     }
 
     public function test_a_new_day_rebuilds_the_payload_and_its_stale_flags(): void
     {
         $this->productionLikeFixture();
-        $this->getJson('/api/market-context')->assertJsonPath('breadth.stale', false);
+        $this->asUser()->getJson('/api/market-context')->assertJsonPath('breadth.stale', false);
 
         DB::table('market_regime_snapshots')->update(['regime' => 'adverse', 'score' => -3]);
         Carbon::setTestNow(Carbon::parse('2026-10-30 12:00:00', 'America/New_York'));
 
-        $this->getJson('/api/market-context')
+        $this->asUser()->getJson('/api/market-context')
             ->assertJsonPath('as_of', '2026-10-30')
             ->assertJsonPath('regime.regime', 'adverse')
             ->assertJsonPath('breadth.stale', true);
@@ -290,10 +296,19 @@ class MarketContextApiTest extends TestCase
     {
         $this->productionLikeFixture();
         $admin = User::factory()->admin()->create();
-        $this->getJson('/api/market-context')->assertJsonPath('public', true);
+        $this->asUser()->getJson('/api/market-context')->assertJsonPath('public', true);
 
         config(['market_context.public' => false]);
+        $this->app['auth']->forgetGuards();
 
         $this->actingAs($admin)->getJson('/api/market-context')->assertJsonPath('public', false);
+    }
+
+    /** A Registered User; every payload test reads the API signed in (market-context-patterns). */
+    private function asUser(): static
+    {
+        $this->user ??= User::factory()->create();
+
+        return $this->actingAs($this->user);
     }
 }
