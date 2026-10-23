@@ -16,6 +16,8 @@ export interface I18nContextValue {
   formatCompact: (value: number | null) => string
   formatDateTime: (iso: string | null) => string
   formatMarketDate: (isoDate: string | null) => string
+  /** Month of a monthly observation ("septiembre de 2026"). */
+  formatMarketMonth: (isoDate: string | null) => string
 }
 
 /**

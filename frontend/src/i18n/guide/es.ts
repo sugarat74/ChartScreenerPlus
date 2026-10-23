@@ -271,6 +271,37 @@ export const guideEs: GuideTexts = {
       ],
     },
     {
+      id: 'mercado',
+      title: 'Contexto de mercado',
+      paragraphs: [
+        'La página Mercado resume el entorno del mercado de EE. UU. con reglas fijas y públicas. Cada bloque muestra su fecha («Datos del…» o, para los datos mensuales, «Datos de septiembre de 2026»), su fuente y una nota «¿Qué significa?». Es información descriptiva: no anticipa lo que hará el mercado ni es asesoramiento.',
+      ],
+      entries: [
+        {
+          term: 'Entorno de mercado',
+          summary: 'Una etiqueta (Favorable, Neutral, Adverso o Sin datos suficientes) que suma la aportación de cada componente: +1, 0 o −1 según umbrales fijos.',
+          details: [
+            'Componentes: amplitud (60 % o más de las acciones del S&P 500 sobre su SMA200 suma, 40 % o menos resta), tendencia del índice (SPY alcista suma, bajista resta), participación sectorial (7 o más de 11 sectores alcistas suma, 3 o menos resta), curva de tipos (diferencial 10 años – 3 meses de +0,5 pp o más suma, por debajo de 0 resta), condiciones financieras (NFCI por debajo de −0,25 suma, por encima de 0 resta), liquidez neta (+2 % o más en 13 semanas suma, −2 % o menos resta) y volatilidad (VIX por debajo de 18 suma, por encima de 28 resta).',
+            'Favorable con +3 o más, Adverso con −3 o menos y Neutral en el resto. Con menos de 4 componentes con datos al día se muestra «Sin datos suficientes». Los componentes desactualizados o de fuentes no habilitadas aparecen con su motivo y «no cuenta». Los umbrales son valores iniciales sin calibrar.',
+          ],
+        },
+        {
+          term: 'Sectores',
+          summary: 'Los 11 ETF sectoriales SPDR ordenados por su rentabilidad de 3 meses frente al S&P 500 (fuerza relativa), con su tendencia y el porcentaje de acciones del sector sobre su SMA200. El selector 1 semana / 1 mes / 3 meses cambia solo la columna de rentabilidad; cada fila abre el gráfico del ETF.',
+        },
+        { term: 'Amplitud del S&P 500', summary: 'Porcentaje de acciones sobre sus SMA50 y SMA200, nuevos máximos y mínimos de 52 semanas, acciones que suben y que bajan, y la tendencia del SPY.' },
+        { term: 'Tipos y curva', summary: 'Rentabilidad de los bonos del Tesoro a 3 meses, 2 y 10 años, la variación del 10 años en 20 sesiones y los diferenciales 10 años – 2 años y 10 años – 3 meses, calculados por Chartiko. «Invertida» indica un diferencial 10 años – 3 meses negativo.' },
+        { term: 'Liquidez neta de la Fed', summary: 'Activos de la Reserva Federal menos la cuenta del Tesoro y los repos inversos, cada miércoles, con su variación en 4 y 13 semanas.' },
+        { term: 'Bancos centrales', summary: 'Rango de tipos oficiales de la Fed y tipo de depósito del BCE, su último cambio y la última y la próxima reunión según los calendarios oficiales, revisados a mano.' },
+        { term: 'Datos adelantados', summary: 'Peticiones iniciales de subsidio por desempleo (y su media de 4 semanas), permisos de construcción, el indicador adelantado de la OCDE y el NFCI cuando su fuente está habilitada.' },
+        { term: 'Evolución histórica', summary: 'Con sesión iniciada, cada bloque ofrece «Ver evolución» con gráficos de 1 y 3 años; sin sesión se muestra un aviso para iniciarla.' },
+      ],
+      notes: [
+        'Un dato está «Desactualizado» cuando es más antiguo de lo que permite su frecuencia: 7 días para los datos diarios y de sesión, 16 para los semanales y 100 para los mensuales. Los datos desactualizados se muestran, pero no cuentan en el entorno.',
+        'Los datos macroeconómicos proceden de FRED® y de sus fuentes originales, citadas en cada bloque. «No disponible · fuente no habilitada» indica una serie desactivada.',
+      ],
+    },
+    {
       id: 'cuenta',
       title: 'Tu cuenta: Screeners guardados y Watchlist',
       paragraphs: [

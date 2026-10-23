@@ -99,3 +99,23 @@ export function formatMarketDate(locale: Locale, isoDate: string | null): string
     timeZone: 'UTC',
   }).format(date)
 }
+
+/**
+ * Month of a monthly observation (`YYYY-MM-DD`, dated the 1st): "septiembre
+ * de 2026" / "September 2026". UTC, like `formatMarketDate`.
+ */
+export function formatMarketMonth(locale: Locale, isoDate: string | null): string {
+  if (isoDate === null) {
+    return EMPTY
+  }
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate)
+  if (!match) {
+    return isoDate
+  }
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])))
+  return new Intl.DateTimeFormat(intlTag(locale), {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date)
+}

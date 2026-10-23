@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\RecordsMarketContextRun;
 use App\Services\MarketContext\MarketContextComputer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -20,6 +21,8 @@ use Throwable;
  */
 class ComputeMarketContext extends Command
 {
+    use RecordsMarketContextRun;
+
     /**
      * The name and signature of the console command.
      *
@@ -37,9 +40,15 @@ class ComputeMarketContext extends Command
     protected $description = 'Compute the daily sector and market breadth snapshots (Market Context)';
 
     /**
-     * Execute the console command.
+     * Execute the console command; its run is recorded for the Admin tab and
+     * renews the Market Context cache (market-context-ui).
      */
     public function handle(MarketContextComputer $computer): int
+    {
+        return $this->recordingRun('market-context:compute', fn (): int => $this->runCompute($computer));
+    }
+
+    private function runCompute(MarketContextComputer $computer): int
     {
         $date = $this->dateOption('date');
         $from = $this->dateOption('from');

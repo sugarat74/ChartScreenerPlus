@@ -1158,10 +1158,266 @@ export type LegalInfo = {
    * null (or absent on older deployments) while the feature is off.
    */
   email_digest?: { provider: string; provider_location: string } | null
+  /**
+   * Market Context go-live switch (market-context-ui): the header link and the
+   * FRED clauses of the legal notice. Absent on older deployments (= false).
+   */
+  market_context?: boolean
 }
 
 export const legalApi = {
   async info(): Promise<LegalInfo> {
     return request<LegalInfo>('/api/legal')
+  },
+}
+
+/* ------------------------------------------------------------------------ */
+/* Market Context (docs/specs/market-context-ui.md)                          */
+/* ------------------------------------------------------------------------ */
+
+/** One macro reading; `null` instead of the object when its series is disabled. */
+export type MarketReading = { value: number | null; as_of: string | null; stale: boolean }
+
+export type MarketRegimeLabel = 'favourable' | 'neutral' | 'adverse' | 'insufficient'
+
+export type MarketTrend = 'uptrend' | 'mixed' | 'downtrend'
+
+export type RegimeComponentKey =
+  | 'breadth'
+  | 'index_trend'
+  | 'sector_participation'
+  | 'yield_curve'
+  | 'financial_conditions'
+  | 'liquidity'
+  | 'volatility'
+
+export type RegimeComponent = {
+  status: 'ok' | 'stale' | 'missing' | 'disabled'
+  score: number | null
+  value: number | string | null
+  as_of: string | null
+  stale: boolean
+}
+
+export type MarketRegime = {
+  date: string
+  stale: boolean
+  regime: MarketRegimeLabel
+  score: number | null
+  available: number
+  rules_version: number
+  rules: { min_available: number; favourable_min_score: number; adverse_max_score: number }
+  /** Stored order; an absent key was not computed by that rules version. */
+  components: Partial<Record<RegimeComponentKey, RegimeComponent>>
+}
+
+export type SectorKey =
+  | 'communication_services'
+  | 'consumer_discretionary'
+  | 'consumer_staples'
+  | 'energy'
+  | 'financials'
+  | 'health_care'
+  | 'industrials'
+  | 'information_technology'
+  | 'materials'
+  | 'real_estate'
+  | 'utilities'
+
+export type MarketSectorRow = {
+  ticker: string
+  sector_key: SectorKey | null
+  ret_5: number | null
+  ret_20: number | null
+  ret_60: number | null
+  rs_60: number | null
+  rs_rank: number | null
+  trend: MarketTrend | null
+  breadth_200: number | null
+}
+
+export type MarketBreadth = {
+  date: string
+  stale: boolean
+  members: number | null
+  pct_above_sma50: number | null
+  pct_above_sma200: number | null
+  new_highs: number | null
+  new_lows: number | null
+  advancers: number | null
+  decliners: number | null
+  spy_trend: MarketTrend | null
+}
+
+export type CentralBankMeeting = { start: string; decision: string }
+
+export type CentralBankCalendarInfo = { source_url: string; checked_at: string }
+
+export type FedBlock = {
+  lower: MarketReading
+  upper: MarketReading
+  last_change: {
+    direction: 'raise' | 'cut'
+    from: { lower: number | null; upper: number | null }
+    to: { lower: number | null; upper: number | null }
+    effective_date: string
+  } | null
+  last_meeting: CentralBankMeeting | null
+  next_meeting: CentralBankMeeting | null
+  calendar: CentralBankCalendarInfo
+}
+
+export type EcbBlock = {
+  deposit_rate: MarketReading
+  last_change: { direction: 'raise' | 'cut'; from: number | null; to: number | null; effective_date: string } | null
+  last_meeting: CentralBankMeeting | null
+  next_meeting: CentralBankMeeting | null
+  calendar: CentralBankCalendarInfo
+}
+
+export type MarketMacro = {
+  rates: {
+    dgs3mo: MarketReading | null
+    dgs2: MarketReading | null
+    dgs10: MarketReading | null
+    dgs10_change_20: MarketReading | null
+  } | null
+  curve: {
+    spread_10y2y: MarketReading | null
+    spread_10y3m: MarketReading | null
+    inverted: boolean | null
+  } | null
+  liquidity: {
+    net_liquidity: MarketReading | null
+    change_4w_pct: MarketReading | null
+    change_13w_pct: MarketReading | null
+  } | null
+  leading: {
+    icsa: MarketReading | null
+    icsa_4w: MarketReading | null
+    icsa_4w_vs_52w_min_pct: MarketReading | null
+    permit: MarketReading | null
+    permit_change_3m_pct: MarketReading | null
+    nfci: MarketReading | null
+    oecd_cli: MarketReading | null
+    oecd_cli_change_1m: MarketReading | null
+  } | null
+  central_banks: { fed: FedBlock | null; ecb: EcbBlock | null }
+  /** Attribution of the enabled series per card, verbatim (proper names). */
+  sources: { rates: string[]; liquidity: string[]; central_banks: string[]; leading: string[] }
+}
+
+export type MarketContext = {
+  as_of: string
+  public: boolean
+  regime: MarketRegime | null
+  sectors: { date: string; stale: boolean; rows: MarketSectorRow[] } | null
+  breadth: MarketBreadth | null
+  /** `null` while macro data is disabled. */
+  macro: MarketMacro | null
+}
+
+/** The closed history metric list (C2); sectors use `sector_rs_60:{ticker}`. */
+export type MarketHistoryMetric =
+  | 'regime_score'
+  | 'pct_above_sma200'
+  | 'dgs10'
+  | 'spread_10y3m'
+  | 'net_liquidity'
+  | 'icsa_4w'
+  | 'nfci'
+  | `sector_rs_60:${string}`
+
+export type MarketHistoryRange = '1y' | '3y'
+
+export type MarketHistory = {
+  metric: string
+  range: MarketHistoryRange
+  disabled: boolean
+  from: string | null
+  to: string | null
+  first_date: string | null
+  points: { date: string; value: number | null }[]
+}
+
+/**
+ * Market Context API. `latest` is public once the owner turns
+ * MARKET_CONTEXT_PUBLIC on (Admins preview it before; others get 404);
+ * `history` is for Registered Users only (401 for a guest).
+ */
+export const marketContextApi = {
+  async latest(): Promise<MarketContext> {
+    return request<MarketContext>('/api/market-context')
+  },
+
+  async history(metric: MarketHistoryMetric, range: MarketHistoryRange): Promise<MarketHistory> {
+    const params = new URLSearchParams({ metric, range })
+    return request<MarketHistory>(`/api/market-context/history?${params.toString()}`)
+  },
+}
+
+export type MarketContextCommand = 'market-context:compute' | 'macro:refresh' | 'market-regime:compute'
+
+export const MARKET_CONTEXT_COMMANDS: readonly MarketContextCommand[] = [
+  'market-context:compute',
+  'macro:refresh',
+  'market-regime:compute',
+]
+
+export type MarketContextRunStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'interrupted'
+
+export type MarketContextRun = {
+  status: MarketContextRunStatus
+  queued_at: string | null
+  started_at: string | null
+  finished_at: string | null
+  exit_code: number | null
+}
+
+export type AdminMarketContextSeries = {
+  code: string
+  category: string
+  frequency: string
+  license: string
+  enabled: boolean
+  last_observation_date: string | null
+  last_refreshed_at: string | null
+  last_attempted_at: string | null
+  last_error: string | null
+  stale: boolean
+}
+
+export type AdminMarketContextStatus = {
+  public: boolean
+  macro_enabled: boolean
+  runs: Record<MarketContextCommand, MarketContextRun | null>
+  snapshots: {
+    sectors: { first_date: string; latest_date: string; latest_rows: number } | null
+    breadth: { first_date: string; latest_date: string } | null
+    regime: {
+      first_date: string
+      latest_date: string
+      count: number
+      rules_version: number
+      latest: { regime: MarketRegimeLabel; score: number | null; available: number }
+      distribution: Record<MarketRegimeLabel, number>
+    } | null
+  }
+  series: AdminMarketContextSeries[]
+}
+
+/** Admin Market Context tab; `auth:sanctum` + `admin` server-side (401/403). */
+export const adminMarketContextApi = {
+  async status(): Promise<AdminMarketContextStatus> {
+    return request<AdminMarketContextStatus>('/api/admin/market-context')
+  },
+
+  /** Queue one of the three commands (202); 409 while it is queued or running. */
+  async rerun(command: MarketContextCommand): Promise<{ command: MarketContextCommand; run: MarketContextRun }> {
+    await ensureCsrfCookie()
+    return request<{ command: MarketContextCommand; run: MarketContextRun }>('/api/admin/market-context/runs', {
+      method: 'POST',
+      body: JSON.stringify({ command }),
+    })
   },
 }

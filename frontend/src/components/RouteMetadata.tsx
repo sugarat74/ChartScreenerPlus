@@ -5,6 +5,7 @@ import type { MessageKey } from '../i18n/translate.ts'
 
 const ROUTE_METADATA: Record<string, { title: MessageKey; description: MessageKey }> = {
   '/screener': { title: 'meta.screenerTitle', description: 'meta.screenerDescription' },
+  '/mercado': { title: 'meta.marketTitle', description: 'meta.marketDescription' },
   '/como-funciona': { title: 'meta.howItWorksTitle', description: 'meta.howItWorksDescription' },
   '/chart': { title: 'meta.chartTitle', description: 'meta.chartDescription' },
   '/portal': { title: 'meta.portalTitle', description: 'meta.portalDescription' },

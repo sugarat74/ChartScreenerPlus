@@ -20,4 +20,28 @@ return [
 
     'benchmark' => env('MARKET_CONTEXT_BENCHMARK', 'SPY'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Market Context page and API (docs/specs/market-context-ui.md)
+    |--------------------------------------------------------------------------
+    |
+    | `public` is the go-live switch of `/mercado`, `GET /api/market-context`
+    | and its history (EnsureMarketContextPublic). While it is false only
+    | Admins can open them, as a preview. Owner decision 2026-10-23 (option
+    | b): it is turned on only once the legal notice, which carries the FRED
+    | terms-of-use clause, is published (spec, "Legal Gate").
+    |
+    | `cache_ttl_seconds` bounds the cached payload and history; the three
+    | Market Context commands also renew the cache version when they finish.
+    | A run record still `queued`/`running` after `run_stale_after_minutes`
+    | is reported as `interrupted` and no longer blocks an Admin rerun.
+    |
+    */
+
+    'public' => (bool) env('MARKET_CONTEXT_PUBLIC', false),
+
+    'cache_ttl_seconds' => 86400,
+
+    'run_stale_after_minutes' => 30,
+
 ];

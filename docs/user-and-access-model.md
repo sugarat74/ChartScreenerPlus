@@ -23,6 +23,9 @@
 | Request an experimental Jev forecast | no | yes | yes |
 | Read / generate an AI Company Card | no | yes | yes |
 | Describe a Screener search in natural language (AI) | no (sign-in link) | yes | yes |
+| Open `/mercado` and `GET /api/market-context` (Market Context) | yes once `MARKET_CONTEXT_PUBLIC=true` (404 before) | yes once public (404 before) | yes (preview with a banner while not public) |
+| Market Context history charts (`/api/market-context/history`) | no (sign-in prompt; API 401) | yes once public | yes |
+| Market Context Admin tab (status, rerun the three commands) | no | no | yes |
 | View forecast evaluation metrics | no | no | yes |
 | Start and inspect Jev Backtesting runs | no | no | yes |
 | Save / apply Saved Screeners | no | yes (own) | yes |
@@ -57,6 +60,7 @@
 - Only Admin-role accounts see the Admin panel; hiding it in the UI is not sufficient, the API must enforce the role.
 - **Enforcement mechanism (implemented):** admin API routes are grouped under `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')` in `routes/api.php`. `auth:sanctum` rejects a guest with **401**; the `admin` middleware alias (`App\Http\Middleware\EnsureUserIsAdmin`) then rejects an authenticated non-admin with **403**. An Admin passes.
 - **Role granting:** registration and every request can only ever produce `role=user`. The role is not mass-assignable and no endpoint accepts it. Admin is granted out of band with `php artisan app:make-admin {email}` (promotes an existing account; unknown email fails) or `UserFactory::admin()` in tests.
+- **Market Context (implemented, `market-context-ui`):** the history endpoint sits in the `auth:sanctum` group (guest **401**); the page, the payload and the history also pass the release gate `market-context.public`, which answers **404** to everyone but Admins while `MARKET_CONTEXT_PUBLIC` is off. The gate is a go-live switch, not authorization. Owner decision 2026-10-23: it stays off until the legal notice with the FRED terms clause is published. The Admin endpoints (`/api/admin/market-context*`) are in the admin group (401/403).
 - Registration is email-based; no paid plan gating in the MVP.
 
 ## Revocation / Expiry

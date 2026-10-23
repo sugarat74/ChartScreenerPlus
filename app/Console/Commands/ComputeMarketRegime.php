@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\RecordsMarketContextRun;
 use App\Services\MarketRegime\MarketRegimeComputer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -22,6 +23,8 @@ use Throwable;
  */
 class ComputeMarketRegime extends Command
 {
+    use RecordsMarketContextRun;
+
     /**
      * The name and signature of the console command.
      *
@@ -39,9 +42,15 @@ class ComputeMarketRegime extends Command
     protected $description = 'Compute the daily rule-based Market Regime and its components';
 
     /**
-     * Execute the console command.
+     * Execute the console command; its run is recorded for the Admin tab and
+     * renews the Market Context cache (market-context-ui).
      */
     public function handle(MarketRegimeComputer $computer): int
+    {
+        return $this->recordingRun('market-regime:compute', fn (): int => $this->runCompute($computer));
+    }
+
+    private function runCompute(MarketRegimeComputer $computer): int
     {
         $date = $this->dateOption('date');
         $from = $this->dateOption('from');

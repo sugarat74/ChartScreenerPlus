@@ -6,6 +6,7 @@ import type { CookieRow, LegalDocument } from '../i18n/legal/types.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import { useLegalInfo } from '../legal/useLegalInfo.ts'
 import type { LegalInfo } from '../lib/api.ts'
+import { FRED_TERMS_URL } from '../components/market/MarketLegalFooter.tsx'
 import { COOKIES_ROUTE, PRIVACY_ROUTE } from '../nav.ts'
 
 export type LegalPageKind = 'privacy' | 'notice' | 'cookies'
@@ -52,22 +53,31 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
       </div>
     )
   } else {
-    const values = placeholderValues(state.info, t('legal.cookiesLink'), t('legal.privacyLink'))
+    const values = placeholderValues(state.info, t('legal.cookiesLink'), t('legal.privacyLink'), t('marketContext.legal.fredTerms'))
+    const marketContext = state.info.market_context === true
     body = (
       <>
         <p className="text-base leading-7 text-on-surface-variant">{document.intro}</p>
         {kind === 'cookies' ? <CookieTable rows={texts.cookies.rows} values={values} label={document.title} /> : null}
-        {document.sections.map((section) => (
+        {document.sections.map((section) => {
+          const fred = marketContext ? (section.marketContext ?? []) : []
+          const items = section.items ? [...section.items, ...fred] : undefined
+          const paragraphs = [
+            ...(section.paragraphs ?? []),
+            ...(state.info.email_digest ? (section.emailDigest ?? []) : []),
+            ...(section.items ? [] : fred),
+          ]
+          return (
           <section key={section.heading} className="flex flex-col gap-2">
             <h2 className="font-headline text-xl font-bold">{section.heading}</h2>
-            {[...(section.paragraphs ?? []), ...(state.info.email_digest ? (section.emailDigest ?? []) : [])].map((paragraph) => (
+            {paragraphs.map((paragraph) => (
               <p key={paragraph} className="text-sm leading-6 text-on-surface-variant">
                 <Interpolate template={paragraph} values={values} />
               </p>
             ))}
-            {section.items ? (
+            {items ? (
               <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-on-surface-variant">
-                {section.items.map((item) => (
+                {items.map((item) => (
                   <li key={item}>
                     <Interpolate template={item} values={values} />
                   </li>
@@ -75,7 +85,8 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
               </ul>
             ) : null}
           </section>
-        ))}
+          )
+        })}
         {kind === 'notice' && state.info.owner?.registry ? (
           <p className="text-sm text-on-surface-variant">
             {t('legal.registry', { registry: state.info.owner.registry })}
@@ -131,7 +142,12 @@ function CookieTable({ rows, values, label }: { rows: CookieRow[]; values: Recor
   )
 }
 
-function placeholderValues(info: LegalInfo, cookiesLabel: string, privacyLabel: string): Record<string, ReactNode> {
+function placeholderValues(
+  info: LegalInfo,
+  cookiesLabel: string,
+  privacyLabel: string,
+  fredTermsLabel: string,
+): Record<string, ReactNode> {
   const owner = info.owner
   return {
     ...(owner
@@ -171,6 +187,11 @@ function placeholderValues(info: LegalInfo, cookiesLabel: string, privacyLabel: 
       <Link to={PRIVACY_ROUTE} className={LINK_CLASS}>
         {privacyLabel}
       </Link>
+    ),
+    fredTermsLink: (
+      <a href={FRED_TERMS_URL} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
+        {fredTermsLabel}
+      </a>
     ),
   }
 }

@@ -252,3 +252,26 @@ describe('daily alert email in the privacy policy (alerts-email-digest)', () => 
     expectNoMailtoOrPlaceholders()
   })
 })
+
+describe('FRED clauses in the legal notice (market-context-ui)', () => {
+  it('shows the terms item and the sources paragraph only while the Market Context is public', async () => {
+    mockApi({ ...ALL, market_context: false })
+    renderAt('/aviso-legal')
+    await screen.findByRole('heading', { name: 'Condiciones de uso' })
+    expect(document.body.textContent).not.toMatch(/FRED/)
+    cleanup()
+    resetLegalInfoCache()
+
+    mockApi({ ...ALL, market_context: true })
+    renderAt('/aviso-legal')
+    const terms = await screen.findByRole('link', { name: 'Condiciones de uso de la API de FRED®' })
+    expect(terms.getAttribute('href')).toBe('https://fred.stlouisfed.org/docs/api/terms_of_use.html')
+    expect(terms.getAttribute('rel')).toBe('noopener noreferrer')
+    // The clause is a list item of "Condiciones de uso".
+    expect(terms.closest('li')?.textContent).toBe(
+      'Los datos macroeconómicos de la página Mercado proceden de la API FRED® del Banco de la Reserva Federal de St. Louis. Al usar Chartiko aceptas quedar vinculado por las Condiciones de uso de la API de FRED®.',
+    )
+    expect(screen.getByText(/Chartiko usa la API FRED® pero no está respaldado ni certificado/).tagName).toBe('P')
+    expectNoMailtoOrPlaceholders()
+  })
+})

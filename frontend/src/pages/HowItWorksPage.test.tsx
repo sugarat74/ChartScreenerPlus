@@ -108,6 +108,23 @@ describe('manual stays consistent with the interface', () => {
     expect(JSON.stringify(GUIDE_TEXTS)).not.toMatch(/\bEOD\b|end[- ]of[- ]day|fin de d[ií]a/i)
   })
 
+  it('explains the Market page in both languages without advice wording (market-context-ui)', () => {
+    const advice = /compra|comprar|venta|vender|recomend|objetivo|probabilidad|previsi[oó]n|pron[oó]stico|\bbuy\b|\bsell\b|target|recommend|probabilit|forecast|predict/i
+    for (const locale of ['es', 'en'] as const) {
+      const sections = GUIDE_TEXTS[locale].sections
+      const index = sections.findIndex((item) => item.id === 'mercado')
+      expect(index).toBe(sections.findIndex((item) => item.id === 'grafico') + 1)
+      const text = JSON.stringify(sections[index])
+      expect(text).not.toMatch(advice)
+      // Thresholds match MarketRegimeRules (±3, 4 components, 60/40, 7/3, +0.5/0, −0.25/0, ±2, 18/28).
+      for (const pattern of [/\+3/, /−3/, /\b4 comp/, /\b60 ?%/, /\b40 ?%/, /\b7\b/, /\b18\b/, /\b28\b/]) {
+        expect(text, String(pattern)).toMatch(pattern)
+      }
+    }
+    expect(GUIDE_TEXTS.es.sections.find((item) => item.id === 'mercado')!.title).toBe(MESSAGES.es.marketContext.title)
+    expect(GUIDE_TEXTS.en.sections.find((item) => item.id === 'mercado')!.title).toBe(MESSAGES.en.marketContext.title)
+  })
+
   it('Spanish and English manuals have the same structure', () => {
     const shape = (locale: 'es' | 'en') =>
       GUIDE_TEXTS[locale].sections.map((section) => ({

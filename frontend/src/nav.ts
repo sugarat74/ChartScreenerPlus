@@ -14,10 +14,16 @@ export type NavItem = {
   readonly adminOnly?: boolean
   /** Keep the tab active on nested routes (e.g. `/admin/users`). */
   readonly nested?: boolean
+  /**
+   * Market Context (market-context-ui): shown only once `GET /api/legal`
+   * reports the page public, or to Admins (preview). UI affordance only.
+   */
+  readonly marketContext?: boolean
 }
 
 export const NAV_ITEMS = [
   { path: '/', labelKey: 'nav.screener' },
+  { path: '/mercado', labelKey: 'nav.market', marketContext: true },
   { path: '/como-funciona', labelKey: 'nav.howItWorks' },
   { path: '/admin', labelKey: 'nav.admin', adminOnly: true, nested: true },
   { path: '/portal', labelKey: 'nav.portal', nested: true },
@@ -31,6 +37,9 @@ export const DEFAULT_ROUTE: string = NAV_ITEMS[0].path
  */
 export const LOGIN_ROUTE = '/login'
 export const REGISTER_ROUTE = '/register'
+
+/** Market Context page (market-context-ui). */
+export const MARKET_ROUTE = '/mercado'
 
 /** Public legal pages (docs/specs/legal-compliance-eu.md), linked from the footer. */
 export const PRIVACY_ROUTE = '/privacidad'

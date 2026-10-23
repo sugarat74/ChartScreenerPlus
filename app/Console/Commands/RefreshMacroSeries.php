@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\RecordsMarketContextRun;
 use App\Services\Fundamentals\Sleeper;
 use App\Services\Macro\FredClient;
 use App\Services\Macro\MacroSeriesRefresher;
@@ -25,9 +26,15 @@ use Illuminate\Support\Facades\Log;
  *
  * The first run backfills `backfill_years` by itself; `--backfill` re-fetches
  * that whole window.
+ *
+ * Its run is recorded for the Admin tab and renews the Market Context cache
+ * (market-context-ui), except on the disabled and lock-held exits, which run
+ * nothing.
  */
 class RefreshMacroSeries extends Command
 {
+    use RecordsMarketContextRun;
+
     protected $signature = 'macro:refresh
                             {--series=* : Only these codes (e.g. --series=DGS10 --series=WALCL)}
                             {--backfill : Re-fetch the full backfill window}';
@@ -43,9 +50,11 @@ class RefreshMacroSeries extends Command
             return self::SUCCESS;
         }
         if (! FredClient::validKey(config('macro.fred_api_key'))) {
-            $this->error('FRED_API_KEY is missing or malformed (32 lower-case letters and digits); nothing was requested.');
+            return $this->recordingRun('macro:refresh', function (): int {
+                $this->error('FRED_API_KEY is missing or malformed (32 lower-case letters and digits); nothing was requested.');
 
-            return self::FAILURE;
+                return self::FAILURE;
+            });
         }
 
         $enabled = array_keys(MacroSeriesRefresher::enabledSeries());
@@ -55,9 +64,11 @@ class RefreshMacroSeries extends Command
         ))));
         $unknown = array_values(array_diff($requested, $enabled));
         if ($unknown !== []) {
-            $this->error('Unknown or disabled series: '.implode(', ', $unknown).'. Enabled: '.implode(', ', $enabled).'. Nothing was requested.');
+            return $this->recordingRun('macro:refresh', function () use ($unknown, $enabled): int {
+                $this->error('Unknown or disabled series: '.implode(', ', $unknown).'. Enabled: '.implode(', ', $enabled).'. Nothing was requested.');
 
-            return self::FAILURE;
+                return self::FAILURE;
+            });
         }
         $codes = $requested === [] ? $enabled : array_values(array_intersect($enabled, $requested));
 
@@ -69,7 +80,10 @@ class RefreshMacroSeries extends Command
         }
 
         try {
-            return $this->refreshAll($refresher, $sleeper, $codes, (bool) $this->option('backfill'));
+            return $this->recordingRun(
+                'macro:refresh',
+                fn (): int => $this->refreshAll($refresher, $sleeper, $codes, (bool) $this->option('backfill')),
+            );
         } finally {
             $lock->release();
         }

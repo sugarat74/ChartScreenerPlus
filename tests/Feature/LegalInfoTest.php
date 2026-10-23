@@ -182,4 +182,13 @@ class LegalInfoTest extends TestCase
     {
         $this->getJson('/api/legal')->assertOk()->assertHeaderMissing('Set-Cookie');
     }
+
+    public function test_market_context_follows_the_go_live_flag(): void
+    {
+        config(['market_context.public' => false]);
+        $this->getJson('/api/legal')->assertOk()->assertJsonPath('market_context', false);
+
+        config(['market_context.public' => true]);
+        $this->getJson('/api/legal')->assertOk()->assertJsonPath('market_context', true);
+    }
 }

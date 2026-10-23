@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\LocalizedFrameworkMessages;
+use App\Http\Middleware\EnsureMarketContextPublic;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -31,8 +32,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Server-side admin boundary. Applied to admin route groups after
         // `auth:sanctum` so guests get 401 and non-admins 403.
+        // The Market Context go-live switch (market-context-ui): public once
+        // MARKET_CONTEXT_PUBLIC is on, Admin preview before. A release gate,
+        // not authorization.
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'market-context.public' => EnsureMarketContextPublic::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

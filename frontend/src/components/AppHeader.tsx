@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
 import { useI18n } from '../i18n/useI18n.ts'
+import { useLegalInfo } from '../legal/useLegalInfo.ts'
 import { ACCOUNT_ROUTE, DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
 import LanguageSelector from './LanguageSelector.tsx'
 import NotificationBell from './NotificationBell.tsx'
@@ -11,11 +12,18 @@ import ThemeSelector from './ThemeSelector.tsx'
 export default function AppHeader() {
   const { user, status, logout } = useAuth()
   const { t } = useI18n()
+  const legal = useLegalInfo()
   const [signingOut, setSigningOut] = useState(false)
+  const isAdmin = user?.role === 'admin'
+  // The Market Context link waits for the owner's go-live (Admins preview it);
+  // nothing while the legal info loads. The API is the real gate.
+  const marketContextPublic = legal.status === 'ready' && legal.info.market_context === true
 
   // Admin-only tabs are hidden for everyone else; the API is the real gate.
   const visibleNavItems = NAV_ITEMS.filter(
-    (item) => item.adminOnly !== true || user?.role === 'admin',
+    (item) =>
+      (item.adminOnly !== true || isAdmin) &&
+      (!('marketContext' in item) || item.marketContext !== true || isAdmin || marketContextPublic),
   )
 
   async function handleSignOut() {

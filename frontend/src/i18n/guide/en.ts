@@ -271,6 +271,37 @@ export const guideEn: GuideTexts = {
       ],
     },
     {
+      id: 'mercado',
+      title: 'Market context',
+      paragraphs: [
+        'The Market page sums up the US market with fixed, public rules. Each block shows its date ("Data as of…" or, for monthly data, "Data for September 2026"), its source and a "What does it mean?" note. It is descriptive information: it does not say what the market will do and it is not advice.',
+      ],
+      entries: [
+        {
+          term: 'Market regime',
+          summary: 'A label (Favourable, Neutral, Adverse or Not enough data) that adds up each component: +1, 0 or −1 using fixed thresholds.',
+          details: [
+            'Components: breadth (60% or more of S&P 500 stocks above their SMA200 adds, 40% or less subtracts), index trend (SPY uptrend adds, downtrend subtracts), sector participation (7 or more of 11 sectors in an uptrend adds, 3 or fewer subtracts), yield curve (10-year – 3-month spread of +0.5 pp or more adds, below 0 subtracts), financial conditions (NFCI below −0.25 adds, above 0 subtracts), net liquidity (+2% or more over 13 weeks adds, −2% or less subtracts) and volatility (VIX below 18 adds, above 28 subtracts).',
+            'Favourable with +3 or more, Adverse with −3 or less and Neutral otherwise. With fewer than 4 components with up-to-date data it shows "Not enough data". Stale components and sources that are not enabled are listed with their reason and "does not count". The thresholds are uncalibrated initial values.',
+          ],
+        },
+        {
+          term: 'Sectors',
+          summary: 'The 11 SPDR sector ETFs ranked by their 3-month return against the S&P 500 (relative strength), with their trend and the share of the sector’s stocks above their SMA200. The 1 week / 1 month / 3 months control only changes the return column; each row opens the ETF chart.',
+        },
+        { term: 'S&P 500 breadth', summary: 'Share of stocks above their SMA50 and SMA200, new 52-week highs and lows, advancers and decliners, and the SPY trend.' },
+        { term: 'Rates and curve', summary: '3-month, 2-year and 10-year Treasury yields, the 10-year change over 20 sessions and the 10-year – 2-year and 10-year – 3-month spreads, calculated by Chartiko. "Inverted" means a negative 10-year – 3-month spread.' },
+        { term: 'Fed net liquidity', summary: 'Federal Reserve assets minus the Treasury General Account and reverse repos, every Wednesday, with its 4- and 13-week change.' },
+        { term: 'Central banks', summary: 'The Fed funds rate range and the ECB deposit rate, their last change and the last and next meeting from the official calendars, checked by hand.' },
+        { term: 'Leading data', summary: 'Initial jobless claims (and their 4-week average), building permits, the OECD leading indicator and the NFCI when its source is enabled.' },
+        { term: 'History', summary: 'When signed in, each block offers "Show history" with 1- and 3-year charts; without a session a sign-in prompt is shown.' },
+      ],
+      notes: [
+        'A reading is "Stale" when it is older than its frequency allows: 7 days for daily and session data, 16 for weekly and 100 for monthly data. Stale readings are shown but do not count in the regime.',
+        'Macroeconomic data come from FRED® and their original sources, cited in each block. "Not available · source not enabled" marks a disabled series.',
+      ],
+    },
+    {
       id: 'cuenta',
       title: 'Your account: saved Screeners and Watchlist',
       paragraphs: [

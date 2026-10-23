@@ -11,7 +11,9 @@ use App\Models\MarketRegimeSnapshot;
 use App\Models\MarketSectorSnapshot;
 use App\Models\Universe;
 use App\Services\Macro\MacroSeriesRefresher;
+use App\Services\MarketContext\MarketContextCache;
 use App\Services\MarketContext\MarketContextComputer;
+use App\Services\MarketContext\MarketContextRunLog;
 use App\Services\MarketRegime\MarketRegimeComputer;
 use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -498,6 +500,30 @@ class IngestionPipelineCommandTest extends TestCase
 
         $this->assertDatabaseCount('market_breadth_snapshots', 0);
         Log::shouldHaveReceived('warning')->with('Market context stage failed.', ['stage' => 'market-context:compute', 'exit' => 1])->once();
+    }
+
+    public function test_the_pipeline_records_the_three_market_context_runs_and_bumps_the_cache(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->marketContextUniverse();
+        $this->enableFred();
+        $this->fakeEngineWithEtfs();
+        Http::fake(['api.stlouisfed.org/*' => Http::failedConnection()]);
+        $this->fakeMacroSleeper();
+        Exceptions::fake();
+        $version = MarketContextCache::version();
+
+        // The macro stage fails; the exit code is unchanged (market-context-ui, C4).
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Macro stage macro:refresh failed (exit 1); the pipeline continues.')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->assertExitCode(0);
+
+        $this->assertSame('succeeded', MarketContextRunLog::get('market-context:compute')['status']);
+        $this->assertSame(['failed', 1], [MarketContextRunLog::get('macro:refresh')['status'], MarketContextRunLog::get('macro:refresh')['exit_code']]);
+        $this->assertSame('succeeded', MarketContextRunLog::get('market-regime:compute')['status']);
+        $this->assertNotSame($version, MarketContextCache::version());
     }
 
     public function test_a_disabled_macro_stage_is_skipped_without_requests(): void
