@@ -35,8 +35,11 @@ return [
 
     'email_digest' => [
         'enabled' => (bool) env('ALERT_EMAIL_DIGEST_ENABLED', false),
-        'provider' => env('ALERT_EMAIL_PROVIDER'),
-        'provider_location' => env('ALERT_EMAIL_PROVIDER_LOCATION'),
+        // A blank value falls back to the shared MAIL_PROVIDER* pair, so one
+        // pair names the provider for account and alert emails alike
+        // (docs/specs/auth-email-verification.md).
+        'provider' => env('ALERT_EMAIL_PROVIDER') ?: env('MAIL_PROVIDER'),
+        'provider_location' => env('ALERT_EMAIL_PROVIDER_LOCATION') ?: env('MAIL_PROVIDER_LOCATION'),
         'max_items' => 50,
         'ledger_retention_days' => (int) env('ALERT_EMAIL_LEDGER_RETENTION_DAYS', 90),
     ],

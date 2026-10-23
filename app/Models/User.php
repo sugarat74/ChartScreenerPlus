@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Services\Auth\EmailVerificationMailer;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -63,6 +63,19 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    /**
+     * Send the address confirmation email (auth-email-verification). Overrides
+     * the framework's notification, which must never be sent: the link is the
+     * SPA page and the email has its own layout. The model deliberately does
+     * not implement the `MustVerifyEmail` contract, so the framework never
+     * sends anything by itself; access decisions read only
+     * `App\Support\EmailVerification::pending()`.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        app(EmailVerificationMailer::class)->send($this);
     }
 
     /**

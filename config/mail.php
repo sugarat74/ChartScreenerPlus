@@ -115,4 +115,35 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Global "Reply-To" Address (Chartiko)
+    |--------------------------------------------------------------------------
+    |
+    | Account and alert emails are sent from a no-reply sender; replies go to
+    | the owner's contact address. Laravel applies it only when an address is
+    | set (docs/specs/auth-email-verification.md, D6).
+    |
+    */
+
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS'),
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sending provider (Chartiko)
+    |--------------------------------------------------------------------------
+    |
+    | The email delivery provider and its data location, named in the privacy
+    | policy. Outbound email (App\Support\OutboundMail) is ready only when both
+    | are set; the alert digest falls back to these values too.
+    |
+    */
+
+    'provider' => env('MAIL_PROVIDER'),
+
+    'provider_location' => env('MAIL_PROVIDER_LOCATION'),
+
 ];

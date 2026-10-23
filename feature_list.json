@@ -1560,7 +1560,8 @@
     "title": "Turn on the daily alert email in production (Brevo, free EU provider)",
     "user_visible_behavior": "Registered Users see the daily email opt-in in their Portal and, once they tick it, receive the daily alert summary from alertas@chartiko.com; the privacy policy names Brevo (EU, France) as the sending provider.",
     "depends_on": [
-      "alerts-email-digest"
+      "alerts-email-digest",
+      "auth-email-verification"
     ],
     "status": "not_started",
     "verification": [
@@ -1777,7 +1778,7 @@
     "depends_on": [
       "auth-registration-login"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Feature tests: register sends one verification email (log/array mailer), the signed link verifies and expires after 24 h, resend is throttled, tampered or expired links are rejected",
       "Unverified users get the localized 'verify your email' response on every auth-only API (Watchlist, Saved Screeners, alerts, AI features, Market Context) and can still sign out and resend; verified users are unaffected",
@@ -1785,7 +1786,17 @@
       "Vitest: verify-email screen, resend button states, es/en, no hardcoded text",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-23 independent validator: accept (round 1). .\\init.ps1 exit 0 (Laravel 831 passed / 6 skipped, Vitest 345 in 43 files, SPA lint + build, engine 101); route-walker probe caught a fake account-only route without verified; scratch-DB browser run with the flag on (MAIL_PROVIDER=Bird, log mailer to stderr): register -> notice -> resend (6x 202 then 429) -> link in a fresh context verifies without a session, tampered/missing signature invalid, second visit already verified, one POST per visit; flag off releases pending accounts at once and new sign-ups are stamped verified with no email. No provider hardcoded in product or legal text. PostgreSQL pending CI test-pgsql.",
+      "2026-10-23 implementer self-verification (not yet independently validated). Spec: docs/specs/auth-email-verification.md.",
+      ".\\init.ps1 -> exit 0 ('Baseline OK.'): Laravel 831 passed / 6 skipped (6391 assertions), SPA tsc + oxlint (only the pre-existing RequireAuth.test warning), Vitest 345 passed (43 files), vite build OK, engine 101 passed.",
+      "php artisan test --filter=EmailVerificationTest -> 58 passed (dormant default, flag without provider, production + log/array mailer dormant, register while required queues one VerifyEmailAddress in the Accept-Language locale, HTML/text es+en with no name/images/escaped user text, sent message has Reply-To and no List-Unsubscribe, mail failure -> 201 and log {user_id, error} only, verify once without a session + Verified event once + no sign-in, GET 405, 1439 min valid / 1441 min link_expired, expired-but-verified -> already_verified, 7 tampering cases -> invalid_link, malformed path JSON 404, verify throttle 12/min, resend 202/200/409/401/400 and 7th call localized 429 with Retry-After, 21-route denial matrix es+en with nothing written, pending user keeps /user, PATCH /account, export, logout, delete, Admin with null email_verified_at never pending, Market Context ability denies a pending user on the public Screener, structural guard over Route::getRoutes(), verified alias = EnsureEmailVerified, migration backfills only null rows, /api/legal account_email).",
+      "Updated tests: AuthTest +2 (dormant register stamps email_verified_at; 11th register per IP -> 429), LegalInfoTest +1, AlertEmailDigestTest +1 (pending opted-in user gets no digest, queued job re-checks), MarketContextAccessTest +1 (pending denied, pending Admin allowed).",
+      "Vitest +28: VerifyEmailNotice 7 (es/en, sending/sent/60 s countdown, 429 server message, network message, 409 refresh, 'Ya lo he confirmado'), VerifyEmailPage 8 (missing params no fetch, one POST under StrictMode, verified/already/expired/invalid/error+retry, continue vs sign-in), AppLayout gate 10, LegalPage +2 (accountEmail paragraphs, register hint), RouteMetadata +1.",
+      "php artisan route:list --path=api -v: POST api/register throttle 10,60,register; POST api/email/verify/{user}/{hash} (verification.verify) throttle 12,1,email-verify; POST api/email/verification-notification auth:sanctum + throttle 6,60,email-verification-resend; every other auth:sanctum non-admin route carries `verified`.",
+      "Manual (Laravel + Vite on a scratch SQLite DB in the session scratchpad via DB_DATABASE, AUTH_EMAIL_VERIFICATION_ENABLED=true, MAIL_MAILER=log, MAIL_PROVIDER=Local, QUEUE_CONNECTION=sync; dev DB untouched; servers stopped; .playwright-mcp removed; scratch DB deleted): register in es -> notice with the address, no bell, one email in laravel.log with a /verificar-correo/ link and Reply-To contacto@; / and /portal -> notice; /portal/cuenta and /privacidad -> real pages; /api/watchlist -> 403 email_verification.required es/en; resend -> 'Te hemos enviado un nuevo email. Podrás pedir otro en 56 s'; spam -> 6th API call 429 'Demasiados intentos…' with Retry-After; link in a fresh context (no session, 390 px) -> 'Correo confirmado' + sign-in link, /api/user still 401, second open 'Tu correo ya estaba confirmado'; tampered signature -> 'Enlace no válido'; original tab 'Ya lo he confirmado' -> gate gone, bell back, watchlist 200; second account registered in en at 390 px dark (no horizontal scroll); flag off + config:clear -> that pending account gets the Portal and watchlist 200, /api/legal account_email null; email HTML rendered at 390/640 px light/dark: no overflow, no images, only the verify and privacy links.",
+      "Production stays dormant: with the default flag off, register stamps email_verified_at, sends nothing and /api/legal has account_email: null (EmailVerificationTest scenario 1, LegalInfoTest)."
+    ],
     "notes": "Requested 2026-10-23: 'quiero que para registrarse haya que validar el correo'. Owner choices: existing accounts treated as verified; unverified accounts can sign in but only see the confirm-email screen with resend (link valid 24 h). Needs real outbound email in production (MAIL_MAILER is log today): shares the Brevo setup of alerts-email-golive (owner actions: Brevo account, Cloudflare DNS records, SMTP key). The planner decides whether enforcement ships behind a flag so it can deploy before email works without locking out new sign-ups. Privacy policy must name the email provider when it goes live."
   },
   {

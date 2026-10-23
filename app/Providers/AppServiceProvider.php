@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Services\Admin\LoginEventRecorder;
+use App\Support\EmailVerification;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -42,8 +43,20 @@ class AppServiceProvider extends ServiceProvider
         // `Response::denyWithStatus(403, ...)`). Every Market Context check
         // (routes, Screener filters, Saved Screeners, NL Screener, alerts and
         // the user capability) calls this ability, never the role or the flag.
-        Gate::define('view-market-context', fn (User $user): Response => ($user->isAdmin() || (bool) config('market_context.public'))
-            ? Response::allow()
-            : Response::denyAsNotFound(__('market_context.not_available')));
+        //
+        // An account that still has to confirm its email
+        // (auth-email-verification, D4) is denied first: the ability is also
+        // checked outside the `verified` route group (the public Screener's
+        // sector filters, Saved Screener alerts, the user capability). Behind
+        // `verified` a pending user never reaches it.
+        Gate::define('view-market-context', function (User $user): Response {
+            if (EmailVerification::pending($user)) {
+                return Response::denyAsNotFound(__('market_context.not_available'));
+            }
+
+            return ($user->isAdmin() || (bool) config('market_context.public'))
+                ? Response::allow()
+                : Response::denyAsNotFound(__('market_context.not_available'));
+        });
     }
 }

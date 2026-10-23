@@ -253,6 +253,43 @@ describe('daily alert email in the privacy policy (alerts-email-digest)', () => 
   })
 })
 
+describe('account emails in the privacy policy and the register form (auth-email-verification)', () => {
+  it('describes the confirmation email and names its provider only while account emails are sent', async () => {
+    mockApi(PRIVACY_ONLY)
+    renderAt('/privacidad')
+    await screen.findByRole('heading', { name: 'Cuenta de usuario' })
+    expect(document.body.textContent).not.toMatch(/confirmar que la dirección es tuya/)
+    expect(document.body.textContent).not.toMatch(/Los emails de tu cuenta/)
+    cleanup()
+    resetLegalInfoCache()
+
+    mockApi({ ...PRIVACY_ONLY, account_email: { provider: 'Brevo', provider_location: 'UE (Francia)' } })
+    renderAt('/privacidad')
+    await screen.findByRole('heading', { name: 'Cuenta de usuario' })
+    expect(document.body.textContent).toMatch(/un enlace que caduca a las 24 horas/)
+    expect(document.body.textContent).toMatch(/Los emails de tu cuenta \(como la confirmación de tu dirección\) se envían a través de Brevo/)
+    expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE \(Francia\)/)
+    // The daily alert email paragraphs stay off.
+    expect(document.body.textContent).not.toMatch(/resumen diario por email/)
+    expectNoMailtoOrPlaceholders()
+  })
+
+  it('shows the confirmation hint on the register form only while account emails are sent', async () => {
+    mockApi(PRIVACY_ONLY)
+    renderAt('/register')
+    await screen.findByTestId('register-privacy')
+    expect(screen.queryByTestId('register-verify-hint')).toBeNull()
+    cleanup()
+    resetLegalInfoCache()
+
+    mockApi({ ...PRIVACY_ONLY, account_email: { provider: 'Brevo', provider_location: 'UE (Francia)' } })
+    renderAt('/register')
+    expect((await screen.findByTestId('register-verify-hint')).textContent).toBe(
+      'Después de crear la cuenta te enviaremos un email para confirmar tu dirección.',
+    )
+  })
+})
+
 describe('FRED clauses in the legal notice (market-context-ui)', () => {
   it('shows the terms item and the sources paragraph only while the Market Context is public', async () => {
     mockApi({ ...ALL, market_context: false })

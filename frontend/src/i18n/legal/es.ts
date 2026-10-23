@@ -22,6 +22,9 @@ export const legalEs: LegalTexts = {
         paragraphs: [
           'Si creas una cuenta tratamos tu nombre, tu email y tu contraseña, que se guarda transformada mediante una función hash y nunca en claro. También guardamos los Screeners y la Watchlist que decides conservar.',
         ],
+        accountEmail: [
+          'Al registrarte te enviamos un email para confirmar que la dirección es tuya, con un enlace que caduca a las 24 horas. Hasta que la confirmes, la cuenta solo permite reenviar ese email, gestionarla o eliminarla. Guardamos la fecha de confirmación.',
+        ],
         items: [
           'Finalidad: crear y mantener tu cuenta y ofrecerte las funciones de usuario registrado.',
           'Base jurídica: ejecución del contrato de uso del servicio que aceptas al registrarte (art. 6.1.b RGPD).',
@@ -109,6 +112,9 @@ export const legalEs: LegalTexts = {
           'No cedemos tus datos a terceros salvo obligación legal. El proveedor de alojamiento, OVH, trata los datos por cuenta de Chartiko como encargado del tratamiento.',
           'Si usas la búsqueda con IA del Screener, el texto que escribes se envía a DevExpert Inference, el proveedor de IA, solo para devolver los filtros (véase «Funciones de IA»); por eso te pedimos que no incluyas datos personales.',
           'El servidor está situado en Canadá (Beauharnois, Quebec). La Comisión Europea reconoce a Canadá un nivel de protección adecuado (Decisión 2002/2/CE), en el que se basa esta transferencia internacional.',
+        ],
+        accountEmail: [
+          'Los emails de tu cuenta (como la confirmación de tu dirección) se envían a través de {emailProvider}, el proveedor de envío de correo, que los trata por cuenta de Chartiko como encargado del tratamiento. Ubicación del tratamiento: {emailProviderLocation}.',
         ],
         emailDigest: [
           'Si activas el resumen diario por email, tu dirección de correo y el contenido del email se envían a {emailProvider}, el proveedor de envío de correo, que los trata por cuenta de Chartiko como encargado del tratamiento. Ubicación del tratamiento: {emailProviderLocation}.',

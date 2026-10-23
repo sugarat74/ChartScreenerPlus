@@ -29,6 +29,12 @@ export type AuthUser = {
    * deployments (= no access).
    */
   capabilities?: { market_context: boolean }
+  /**
+   * The account still has to confirm its email (auth-email-verification): the
+   * SPA then shows only the "confirm your email" screen. Computed by the
+   * server, which also enforces it. Absent on older deployments (= false).
+   */
+  email_verification_pending?: boolean
 }
 
 export type RegisterPayload = {
@@ -190,6 +196,34 @@ export const authApi = {
   async logout(): Promise<void> {
     await ensureCsrfCookie()
     await request<void>('/api/logout', { method: 'POST' })
+  },
+}
+
+/**
+ * Email verification (auth-email-verification). `verify` POSTs the signed
+ * link of the email (the signature is the credential: it works without a
+ * session and never signs anyone in); errors are an `ApiError` whose `code` is
+ * `email_verification.invalid_link` or `email_verification.link_expired`.
+ */
+export const emailVerificationApi = {
+  async verify(userId: string, hash: string, expires: string, signature: string): Promise<'verified' | 'already_verified'> {
+    await ensureCsrfCookie()
+    // Only `expires` and `signature`, in this order: the signature covers the query.
+    const query = new URLSearchParams({ expires, signature })
+    const payload = await request<{ status: 'verified' | 'already_verified' }>(
+      `/api/email/verify/${encodeURIComponent(userId)}/${encodeURIComponent(hash)}?${query.toString()}`,
+      { method: 'POST' },
+    )
+    return payload.status
+  },
+
+  /** A fresh confirmation email for the session user (409 while verification is off). */
+  async resend(): Promise<'sent' | 'already_verified'> {
+    await ensureCsrfCookie()
+    const payload = await request<{ status: 'sent' | 'already_verified' }>('/api/email/verification-notification', {
+      method: 'POST',
+    })
+    return payload.status
   },
 }
 
@@ -1179,6 +1213,12 @@ export type LegalInfo = {
    * null (or absent on older deployments) while the feature is off.
    */
   email_digest?: { provider: string; provider_location: string } | null
+  /**
+   * Account emails (auth-email-verification: the address confirmation) and
+   * their sending provider; null (or absent on older deployments) while they
+   * are not sent.
+   */
+  account_email?: { provider: string; provider_location: string } | null
   /**
    * Market Context go-live switch (market-context-ui): the header link and the
    * FRED clauses of the legal notice. Absent on older deployments (= false).

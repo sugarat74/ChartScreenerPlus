@@ -6,6 +6,7 @@ use App\Mail\AlertDigest;
 use App\Models\AlertEmailDigest;
 use App\Services\Alerts\AlertDigestContent;
 use App\Services\Alerts\AlertEmailDigestAvailability;
+use App\Support\EmailVerification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -45,7 +46,8 @@ class SendAlertDigest implements ShouldQueue
             return;
         }
 
-        if (! AlertEmailDigestAvailability::available() || ! $user->wantsAlertEmails()) {
+        // auth-email-verification: an unconfirmed address gets no email.
+        if (! AlertEmailDigestAvailability::available() || ! $user->wantsAlertEmails() || EmailVerification::pending($user)) {
             return;
         }
 

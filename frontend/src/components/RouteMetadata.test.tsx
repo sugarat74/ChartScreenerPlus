@@ -57,3 +57,11 @@ it('the Market page is titled and not indexed', () => {
   expect(robots()).toBe('noindex, follow')
   expect(canonical()).toBeNull()
 })
+
+it('the email confirmation page is titled by prefix and not indexed', () => {
+  show(`/verificar-correo/7/${'a'.repeat(40)}`)
+
+  expect(document.title).toBe('Confirmar email | Chartiko')
+  expect(robots()).toBe('noindex, follow')
+  expect(canonical()).toBeNull()
+})

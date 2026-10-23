@@ -5,6 +5,7 @@ namespace App\Services\Alerts;
 use App\Jobs\SendAlertDigest;
 use App\Models\AlertEmailDigest;
 use App\Models\User;
+use App\Support\EmailVerification;
 use Illuminate\Database\UniqueConstraintViolationException;
 
 /**
@@ -33,6 +34,11 @@ final class AlertDigestSender
             ->whereDoesntHave('alertEmailDigests', fn ($query) => $query->whereDate('as_of', $asOf))
             ->orderBy('id')
             ->each(function (User $user) use ($asOf, &$queued): void {
+                // auth-email-verification: never mail an unconfirmed address.
+                if (EmailVerification::pending($user)) {
+                    return;
+                }
+
                 $notifications = AlertDigestContent::notificationsFor($user, $asOf);
                 if ($notifications === []) {
                     return;

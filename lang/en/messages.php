@@ -47,6 +47,13 @@ return [
         'confirmation_word' => 'Type DELETE to confirm.',
     ],
 
+    'email_verification' => [
+        'required' => 'Confirm your email to use this feature.',
+        'invalid_link' => 'The confirmation link is not valid.',
+        'link_expired' => 'The confirmation link has expired. Ask for a new one.',
+        'unavailable' => 'Email confirmation is not available.',
+    ],
+
     'alerts' => [
         'limit' => 'You can have at most :max alerts.',
         'duplicate' => 'You already have this alert.',

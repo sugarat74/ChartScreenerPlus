@@ -48,6 +48,13 @@ return [
         'confirmation_word' => 'Escribe ELIMINAR para confirmar.',
     ],
 
+    'email_verification' => [
+        'required' => 'Confirma tu email para usar esta función.',
+        'invalid_link' => 'El enlace de confirmación no es válido.',
+        'link_expired' => 'El enlace de confirmación ha caducado. Pide otro.',
+        'unavailable' => 'La confirmación por email no está disponible.',
+    ],
+
     'alerts' => [
         'limit' => 'Puedes tener como máximo :max alertas.',
         'duplicate' => 'Ya tienes esta alerta.',

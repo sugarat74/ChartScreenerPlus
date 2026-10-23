@@ -133,6 +133,27 @@ class AlertEmailDigestTest extends TestCase
         $this->assertSame(0, AlertEmailDigest::query()->count());
     }
 
+    public function test_an_account_pending_email_verification_gets_no_digest(): void
+    {
+        // auth-email-verification: never mail an unconfirmed address.
+        Mail::fake();
+        config(['auth.verification.enabled' => true, 'mail.provider' => 'Acme Mail', 'mail.provider_location' => 'EU (Ireland)']);
+        $user = $this->optedIn();
+        $user->forceFill(['email_verified_at' => null])->save();
+        $this->twoNotifications($user);
+
+        $this->assertSame(0, app(AlertDigestSender::class)->queue(self::AS_OF));
+        $this->assertSame(0, AlertEmailDigest::query()->count());
+
+        // A job queued before the account became pending sends nothing either.
+        $user->forceFill(['email_verified_at' => now()])->save();
+        Queue::fake();
+        app(AlertDigestSender::class)->queue(self::AS_OF);
+        $user->forceFill(['email_verified_at' => null])->save();
+        (new SendAlertDigest(AlertEmailDigest::query()->sole()->id))->handle();
+        Mail::assertNothingSent();
+    }
+
     public function test_nothing_is_sent_while_the_feature_is_unavailable(): void
     {
         Mail::fake();

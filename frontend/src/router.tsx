@@ -20,6 +20,7 @@ import NotificationsPage from './pages/NotificationsPage.tsx'
 import PortalPage from './pages/PortalPage.tsx'
 import RegisterPage from './pages/RegisterPage.tsx'
 import ScreenerPage from './pages/ScreenerPage.tsx'
+import VerifyEmailPage from './pages/VerifyEmailPage.tsx'
 import {
   ACCOUNT_ROUTE,
   COOKIES_ROUTE,
@@ -30,6 +31,7 @@ import {
   PRIVACY_ROUTE,
   REGISTER_ROUTE,
   routeSegment,
+  VERIFY_EMAIL_ROUTE,
 } from './nav.ts'
 
 export const router = createBrowserRouter([
@@ -66,6 +68,7 @@ export const router = createBrowserRouter([
       { path: routeSegment(PRIVACY_ROUTE), element: <LegalPage kind="privacy" /> },
       { path: routeSegment(LEGAL_NOTICE_ROUTE), element: <LegalPage kind="notice" /> },
       { path: routeSegment(COOKIES_ROUTE), element: <LegalPage kind="cookies" /> },
+      { path: `${routeSegment(VERIFY_EMAIL_ROUTE)}/:userId/:hash`, element: <VerifyEmailPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

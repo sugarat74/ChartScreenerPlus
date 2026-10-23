@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\LocalizedFrameworkMessages;
+use App\Http\Middleware\EnsureEmailVerified;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -33,9 +35,20 @@ return Application::configure(basePath: dirname(__DIR__))
         // `auth:sanctum` so guests get 401 and non-admins 403. Market Context
         // access is the `view-market-context` ability (AppServiceProvider),
         // applied with `can:view-market-context`.
+        //
+        // `verified` (auth-email-verification) replaces the framework alias,
+        // whose middleware redirects: an account that still has to confirm its
+        // email gets a JSON 403 `email_verification.required`. It runs before
+        // route model binding, so the answer never depends on whether an id
+        // exists.
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'verified' => EnsureEmailVerified::class,
         ]);
+        $middleware->prependToPriorityList(
+            before: SubstituteBindings::class,
+            prepend: EnsureEmailVerified::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Translate the framework's generic API error messages (401, 419,

@@ -22,6 +22,9 @@ export const legalEn: LegalTexts = {
         paragraphs: [
           'If you create an account we process your name, your email and your password, which is stored as a hash and never in plain text. We also keep the Screeners and the Watchlist you choose to save.',
         ],
+        accountEmail: [
+          'When you register we send you an email to confirm that the address is yours, with a link that expires after 24 hours. Until you confirm it, the account only lets you resend that email, manage the account or delete it. We store the confirmation date.',
+        ],
         items: [
           'Purpose: to create and maintain your account and provide the features for registered users.',
           'Legal basis: performance of the terms of use you accept when you sign up (Art. 6(1)(b) GDPR).',
@@ -109,6 +112,9 @@ export const legalEn: LegalTexts = {
           'We do not share your data with third parties unless required by law. The hosting provider, OVH, processes the data on behalf of Chartiko as a data processor.',
           'If you use the Screener AI search, the text you type is sent to DevExpert Inference, the AI provider, only to return the filters (see "AI features"); that is why we ask you not to include personal data.',
           'The server is located in Canada (Beauharnois, Quebec). The European Commission recognises an adequate level of protection in Canada (Decision 2002/2/EC), on which this international transfer relies.',
+        ],
+        accountEmail: [
+          'The emails of your account (such as the confirmation of your address) are sent through {emailProvider}, the email delivery provider, which processes them on behalf of Chartiko as a data processor. Processing location: {emailProviderLocation}.',
         ],
         emailDigest: [
           'If you turn on the daily email summary, your email address and the email content are sent to {emailProvider}, the email delivery provider, which processes them on behalf of Chartiko as a data processor. Processing location: {emailProviderLocation}.',
