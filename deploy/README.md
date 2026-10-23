@@ -305,7 +305,8 @@ PostgreSQL y PgBouncer no se exponen: usa un túnel SSH
 
 La configuración vigente es [alerts-email-golive](../docs/specs/alerts-email-golive.md).
 Brevo envía las confirmaciones de cuenta y el resumen diario mediante su API
-transaccional. La clave de API se instala sólo en `shared/.env`; el token MCP no
+transaccional, solo en texto: una prueba real detectó que Brevo reescribe los
+enlaces del HTML para seguimiento. La clave de API se instala sólo en `shared/.env`; el token MCP no
 se usa en la aplicación. Los registros DNS de Brevo están publicados en
 Cloudflare. No se modifican los MX ni el SPF del dominio.
 

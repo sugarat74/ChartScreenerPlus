@@ -11,9 +11,9 @@ use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Support\Facades\URL;
 
 /**
- * The daily alert email (alerts-email-digest): HTML and plain-text parts,
- * no images, no tracking pixels and no click tracking (links point straight
- * at chartiko.com). Carries RFC 2369 / RFC 8058 one-click unsubscribe headers
+ * The daily alert email (alerts-email-digest): HTML and plain-text parts;
+ * Brevo sends only the text part so its HTML link tracker cannot rewrite
+ * Chartiko URLs. Carries RFC 2369 / RFC 8058 one-click unsubscribe headers
  * with a signed URL, so unsubscribing never needs a session.
  */
 class AlertDigest extends Mailable

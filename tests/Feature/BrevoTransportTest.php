@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 class BrevoTransportTest extends TestCase
 {
-    public function test_it_sends_both_bodies_and_unsubscribe_headers_without_tracking_consent(): void
+    public function test_it_sends_plain_text_and_unsubscribe_headers_without_tracking_consent(): void
     {
         Http::fake(['api.brevo.com/*' => Http::response(['messageId' => 'brevo-123'], 201)]);
         $email = (new Email)
@@ -32,7 +32,7 @@ class BrevoTransportTest extends TestCase
             && $request['to'][0]['email'] === 'user@example.com'
             && $request['to'][0]['contactPixelTrackingConsent'] === false
             && $request['replyTo']['email'] === 'contacto@chartiko.com'
-            && $request['htmlContent'] === '<p>Hola</p>'
+            && !isset($request['htmlContent'])
             && $request['textContent'] === 'Hola'
             && $request['headers']['List-Unsubscribe'] === '<https://www.chartiko.com/unsubscribe>'
             && $request['headers']['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click');
@@ -46,5 +46,19 @@ class BrevoTransportTest extends TestCase
         $this->expectException(TransportException::class);
         $this->expectExceptionMessage('Brevo API rejected the message (HTTP 403).');
         (new BrevoTransport('test-key'))->send($email);
+    }
+
+    public function test_it_rejects_messages_without_plain_text(): void
+    {
+        Http::fake();
+        $email = (new Email)->from('no-reply@chartiko.com')->to('user@example.com')->subject('Test')->html('<p>Test</p>');
+
+        try {
+            (new BrevoTransport('test-key'))->send($email);
+            $this->fail('Expected a transport exception.');
+        } catch (TransportException $exception) {
+            $this->assertSame('Brevo transport requires a plain-text body.', $exception->getMessage());
+            Http::assertNothingSent();
+        }
     }
 }
