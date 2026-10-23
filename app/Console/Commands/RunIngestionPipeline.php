@@ -11,7 +11,7 @@ use Throwable;
 
 /**
  * Run the full EOD pipeline in order: ingestion -> indicators -> signals -> patterns
- * -> Market Context -> Macro Series -> screener rows -> alerts.
+ * -> Market Context -> Macro Series -> Market Regime -> screener rows -> alerts.
  *
  * This is a thin composition wrapper: it never reimplements any stage and
  * delegates to the `ingestion:run`, `indicators:compute`, `signals:detect`,
@@ -46,7 +46,13 @@ use Throwable;
  * the same way (a non-zero exit or an exception is printed and logged with
  * stage and exit only, never changing the exit code or skipping later
  * stages) and skipped with one info line when `MACRO_ENABLED=false`.
- * `market-regime:compute` (market-regime) will follow it.
+ *
+ * Market Regime stage (docs/specs/market-regime.md): right after the macro
+ * stage and before the Screener refresh, `market-regime:compute` labels the
+ * latest sessions (or seeds the history on an empty table). It always runs,
+ * even when macro is disabled or the Market Context block was skipped, and
+ * is isolated the same way: a failure is printed and logged (stage and exit
+ * only) and never changes the exit code nor skips later stages.
  */
 class RunIngestionPipeline extends Command
 {
@@ -102,6 +108,7 @@ class RunIngestionPipeline extends Command
             $patterns = $this->call('patterns:detect', ['--universe' => $universe]);
             $this->runMarketContext();
             $this->runMacro();
+            $this->runMarketRegime();
             // The Screener and the alerts read the precomputed rows, so they are
             // rebuilt from whatever the stages above stored.
             $screener = $this->call('screener:refresh');
@@ -186,6 +193,25 @@ class RunIngestionPipeline extends Command
         if ($exit !== self::SUCCESS) {
             $this->warn("Macro stage macro:refresh failed (exit {$exit}); the pipeline continues.");
             Log::warning('Macro stage failed.', ['stage' => 'macro:refresh', 'exit' => $exit]);
+        }
+    }
+
+    /**
+     * Compute the Market Regime from the snapshots and macro readings stored
+     * by the stages above. Failures never reach the exit code.
+     */
+    private function runMarketRegime(): void
+    {
+        try {
+            $exit = $this->call('market-regime:compute');
+        } catch (Throwable $exception) {
+            report($exception);
+            $exit = self::FAILURE;
+        }
+
+        if ($exit !== self::SUCCESS) {
+            $this->warn("Market regime stage market-regime:compute failed (exit {$exit}); the pipeline continues.");
+            Log::warning('Market regime stage failed.', ['stage' => 'market-regime:compute', 'exit' => $exit]);
         }
     }
 }

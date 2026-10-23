@@ -1641,15 +1641,25 @@
       "market-context-sectors",
       "macro-series-fred"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Unit tests per component at, below and above each threshold, and for stale and missing inputs",
       "Label boundaries +3/-3 and the insufficient rule (fewer than 4 available components) covered",
       "Backfill for a past date ignores observations published after it (no look-ahead)",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-10-22 at user request. Spec: docs/specs/market-context.md (Feature 3). Thresholds are uncalibrated initial constants; descriptive only, never a forecast or advice."
+    "evidence": [
+      "2026-10-23 independent validator: accept (round 1). .\\init.ps1 exit 0 rerun (Laravel 686 passed / 6 skipped, Vitest 223, SPA lint + build, engine 101); focused filter 87 passed / 6 skipped; pint clean; scratchpad probe (3 tests, 25 assertions): live per-date runs vs later backfill with added future data gave byte-identical rows, staleness boundaries (market 7/8 days, weekly macro 16/17) with no fallback, single disabled legs and missing NFCI/VIX; fixture A recomputed by hand (score 4, 5 available, favourable). PostgreSQL pending CI test-pgsql.",
+      "2026-10-23 implementer self-verification (not yet independently validated). Spec: docs/specs/market-regime.md.",
+      "Schema: market_regime_snapshots (date unique, regime string(16), score smallint nullable, available, components json, rules_version, timestamps); model MarketRegimeSnapshot (REGIME_* / STATUS_* constants, array cast), MarketRegimeSnapshotFactory; table added to CopySqliteToPgsql::SKIPPED_TABLES.",
+      "MarketRegimeRules (pure, static; every Rule 1 constant with its exact operator, values rounded to 4 dp, label with MIN_AVAILABLE 4 and +3/-3, RULES_VERSION 1, MARKET_STALE_AFTER_DAYS 7); MarketRegimeComputer (snapshot rows loaded once and dates normalised in PHP, latest reading <= d, sectors only on dates with all 11 trends, macro always MacroSnapshotService::snapshot(d, pointInTime: true) from a service resolved inside every compute(), statuses ok/stale/missing/disabled, JSON_PRESERVE_ZERO_FRACTION, one-transaction upsert on date); market-regime:compute {--date=} {--from=} (default latest 5 sessions, self-seed from the first Breadth Snapshot on an empty table); isolated runMarketRegime() stage after runMacro() and before screener:refresh.",
+      "New tests (60): MarketRegimeRulesTest 39 (every threshold at / inside / outside, trend up/mixed/down, 4-dp rounding, unknown key throws, 8 label cases, constants); MarketRegimeComputerTest 10 (Scenarios 1-7 with hand computations: fixture A favourable score 4 / 5 available with the exact Rule 6 JSON, 10-14 no look-ahead insufficient, stale boundaries age 7 ok / 8 stale for breadth, index and curve, partial sectors missing, earlier complete sector date used, NFCI/VIX enabled score 6 / 7 available with the 10-15 VIX hidden by lag, macro disabled, fresh macro per compute, key order); MarketRegimeComputeCommandTest 7 (Scenario 8: self-seed 6 rows, rerun unchanged except timestamps, --from floor message, --date/--from narrowing, before-first-snapshot / non-session / malformed / both options exit 1, no snapshots exit 0, missing universe exit 1); IngestionPipelineCommandTest +3 and 1 extended (3 insufficient rows self-seeded in the Market Context block test; output order macro skip < regime < Screener refresh; throwing computer -> warning, Log::warning stage/exit, reported, exit 0, Screener and alerts run; RuntimeException path keeps a pattern-failure exit 1); MarketDataSchemaTest +1 (date unique with savepoint, components round-trip).",
+      "php artisan test --filter=\"MarketRegime|IngestionPipelineCommand|MarketDataSchema|CopySqliteToPgsql\": 87 passed, 6 skipped (pgsql copy scenarios need PostgreSQL).",
+      ".\\init.ps1 exit 0 (Baseline OK.): Laravel 686 passed / 6 skipped (5164 assertions), Vitest 30 files / 223 tests, SPA lint + build, engine 101 passed. vendor/bin/pint --test passed on the changed PHP files.",
+      "Smoke on a scratch SQLite DB under the session scratchpad (env DB_DATABASE, never the dev DB): migrated + seeded, market-regime:compute prints 'No market snapshots yet; nothing to compute.' exit 0; malformed --date exit 1. Synthetic one-year data (261 sessions, 5 years of the 12 enabled macro series, macro enabled): self-seed run 1.41 s, default 5-session run 0.05 s, 5 components available as expected with NFCI/VIX off. Scratch files removed.",
+      "Not verified: PostgreSQL locally (CI test-pgsql is the confirming check); real production data (post-deploy: row count, min(date) = 2025-10-22, latest row vs snapshots and point-in-time macro, label distribution, see deploy/README.md item 9). The dev DB was not migrated or touched (empty dev DB, smoke ran on the scratch DB instead)."
+    ],
+    "notes": "Planned 2026-10-22 at user request. Spec: docs/specs/market-regime.md (umbrella docs/specs/market-context.md, Feature 3). Thresholds are uncalibrated initial constants; descriptive only, never a forecast or advice."
   },
   {
     "id": "market-context-ui",

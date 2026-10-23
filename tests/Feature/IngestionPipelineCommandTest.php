@@ -7,15 +7,18 @@ use App\Models\IngestionRun;
 use App\Models\Instrument;
 use App\Models\MacroSeries;
 use App\Models\MarketBreadthSnapshot;
+use App\Models\MarketRegimeSnapshot;
 use App\Models\MarketSectorSnapshot;
 use App\Models\Universe;
 use App\Services\Macro\MacroSeriesRefresher;
 use App\Services\MarketContext\MarketContextComputer;
+use App\Services\MarketRegime\MarketRegimeComputer;
 use App\Services\Screener\ScreenerRowBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Exceptions;
@@ -419,6 +422,7 @@ class IngestionPipelineCommandTest extends TestCase
 
         $this->artisan('ingestion:pipeline')
             ->expectsOutputToContain('Market context computed for 3 session(s)')
+            ->expectsOutputToContain('Market regime computed for 3 session(s) (2026-09-01 to 2026-09-03); latest 2026-09-03: insufficient')
             ->expectsOutputToContain('Alerts as of 2026-09-03')
             ->expectsOutputToContain('EOD pipeline completed.')
             ->assertExitCode(0);
@@ -434,6 +438,10 @@ class IngestionPipelineCommandTest extends TestCase
 
         $this->assertSame(3, MarketBreadthSnapshot::query()->count());
         $this->assertSame(3, MarketSectorSnapshot::query()->count());
+        // The regime stage self-seeded one row per computed session; with
+        // macro disabled at most 3 components exist, so each is insufficient.
+        $this->assertSame(3, MarketRegimeSnapshot::query()->count());
+        $this->assertSame(3, MarketRegimeSnapshot::query()->where('regime', MarketRegimeSnapshot::REGIME_INSUFFICIENT)->whereNull('score')->count());
         // The Screener rows stay stock-only.
         $this->assertDatabaseHas('screener_rows', ['ticker' => 'AAA']);
         $this->assertDatabaseMissing('screener_rows', ['ticker' => 'XLK']);
@@ -569,5 +577,80 @@ class IngestionPipelineCommandTest extends TestCase
         Log::shouldHaveReceived('warning')->with('Macro stage failed.', ['stage' => 'macro:refresh', 'exit' => 1])->once();
         // The macro lock was released despite the exception.
         $this->assertTrue(Cache::lock('macro:refresh', 10)->get());
+    }
+
+    public function test_the_market_regime_stage_runs_after_macro_and_before_the_screener_refresh(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->marketContextUniverse();
+        $this->fakeEngineWithEtfs();
+
+        $exit = $this->withoutMockingConsoleOutput()->artisan('ingestion:pipeline');
+        $output = Artisan::output();
+
+        $this->assertSame(0, $exit);
+        $macro = strpos($output, 'Macro series disabled; skipped.');
+        $regime = strpos($output, 'Market regime computed for 3 session(s)');
+        $screener = strpos($output, 'Screener rows refreshed:');
+        $this->assertNotFalse($macro);
+        $this->assertNotFalse($regime);
+        $this->assertNotFalse($screener);
+        $this->assertLessThan($regime, $macro);
+        $this->assertLessThan($screener, $regime);
+        $this->assertStringContainsString('EOD pipeline completed.', $output);
+    }
+
+    public function test_a_throwing_market_regime_stage_never_changes_the_exit_code(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->fakeEngine();
+        $this->app->instance(MarketRegimeComputer::class, new class(new MarketContextComputer) extends MarketRegimeComputer
+        {
+            public function firstSnapshotDate(): ?string
+            {
+                throw new \LogicException('regime exploded');
+            }
+        });
+        Exceptions::fake();
+        Log::spy();
+
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Market regime stage market-regime:compute failed (exit 1); the pipeline continues.')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
+            ->expectsOutputToContain('EOD pipeline completed.')
+            ->assertExitCode(0);
+
+        Exceptions::assertReported(\LogicException::class);
+        Log::shouldHaveReceived('warning')->with('Market regime stage failed.', ['stage' => 'market-regime:compute', 'exit' => 1])->once();
+        // The Screener rows were refreshed after the regime stage.
+        $this->assertDatabaseHas('screener_rows', ['ticker' => 'AAA', 'date' => '2026-09-03']);
+        $this->assertDatabaseCount('market_regime_snapshots', 0);
+    }
+
+    public function test_a_failing_market_regime_stage_keeps_the_exit_code_of_the_other_stages(): void
+    {
+        $this->atTradingDay();
+        $this->universeWith(['AAA']);
+        $this->fakeEngine(patternsStatus: 500);
+        $this->app->instance(MarketRegimeComputer::class, new class(new MarketContextComputer) extends MarketRegimeComputer
+        {
+            public function firstSnapshotDate(): ?string
+            {
+                throw new \RuntimeException('No universe found for [sp500].');
+            }
+        });
+        Log::spy();
+
+        // A pattern failure still exits 1, exactly as without the regime; the
+        // regime's own exit 1 is only printed and logged.
+        $this->artisan('ingestion:pipeline')
+            ->expectsOutputToContain('Market regime stage market-regime:compute failed (exit 1); the pipeline continues.')
+            ->expectsOutputToContain('Alerts as of 2026-09-03')
+            ->expectsOutputToContain('EOD pipeline finished with errors.')
+            ->assertExitCode(1);
+
+        Log::shouldHaveReceived('warning')->with('Market regime stage failed.', ['stage' => 'market-regime:compute', 'exit' => 1])->once();
     }
 }

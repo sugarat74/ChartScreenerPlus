@@ -98,7 +98,7 @@ The daily set of sector, Breadth and macro readings around the market, each with
 
 ### Market Regime (Entorno de mercado)
 
-A rule-based label (favourable / neutral / adverse) computed from Market Context components, with its reasons visible. It is descriptive, never a forecast or advice.
+A rule-based daily label (favourable / neutral / adverse) computed from up to seven Market Context components (S&P 500 Breadth, SPY trend, sector participation, yield curve, financial conditions, net liquidity, volatility), each stored with its score, value, date and staleness so the reasons stay visible. With fewer than four usable components the label is **insufficient** ("Sin datos suficientes" / "Not enough data"), never a guess. The thresholds are fixed, uncalibrated initial values; a past date uses only data published by then. It is descriptive, never a forecast or advice.
 
 ### Breadth (Amplitud)
 

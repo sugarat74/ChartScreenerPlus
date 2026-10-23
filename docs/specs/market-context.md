@@ -197,9 +197,11 @@ Implementation contract, the per-series verification done on FRED on 2026-10-22,
 
 ## Feature 3 — `market-regime`
 
+Implementation contract: `docs/specs/market-regime.md`. It has the exact component rules and constants, the point-in-time inputs, the statuses, the JSON shape, the command and pipeline behaviour, the fixtures and the resolved ambiguities. That spec wins where it is more precise. The items below were corrected on 2026-10-22 to match it.
+
 ### Scope
 
-1. **Components.** Each component scores `+1`, `0` or `−1` from the latest non-stale reading. The initial thresholds are named constants in one class, to be calibrated later with history:
+1. **Components.** Each component scores `+1`, `0` or `−1` from its latest reading on or before the date. If that reading is stale, missing or disabled, the component does not count; there is no fallback to an older reading. `sector_participation` needs all 11 sector trends known on the date it reads. The initial thresholds are named constants in one class, to be calibrated later with history:
 
    | Component | +1 | −1 | Otherwise |
    | --- | --- | --- | --- |
@@ -214,9 +216,14 @@ Implementation contract, the per-series verification done on FRED on 2026-10-22,
 
 2. **Label.** Score = sum of the available components.
    - `favourable` when the score is `>= +3`; `adverse` when `<= −3`; otherwise `neutral`.
-   - Fewer than 4 available components → `insufficient` (shown as "Sin datos suficientes" / "Not enough data"), never a guessed label.
-3. **Storage.** Table `market_regime_snapshots`: `date` unique, `regime`, `score`, `available`, `components` (JSON: per component `score`, `value`, `as_of`, `stale`), timestamps. The `--from` backfill uses only the data available on each date (no look-ahead).
-4. **Command.** `market-regime:compute {--date=} {--from=}`, run by the pipeline after `macro:refresh` and `market-context:compute`.
+   - Fewer than 4 available components → `insufficient` (shown as "Sin datos suficientes" / "Not enough data"), never a guessed label; its `score` is stored as `null`.
+3. **Storage.** Table `market_regime_snapshots`: `date` unique, `regime`, `score` (nullable), `available`, `components`, `rules_version`, timestamps.
+   - `components` is JSON with every component key; per component `status` (`ok`|`stale`|`missing`|`disabled`), `score`, `value`, `as_of`, `stale`.
+   - Every run, not only the `--from` backfill, uses only the data available on each date (no look-ahead): snapshots dated on or before it, and macro readings in point-in-time mode (`release_lag_days`).
+4. **Command.** `market-regime:compute {--date=} {--from=}`, run by the pipeline after `market-context:compute` and `macro:refresh` (isolated, before `screener:refresh`).
+   - It recomputes the last 5 sessions by default.
+   - When the table is empty, it fills every session from the first breadth snapshot (about 1 year in production, from 2025-10-22).
+   - The standalone `macro-refresh` event does not recompute it.
 5. **Reasons.** The API returns the components and the SPA builds the reason sentences from i18n keys (for example "38 % de valores sobre su media de 200 sesiones", "Curva 10a–3m invertida"). The backend stores no free text.
 
 ### Acceptance

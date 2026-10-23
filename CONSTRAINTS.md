@@ -28,6 +28,11 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - ETFs (`instruments.kind = etf`, the `market-context` universe) **MUST NOT** reach screener rows or Screener results, the Watchlist, alerts (as-of date and watchlist states), the Company Card, fundamentals or the forecast; new stock features **MUST** filter with `Instrument::stocks()` / `kind = stock`. Reason: ETFs get bars and indicators but no signals, patterns or SEC filings, and `ScreenerRowBuilder` is not universe-scoped.
 - Market Context stages in `ingestion:pipeline` **MUST NOT** change the pipeline exit code or gate later stages (Screener refresh, alerts); failures are printed and logged only. Reason: a sector/breadth reading is optional context, never a reason to skip the stock pipeline or the alerts (umbrella decision 5).
 - `market_sector_snapshots` and `market_breadth_snapshots` are derived data computed **only** in Laravel (`market-context:compute`) from `daily_bars` and `indicator_snapshots`; they **MUST NOT** be written elsewhere or by the engine. Reason: one rule set, reproducible and idempotent.
+- `market_regime_snapshots` is derived data written **only** by `market-regime:compute` (`MarketRegimeComputer`). Reason: one rule set, reproducible and idempotent (`docs/specs/market-regime.md`).
+- The Market Regime of a date `d` **MUST** read only snapshot rows dated ≤ `d` and macro readings in point-in-time mode (`MacroSnapshotService::snapshot(d, pointInTime: true)`), for the live run as well as the backfill, from a `MacroSnapshotService` resolved fresh per run. Reason: no look-ahead, so the history and the live label agree.
+- `stale`, `missing` and `disabled` regime components **MUST NOT** count in the score or in `available`, and the regime **MUST NOT** be labelled with fewer than 4 available components (`insufficient`, `score` null). Reason: never a guessed label.
+- The backend **MUST NOT** store text for the regime (labels and statuses are codes; reason sentences live in the UI's i18n), and its wording **MUST** stay descriptive, never a forecast or advice. Reason: scope guard of the Market Context plan.
+- `market-regime:compute` in `ingestion:pipeline` **MUST NOT** change the pipeline exit code or skip later stages. Reason: the regime is optional context (umbrella decision 5).
 
 ## Dataset And Seeding
 

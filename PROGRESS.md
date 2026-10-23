@@ -1,5 +1,21 @@
 # Progress Log
 
+## Rule-based Market Regime (`market-regime`, accepted) — 2026-10-23
+
+- Feature 3 of the Market Context plan; spec `docs/specs/market-regime.md`. Accepted by the independent validator in round 1.
+- What it does (no UI, API, i18n or alerts):
+  - `market_regime_snapshots` (one row per session, `date` unique): `regime` (`favourable` / `neutral` / `adverse` / `insufficient`), `score` (null when insufficient), `available`, `components` json and `rules_version` (1). Skipped by `db:copy-sqlite-to-pgsql`.
+  - `MarketRegimeRules` holds the uncalibrated thresholds of the seven components (breadth, index trend, sector participation, yield curve, NFCI, net liquidity, VIX) and the label rule (fewer than 4 `ok` components → `insufficient`; ±3 for favourable/adverse).
+  - `MarketRegimeComputer`: each component is `ok` / `stale` / `missing` / `disabled` with score, value, `as_of` and staleness; no look-ahead (snapshot rows ≤ `d`, macro always point-in-time from a fresh `MacroSnapshotService` per run); sectors only score on dates with all 11 trends.
+  - `market-regime:compute {--date=} {--from=}`: default latest 5 sessions; on an empty table it seeds every session from the first Breadth Snapshot (about one year in production). It runs as an isolated `ingestion:pipeline` stage after the macro stage and before `screener:refresh`; a failure never changes the exit code.
+- Docs: `ARCHITECTURE.md` (new Market Regime section, pipeline stage), `CONSTRAINTS.md`, `CONTEXT.md`, `docs/domain-model.md`, `docs/risks-and-open-questions.md`, `deploy/README.md` item 9.
+- Tests: 60 new Laravel tests (details in `feature_list.json`). Focused filter 87 passed / 6 skipped.
+- `.\init.ps1` exit 0: Laravel 686 passed / 6 skipped, Vitest 223, SPA lint + build, engine 101.
+- Smoke on a scratch SQLite DB (never the dev DB): empty → "No market snapshots yet; nothing to compute." exit 0; synthetic one year with macro enabled: self-seed of 261 sessions in 1.41 s, default run 0.05 s.
+- Not verified: PostgreSQL locally (CI `test-pgsql`) and real production data. After deploy: count, `min(date)` (2025-10-22), `max(date)`, latest row vs snapshots and point-in-time macro, label distribution; rerun `--from=2025-10-22` if macro data was missing on the first run.
+- Validator round 1: `accept`. Reran `.\init.ps1` (exit 0) and a scratchpad probe: live per-date runs and a later backfill with future data added gave byte-identical rows; staleness boundaries and no fallback checked; fixture A recomputed by hand. Low notes: `MarketRegimeSnapshotFactory` picks random dates without `unique()` (pass explicit dates in `market-context-ui` tests); the sector count assumes the fixed 11 SPDRs.
+- Next: PR and green CI (incl. `test-pgsql`); after deploy, follow `deploy/README.md` item 9. Next feature: `market-context-ui` (planner).
+
 ## FRED macro series and central bank calendar (`macro-series-fred`, accepted) — 2026-10-22
 
 - Feature 2 of the Market Context plan; spec `docs/specs/macro-series-fred.md`. Accepted by the independent validator in round 1.
