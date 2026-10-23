@@ -60,8 +60,20 @@ describe('interpretedFiltersToPatch', () => {
       maCross: null,
       patterns: ['bull_flag'],
       patternStatus: 'confirmed',
+      sectorTrend: null,
+      sectorRsRankMax: null,
       sort: 'rsi_asc',
     })
+  })
+
+  it('applies the sector context keys (market-context-patterns)', () => {
+    const patch = interpretedFiltersToPatch({ ...FILTERS, sector_trend: 'uptrend', sector_rs_rank_max: 3 })
+    expect(patch.sectorTrend).toBe('uptrend')
+    expect(patch.sectorRsRankMax).toBe(3)
+    const after = patchScreenerFilters(new URLSearchParams('sector_trend=mixed&utm=x'), patch)
+    expect(after.toString()).toBe('sector_trend=uptrend&utm=x&rsi_max=30&min_rvol=1.5&price_above_sma200=1&sector_rs_rank_max=3')
+    // A denied user gets nulls from the server: both keys leave the URL.
+    expect(patchScreenerFilters(after, interpretedFiltersToPatch(FILTERS)).toString()).toBe('utm=x&rsi_max=30&min_rvol=1.5&price_above_sma200=1')
   })
 
   it('replaces every owned key in the URL and keeps unrelated params', () => {

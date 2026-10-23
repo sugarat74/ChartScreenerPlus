@@ -7,6 +7,7 @@ import type { ScreenerCandidate, ScreenerFilters } from '../../lib/api.ts'
 import { EMPTY_SCREENER_FILTERS } from '../../lib/screenerFilters.ts'
 import CandidateTable from '../screener/CandidateTable.tsx'
 import ScreenerFilterPanel from '../screener/ScreenerFilterPanel.tsx'
+import { AAPL_CONTEXT } from './instrumentContext.fixture.ts'
 import PatternPanel from './PatternPanel.tsx'
 import { MemoryRouter } from 'react-router'
 
@@ -148,5 +149,55 @@ describe('Screener pattern controls', () => {
     expect(confirmed.className).not.toMatch(/\btext-on-surface\b/)
     expect(forming.className).toContain('bg-surface-bright')
     expect(forming.className).toContain('text-on-surface')
+  })
+})
+
+describe('PatternPanel market context chips (market-context-patterns)', () => {
+  it('adds the sector trend, rank and regime chips to every pattern, with one note', () => {
+    withI18n(<PatternPanel patterns={[PATTERN, { ...PATTERN, type: 'bull_flag' }]} context={AAPL_CONTEXT} />)
+
+    const items = screen.getAllByRole('listitem')
+    expect(items).toHaveLength(2)
+    for (const item of items) {
+      const text = item.textContent ?? ''
+      expect(text).toContain('Contexto actual:')
+      expect(text).toContain('▲Sector Alcista')
+      expect(text).toContain('Fuerza relativa 1/10')
+      expect(text).toContain('●Entorno: Neutral')
+    }
+    expect(screen.getAllByText('El contexto es el de la última sesión, no el de la fecha del patrón.')).toHaveLength(1)
+    expect(document.body.textContent).not.toMatch(/objetivo:|target|compra|venta/i)
+  })
+
+  it('a stock without a sector ETF shows the sector note and the regime', () => {
+    withI18n(<PatternPanel patterns={[PATTERN]} context={{ ...AAPL_CONTEXT, sector: null }} />)
+
+    const text = screen.getByRole('listitem').textContent ?? ''
+    expect(text).toContain('Sector: sin ETF sectorial asignado')
+    expect(text).toContain('Entorno: Neutral')
+    expect(text).not.toContain('Fuerza relativa')
+  })
+
+  it('without a context (or without patterns) the panel is unchanged', () => {
+    withI18n(<PatternPanel patterns={[PATTERN]} />)
+    expect(screen.queryByText(/Contexto actual/)).toBeNull()
+    expect(screen.queryByText(/no el de la fecha del patrón/)).toBeNull()
+    cleanup()
+
+    withI18n(<PatternPanel patterns={[]} context={AAPL_CONTEXT} />)
+    expect(screen.getByText('Sin patrones activos para este instrumento.')).toBeTruthy()
+    expect(screen.queryByText(/no el de la fecha del patrón/)).toBeNull()
+  })
+
+  it('renders the chips in English', () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, 'en')
+    withI18n(<PatternPanel patterns={[PATTERN]} context={AAPL_CONTEXT} />)
+
+    const text = screen.getByRole('listitem').textContent ?? ''
+    expect(text).toContain('Current context:')
+    expect(text).toContain('▲Sector Uptrend')
+    expect(text).toContain('Relative strength 1/10')
+    expect(text).toContain('●Regime: Neutral')
+    expect(screen.getByText("The context is from the latest session, not from the pattern's date.")).toBeTruthy()
   })
 })

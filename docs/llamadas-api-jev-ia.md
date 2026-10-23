@@ -290,10 +290,10 @@ Un usuario registrado describe en español o inglés lo que busca y el modelo lo
 {
   "model": "{AI_MODEL}",
   "messages": [
-    {"role": "system", "content": "<instrucciones de screener-query-prompt-v1 en el idioma de la petición>"},
+    {"role": "system", "content": "<instrucciones de screener-query-prompt-v2 en el idioma de la petición>"},
     {"role": "user", "content": "<texto del usuario, tal cual (3 a 300 caracteres)>"}
   ],
-  "response_format": {"type": "json_schema", "json_schema": {"name": "screener_query_v1", "strict": true, "schema": {}}},
+  "response_format": {"type": "json_schema", "json_schema": {"name": "screener_query_v2", "strict": true, "schema": {}}},
   "max_tokens": 800,
   "temperature": 0
 }
@@ -301,9 +301,9 @@ Un usuario registrado describe en español o inglés lo que busca y el modelo lo
 
 Timeout de 20 s. Si el proveedor responde 400 a `json_schema`, se repite una vez con `json_object` y el esquema dentro del mensaje de sistema (mismo respaldo que la ficha).
 
-### 3.2 Esquema `screener-query-v1`
+### 3.2 Esquema `screener-query-v2`
 
-Todas las claves son obligatorias y no se admiten otras. Los enums salen de `ScreenerFilterParser`, el mismo que valida `GET /api/screener`:
+Desde `market-context-patterns` (2026-10-23) el esquema es `screener-query-v2` (`screener_query_v2`, prompt `screener-query-prompt-v2`): añade `sector_trend` y `sector_rs_rank_max`. No se envía al proveedor ningún dato de mercado ni de FRED, solo el vocabulario del prompt. Todas las claves son obligatorias y no se admiten otras. Los enums salen de `ScreenerFilterParser`, el mismo que valida `GET /api/screener`:
 
 | Campo | Tipo |
 |---|---|
@@ -315,6 +315,8 @@ Todas las claves son obligatorias y no se admiten otras. Los enums salen de `Scr
 | `pattern` | lista de patrones conocidos (máx. 4) |
 | `pattern_status` | `any`, `forming`, `confirmed` |
 | `sort` | uno de los seis órdenes |
+| `sector_trend` | `uptrend`, `mixed`, `downtrend` o `null` (tendencia del ETF sectorial de la acción) |
+| `sector_rs_rank_max` | entero exacto 1–11 o `null` (solo sectores entre los N más fuertes de 11) |
 | `unsupported` | hasta 5 textos de 120 caracteres: lo que los filtros no pueden expresar |
 | `explanation` | texto de hasta 300 caracteres |
 
@@ -381,7 +383,7 @@ Los errores devuelven `{ code, message }`, con los mismos códigos que la ficha 
 | | Jev | Ficha IA | Screener en lenguaje natural |
 |---|---|---|---|
 | Endpoint | `https://api.typesafe.ai/v1/systemone` (fijo) | `{AI_BASE_URL}/chat/completions` (configurable) | El mismo que la ficha |
-| Formato de salida | Pregunta `choice` con probabilidades `up/down/flat` | JSON Schema estricto `company_card_v2` (respaldo `json_object`) | JSON Schema estricto `screener_query_v1` (respaldo `json_object`) |
+| Formato de salida | Pregunta `choice` con probabilidades `up/down/flat` | JSON Schema estricto `company_card_v2` (respaldo `json_object`) | JSON Schema estricto `screener_query_v2` (respaldo `json_object`) |
 | Datos enviados | 252 barras, indicadores y Signals del instrumento | Identidad del instrumento. Contexto técnico solo con derechos verificados | El texto del usuario y el idioma |
 | Activación | `JEV_ENABLED` + `JEV_MARKET_DATA_RIGHTS_VERIFIED` | `AI_CARD_ENABLED` (+ `AI_CARD_MARKET_DATA_RIGHTS_VERIFIED` para `technical`) | `AI_SCREENER_ENABLED` |
 | Timeout | 8 s | 40 s | 20 s |

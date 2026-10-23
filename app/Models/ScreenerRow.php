@@ -28,6 +28,7 @@ class ScreenerRow extends Model
             'signal_count' => 'integer',
             'signals' => 'array',
             'patterns' => 'array',
+            'sector_rs_rank' => 'integer',
         ];
     }
 

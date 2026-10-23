@@ -3,6 +3,7 @@
 namespace App\Services\Screener;
 
 use App\Models\ChartPattern;
+use App\Models\MarketSectorSnapshot;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -65,11 +66,31 @@ class ScreenerFilterParser
     public const DEFAULT_SORT = 'rvol_desc';
 
     /**
+     * Values accepted by `?sector_trend` (the `MarketSectorSnapshot` trends):
+     * the trend of the stock's sector ETF (market-context-patterns, C5).
+     */
+    public const SECTOR_TRENDS = [
+        MarketSectorSnapshot::TREND_UP,
+        MarketSectorSnapshot::TREND_MIXED,
+        MarketSectorSnapshot::TREND_DOWN,
+    ];
+
+    /**
+     * Upper bound of `?sector_rs_rank_max` (the 11 SPDR sectors).
+     */
+    public const SECTOR_RS_RANK_MAX = 11;
+
+    /**
+     * The filters that need the `view-market-context` ability.
+     */
+    public const MARKET_CONTEXT_KEYS = ['sector_trend', 'sector_rs_rank_max'];
+
+    /**
      * Resolve and validate the filter/sort params from a raw input array
      * (a query string array or decoded JSON).
      *
      * @param  array<mixed>  $input
-     * @return array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string}
+     * @return array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int}
      *
      * @throws ValidationException
      */
@@ -85,7 +106,68 @@ class ScreenerFilterParser
             'pattern' => self::patternTypes($input['pattern'] ?? null),
             'pattern_status' => self::patternStatus($input['pattern_status'] ?? null),
             'sort' => self::sort($input['sort'] ?? null),
+            'sector_trend' => self::sectorTrend($input['sector_trend'] ?? null),
+            'sector_rs_rank_max' => self::sectorRsRankMax($input['sector_rs_rank_max'] ?? null),
         ];
+    }
+
+    /**
+     * Whether resolved filters use a sector context key, which needs the
+     * `view-market-context` ability (market-context-patterns, C5).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public static function usesMarketContext(array $filters): bool
+    {
+        foreach (self::MARKET_CONTEXT_KEYS as $key) {
+            if (($filters[$key] ?? null) !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Resolve `sector_trend`; anything but one of the three trends (an array
+     * included) is a `422`.
+     */
+    private static function sectorTrend(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_string($value) || ! in_array($value, self::SECTOR_TRENDS, true)) {
+            throw ValidationException::withMessages([
+                'sector_trend' => [__('messages.screener.sector_trend_invalid')],
+            ]);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Resolve `sector_rs_rank_max` to a whole number from 1 to 11; `0`, `12`,
+     * `3.5`, `abc`, an array or a bool is a `422`.
+     */
+    private static function sectorRsRankMax(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $rank = is_string($value) || is_int($value)
+            ? filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => self::SECTOR_RS_RANK_MAX]])
+            : false;
+
+        if ($rank === false) {
+            throw ValidationException::withMessages([
+                'sector_rs_rank_max' => [__('messages.screener.sector_rs_rank_max_invalid')],
+            ]);
+        }
+
+        return $rank;
     }
 
     /**

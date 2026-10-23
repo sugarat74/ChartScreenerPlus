@@ -50,10 +50,12 @@ so I can judge the setup in its context with rules I can read.
 
 | Actor | Can |
 | --- | --- |
-| Visitor | Open `/mercado`: regime with reasons, sector table, breadth, rates, liquidity, central banks and leading data, all with their current values. See the context strip on the chart. Use the two new Screener filters. |
-| Registered User | Everything above, plus the history charts on `/mercado` (enforced server-side, as in `premium-panels-auth-only`), plus saving the new filters in Saved Screeners and the natural-language Screener. |
-| Admin | Sees the Market Context status in the Admin panel and can rerun the commands. |
+| Visitor | Nothing of Market Context. Once `MARKET_CONTEXT_PUBLIC=true`, sees the header link and a sign-in prompt on `/mercado`, on the chart and in the Screener filter panel; the APIs answer 401. |
+| Registered User | Once `MARKET_CONTEXT_PUBLIC=true`: `/mercado` (regime with reasons, sectors, breadth, rates, liquidity, central banks, leading data) with its history charts, the chart context strip and pattern chips, the two Screener filters, Saved Screeners, alerts and the natural-language Screener with them. While the flag is off: nothing (APIs 404, filters 403). |
+| Admin | Everything above even while the flag is off (preview), plus the Market Context status in the Admin panel and the reruns. |
 | Developer/Operator | `market-context:compute`, `macro:refresh`, `market-regime:compute`. |
+
+**Access decision (owner, 2026-10-23, superseding the Visitor row planned on 2026-10-22):** "quiero que la parte de mercado solo este accesible a usuarios registrados, a futuro quiero establecer algunas de las funcionalidades de pago". Every Market Context surface is Registered-only, enforced server-side by one ability, `view-market-context` (Registered User AND (flag on OR Admin)), so a future paid plan changes one place. Paid plans themselves stay out of scope. Contract: `docs/specs/market-context-patterns.md` (C1–C2), which also moves `/mercado` and `GET /api/market-context` behind it.
 
 ## Domain Decisions (shared)
 
@@ -241,7 +243,7 @@ Implementation contract, exact JSON shapes, the go-live flag and the legal gate:
 ### Scope
 
 1. **API.**
-   - `GET /api/market-context`, public once `MARKET_CONTEXT_PUBLIC=true` (Admins can preview it before): the latest regime with its components; the 11 sectors (ticker, i18n sector key, `ret_5`, `ret_20`, `ret_60`, `rs_60`, `rs_rank`, `trend`, `breadth_200`); breadth; rates and curve; liquidity; central banks (current rate, last change, last and next meeting); leading data; and the sources with the `as_of` date per block. Cached under a version token that `market-context:compute`, `macro:refresh` and `market-regime:compute` renew when they finish.
+   - `GET /api/market-context`, for Registered Users once `MARKET_CONTEXT_PUBLIC=true` (Admins can preview it before; Visitors get 401 since the 2026-10-23 access decision, see Users And Permissions): the latest regime with its components; the 11 sectors (ticker, i18n sector key, `ret_5`, `ret_20`, `ret_60`, `rs_60`, `rs_rank`, `trend`, `breadth_200`); breadth; rates and curve; liquidity; central banks (current rate, last change, last and next meeting); leading data; and the sources with the `as_of` date per block. Cached under a version token that `market-context:compute`, `macro:refresh` and `market-regime:compute` renew when they finish.
    - `GET /api/market-context/history?metric=…&range=1y|3y`, **Registered Users only**, enforced server-side: a closed list of metrics (`regime_score`, `pct_above_sma200`, `dgs10`, `spread_10y3m`, `net_liquidity`, `icsa_4w`, `nfci`, `sector_rs_60:{ticker}`). `spread_10y3m` is Chartiko's `DGS10 − DGS3MO`, not FRED's copyrighted `T10Y3M`.
 2. **Page `/mercado`.** A SPA route with a "Mercado" / "Market" header link. It follows `DESIGN.md`, dark mode and es/en i18n. Layout:
    1. **Regime light:** large label with icon and text (never colour alone), the score, the reasons list and "Datos del {date}".
@@ -278,22 +280,26 @@ Implementation contract, exact JSON shapes, the go-live flag and the legal gate:
 
 ## Feature 5 — `market-context-patterns`
 
+Implementation contract: `docs/specs/market-context-patterns.md`. That spec wins where it is more precise; the items below were corrected on 2026-10-23 to match it (Registered-only access, dedicated endpoint instead of an instrument-detail field).
+
 ### Scope
 
-1. **Chart context strip.** On `/instruments/{ticker}` for `kind = stock`:
-   - Shows "Sector: {sector} ({ETF}) · {trend} · fuerza relativa {rs_rank}/11 · Entorno: {regime}", linking to `/mercado`.
+1. **Access seam.** One ability `view-market-context` used by every Market Context route, the filter check, Saved Screeners, alerts, the NL Screener and a `capabilities.market_context` flag in the user payload. `/mercado` and `GET /api/market-context` move behind it (Visitors 401).
+2. **Chart context strip.** On `/instruments/{ticker}` for `kind = stock`, for allowed users:
+   - Shows "Sector: {sector} ({ETF}) · {trend} · fuerza relativa {rs_rank}/{k} · Entorno: {regime}", linking to `/mercado`.
    - The Chartist Pattern panel shows the same chips next to each pattern, using the latest snapshot. Pattern-date context is listed under Later.
-   - Data comes from the instrument detail API (new `market_context` field), public.
-2. **Screener filters.**
+   - Data comes from a new Registered-only endpoint `GET /api/instruments/{ticker}/market-context`. The public instrument detail payload is unchanged. Visitors see a sign-in prompt once the flag is on.
+3. **Screener filters.**
    - `sector_trend` (`uptrend`|`mixed`|`downtrend`) and `sector_rs_rank_max` (1–11, for example 3 = only the three strongest sectors).
-   - `screener_rows` gets `sector_trend` and `sector_rs_rank` columns, filled by `screener:refresh` from the latest sector snapshot.
-   - Both filters are accepted by Saved Screeners and alerts that store filters, and by the natural-language Screener's strict schema (`ai-screener-natural-language`).
+   - `screener_rows` gets `sector_trend` and `sector_rs_rank` columns, filled by `screener:refresh` from the latest sector snapshot (null when it is more than 7 days older than the row, or the stock has no sector ETF). They are not added to the Candidate JSON.
+   - The filters are rejected for guests (401) and users without access (403). They are accepted by Saved Screeners and their alerts (an alert is skipped while its owner has no access) and by the natural-language Screener's strict schema (`screener-query-v2`).
    - The filters appear in the filter UI with i18n labels and the "Cómo funciona" manual entry.
 
 ### Acceptance
 
-- Feature tests: the filters return the expected Candidates on a fixture. Unknown values are rejected. A Saved Screener round-trips the new keys. The NL schema accepts them and rejects anything else.
-- SPA tests: the context strip renders for a stock, is absent for an ETF, and has no advice wording.
+- Feature tests: the filters return the expected Candidates on a fixture. Unknown values are rejected. Guests get 401 and users without access 403. A Saved Screener round-trips the new keys. The NL schema accepts them and rejects anything else.
+- Access: guest 401, user 404 while the flag is off, Admin preview, on every Market Context endpoint.
+- SPA tests: the context strip renders for an allowed user on a stock, is a sign-in prompt for Visitors once the flag is on, is absent for an ETF, and has no advice wording.
 - The manual and both locales are updated.
 
 ---

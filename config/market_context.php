@@ -25,8 +25,11 @@ return [
     | Market Context page and API (docs/specs/market-context-ui.md)
     |--------------------------------------------------------------------------
     |
-    | `public` is the go-live switch of `/mercado`, `GET /api/market-context`
-    | and its history (EnsureMarketContextPublic). While it is false only
+    | `public` is the go-live switch of every Market Context surface
+    | (`/mercado`, its APIs, the chart strip and the Screener sector filters).
+    | Even when it is on, only Registered Users get in: the single
+    | `view-market-context` ability (AppServiceProvider,
+    | docs/specs/market-context-patterns.md C1). While it is false only
     | Admins can open them, as a preview. Owner decision 2026-10-23 (option
     | b): it is turned on only once the legal notice, which carries the FRED
     | terms-of-use clause, is published (spec, "Legal Gate").

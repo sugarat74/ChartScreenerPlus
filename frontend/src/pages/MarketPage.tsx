@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useMarketContextAccess } from '../auth/useMarketContextAccess.ts'
 import BreadthCard from '../components/market/BreadthCard.tsx'
 import CentralBanksCard from '../components/market/CentralBanksCard.tsx'
 import LeadingCard from '../components/market/LeadingCard.tsx'
 import LiquidityCard from '../components/market/LiquidityCard.tsx'
 import { CARD_CLASS } from '../components/market/MarketCard.tsx'
 import MarketLegalFooter from '../components/market/MarketLegalFooter.tsx'
+import MarketSignInBox from '../components/market/MarketSignInBox.tsx'
 import { dateLine } from '../components/market/marketText.ts'
 import RatesCard from '../components/market/RatesCard.tsx'
 import RegimeCard from '../components/market/RegimeCard.tsx'
@@ -17,44 +19,74 @@ type PageState =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'unavailable' }
+  | { status: 'signIn' }
   | { status: 'ready'; data: MarketContext }
 
 /**
  * `/mercado` (market-context-ui): the Market Regime with its reasons, the
  * sectors, Breadth and the macro cards, each with its own date and source.
- * Descriptive only. The API answers 404 until the owner makes the page public
- * (Admins get a preview with a banner).
+ * Descriptive only. Registered Users only (market-context-patterns): the
+ * access hook decides before any request. A Visitor sees the title and a
+ * sign-in box once the owner's go-live flag is on, and "not available yet"
+ * before; a user without access sees "not available yet"; an Admin previews
+ * the page with a banner while the flag is off. The API enforces the same
+ * `view-market-context` ability (401 guest, 404 without access).
  */
 export default function MarketPage() {
   const i18n = useI18n()
   const { t } = i18n
-  const [state, setState] = useState<PageState>({ status: 'loading' })
+  const access = useMarketContextAccess()
+  const [fetched, setFetched] = useState<PageState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
+  const allowed = access.status === 'allowed'
 
   useEffect(() => {
+    // No request unless the session has Market Context access.
+    if (!allowed) {
+      return
+    }
     let active = true
     marketContextApi.latest().then(
       (data) => {
-        if (active) setState({ status: 'ready', data })
+        if (active) setFetched({ status: 'ready', data })
       },
       (error: unknown) => {
         if (!active) return
-        setState(error instanceof ApiError && error.status === 404 ? { status: 'unavailable' } : { status: 'error' })
+        if (error instanceof ApiError && error.status === 401) {
+          setFetched({ status: 'signIn' })
+        } else if (error instanceof ApiError && error.status === 404) {
+          setFetched({ status: 'unavailable' })
+        } else {
+          setFetched({ status: 'error' })
+        }
       },
     )
     return () => {
       active = false
     }
-  }, [attempt])
+  }, [attempt, allowed])
+
+  const state: PageState =
+    access.status === 'loading'
+      ? { status: 'loading' }
+      : access.status === 'signIn'
+        ? { status: 'signIn' }
+        : access.status === 'hidden'
+          ? { status: 'unavailable' }
+          : fetched
 
   function retry() {
-    setState({ status: 'loading' })
+    setFetched({ status: 'loading' })
     setAttempt((value) => value + 1)
   }
 
   let body
   if (state.status === 'loading') {
     body = <p className="font-mono text-sm text-on-surface-variant">{t('common.loading')}</p>
+  } else if (state.status === 'signIn') {
+    body = (
+      <MarketSignInBox title={t('marketContext.signInTitle')} body={t('marketContext.signInBody')} link={t('marketContext.signIn')} />
+    )
   } else if (state.status === 'unavailable') {
     body = (
       <div className={CARD_CLASS}>

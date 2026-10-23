@@ -48,7 +48,7 @@ so I can get the right Candidate list in one step and learn the filters by seein
    - `invalid_provider_response` returns 503;
    - input validation returns 422.
 2. **One filter vocabulary.** Extract the private filter resolution from `ScreenerController` into `App\Services\Screener\ScreenerFilterParser::fromArray(array): array`, with the same rules, messages and `ValidationException`s. Both the controller (from the query string) and the interpreter (from AI output) use it. Responses of `GET /api/screener` must not change, and `ScreenerApiTest` is the regression net. Enum lists such as `SIGNAL_TYPES`, `SORTS`, `PATTERN_STATUSES` and `ChartPattern::TYPES` move to or are exposed by the parser, so the AI schema is built from the same constants.
-3. **Strict schema** (`App\Services\Screener\Ai\ScreenerQuerySchema`, version `screener-query-v1`). Every field is required, and nullability is expressed by type unions, as strict `json_schema` demands:
+3. **Strict schema** (`App\Services\Screener\Ai\ScreenerQuerySchema`, version `screener-query-v1`; `screener-query-v2` since `market-context-patterns` 2026-10-23 adds the required `sector_trend` (enum or null) and `sector_rs_rank_max` (exact integer 1..11 or null), nulled per caller without Market Context access, see `docs/specs/market-context-patterns.md` C7). Every field is required, and nullability is expressed by type unions, as strict `json_schema` demands:
    - `signal`: array of the signal enum, max 9;
    - `rsi_min` and `rsi_max`: number 0..100 or null;
    - `min_rvol`: number 0..20 or null;

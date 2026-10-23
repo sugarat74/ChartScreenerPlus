@@ -101,6 +101,20 @@ export const guideEs: GuideTexts = {
             'El control de estado («Cualquiera», «En formación», «Confirmado») se activa al elegir algún patrón y filtra solo esos patrones.',
           ],
         },
+        {
+          term: 'Contexto sectorial: tendencia',
+          summary: '«Alcista», «Mixta» o «Bajista» exige esa tendencia en el ETF sectorial SPDR del sector de cada acción: alcista cuando el ETF cierra por encima de su SMA 50 y esta está por encima de su SMA 200, bajista al revés y mixta en el resto. «Cualquiera» desactiva el filtro.',
+          details: [
+            'Usa la última sesión del ETF. Una acción sin ETF sectorial asignado o con un dato sectorial de más de 7 días respecto a su última sesión nunca cumple el filtro. Necesita una cuenta.',
+          ],
+        },
+        {
+          term: 'Contexto sectorial: fuerza relativa',
+          summary: '«Top N de 11» muestra solo acciones cuyo sector está entre los N más fuertes de los 11 por rentabilidad de 3 meses frente al S&P 500 (la misma clasificación que la tabla de sectores de la página Mercado). «Todos los sectores» desactiva el filtro.',
+          details: [
+            'Un sector sin clasificación (sin datos de fuerza relativa) nunca cumple el filtro. Los filtros de contexto sectorial se pueden guardar en un screener y usar en sus alertas mientras la cuenta tenga acceso; necesitan una cuenta.',
+          ],
+        },
       ],
     },
     {
@@ -265,6 +279,13 @@ export const guideEs: GuideTexts = {
         { term: 'Línea PIVOTE', summary: 'Aparece cuando la señal «Ruptura pivote + RVOL» está activa, en el nivel del pivote.' },
         { term: 'Patrones', summary: 'Los puntos clave de cada patrón activo se marcan sobre las velas y su nivel de ruptura se dibuja como línea punteada con el nombre del patrón.' },
         { term: 'Paneles «Señales activas» y «Patrones activos»', summary: 'Debajo del gráfico listan en texto todas las señales y patrones con sus fechas y niveles, también para lectores de pantalla.' },
+        {
+          term: 'Contexto de mercado',
+          summary: 'Con sesión iniciada, encima del gráfico de una acción se muestran su ETF sectorial, la tendencia del sector, su fuerza relativa (puesto entre los sectores con datos) y el entorno de mercado, con un enlace a la página Mercado. Cada patrón activo repite esos datos.',
+          details: [
+            'Son los datos de la última sesión, no los de la fecha del patrón. No aparece en los ETF.',
+          ],
+        },
       ],
       notes: [
         'Si faltan medias porque el valor tiene poco historial, verás el aviso de historial insuficiente; el gráfico se muestra igualmente.',
@@ -274,7 +295,7 @@ export const guideEs: GuideTexts = {
       id: 'mercado',
       title: 'Contexto de mercado',
       paragraphs: [
-        'La página Mercado resume el entorno del mercado de EE. UU. con reglas fijas y públicas. Cada bloque muestra su fecha («Datos del…» o, para los datos mensuales, «Datos de septiembre de 2026»), su fuente y una nota «¿Qué significa?». Es información descriptiva: no anticipa lo que hará el mercado ni es asesoramiento.',
+        'La página Mercado resume el entorno del mercado de EE. UU. con reglas fijas y públicas y necesita una sesión iniciada. Cada bloque muestra su fecha («Datos del…» o, para los datos mensuales, «Datos de septiembre de 2026»), su fuente y una nota «¿Qué significa?». Es información descriptiva: no anticipa lo que hará el mercado ni es asesoramiento.',
       ],
       entries: [
         {
@@ -294,7 +315,7 @@ export const guideEs: GuideTexts = {
         { term: 'Liquidez neta de la Fed', summary: 'Activos de la Reserva Federal menos la cuenta del Tesoro y los repos inversos, cada miércoles, con su variación en 4 y 13 semanas.' },
         { term: 'Bancos centrales', summary: 'Rango de tipos oficiales de la Fed y tipo de depósito del BCE, su último cambio y la última y la próxima reunión según los calendarios oficiales, revisados a mano.' },
         { term: 'Datos adelantados', summary: 'Peticiones iniciales de subsidio por desempleo (y su media de 4 semanas), permisos de construcción, el indicador adelantado de la OCDE y el NFCI cuando su fuente está habilitada.' },
-        { term: 'Evolución histórica', summary: 'Con sesión iniciada, cada bloque ofrece «Ver evolución» con gráficos de 1 y 3 años; sin sesión se muestra un aviso para iniciarla.' },
+        { term: 'Evolución histórica', summary: 'Cada bloque ofrece «Ver evolución» con gráficos de 1 y 3 años.' },
       ],
       notes: [
         'Un dato está «Desactualizado» cuando es más antiguo de lo que permite su frecuencia: 7 días para los datos diarios y de sesión, 16 para los semanales y 100 para los mensuales. Los datos desactualizados se muestran, pero no cuentan en el entorno.',

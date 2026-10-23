@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Account\AccountDeleter;
 use App\Services\Account\AccountExporter;
 use App\Services\Admin\SessionDirectory;
+use App\Support\AuthUserPayload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -36,7 +37,7 @@ class AccountController extends Controller
         $user = $request->user();
         $user->forceFill(['name' => $validated['name']])->save();
 
-        return response()->json(['user' => $user]);
+        return response()->json(['user' => AuthUserPayload::make($user)]);
     }
 
     /**

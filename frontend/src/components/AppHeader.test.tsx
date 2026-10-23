@@ -24,8 +24,10 @@ const LEGAL: LegalInfo = {
   retention: { sign_in_activity_days: 90, session_minutes: 120, backup_days: 14, server_log_days: 14, notification_days: 90 },
 }
 
-const USER: AuthUser = { id: 1, name: 'Ana', email: 'ana@example.test', role: 'user' }
-const ADMIN: AuthUser = { ...USER, role: 'admin' }
+// The capability comes from the server's `view-market-context` ability (market-context-patterns).
+const USER: AuthUser = { id: 1, name: 'Ana', email: 'ana@example.test', role: 'user', capabilities: { market_context: false } }
+const ALLOWED_USER: AuthUser = { ...USER, capabilities: { market_context: true } }
+const ADMIN: AuthUser = { ...USER, role: 'admin', capabilities: { market_context: true } }
 
 function show(user: AuthUser | null) {
   return render(
@@ -57,7 +59,7 @@ afterEach(() => {
   window.localStorage.clear()
 })
 
-describe('AppHeader Market link (market-context-ui)', () => {
+describe('AppHeader Market link (market-context-ui, market-context-patterns)', () => {
   it('is hidden while the legal info loads', () => {
     vi.mocked(legalApi.info).mockReturnValue(new Promise(() => {}))
     show(null)
@@ -78,7 +80,7 @@ describe('AppHeader Market link (market-context-ui)', () => {
     expect(marketLink()).toBeNull()
   })
 
-  it('is shown right after Screener once the page is public', async () => {
+  it('is shown to a Visitor (sign-in on the page) right after Screener once the page is public', async () => {
     vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
     show(null)
     const link = await screen.findByRole('link', { name: 'Mercado' })
@@ -91,5 +93,22 @@ describe('AppHeader Market link (market-context-ui)', () => {
     vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: false })
     show(ADMIN)
     expect(await screen.findByRole('link', { name: 'Mercado' })).toBeTruthy()
+  })
+
+  it('follows the capability for a signed-in user, never the role', async () => {
+    vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
+    show(ALLOWED_USER)
+    expect(await screen.findByRole('link', { name: 'Mercado' })).toBeTruthy()
+    cleanup()
+
+    // An Admin payload without the capability (an older deployment) is hidden.
+    show({ ...ADMIN, capabilities: undefined })
+    await settle()
+    expect(marketLink()).toBeNull()
+    cleanup()
+
+    show(USER)
+    await settle()
+    expect(marketLink()).toBeNull()
   })
 })

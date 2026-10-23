@@ -2,12 +2,19 @@
  * Screener filter controls. Toggles/selects commit to the URL immediately;
  * the numeric RSI inputs keep a local draft and commit on blur/Enter so typing
  * never fires a request per keystroke. Token-only styling (DESIGN.md).
+ *
+ * The "Contexto sectorial" fieldset (market-context-patterns) follows the
+ * Market Context access: the controls for an allowed session (with a
+ * "Vista previa" chip for an Admin preview), a dashed sign-in box for a
+ * Visitor once the go-live flag is on, and nothing otherwise.
  */
 
 import type { KeyboardEvent } from 'react'
+import type { MarketContextAccess } from '../../auth/useMarketContextAccess.ts'
 import type { MessageKey } from '../../i18n/translate.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type {
+  MarketTrend,
   ScreenerFilters,
   ScreenerMaCross,
   ScreenerPatternStatus,
@@ -16,6 +23,8 @@ import type {
 } from '../../lib/api.ts'
 import {
   MIN_RVOL_PRESETS,
+  SECTOR_RS_RANK_OPTIONS,
+  SECTOR_TRENDS,
   SCREENER_PATTERN_STATUSES,
   SCREENER_PATTERN_GROUPS,
   SCREENER_SIGNAL_TYPES,
@@ -23,6 +32,8 @@ import {
   patternLabel,
   signalLabel,
 } from '../../lib/screenerFilters.ts'
+import MarketSignInBox from '../market/MarketSignInBox.tsx'
+import { TREND_ICON } from '../market/marketText.ts'
 
 const CHIP_BASE =
   'rounded-[4px] border-2 px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
@@ -63,9 +74,16 @@ function toDraft(value: number | null): string {
   return value === null ? '' : String(value)
 }
 
+const SELECT_CLASS =
+  'w-fit rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-xs text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
+
+const SECTOR_TREND_OPTIONS: ReadonlyArray<MarketTrend | null> = [null, ...SECTOR_TRENDS]
+
 interface ScreenerFilterPanelProps {
   filters: ScreenerFilters
   activeCount: number
+  /** Market Context access (useMarketContextAccess); absent = no sector fieldset. */
+  access?: MarketContextAccess
   onChange: (patch: Partial<ScreenerFilters>) => void
   onClear: () => void
 }
@@ -73,6 +91,7 @@ interface ScreenerFilterPanelProps {
 export default function ScreenerFilterPanel({
   filters,
   activeCount,
+  access,
   onChange,
   onClear,
 }: ScreenerFilterPanelProps) {
@@ -309,6 +328,75 @@ export default function ScreenerFilterPanel({
           </div>
           <p className="max-w-xs font-mono text-[10px] text-on-surface-variant">{t('patterns.hint')}</p>
         </fieldset>
+
+        {access?.status === 'allowed' ? (
+          <fieldset className="flex min-w-0 flex-col gap-2">
+            <legend className={LEGEND_CLASS}>
+              {t('screener.sectorContext.legend')}
+              {access.preview ? (
+                <span className="ml-2 rounded-[4px] border border-dashed border-outline bg-primary-container px-1.5 py-0.5 text-[10px] text-on-primary-container">
+                  {t('screener.sectorContext.preview')}
+                </span>
+              ) : null}
+            </legend>
+            <span className="font-mono text-[10px] uppercase text-on-surface-variant">{t('screener.sectorContext.trendLabel')}</span>
+            <div
+              role="group"
+              aria-label={t('screener.sectorContext.trendAria')}
+              className="inline-flex w-fit flex-wrap overflow-hidden rounded-[4px] border-2 border-outline"
+            >
+              {SECTOR_TREND_OPTIONS.map((trend, index) => {
+                const selected = filters.sectorTrend === trend
+                return (
+                  <button
+                    key={trend ?? 'any'}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => onChange({ sectorTrend: trend })}
+                    className={segmentClass(selected, index)}
+                  >
+                    {trend === null ? (
+                      t('screener.sectorContext.trendAny')
+                    ) : (
+                      <>
+                        <span aria-hidden="true">{TREND_ICON[trend]} </span>
+                        {t(`marketContext.trend.${trend}`)}
+                      </>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <label htmlFor="screener-sector-rank" className="font-mono text-[10px] uppercase text-on-surface-variant">
+              {t('screener.sectorContext.rankLabel')}
+            </label>
+            <select
+              id="screener-sector-rank"
+              value={filters.sectorRsRankMax === null ? '' : String(filters.sectorRsRankMax)}
+              onChange={(event) => onChange({ sectorRsRankMax: event.target.value === '' ? null : Number(event.target.value) })}
+              className={SELECT_CLASS}
+            >
+              <option value="">{t('screener.sectorContext.rankAll')}</option>
+              {SECTOR_RS_RANK_OPTIONS.map((n) => (
+                <option key={n} value={String(n)}>
+                  {t('screener.sectorContext.rankTop', { n })}
+                </option>
+              ))}
+            </select>
+            <p className="max-w-xs font-mono text-[10px] text-on-surface-variant">{t('screener.sectorContext.hint')}</p>
+          </fieldset>
+        ) : null}
+
+        {access?.status === 'signIn' ? (
+          <fieldset className="flex min-w-0 max-w-sm flex-col gap-2">
+            <legend className={LEGEND_CLASS}>{t('screener.sectorContext.legend')}</legend>
+            <MarketSignInBox
+              title={t('screener.sectorContext.signInTitle')}
+              body={t('screener.sectorContext.signInBody')}
+              link={t('screener.sectorContext.signIn')}
+            />
+          </fieldset>
+        ) : null}
       </div>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t-2 border-outline-variant pt-4">

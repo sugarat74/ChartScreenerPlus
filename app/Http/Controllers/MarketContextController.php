@@ -11,9 +11,9 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Market Context API (docs/specs/market-context-ui.md, C1-C2). Both actions
- * sit behind the `market-context.public` release gate; the history is in the
- * `auth:sanctum` group (Registered Users only, enforced by the route). Bodies
- * come from {@see MarketContextCache} and hold no user data.
+ * are for Registered Users only: the routes sit in `auth:sanctum` behind the
+ * `view-market-context` ability (docs/specs/market-context-patterns.md, C1-C2).
+ * Bodies come from {@see MarketContextCache} and hold no user data.
  */
 class MarketContextController extends Controller
 {

@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext } from '../auth/context.ts'
 import { I18nProvider } from '../i18n/I18nProvider.tsx'
 import { LOCALE_STORAGE_KEY } from '../i18n/locales.ts'
-import { companyCardApi, instrumentApi, watchlistApi } from '../lib/api.ts'
-import type { InstrumentDetailResponse } from '../lib/api.ts'
+import { resetLegalInfoCache } from '../legal/useLegalInfo.ts'
+import { companyCardApi, instrumentApi, instrumentMarketContextApi, legalApi, watchlistApi } from '../lib/api.ts'
+import type { AuthUser, InstrumentDetailResponse, LegalInfo } from '../lib/api.ts'
+import { AAPL_CONTEXT } from '../components/chart/instrumentContext.fixture.ts'
 import InstrumentChartPage from './InstrumentChartPage.tsx'
 
 // The canvas chart is not under test (and needs a real canvas).
@@ -22,8 +24,29 @@ vi.mock('../lib/api.ts', async (importOriginal) => {
     watchlistApi: { list: vi.fn(), add: vi.fn(), remove: vi.fn() },
     companyCardApi: { get: vi.fn(), generate: vi.fn() },
     forecastApi: { predict: vi.fn(), report: vi.fn() },
+    legalApi: { info: vi.fn() },
+    instrumentMarketContextApi: { get: vi.fn() },
   }
 })
+
+const LEGAL: LegalInfo = {
+  privacy_published: true,
+  notice_published: false,
+  owner: null,
+  updated_at: '2026-10-23',
+  retention: { sign_in_activity_days: 90, session_minutes: 120, backup_days: 14, server_log_days: 14, notification_days: 90 },
+}
+
+const ALLOWED: AuthUser = { id: 1, name: 'Test', email: 'test@example.com', role: 'user', capabilities: { market_context: true } }
+
+const PATTERN = {
+  type: 'double_bottom',
+  status: 'confirmed' as const,
+  start_date: '2026-09-01',
+  end_date: '2026-09-30',
+  breakout_level: 115,
+  points: [{ date: '2026-09-01', price: 100, role: 'left_low' }],
+}
 
 const auth = {
   user: { id: 1, name: 'Test', email: 'test@example.com', role: 'user' as const },
@@ -42,9 +65,9 @@ function payload(instrument: Partial<InstrumentDetailResponse['instrument']>): I
   }
 }
 
-function show(ticker: string) {
+function show(ticker: string, user: AuthUser | null = auth.user) {
   return render(
-    <AuthContext.Provider value={auth}>
+    <AuthContext.Provider value={{ ...auth, user }}>
       <I18nProvider>
         <MemoryRouter initialEntries={[`/instruments/${ticker}`]}>
           <Routes>
@@ -57,6 +80,8 @@ function show(ticker: string) {
 }
 
 beforeEach(() => {
+  resetLegalInfoCache()
+  vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: false })
   window.localStorage.setItem(LOCALE_STORAGE_KEY, 'es')
   vi.mocked(watchlistApi.list).mockResolvedValue([])
   vi.mocked(companyCardApi.get).mockResolvedValue({ card: null, available: false, fundamentals: null })
@@ -101,4 +126,73 @@ it('keeps the stock-only panels for a stock, including an older payload without 
   expect(screen.getByText('Ficha de empresa')).toBeTruthy()
   await waitFor(() => expect(screen.getByRole('button', { name: 'Seguir' })).toBeTruthy())
   expect(watchlistApi.list).toHaveBeenCalled()
+})
+
+describe('Market Context strip and pattern chips (market-context-patterns)', () => {
+  it('an allowed user gets one context request for a stock, the strip and the pattern chips', async () => {
+    vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
+    vi.mocked(instrumentMarketContextApi.get).mockResolvedValue(AAPL_CONTEXT)
+    vi.mocked(instrumentApi.detail).mockResolvedValue({
+      ...payload({ ticker: 'AAPL', company: 'Apple Inc.', exchange: 'NASDAQ', kind: 'stock' }),
+      patterns: [PATTERN],
+    })
+    show('AAPL', ALLOWED)
+
+    const strip = await screen.findByRole('region', { name: 'Contexto de mercado' })
+    expect(strip.textContent).toContain('Sector: Tecnología de la información (XLK)')
+    expect(strip.textContent).toContain('Fuerza relativa 1/10')
+    expect(within(strip).queryByText('Vista previa')).toBeNull()
+    expect(screen.getByText('El contexto es el de la última sesión, no el de la fecha del patrón.')).toBeTruthy()
+    expect(screen.getByText('Contexto actual:', { exact: false })).toBeTruthy()
+    expect(instrumentMarketContextApi.get).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(instrumentMarketContextApi.get).mock.calls[0][0]).toBe('AAPL')
+  })
+
+  it('an Admin preview carries the chip while the flag is off', async () => {
+    vi.mocked(instrumentMarketContextApi.get).mockResolvedValue(AAPL_CONTEXT)
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'AAPL', kind: 'stock' }))
+    show('AAPL', { ...ALLOWED, role: 'admin' })
+
+    const strip = await screen.findByRole('region', { name: 'Contexto de mercado' })
+    await waitFor(() => expect(within(strip).getByText('Vista previa')).toBeTruthy())
+  })
+
+  it('an ETF makes no context request and shows no strip', async () => {
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ kind: 'etf' }))
+    show('XLK', ALLOWED)
+
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(screen.queryByRole('region', { name: 'Contexto de mercado' })).toBeNull()
+    expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
+  })
+
+  it('a Visitor gets the sign-in box with the flag on and nothing with it off, never a request', async () => {
+    vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
+    vi.mocked(instrumentApi.detail).mockResolvedValue({ ...payload({ ticker: 'AAPL', kind: 'stock' }), patterns: [PATTERN] })
+    show('AAPL', null)
+
+    expect(await screen.findByText('Inicia sesión para ver el sector y el entorno de mercado de este valor.')).toBeTruthy()
+    expect(screen.queryByText(/no el de la fecha del patrón/)).toBeNull()
+    cleanup()
+
+    resetLegalInfoCache()
+    vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: false })
+    show('AAPL', null)
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(screen.queryByText(/Inicia sesión para ver el sector/)).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Contexto de mercado' })).toBeNull()
+    expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
+  })
+
+  it('a user without the capability sees nothing and makes no request', async () => {
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'AAPL', kind: 'stock' }))
+    show('AAPL')
+
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(screen.queryByRole('region', { name: 'Contexto de mercado' })).toBeNull()
+    expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
+  })
 })

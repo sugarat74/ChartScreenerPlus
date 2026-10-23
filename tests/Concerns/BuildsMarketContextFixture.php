@@ -210,4 +210,71 @@ trait BuildsMarketContextFixture
         $this->breadthRow();
         $this->macroFixture();
     }
+
+    /**
+     * The "context" sector rows of docs/specs/market-context-patterns.md:
+     * XLK uptrend rank 1, XLE downtrend rank 10, XLU mixed with a null rank and
+     * `rs_60` (so `rs_rank_of` is 10), eight more rows ranked 2..9.
+     *
+     * @var array<string, array{0: ?int, 1: float, 2: float, 3: float, 4: ?float, 5: string, 6: float}>
+     */
+    protected const CONTEXT_SECTOR_ROWS = [
+        'XLK' => [1, 1.23, 4.5, 9.87, 3.21, 'uptrend', 71.43],
+        'XLC' => [2, 0.9, 3.1, 8.2, 2.5, 'uptrend', 65.0],
+        'XLY' => [3, 0.4, 2.2, 6.1, 1.4, 'uptrend', 60.0],
+        'XLI' => [4, 0.3, 1.9, 5.5, 0.8, 'uptrend', 58.0],
+        'XLF' => [5, 0.2, 1.5, 4.9, 0.2, 'uptrend', 55.0],
+        'XLV' => [6, 0.1, 1.1, 4.0, -0.7, 'uptrend', 52.0],
+        'XLB' => [7, -0.1, 0.5, 3.2, -1.5, 'mixed', 48.0],
+        'XLRE' => [8, -0.4, -0.2, 2.1, -2.6, 'mixed', 45.0],
+        'XLP' => [9, -0.6, -0.9, 1.0, -3.7, 'mixed', 40.0],
+        'XLE' => [10, -1.5, -3.0, -2.2, -6.9, 'downtrend', 20.0],
+        'XLU' => [null, -0.8, -1.4, 0.3, null, 'mixed', 35.0],
+    ];
+
+    /**
+     * The "context" stocks (market-context-patterns): AAPL (Information
+     * Technology), XOM (Energy), NEE (Utilities), ZZZ (no sector) and ODD
+     * (an unmapped sector), members of the main Universe with a bar on
+     * `$barDate` and the day before and a snapshot on `$barDate`.
+     *
+     * @return array<string, Instrument>
+     */
+    protected function contextStocks(string $barDate = self::LATEST): array
+    {
+        $stocks = [];
+
+        foreach (['AAPL' => 'Information Technology', 'XOM' => 'Energy', 'NEE' => 'Utilities', 'ZZZ' => null, 'ODD' => 'Conglomerates'] as $ticker => $sector) {
+            $instrument = Instrument::factory()->create(['ticker' => $ticker, 'company' => "{$ticker} Inc", 'sector' => $sector]);
+            $this->mainUniverse->instruments()->attach($instrument->id);
+
+            foreach ([Carbon::parse($barDate)->subDay()->toDateString() => 99.0, $barDate => 100.0] as $date => $close) {
+                DB::table('daily_bars')->insert([
+                    'instrument_id' => $instrument->id,
+                    'date' => Carbon::parse($date)->startOfDay(),
+                    'open' => $close, 'high' => $close, 'low' => $close, 'close' => $close, 'volume' => 1000000,
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+
+            DB::table('indicator_snapshots')->insert([
+                'instrument_id' => $instrument->id,
+                'date' => Carbon::parse($barDate)->startOfDay(),
+                'sma20' => 98, 'sma50' => 95, 'sma200' => 90, 'rsi14' => 55, 'rvol' => 1.2,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+
+            $stocks[$ticker] = $instrument;
+        }
+
+        return $stocks;
+    }
+
+    /** The whole "context" fixture: sector rows, regime and the five stocks. */
+    protected function contextFixture(): void
+    {
+        $this->sectorRows(self::LATEST, self::CONTEXT_SECTOR_ROWS);
+        $this->regimeRow();
+        $this->contextStocks();
+    }
 }

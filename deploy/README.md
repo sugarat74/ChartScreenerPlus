@@ -115,6 +115,22 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    (con `umask 007`) y comprueba la página sin sesión. La caché del contexto se renueva sola cuando termina
    cada uno de los tres comandos; los botones «Recalcular» de la pestaña Admin usan la cola `database`.
 
+   **Solo usuarios registrados (`market-context-patterns`, decisión del titular 2026-10-23).** Activar
+   `MARKET_CONTEXT_PUBLIC` significa que lo ven los **usuarios registrados**, nunca los visitantes: sin sesión,
+   el enlace «Mercado», `/mercado`, la franja «Contexto de mercado» del gráfico y los filtros «Contexto
+   sectorial» del Screener solo muestran un aviso para iniciar sesión, y toda la API de contexto responde 401.
+   El acceso es una única habilidad, `view-market-context` (`AppServiceProvider`), punto de entrada de un
+   futuro plan de pago. La migración añade `screener_rows.sector_trend` y `sector_rs_rank` (las rellena el
+   `screener:refresh` del despliegue). Tras el despliegue, con la bandera aún apagada: como Admin, abre el
+   gráfico de una acción (p. ej. `/instruments/AAPL`), compara su franja con la tabla de sectores de
+   `/mercado` y prueba un filtro «Contexto sectorial» en el Screener; como usuario normal, comprueba que no
+   aparece nada. Al comprobar la página «sin sesión» tras activar la bandera, espera el aviso de inicio de
+   sesión, no los datos.
+
+   Si ejecutas `php artisan market-context:compute` a mano (p. ej. un relleno con `--from`), ejecuta después
+   `php artisan screener:refresh` para que las columnas sectoriales del Screener se actualicen (el pipeline
+   diario y el botón «Recalcular» de Admin ya lo hacen).
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.

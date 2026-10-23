@@ -5,6 +5,7 @@ namespace App\Services\Screener;
 use App\Models\ChartPattern;
 use App\Models\Instrument;
 use App\Models\ScreenerRow;
+use App\Services\MarketRegime\MarketRegimeRules;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -20,7 +21,15 @@ use Illuminate\Support\Facades\DB;
  * universe-scoped, so the `kind` filter here is the Screener's real gate. The values are computed
  * with the same rules the Screener used per request (previous close = second
  * latest bar by date, change % in PHP, nulls kept), so results do not change.
- * Run after every data update: `ingestion:pipeline`, `RunIngestionJob`, deploy.
+ * Run after every data update: `ingestion:pipeline`, `RunIngestionJob`, deploy,
+ * and after a manual `market-context:compute` (the sector context columns).
+ *
+ * Sector context (docs/specs/market-context-patterns.md, C4): each row gets the
+ * trend and relative-strength rank of its sector ETF from the latest Sector
+ * Snapshot date, matched by the stored GICS sector name, or nulls when the
+ * stock has no (or an unmapped) sector or that snapshot is more than
+ * MARKET_STALE_AFTER_DAYS older than the row's own bar. Measured against the
+ * bar date, not today, so the build stays deterministic.
  */
 class ScreenerRowBuilder
 {
@@ -33,17 +42,18 @@ class ScreenerRowBuilder
     {
         $now = Carbon::now();
         $rows = [];
+        $sectors = $this->latestSectorContext();
 
         Instrument::query()
             ->stocks()
             ->with(['latestBar', 'latestSnapshot', 'signals', 'chartPatterns'])
-            ->chunkById(self::CHUNK, function (EloquentCollection $instruments) use (&$rows, $now): void {
+            ->chunkById(self::CHUNK, function (EloquentCollection $instruments) use (&$rows, $now, $sectors): void {
                 $members = $instruments->filter(fn (Instrument $instrument): bool => $instrument->latestBar !== null
                     && $instrument->latestSnapshot !== null);
                 $previousClose = $this->previousCloseByInstrument($members->modelKeys());
 
                 foreach ($members as $instrument) {
-                    $rows[] = $this->row($instrument, $previousClose->get($instrument->id), $now);
+                    $rows[] = $this->row($instrument, $previousClose->get($instrument->id), $now, $sectors);
                 }
             });
 
@@ -78,9 +88,10 @@ class ScreenerRowBuilder
     /**
      * The `screener_rows` attributes for one qualifying instrument.
      *
+     * @param  array{date: ?string, rows: array<string, array{trend: ?string, rs_rank: ?int}>}  $sectors
      * @return array<string, mixed>
      */
-    private function row(Instrument $instrument, ?float $previousClose, Carbon $now): array
+    private function row(Instrument $instrument, ?float $previousClose, Carbon $now, array $sectors): array
     {
         $bar = $instrument->latestBar;
         $snapshot = $instrument->latestSnapshot;
@@ -88,6 +99,7 @@ class ScreenerRowBuilder
         $sma50 = $this->nullableFloat($snapshot->sma50);
         $sma200 = $this->nullableFloat($snapshot->sma200);
         $signals = $instrument->signals->pluck('type')->unique()->sort()->values()->all();
+        $sector = $this->sectorContext($instrument, $bar->date->format('Y-m-d'), $sectors);
 
         return [
             'instrument_id' => $instrument->id,
@@ -127,9 +139,63 @@ class ScreenerRowBuilder
                     'end_date' => $pattern->end_date->format('Y-m-d'),
                 ])
                 ->all(), JSON_PRESERVE_ZERO_FRACTION),
+            'sector_trend' => $sector['trend'] ?? null,
+            'sector_rs_rank' => $sector['rs_rank'] ?? null,
             'created_at' => $now,
             'updated_at' => $now,
         ];
+    }
+
+    /**
+     * The rows of the latest Sector Snapshot date keyed by stored GICS sector.
+     *
+     * @return array{date: ?string, rows: array<string, array{trend: ?string, rs_rank: ?int}>}
+     */
+    private function latestSectorContext(): array
+    {
+        // The raw stored value: SQLite keeps "Y-m-d H:i:s", PostgreSQL "Y-m-d".
+        $latest = DB::table('market_sector_snapshots')->max('date');
+
+        if ($latest === null) {
+            return ['date' => null, 'rows' => []];
+        }
+
+        $rows = [];
+
+        DB::table('market_sector_snapshots')
+            ->where('date', $latest)
+            ->whereNotNull('sector')
+            ->orderBy('instrument_id')
+            ->get(['sector', 'trend', 'rs_rank'])
+            ->each(function (object $row) use (&$rows): void {
+                $rows[(string) $row->sector] ??= [
+                    'trend' => $row->trend === null ? null : (string) $row->trend,
+                    'rs_rank' => $row->rs_rank === null ? null : (int) $row->rs_rank,
+                ];
+            });
+
+        return ['date' => substr((string) $latest, 0, 10), 'rows' => $rows];
+    }
+
+    /**
+     * The stock's sector context, or null when it has no (or an unmapped)
+     * sector or the snapshot is more than 7 days older than the bar.
+     *
+     * @param  array{date: ?string, rows: array<string, array{trend: ?string, rs_rank: ?int}>}  $sectors
+     * @return array{trend: ?string, rs_rank: ?int}|null
+     */
+    private function sectorContext(Instrument $instrument, string $barDate, array $sectors): ?array
+    {
+        $context = $instrument->sector === null ? null : ($sectors['rows'][$instrument->sector] ?? null);
+
+        if ($context === null || $sectors['date'] === null) {
+            return null;
+        }
+
+        // Age of the snapshot on the bar date; a snapshot after the bar is fresh.
+        $age = (int) round(Carbon::parse($sectors['date'])->diffInDays(Carbon::parse($barDate), false));
+
+        return $age > MarketRegimeRules::MARKET_STALE_AFTER_DAYS ? null : $context;
     }
 
     /**

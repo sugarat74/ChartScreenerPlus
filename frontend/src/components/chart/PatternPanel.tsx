@@ -5,14 +5,27 @@
  * is listed here with its status, dates, breakout level and key points. The
  * breakout level is the only price a pattern exposes: no target or stop is
  * shown. Patterns are detected automatically and are informational only.
+ *
+ * With a Market Context (`context`, market-context-patterns) each pattern also
+ * carries the stock's current sector trend, sector rank and Market Regime
+ * chips, with one note that they come from the latest session, not from the
+ * pattern's date. Without it (a Visitor, no access, an ETF) the panel is
+ * unchanged.
  */
 
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { MessageKey } from '../../i18n/translate.ts'
-import type { InstrumentPattern } from '../../lib/api.ts'
+import type { InstrumentMarketContext, InstrumentPattern } from '../../lib/api.ts'
 import { patternLabel } from '../../lib/screenerFilters.ts'
+import { ContextChips } from './MarketContextStrip.tsx'
 
-export default function PatternPanel({ patterns }: { patterns: InstrumentPattern[] }) {
+export default function PatternPanel({
+  patterns,
+  context = null,
+}: {
+  patterns: InstrumentPattern[]
+  context?: InstrumentMarketContext | null
+}) {
   const { t, formatPrice, formatMarketDate } = useI18n()
 
   return (
@@ -64,10 +77,19 @@ export default function PatternPanel({ patterns }: { patterns: InstrumentPattern
                   </div>
                 ))}
               </dl>
+              {context !== null ? (
+                <p className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="sr-only">{t('patterns.contextLabel')}: </span>
+                  <ContextChips context={context} />
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
       )}
+      {context !== null && patterns.length > 0 ? (
+        <p className="mt-3 font-mono text-[10px] text-on-surface-variant">{t('patterns.contextNote')}</p>
+      ) : null}
       <p className="mt-3 font-mono text-[10px] text-on-surface-variant">{t('patterns.disclaimer')}</p>
     </div>
   )

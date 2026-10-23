@@ -7,13 +7,17 @@ use App\Services\Screener\CandidateQuery;
 use App\Services\Screener\ScreenerFilterParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Public, read-only screener over a Universe's Instruments.
  *
  * The route is anonymous by design: browsing the Screener requires no session
  * (`docs/user-and-access-model.md`) and the data is system-owned public market
- * data, so there is no ownership or authorization branch. Filtering and
+ * data, so there is no ownership or authorization branch, except the sector
+ * context filters (`sector_trend`, `sector_rs_rank_max`), which need the
+ * `view-market-context` ability (401 for a guest, 403 without it; checked
+ * after validation; docs/specs/market-context-patterns.md, C5). Filtering and
  * ordering happen server-side over the ~503 universe members (bounded), so the
  * SPA never re-implements ranking.
  *
@@ -47,6 +51,24 @@ class ScreenerController extends Controller
         }
 
         $filters = ScreenerFilterParser::fromArray($request->query());
+
+        // The one documented access check of this public route
+        // (market-context-patterns, C5): the sector context filters are for
+        // Registered Users with the `view-market-context` ability. It runs
+        // after validation, so a bad value is a 422 for any caller, and a
+        // request without those filters stays anonymous and unchanged.
+        if (ScreenerFilterParser::usesMarketContext($filters)) {
+            $user = $request->user('sanctum');
+
+            if ($user === null) {
+                return response()->json(['message' => __('market_context.sign_in_required')], 401);
+            }
+
+            if (Gate::forUser($user)->denies('view-market-context')) {
+                return response()->json(['message' => __('market_context.filter_unavailable')], 403);
+            }
+        }
+
         $limit = $this->resolveLimit($request);
         $offset = $this->resolveOffset($request);
 

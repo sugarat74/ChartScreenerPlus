@@ -66,6 +66,8 @@ class ScreenerInterpretTest extends TestCase
             'pattern' => [],
             'pattern_status' => 'any',
             'sort' => 'rvol_desc',
+            'sector_trend' => null,
+            'sector_rs_rank_max' => null,
             'unsupported' => [],
             'explanation' => 'RSI ≤ 30, precio sobre SMA200, RVOL ≥ 1,5.',
         ], $overrides);
@@ -113,8 +115,8 @@ class ScreenerInterpretTest extends TestCase
                 'outcome' => $outcome,
                 'unsupported_count' => 0,
                 'model' => 'fixture-model',
-                'schema_version' => 'screener-query-v1',
-                'prompt_version' => 'screener-query-prompt-v1',
+                'schema_version' => 'screener-query-v2',
+                'prompt_version' => 'screener-query-prompt-v2',
             ], $overrides));
         }
     }
@@ -138,6 +140,8 @@ class ScreenerInterpretTest extends TestCase
                     'pattern' => [],
                     'pattern_status' => 'any',
                     'sort' => 'rvol_desc',
+                    'sector_trend' => null,
+                    'sector_rs_rank_max' => null,
                 ],
                 'unsupported' => [],
                 'explanation' => 'RSI ≤ 30, precio sobre SMA200, RVOL ≥ 1,5.',
@@ -153,7 +157,7 @@ class ScreenerInterpretTest extends TestCase
                 && $body['temperature'] === 0.0
                 && $body['max_tokens'] === 800
                 && $body['response_format']['type'] === 'json_schema'
-                && $body['response_format']['json_schema']['name'] === 'screener_query_v1'
+                && $body['response_format']['json_schema']['name'] === 'screener_query_v2'
                 && $body['response_format']['json_schema']['strict'] === true
                 && $body['messages'][0]['role'] === 'system'
                 && str_contains($body['messages'][0]['content'], 'sobrevendidas')
@@ -168,8 +172,8 @@ class ScreenerInterpretTest extends TestCase
         $this->assertSame(900, $row->prompt_tokens);
         $this->assertSame(80, $row->completion_tokens);
         $this->assertSame('fixture-model', $row->model);
-        $this->assertSame('screener-query-v1', $row->schema_version);
-        $this->assertSame('screener-query-prompt-v1', $row->prompt_version);
+        $this->assertSame('screener-query-v2', $row->schema_version);
+        $this->assertSame('screener-query-prompt-v2', $row->prompt_version);
     }
 
     public function test_the_locale_defaults_to_the_request_language(): void
@@ -435,7 +439,7 @@ class ScreenerInterpretTest extends TestCase
         $this->assertNotSame(
             ScreenerQueryInterpreter::cacheKey('sobrevendidas', 'es'),
             (function (): string {
-                config()->set('ai_screener.prompt_version', 'screener-query-prompt-v2');
+                config()->set('ai_screener.prompt_version', 'screener-query-prompt-v3');
 
                 return ScreenerQueryInterpreter::cacheKey('sobrevendidas', 'es');
             })(),
@@ -548,5 +552,52 @@ class ScreenerInterpretTest extends TestCase
             'id', 'user_id', 'locale', 'query_length', 'outcome', 'unsupported_count', 'prompt_tokens',
             'completion_tokens', 'latency_ms', 'model', 'schema_version', 'prompt_version', 'created_at',
         ], Schema::getColumnListing('ai_screener_queries'));
+    }
+
+    public function test_scenario_6_sector_context_filters_reach_an_allowed_user(): void
+    {
+        config(['market_context.public' => true]);
+        // The provider maps "acciones de los 3 sectores más fuertes en tendencia alcista".
+        $this->fakeProvider($this->answer([
+            'rsi_max' => null, 'min_rvol' => null, 'price_above_sma200' => false,
+            'sector_trend' => 'uptrend', 'sector_rs_rank_max' => 3,
+            'explanation' => 'Sector en tendencia alcista entre los 3 más fuertes.',
+        ]));
+
+        $this->actingAs(User::factory()->create())
+            ->postJson(self::ENDPOINT, ['query' => 'acciones de los 3 sectores más fuertes en tendencia alcista', 'locale' => 'es'])
+            ->assertOk()
+            ->assertJsonPath('filters.sector_trend', 'uptrend')
+            ->assertJsonPath('filters.sector_rs_rank_max', 3)
+            ->assertJsonPath('unsupported', []);
+    }
+
+    public function test_a_denied_user_gets_nulls_and_a_note_while_the_cache_stays_shared(): void
+    {
+        config(['market_context.public' => false]);
+        $this->fakeProvider($this->answer([
+            'sector_trend' => 'uptrend', 'sector_rs_rank_max' => 3, 'unsupported' => ['precio menor de 50 $'],
+        ]));
+        $query = ['query' => 'sobrevendidas de los 3 sectores más fuertes en tendencia alcista', 'locale' => 'es'];
+
+        // An Admin (allowed while the flag is off) gets the filters...
+        $this->actingAs(User::factory()->admin()->create())->postJson(self::ENDPOINT, $query)
+            ->assertOk()
+            ->assertJsonPath('filters.sector_trend', 'uptrend')
+            ->assertJsonPath('filters.sector_rs_rank_max', 3)
+            ->assertJsonPath('unsupported', ['precio menor de 50 $']);
+
+        // ...a denied user gets the same cached answer without them, named once.
+        $this->app['auth']->forgetGuards();
+        $response = $this->actingAs(User::factory()->create())->postJson(self::ENDPOINT, $query)
+            ->assertOk()
+            ->assertJsonPath('filters.sector_trend', null)
+            ->assertJsonPath('filters.sector_rs_rank_max', null)
+            ->assertJsonPath('filters.rsi_max', 30)
+            ->assertJsonPath('unsupported', ['precio menor de 50 $', 'Filtros de contexto sectorial (no disponibles para tu cuenta)']);
+        $this->assertSame(['signal', 'rsi_min', 'rsi_max', 'min_rvol', 'price_above_sma200', 'ma_cross', 'pattern', 'pattern_status', 'sort', 'sector_trend', 'sector_rs_rank_max'], array_keys($response->json('filters')));
+
+        Http::assertSentCount(1);
+        $this->assertSame(['ok', 'cached'], AiScreenerQuery::query()->orderBy('id')->pluck('outcome')->all());
     }
 }

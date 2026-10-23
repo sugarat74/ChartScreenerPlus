@@ -6,10 +6,13 @@ import { AuthProvider } from '../auth/AuthContext.tsx'
 import { FIXTURE_CONTEXT, FIXTURE_REGIME, regimeHistory } from '../components/market/marketContext.fixture.ts'
 import { I18nProvider } from '../i18n/I18nProvider.tsx'
 import { LOCALE_STORAGE_KEY } from '../i18n/locales.ts'
+import { resetLegalInfoCache } from '../legal/useLegalInfo.ts'
 import type { AuthUser, MarketContext } from '../lib/api.ts'
 import MarketPage from './MarketPage.tsx'
 
-const USER: AuthUser = { id: 1, name: 'Ana', email: 'ana@example.test', role: 'user' }
+// market-context-patterns: the page is for Registered Users with the capability.
+const USER: AuthUser = { id: 1, name: 'Ana', email: 'ana@example.test', role: 'user', capabilities: { market_context: true } }
+const NO_ACCESS: AuthUser = { ...USER, capabilities: { market_context: false } }
 
 const ADVICE = /compra|comprar|venta|vender|recomend|objetivo|probabilidad|previsi[oó]n|pron[oó]stico|\bbuy\b|\bsell\b|target|recommend|probabilit|forecast|predict/i
 const EOD = /\bEOD\b|end[- ]of[- ]day|fin de d[ií]a/i
@@ -18,10 +21,18 @@ function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
 
-type Mock = { context?: MarketContext | 'error' | 'unavailable'; user?: AuthUser | null | 'pending' }
+type Mock = {
+  context?: MarketContext | 'error' | 'unavailable' | 'guest'
+  user?: AuthUser | null | 'pending'
+  /** `market_context` of `GET /api/legal` (the owner's go-live flag). */
+  flag?: boolean
+}
 
-function mockApi({ context = FIXTURE_CONTEXT, user = null }: Mock = {}) {
+function mockApi({ context = FIXTURE_CONTEXT, user = USER, flag = true }: Mock = {}) {
   const fetchMock = vi.fn(async (input: string) => {
+    if (input === '/api/legal') {
+      return json({ privacy_published: true, notice_published: false, owner: null, updated_at: '2026-10-23', retention: {}, market_context: flag })
+    }
     if (input === '/api/user') {
       if (user === 'pending') return new Promise<Response>(() => {})
       return user ? json({ user }) : json({ message: 'Unauthenticated.' }, 401)
@@ -29,6 +40,7 @@ function mockApi({ context = FIXTURE_CONTEXT, user = null }: Mock = {}) {
     if (input === '/api/market-context') {
       if (context === 'error') return json({ message: 'Server Error' }, 500)
       if (context === 'unavailable') return json({ message: 'Esta página aún no está disponible.' }, 404)
+      if (context === 'guest') return json({ message: 'Unauthenticated.' }, 401)
       return json(context)
     }
     if (input.startsWith('/api/market-context/history')) {
@@ -39,6 +51,10 @@ function mockApi({ context = FIXTURE_CONTEXT, user = null }: Mock = {}) {
   })
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
+}
+
+function contextCalls(fetchMock: ReturnType<typeof mockApi>): string[] {
+  return fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.startsWith('/api/market-context'))
 }
 
 function historyCalls(fetchMock: ReturnType<typeof mockApi>): string[] {
@@ -56,14 +72,17 @@ function renderPage() {
   )
 }
 
-beforeEach(() => window.localStorage.setItem(LOCALE_STORAGE_KEY, 'es'))
+beforeEach(() => {
+  resetLegalInfoCache()
+  window.localStorage.setItem(LOCALE_STORAGE_KEY, 'es')
+})
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
   window.localStorage.clear()
 })
 
-describe('MarketPage (Scenario 1: public page, Visitor)', () => {
+describe('MarketPage (Scenario 1: Registered User)', () => {
   it('renders the regime, reasons, sectors, cards and the legal footer in Spanish', async () => {
     const fetchMock = mockApi()
     renderPage()
@@ -143,9 +162,9 @@ describe('MarketPage (Scenario 1: public page, Visitor)', () => {
     expect(screen.getByRole('link', { name: 'CC BY 4.0' }).getAttribute('href')).toBe('https://creativecommons.org/licenses/by/4.0/')
     expect(screen.getByText('Información descriptiva, no es asesoramiento de inversión.')).toBeTruthy()
 
-    // Visitors: a sign-in box instead of every history, and no history request.
-    await waitFor(() => expect(screen.getAllByText('Inicia sesión para ver la evolución de 1 y 3 años.')).toHaveLength(6))
-    expect(screen.queryByRole('button', { name: 'Ver evolución' })).toBeNull()
+    // Registered Users: every history behind a closed toggle, nothing fetched yet.
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Ver evolución' })).toHaveLength(6))
+    expect(screen.queryByText('Inicia sesión para ver la evolución de 1 y 3 años.')).toBeNull()
     expect(historyCalls(fetchMock)).toEqual([])
 
     // No preview banner when public; no EOD or advice wording.
@@ -234,7 +253,7 @@ describe('MarketPage states', () => {
     expect(within(sectors).getByText('Desactualizado')).toBeTruthy()
   })
 
-  it('Scenario 5: unavailable page for everyone but Admins', async () => {
+  it('an API 404 (no access any more) shows the unavailable page', async () => {
     mockApi({ context: 'unavailable' })
     renderPage()
 
@@ -243,7 +262,7 @@ describe('MarketPage states', () => {
   })
 
   it('Scenario 5: the Admin preview shows a banner', async () => {
-    mockApi({ context: { ...FIXTURE_CONTEXT, public: false }, user: { ...USER, role: 'admin' } })
+    mockApi({ context: { ...FIXTURE_CONTEXT, public: false }, user: { ...USER, role: 'admin' }, flag: false })
     renderPage()
 
     expect(await screen.findByRole('note')).toBeTruthy()
@@ -302,14 +321,60 @@ describe('MarketPage states', () => {
     expect(fetchMock).toHaveBeenCalled()
   })
 
-  it('renders no history slot while the session loads', async () => {
+  it('requests nothing while the session loads', async () => {
     const fetchMock = mockApi({ user: 'pending' })
     renderPage()
 
-    await screen.findByRole('region', { name: 'Entorno de mercado' })
-    expect(screen.queryByText('Inicia sesión para ver la evolución de 1 y 3 años.')).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Ver evolución' })).toBeNull()
-    expect(historyCalls(fetchMock)).toEqual([])
+    expect(await screen.findByText('Cargando…')).toBeTruthy()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(screen.queryByRole('region', { name: 'Entorno de mercado' })).toBeNull()
+    expect(contextCalls(fetchMock)).toEqual([])
+  })
+})
+
+describe('MarketPage access (Scenario 7: Registered Users only)', () => {
+  it('a Visitor sees the title and a sign-in box once the flag is on, and requests nothing', async () => {
+    const fetchMock = mockApi({ user: null, flag: true })
+    renderPage()
+
+    expect(await screen.findByText('Contexto de mercado para usuarios registrados')).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'Contexto de mercado' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' }).getAttribute('href')).toBe('/login')
+    expect(screen.queryByRole('region', { name: 'Entorno de mercado' })).toBeNull()
+    expect(contextCalls(fetchMock)).toEqual([])
+  })
+
+  it('a Visitor sees "not available yet" while the flag is off, and requests nothing', async () => {
+    const fetchMock = mockApi({ user: null, flag: false })
+    renderPage()
+
+    expect(await screen.findByText('Esta página aún no está disponible.')).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Iniciar sesión' })).toBeNull()
+    expect(contextCalls(fetchMock)).toEqual([])
+  })
+
+  it('a user without the capability sees "not available yet" and requests nothing', async () => {
+    const fetchMock = mockApi({ user: NO_ACCESS, flag: false })
+    renderPage()
+
+    expect(await screen.findByText('Esta página aún no está disponible.')).toBeTruthy()
+    expect(contextCalls(fetchMock)).toEqual([])
+  })
+
+  it('an API 401 (the session ended) shows the sign-in box', async () => {
+    mockApi({ context: 'guest' })
+    renderPage()
+
+    expect(await screen.findByText('Contexto de mercado para usuarios registrados')).toBeTruthy()
+  })
+
+  it('renders the Visitor sign-in box in English', async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, 'en')
+    mockApi({ user: null, flag: true })
+    renderPage()
+
+    expect(await screen.findByText('Market context for registered users')).toBeTruthy()
+    expect(screen.getByText('Sign in to see the market regime, sectors, breadth and macroeconomic data.')).toBeTruthy()
   })
 })
 

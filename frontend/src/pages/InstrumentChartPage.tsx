@@ -11,7 +11,11 @@
  * redirect or prompt), so the chart remains browseable. A Market Context ETF
  * (`instrument.kind === 'etf'`) shows the chart and its signal/pattern panels
  * but none of the stock-only elements (watchlist toggle, forecast, Company
- * Card), which its API endpoints refuse anyway. The Company Card
+ * Card), which its API endpoints refuse anyway. For a stock, the Market
+ * Context strip and the pattern chips (market-context-patterns) come from one
+ * `GET /api/instruments/{ticker}/market-context` request made only when
+ * `useMarketContextAccess` says `allowed`; a Visitor gets a dashed sign-in box
+ * once the owner's go-live flag is on, anyone else nothing. The Company Card
  * panel itself handles the `#ai-company-card` deep-link scroll (the Candidate
  * row "AI card" link). The page consumes the frozen
  * `GET /api/instruments/{ticker}?limit=252` payload and owns loading / ready /
@@ -22,9 +26,11 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import CompanyCardPanel from '../components/chart/CompanyCardPanel.tsx'
+import MarketContextStrip from '../components/chart/MarketContextStrip.tsx'
 import PatternPanel from '../components/chart/PatternPanel.tsx'
 import ForecastPanel from '../components/chart/ForecastPanel.tsx'
 import SignalLevelsPanel from '../components/chart/SignalLevelsPanel.tsx'
+import { useInstrumentMarketContext } from '../components/chart/useInstrumentMarketContext.ts'
 // `lightweight-charts` is a large dependency: load the canvas chunk only when
 // the chart is actually rendered so the Screener bundle stays lean.
 const InteractiveChart = lazy(() => import('../components/chart/InteractiveChart.tsx'))
@@ -235,6 +241,7 @@ export default function InstrumentChartPage() {
   const heading = current?.instrument.ticker ?? normalizedTicker ?? t('nav.chart')
   // A missing `kind` (older deployments) is a stock.
   const isEtf = current?.instrument.kind === 'etf'
+  const marketContext = useInstrumentMarketContext(current?.instrument.ticker ?? null, current !== null && !isEtf)
   // Company, sector and exchange are data; a missing one is skipped, never
   // printed as an empty "· ·".
   const details =
@@ -284,6 +291,10 @@ export default function InstrumentChartPage() {
           </div>
         </div>
       </header>
+
+      {current !== null && !isEtf ? (
+        <MarketContextStrip access={marketContext.access} state={marketContext.state} onRetry={marketContext.retry} />
+      ) : null}
 
       {normalizedTicker === null ? <GuidancePanel /> : null}
 
@@ -370,7 +381,10 @@ export default function InstrumentChartPage() {
           </div>
 
           <SignalLevelsPanel signals={current.signals} />
-          <PatternPanel patterns={current.patterns ?? []} />
+          <PatternPanel
+            patterns={current.patterns ?? []}
+            context={marketContext.state.status === 'ready' ? marketContext.state.data : null}
+          />
           {isEtf ? null : (
             <>
               <ForecastPanel key={current.instrument.ticker} ticker={current.instrument.ticker} />

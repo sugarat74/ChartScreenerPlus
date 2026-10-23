@@ -1696,14 +1696,23 @@
       "market-context-ui",
       "chart-patterns-ui"
     ],
-    "status": "not_started",
+    "status": "accepted",
     "verification": [
       "Feature tests: sector_trend and sector_rs_rank_max return expected Candidates on a fixture, reject unknown values, round-trip in Saved Screeners and are accepted by the NL screener strict schema",
       "Vitest: context strip renders for a stock, absent for an ETF, no advice wording, es/en",
       "How it works manual and both locales updated",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-10-23 independent validator: accept (round 1). .\\init.ps1 exit 0 on a clean run (Laravel 768 passed / 6 skipped, Vitest 317 in 40 files, SPA lint + build, engine 101); greps confirm one ability view-market-context (no other role/flag check; SPA capability from AuthUserPayload); Playwright fixture check for Visitor/user/Admin with the flag on and off at 1280 and 390 px, light/dark, es/en: with the flag off normal users and Visitors see no Market Context UI or requests; filter order 422 -> 401 -> 403, portable migration and SQL, user-independent instrument context cache, import casing checked. PostgreSQL pending CI test-pgsql.",
+      "2026-10-23 implementer (spec docs/specs/market-context-patterns.md, built in its 6-step order): owner decision 'solo usuarios registrados' implemented as ONE ability view-market-context (AppServiceProvider: Admin or MARKET_CONTEXT_PUBLIC; denyAsNotFound market_context.not_available; guests never pass) used by every Market Context route (auth:sanctum + can:view-market-context: /api/market-context, /history, new /api/instruments/{ticker}/market-context), the Screener sector filters (401 sign_in_required / 403 filter_unavailable after 422 validation), Saved Screeners (403, 11-key canonical object), the NL Screener (v2 schema/prompt; nulls + one unsupported note for denied callers, shared cache), AlertEvaluator (screener alert with sector filters skipped for a denied owner) and AuthUserPayload (user.capabilities.market_context in register/login/user/PATCH account). EnsureMarketContextPublic and its alias removed. Grep: no isAdmin()/flag check for Market Context outside the ability.",
+      "Backend: InstrumentMarketContext + InstrumentMarketContextController (stocks() lookup, ETF/unknown 404, {ticker, as_of, sector{date,stale,etf,sector_key,trend,rs_rank,rs_rank_of}|null, regime{date,stale,regime}|null}, MarketContextCache::instrumentContext version+day key); migration 2026_10_25_000001 (screener_rows.sector_trend string(10), sector_rs_rank unsignedTinyInteger, both nullable+indexed; up/down/up verified on a scratch SQLite DB); ScreenerRowBuilder fills them from the latest sector date by stored GICS sector, null when > 7 days older than the row's bar; ScreenerFilterParser/CandidateQuery sector_trend + sector_rs_rank_max (1..11); RunMarketContextCommand runs screener:refresh after a successful market-context:compute; Candidate JSON and instrument detail unchanged.",
+      "SPA: auth/useMarketContextAccess (single client seam: loading/allowed/signIn/hidden + preview), MarketContextStrip + useInstrumentMarketContext (one request, stock + allowed only), PatternPanel context chips + note, MarketSignInBox, /mercado and header 'Mercado' on the access hook, ScreenerPage drops sector keys without access (status notice, URL kept, waits while access loads), ScreenerFilterPanel 'Contexto sectorial' fieldset, screenerFilters 11 keys + withoutMarketContext, i18n es/en (marketContext.signIn*, marketContext.strip.*, patterns.context*, screener.sectorContext.*), guide filtros/grafico/mercado es/en.",
+      "Laravel new/changed tests: MarketContextAccessTest 8, InstrumentMarketContextApiTest 11, ScreenerSectorFiltersTest 6, ScreenerRowSectorContextTest 5 (incl. Admin rerun refresh), AlertSectorContextTest 3, SavedScreenersApiTest +4, ScreenerInterpretTest +2 (v2 versions), ScreenerQuerySchemaTest +3, MarketContextApiTest gate tests rewritten (guest 401, user 404 exact body, rename ..._serves_registered_users_and_401s_guests). Vitest new/changed: useMarketContextAccess.test 7, MarketContextStrip.test 13, PatternPanel.test +4, InstrumentChartPage.test +5, screenerFilters.test 7, ScreenerPage.test 5, ScreenerFilterPanel.test 5, MarketPage.test 16 (access cases), AppHeader.test +1, ScreenerAiQuery.test +1, translate.test +2 (wording guard over strip/sectorContext/patterns.context), HowItWorksPage.test +2.",
+      ".\\init.ps1 exit 0 (Baseline OK): Laravel 768 passed / 6 skipped, Vitest 317 passed (40 files), SPA lint (tsc + oxlint, only the pre-existing RequireAuth.test warning) + build, engine 101 passed.",
+      "Manual (Laravel :8000 + Vite :5173 on a scratch SQLite DB in the session scratchpad via DB_DATABASE, dev DB untouched; servers I started stopped; .playwright-mcp removed): curl as guest -> /api/market-context, /history, /instruments/AAPL/market-context 401; /api/screener?sector_trend=uptrend 401 'Inicia sesión para usar los filtros de contexto sectorial.'; sector_trend=sideways 422; plain screener 200. Playwright with real login: Admin (flag off) sees Mercado tab, strip with 'Vista previa', Sector Tecnología de la información (XLK), ▲ Alcista, Fuerza relativa 1/10, Entorno ● Neutral, FRED notice; Screener ?sector_trend=uptrend&sector_rs_rank_max=3 -> AAPL only with the fieldset; pattern chips + note (EN, 390 px light). Normal user (flag off): no tab, no strip, notice 'no están disponibles para tu cuenta', /mercado 'Esta página aún no está disponible'. Visitor with /api/legal intercepted to market_context=true: sign-in boxes on chart and /mercado, Mercado tab, no /market-context request (390 px dark). No horizontal page scroll at 1280 and 390 (scrollWidth == clientWidth); select focusable by keyboard.",
+      "Not verified: PostgreSQL locally (CI test-pgsql; portable columns, no new table, no SQLite-only SQL); production preview after deploy (deploy/README item 10). Dev DB not migrated (it already had 3 pending migrations from earlier features; owner's call). Minor visual: at 390 px the 4-segment sector trend control wraps to two lines (legible, keyboard-accessible)."
+    ],
     "notes": "Planned 2026-10-22 at user request. Spec: docs/specs/market-context.md (Feature 5). Context uses the latest snapshot; context at the pattern's detection date is listed under Later."
   },
   {
@@ -1744,5 +1753,20 @@
     ],
     "evidence": [],
     "notes": "Requested 2026-10-22 for later ('añade a implementar a futuro añadir sector, industria y pais de cada stock mostrado en el screener'); not planned yet, needs a spec (planner). Current state: instruments.sector (GICS) is already stored and returned by the Screener API but not shown in the candidate table. Proposed source, no new feed: the same Wikipedia 'List of S&P 500 companies' table used for database/data/sp500.csv also has 'GICS Sub-Industry' and 'Headquarters Location' (country derived from it; US state means United States). SEC submissions (sic_description, business address) is an alternative but company-fundamentals-sec is scoped to the Company Card only. Sector/industry/country Screener filters are a possible follow-up, out of this feature unless requested."
+  },
+  {
+    "id": "api-guest-json-errors",
+    "area": "api",
+    "title": "API answers guests with JSON 401 even without an Accept: application/json header",
+    "user_visible_behavior": "Any /api request that needs a session returns 401 with the localized JSON message ('No has iniciado sesión.') to guests, whatever Accept header the client sends; today such requests without 'Accept: application/json' get a 500.",
+    "depends_on": [],
+    "status": "not_started",
+    "verification": [
+      "Feature test: guest GET on auth-only API routes (e.g. /api/watchlist, /api/market-context/history, /api/admin/market-context) without an Accept header returns 401 JSON, not 500 and not a redirect",
+      "Existing JSON 401/403/404 behaviour and LocalizedFrameworkMessages localization unchanged",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Found 2026-10-23 in production after deploying market-context-ui: curl without Accept on /api/watchlist and /api/market-context/history returned 500; with 'Accept: application/json' it returns 401 correctly. The SPA always sends JSON, so users are not affected. Likely cause (to confirm): the auth middleware tries to redirect non-JSON guests to a 'login' route that does not exist. Candidate fix: render JSON for api/* (Exceptions::shouldRenderJsonWhen) or redirectGuestsTo returning no redirect for API routes. Requested by the owner: 'apunta el error 500 para corregir'."
   }
 ]

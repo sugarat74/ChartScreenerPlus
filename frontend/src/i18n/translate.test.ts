@@ -64,6 +64,22 @@ describe('Market Context wording (market-context-ui)', () => {
     }
   })
 
+  it.each(SUPPORTED_LOCALES)('%s: the chart strip, the pattern context and the sector filters stay descriptive (market-context-patterns)', (locale) => {
+    const strip = flatten(MESSAGES[locale].marketContext.strip, 'marketContext.strip')
+    const filters = flatten(MESSAGES[locale].screener.sectorContext, 'screener.sectorContext')
+    const patterns = {
+      'patterns.contextLabel': MESSAGES[locale].patterns.contextLabel,
+      'patterns.contextNote': MESSAGES[locale].patterns.contextNote,
+    }
+    const texts = { ...strip, ...filters, ...patterns }
+    expect(Object.keys(strip).length).toBeGreaterThan(15)
+    expect(Object.keys(filters).length).toBeGreaterThan(15)
+    for (const [key, text] of Object.entries(texts)) {
+      expect(text, `${locale}: ${key}`).not.toMatch(ADVICE)
+      expect(text, `${locale}: ${key}`).not.toMatch(/\bEOD\b|end[- ]of[- ]day|fin de d[ií]a/i)
+    }
+  })
+
   it('keeps the FRED notice verbatim in English in both catalogs', () => {
     const notice = 'This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.'
     for (const locale of SUPPORTED_LOCALES) {
