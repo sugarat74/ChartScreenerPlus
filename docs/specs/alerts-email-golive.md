@@ -37,9 +37,10 @@ supersedes the earlier Bird and SMTP plans for this feature.
 - A live Brevo HTML test on 2026-10-23 rewrote both Chartiko links to a
   `sendibt2.com/tr/cl/` tracking host despite pixel consent `false`.
   A text-only test preserved the direct Chartiko URL and showed no tracking
-  domain or image in Brevo's stored copy. Therefore production Brevo mail
-  must remain text-only. If Brevo changes that behavior, stop sending until
-  the privacy promise has been rechecked.
+  domain or image in Brevo's stored copy. A later test of the **received**
+  source proved that Brevo converts `textContent` to HTML and adds an opening
+  pixel. The stored copy was insufficient evidence. Sending is disabled until
+  a received message meets the no-tracking requirement.
 - It rejects attachments, which neither current mail flow uses. It never
   includes the provider response body, email addresses or signed links in a
   transport error. A non-201 result fails the queued job.
@@ -77,15 +78,25 @@ supersedes the earlier Bird and SMTP plans for this feature.
 
 ## Current risks
 
-- Brevo's `delivered` event does not show the inbox's authentication results.
-- The received message's raw headers and body still require review in a
-  recipient inbox. Brevo's stored copy of the production text-only test has
-  direct links and no tracking host or image. Provider domain authentication
-  reports both DKIM records and DMARC active. Brevo states its data storage is
-  in the EU; the legal text says `UE` rather than one country. Its DPA is
-  incorporated into its terms; account-level acceptance should be retained.
+- Brevo adds an open tracking pixel to mail received from its API even when
+  `textContent` is the only body and `contactPixelTrackingConsent=false`.
+  Direct test headers `X-Mailin-Track-Open: 0` and `X-Mailin-Track-Click: 0`
+  did not suppress it. The account/digest flags were rolled back to false and
+  the deploy default is false. The tracking configuration must actually remove
+  the pixel, or the owner must review a changed privacy/consent approach,
+  before sending resumes.
+- The temporary mailbox reported SPF/DKIM false and provided no
+  Authentication-Results. The raw source included aligned `d=chartiko.com`
+  and `s=brevo1`, but independent DKIM verification of the mailbox's exported
+  source found a body hash mismatch. Confirm authentication with a reliable
+  recipient before go-live. Brevo's DNS authentication API reports both DKIM
+  records and DMARC active; this alone does not prove a received message passes.
+- Brevo states its data storage is in the EU; the legal text says `UE` rather
+  than one country. Its DPA is incorporated into its terms; account-level
+  acceptance should be retained.
 - PRs 61, 62 and 63 passed CI including PostgreSQL and deployed. The final
   full `./init.ps1` gate passed before activation. Production configuration
   and `/api/legal` confirm both flags active and Brevo/UE on 2026-10-23.
-- A disposable live account registration, resend, digest and unsubscribe
-  still needs a receiving inbox for complete end-to-end acceptance.
+- A disposable live registration, resend, signed verification, opt-in,
+  digest and unsubscribe passed against a temporary receiving inbox. The
+  Chartiko account and mailbox were deleted after the test.

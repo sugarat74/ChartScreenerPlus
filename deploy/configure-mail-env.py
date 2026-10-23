@@ -43,8 +43,9 @@ from pathlib import Path
 ENV_PATH = Path('/var/www/alphapulse/shared/.env')
 APP_DIR = Path('/var/www/alphapulse/current')
 
-# Brevo API, DNS and the production text-only test passed on 2026-10-23.
-EMAIL_FLAGS = True
+# Recipient-source smoke found Brevo adds an open pixel even to textContent.
+# Keep user mail dormant until tracking is disabled and a fresh inbox test passes.
+EMAIL_FLAGS = False
 
 FLAG_NAMES = ('AUTH_EMAIL_VERIFICATION_ENABLED', 'ALERT_EMAIL_DIGEST_ENABLED')
 SETTINGS = {
