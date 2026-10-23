@@ -188,10 +188,10 @@ class LegalInfoTest extends TestCase
         // auth-email-verification: dormant by default.
         $this->getJson('/api/legal')->assertOk()->assertJsonPath('account_email', null);
 
-        config(['auth.verification.enabled' => true, 'mail.provider' => 'Brevo', 'mail.provider_location' => 'UE (Francia)']);
+        config(['auth.verification.enabled' => true, 'mail.provider' => 'Brevo', 'mail.provider_location' => 'UE']);
         $this->getJson('/api/legal')->assertOk()
             ->assertJsonPath('account_email.provider', 'Brevo')
-            ->assertJsonPath('account_email.provider_location', 'UE (Francia)');
+            ->assertJsonPath('account_email.provider_location', 'UE');
 
         // The flag alone, without a provider location, is still dormant.
         config(['mail.provider_location' => '']);

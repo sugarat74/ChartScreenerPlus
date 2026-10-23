@@ -1557,20 +1557,22 @@
   {
     "id": "alerts-email-golive",
     "area": "ops",
-    "title": "Turn on the daily alert email in production (Brevo, free EU provider)",
-    "user_visible_behavior": "Registered Users see the daily email opt-in in their Portal and, once they tick it, receive the daily alert summary from alertas@chartiko.com; the privacy policy names Brevo (EU, France) as the sending provider.",
+    "title": "Turn on outbound email in production via Brevo (EU): account verification and daily alert email",
+    "user_visible_behavior": "New Registered Users must confirm their address with an email from no-reply@chartiko.com (replies go to contacto@chartiko.com); Registered Users see the daily alert email opt-in in their Portal and, once they tick it, receive the daily summary. The privacy policy names Brevo (EU) as the email provider for both.",
     "depends_on": [
       "alerts-email-digest",
       "auth-email-verification"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
-      "chartiko.com authenticated in Brevo (TXT + DKIM in Cloudflare), single SPF including spf.brevo.com, DMARC p=none; DPA accepted",
-      "Mail env written on the server by a prompt-only script (no secret in the repo or chat); legal updated_at bumped in the same deploy",
-      "Owner test: opt-in, one email delivered to the inbox with SPF/DKIM/DMARC pass, List-Unsubscribe headers, unsubscribe page and one-click work; no address in laravel.log"
+      "chartiko.com authenticated in Brevo; Brevo code, two DKIM CNAME and DMARC published in Cloudflare; Bird records retired; apex SPF and MX unchanged",
+      "deploy/configure-mail-env.py writes the non-secret mail settings on every deploy and never prints or blanks BREVO_API_KEY (without a key: log mailer, flags off); the API key is installed by stdin (backup, idempotent); offline tests cover every mode",
+      "php artisan mail:test {to} sends one account-layout email through Brevo API; before any flag is on, the test email reaches the owner's inbox with SPF/DKIM/DMARC pass, From no-reply@, Reply-To contacto@, no tracking pixel and links not rewritten",
+      "Flags on only after delivery and tracking checks: /api/legal names Brevo / UE for account_email and email_digest; privacy es/en no longer says alert emails are not sent; the digest is unavailable without a delivering transport",
+      "Throwaway account: confirmation email delivered, link verifies, resend works, account deleted; owner digest opt-in delivers one email with List-Unsubscribe headers and a working unsubscribe; no address in Laravel logs, no failed jobs; .\\init.ps1 passes"
     ],
     "evidence": [],
-    "notes": "Planned 2026-10-21 at user request (\"dejalo como feature a implementar\"). Spec: docs/specs/alerts-email-golive.md. Blocked on the owner: Brevo account, DNS records in Cloudflare, SMTP key. No application code changes expected."
+    "notes": "Owner changed Bird to Brevo on 2026-10-23 and supplied API and Cloudflare credentials. Spec: docs/specs/alerts-email-golive.md. Brevo uses the transactional HTTP API, not SMTP; the supplied MCP token is not used by the application. DNS and Brevo domain authentication completed; direct API test delivered. Laravel transport, deploy script and tests are in progress. Production flags remain off pending release, live application test and tracking/header review."
   },
   {
     "id": "market-context-sectors",

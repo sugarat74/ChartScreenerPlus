@@ -174,8 +174,9 @@ function placeholderValues(
     aiCardLogDays: info.retention.ai_card_log_days ?? 90,
     aiScreenerLogDays: info.retention.ai_screener_log_days ?? 90,
     ...(info.email_digest ? { emailDigestDays: info.retention.email_digest_days ?? 90 } : {}),
-    // One sending provider for account emails (auth-email-verification) and
-    // the daily alert email; either may be active on its own.
+    // Both paragraphs name the one provider from `MAIL_PROVIDER*`; `account_email`
+    // and `email_digest` always carry the same values (alerts-email-golive).
+    // Either may be active on its own.
     ...(emailProvider
       ? {
           emailProvider: emailProvider.provider,

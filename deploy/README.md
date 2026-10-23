@@ -301,43 +301,30 @@ almacenamiento externo con credenciales solo en el VPS); nunca en el repositorio
 PostgreSQL y PgBouncer no se exponen: usa un túnel SSH
 (`ssh -L 15432:127.0.0.1:5432 deploy@<VPS>`) y conecta a `127.0.0.1:15432`.
 
-## Email del resumen diario de alertas
+## Correo transaccional con Brevo
 
-El resumen diario por email (`alerts-email-digest`) está **desactivado** por defecto: la casilla del Portal no aparece y no se envía nada. Para activarlo, en este orden:
+La configuración vigente es [alerts-email-golive](../docs/specs/alerts-email-golive.md).
+Brevo envía las confirmaciones de cuenta y el resumen diario mediante su API
+transaccional. La clave de API se instala sólo en `shared/.env`; el token MCP no
+se usa en la aplicación. Los registros DNS de Brevo están publicados en
+Cloudflare. No se modifican los MX ni el SPF del dominio.
 
-1. **Proveedor y buzón.** Elige un proveedor SMTP o API (por ejemplo, uno con servidores en la UE), firma su contrato de encargado del tratamiento (DPA) y crea el remitente, por ejemplo `alertas@chartiko.com`.
-2. **Autenticación del dominio** en el DNS de `chartiko.com`, siguiendo las instrucciones del proveedor:
-   - **SPF:** incluye al proveedor en el registro TXT `v=spf1 …` (un único registro SPF por dominio).
-   - **DKIM:** publica las claves que te dé el proveedor.
-   - **DMARC:** como mínimo `_dmarc.chartiko.com TXT "v=DMARC1; p=none; rua=mailto:…"`, y endurécelo después a `quarantine`.
-   - Comprueba los tres con la herramienta del proveedor antes de seguir.
-3. **Variables en `shared/.env`** (nunca en el repositorio):
+Tras desplegar el transporte, instala la clave desde el equipo del propietario:
 
-   ```dotenv
-   MAIL_MAILER=smtp
-   MAIL_HOST=…
-   MAIL_PORT=587
-   MAIL_USERNAME=…
-   MAIL_PASSWORD=…
-   MAIL_FROM_ADDRESS=no-reply@chartiko.com
-   MAIL_FROM_NAME=Chartiko
-   MAIL_REPLY_TO_ADDRESS=contacto@chartiko.com
-   MAIL_PROVIDER="Nombre del proveedor"
-   MAIL_PROVIDER_LOCATION="UE (Irlanda)"
-   ALERT_EMAIL_DIGEST_ENABLED=true
-   ```
+```powershell
+(Get-Content -LiteralPath 'C:\laragon\www\claveapibrevo.txt' -Raw).Trim() | ssh -i "$HOME\.ssh\alphapulse_deploy" deploy@51.222.158.148 'python3 /var/www/alphapulse/current/deploy/configure-mail-env.py --api-key-stdin --apply'
+```
 
-   `MAIL_PROVIDER` y `MAIL_PROVIDER_LOCATION` nombran al proveedor para todos los emails (cuenta y alertas); `ALERT_EMAIL_PROVIDER*`, si están vacías, toman esos valores. El resumen solo se activa con el interruptor y el proveedor y su ubicación rellenos. La política de privacidad nombra automáticamente al proveedor y su ubicación desde esas variables.
-4. **Aplicar:** `php artisan config:cache` como `deploy` (con `umask 007`) y reinicia el worker de colas (`systemctl restart alphapulse-queue`). Los emails se envían desde la cola `database`, con 3 intentos.
-5. **Prueba:** activa la casilla con una cuenta propia en el Portal y espera al siguiente `alerts:evaluate` (o ejecútalo a mano). Comprueba la entrega, las cabeceras `List-Unsubscribe` y `List-Unsubscribe-Post`, el enlace de baja y el texto en español e inglés.
-6. **Legal:** sube `updated_at` en `config/legal.php` en el mismo despliegue en que actives la función, porque la política de privacidad cambia en ese momento.
-
-Para desactivarlo, pon `ALERT_EMAIL_DIGEST_ENABLED=false`, ejecuta `config:cache` y reinicia el worker. No se envía nada más y las preferencias de los usuarios se conservan.
+El script deja ambos interruptores desactivados hasta completar la prueba de
+entrega, las cabeceras y la revisión de seguimiento descritas en la spec.
+`php artisan mail:test <dirección>` envía una prueba sin activar las funciones.
+Para suspenderlas: `python3 deploy/configure-mail-env.py --flags-off --apply`
+como `deploy` en el servidor. No copies la clave a Git ni la muestres en logs.
 
 ### Confirmación del email al registrarse (`auth-email-verification`)
 
-La confirmación del email de las cuentas nuevas se despliega **dormida**: el despliegue normal no cambia nada en el `.env`, la migración marca como verificadas todas las cuentas existentes y, mientras no esté activa, las cuentas nuevas también nacen verificadas, no se envía ningún email y `GET /api/legal` devuelve `account_email: null`.
+La confirmación del email de las cuentas nuevas se despliega **dormida**: el script de correo actualiza las variables no secretas del `.env` pero mantiene ambos interruptores desactivados. La migración marca como verificadas todas las cuentas existentes y, mientras no esté activa, las cuentas nuevas también nacen verificadas, no se envía ningún email y `GET /api/legal` devuelve `account_email: null`.
 
-- **Se activa** en el mismo despliegue que el proveedor real (`alerts-email-golive`), con `AUTH_EMAIL_VERIFICATION_ENABLED=true` además de las variables `MAIL_*` y `MAIL_PROVIDER*` de arriba. Solo surte efecto si `MAIL_PROVIDER` y `MAIL_PROVIDER_LOCATION` están rellenas y `MAIL_MAILER` no es `log` ni `array` (con `log`, las direcciones y los enlaces acabarían en `laravel.log`). Sube `updated_at` en `config/legal.php` en ese despliegue (la política de privacidad describe el email de confirmación), ejecuta `config:cache` y **reinicia `alphapulse-queue`**: los emails de confirmación salen de la cola.
+- **Se activa** después de probar la entrega con Brevo, con `AUTH_EMAIL_VERIFICATION_ENABLED=true` además de `MAIL_MAILER=brevo`, `BREVO_API_KEY` y `MAIL_PROVIDER*`. Solo surte efecto si `MAIL_PROVIDER` y `MAIL_PROVIDER_LOCATION` están rellenas y `MAIL_MAILER` no es `log` ni `array` (con `log`, las direcciones y los enlaces acabarían en `laravel.log`). Sube `updated_at` en `config/legal.php` al activar la función, ejecuta `config:cache` y **reinicia `alphapulse-queue`**: los emails de confirmación salen de la cola.
 - **Prueba:** registra una cuenta de prueba, comprueba que solo ve «Confirma tu correo», que llega un email (es/en, sin imágenes ni seguimiento, Reply-To `contacto@`) y que su enlace `https://www.chartiko.com/verificar-correo/…` confirma la cuenta (también en una ventana privada).
 - **Marcha atrás:** `AUTH_EMAIL_VERIFICATION_ENABLED=false`, `config:cache` y reinicia el worker. Las cuentas pendientes pasan a tener acceso completo al momento; no hace falta tocar la base de datos.

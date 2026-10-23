@@ -37,6 +37,11 @@ return [
 
     'mailers' => [
 
+        'brevo' => [
+            'transport' => 'brevo',
+            'key' => env('BREVO_API_KEY'),
+        ],
+
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),
@@ -138,7 +143,8 @@ return [
     |
     | The email delivery provider and its data location, named in the privacy
     | policy. Outbound email (App\Support\OutboundMail) is ready only when both
-    | are set; the alert digest falls back to these values too.
+    | are set; the alert digest reads these same values. Production values
+    | come from deploy/configure-mail-env.py (docs/specs/alerts-email-golive.md).
     |
     */
 

@@ -103,7 +103,7 @@ export const legalEs: LegalTexts = {
       {
         heading: 'Lo que no hacemos',
         paragraphs: [
-          'No usamos herramientas de analítica, publicidad ni redes sociales, no enviamos comunicaciones comerciales ni emails de alertas, no elaboramos perfiles ni tomamos decisiones automatizadas que te afecten. Los datos de mercado que muestra Chartiko se obtienen desde el servidor y no implican datos de los visitantes.',
+          'No usamos herramientas de analítica, publicidad ni redes sociales, no enviamos comunicaciones comerciales, no elaboramos perfiles ni tomamos decisiones automatizadas que te afecten. Los datos de mercado que muestra Chartiko se obtienen desde el servidor y no implican datos de los visitantes.',
         ],
       },
       {

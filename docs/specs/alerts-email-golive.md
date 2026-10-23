@@ -1,71 +1,79 @@
-# Feature Implementation Spec: Turn on the daily alert email in production
+# Feature: outbound email through Brevo
 
-## Source Feature
+## Decision (2026-10-23)
 
-- `id`: `alerts-email-golive`
-- `area`: `ops`
-- `depends_on`: `alerts-email-digest` (accepted)
-- `status`: `not_started` (planned 2026-10-21 at the user's request: "dejalo como feature a implementar")
-- `source`: `feature_list.json`
+The owner replaced Bird with Brevo. `alerts-email-golive` uses Brevo's
+transactional HTTP API because the supplied credential is an API key, not an
+SMTP key. The Brevo MCP token is not used by the application. This decision
+supersedes the earlier Bird and SMTP plans for this feature.
 
-## Goal
+## Scope
 
-Activate the already-built daily alert email (`alerts-email-digest`, which ships off) in production with a free EU sending provider. The proposed provider is **Brevo**: a French company, free plan of about 300 emails/day (check the current limit), SMTP. No application code changes are expected, only configuration, DNS and verification.
+- Send account confirmation and opt-in daily alert email from
+  `no-reply@chartiko.com`, with `contacto@chartiko.com` as Reply-To.
+- Keep both features dormant until production delivery and legal text are
+  verified. `AUTH_EMAIL_VERIFICATION_ENABLED` and
+  `ALERT_EMAIL_DIGEST_ENABLED` turn on together after that gate.
+- No marketing mail, chat, attachments, tracking pixels, link tracking,
+  alternate inbound mail routing or SPF change.
 
-Corrected 2026-10-23 by the `auth-email-verification` planning (`docs/specs/auth-email-verification.md`): the same go-live also switches on email verification for new accounts, which ships dormant behind `AUTH_EMAIL_VERIFICATION_ENABLED` and shares this transport. The provider is now named once through `MAIL_PROVIDER` / `MAIL_PROVIDER_LOCATION` (the digest falls back to them), and one sender serves account and alert emails. Turn verification on only once `auth-email-verification` is accepted; until then the extra variable is harmless.
+## DNS and provider evidence
 
-## Non-Goals
+- `chartiko.com` added and authenticated in Brevo on 2026-10-23.
+- Cloudflare: apex `brevo-code` TXT, `brevo1._domainkey` and
+  `brevo2._domainkey` CNAME, one `_dmarc` TXT with `p=none` and Brevo's
+  aggregate report address. Bird's DKIM and `send` CNAME were removed.
+- Cloudflare Email Routing MX, its DKIM record and apex SPF remain intact.
+- Brevo sender `no-reply@chartiko.com` created with `dkimError=false` and
+  `spfError=false`. A direct API test was accepted and Brevo subsequently
+  reported `delivered`. This does not prove inbox placement or final headers.
 
-- No code changes to the digest, no marketing email, no other providers in parallel.
-- No new receiving mailbox: replies go through Cloudflare Email Routing like `contacto@`.
+## Transport contract
 
-## Current State (2026-10-21)
+- Laravel's `brevo` mailer converts the existing HTML/text mailables to
+  `POST /v3/smtp/email`, sends `contactPixelTrackingConsent=false` for every
+  recipient and forwards the digest's `List-Unsubscribe` and
+  `List-Unsubscribe-Post` headers.
+- It rejects attachments, which neither current mail flow uses. It never
+  includes the provider response body, email addresses or signed links in a
+  transport error. A non-201 result fails the queued job.
+- `deploy/configure-mail-env.py` writes `MAIL_MAILER=brevo`, From, Reply-To,
+  `MAIL_PROVIDER=Brevo`, `MAIL_PROVIDER_LOCATION=UE` and both feature flags.
+  It preserves an installed `BREVO_API_KEY` without printing it. Without
+  that key it selects `log` and keeps both flags false. It removes retired
+  Bird SMTP settings from the active environment. Owner mode reads the API
+  key on stdin, makes a private backup, writes atomically and can rebuild
+  config and restart the queue/FPM with `--apply`.
+- The CI deploy calls the non-secret configuration step on every release.
+  Never put either supplied credential in GitHub or this repository.
 
-- DNS for `chartiko.com` is on **Cloudflare**. MX records point to Cloudflare Email Routing (receive only).
-- SPF: `v=spf1 include:_spf.mx.cloudflare.net ~all`. There is no `_dmarc` record.
-- Production has `MAIL_MAILER=log`, so nothing is sent. The queue worker `alphapulse-queue.service` is running.
+## Acceptance and verification
 
-## Steps
+1. Offline transport tests cover the payload, the unsubscribe headers,
+   pixel consent and a redacted failure. The deploy script's missing-key,
+   installed-key and bad-key cases are verified. `./init.ps1` passes.
+2. Production stays dormant until a release contains the transport. Install
+   the API key from the owner's local file via the script's stdin mode and
+   verify `mail.default=brevo`, the provider/location and both flags false.
+3. Run `php artisan mail:test` to the owner's address. Brevo must report
+   delivery; inspect received headers for SPF, DKIM and DMARC and the body
+   for direct links without a tracking pixel.
+4. Review Brevo's transactional tracking configuration and DPA. The API
+   payload opts each recipient out of pixel tracking; the received message
+   must confirm that links are not rewritten.
+5. Set both flags true only after the test above, bump `config/legal.php`
+   `updated_at`, rebuild config and restart the queue/FPM. Verify `/api/legal`
+   names Brevo / UE. Register a throwaway account and test confirmation,
+   resend, digest delivery and one-click unsubscribe.
+6. Rollback: run `configure-mail-env.py --flags-off --apply`. This leaves the
+   API key installed but stops both features immediately.
 
-### Owner (account and secrets; never pasted into the chat)
-1. Create a Brevo account and accept its DPA.
-2. Add the domain `chartiko.com` in Brevo. Copy the TXT verification record and the DKIM records into Cloudflare DNS, with CNAME records set to "DNS only".
-3. Edit the existing SPF record (do not add a second one): `v=spf1 include:_spf.mx.cloudflare.net include:spf.brevo.com ~all`.
-4. Add DMARC: TXT `_dmarc` = `v=DMARC1; p=none; rua=mailto:contacto@chartiko.com`.
-5. Authenticate the domain in Brevo and create the sender `no-reply@chartiko.com` (replies go to `contacto@chartiko.com` through the Reply-To header, which Cloudflare Email Routing already forwards). This replaces `alertas@`; if the owner prefers `alertas@`, only `MAIL_FROM_ADDRESS` changes.
-6. In Brevo's transactional settings, turn off open tracking and click tracking: the privacy texts promise emails without tracking pixels or tracking links.
-7. Generate an SMTP key and note the SMTP login.
+## Current risks
 
-### Implementer
-1. Write `deploy/configure-mail-env.py` (or an equivalent PowerShell entry point), modelled on `deploy/configure-ai-env.py`.
-   - It prompts on the server for the SMTP login and key without echoing them.
-   - It writes these to `shared/.env`:
-     - `MAIL_MAILER=smtp`, `MAIL_HOST=smtp-relay.brevo.com`, `MAIL_PORT=587`, `MAIL_USERNAME`, `MAIL_PASSWORD`;
-     - `MAIL_FROM_ADDRESS=no-reply@chartiko.com`, `MAIL_FROM_NAME=Chartiko`, `MAIL_REPLY_TO_ADDRESS=contacto@chartiko.com`;
-     - `MAIL_PROVIDER="Brevo"`, `MAIL_PROVIDER_LOCATION="UE (Francia)"` (they replace `ALERT_EMAIL_PROVIDER*`, which fall back to them; remove any old `ALERT_EMAIL_PROVIDER*` lines);
-     - `ALERT_EMAIL_DIGEST_ENABLED=true`;
-     - `AUTH_EMAIL_VERIFICATION_ENABLED=true` (only once `auth-email-verification` is accepted).
-   - It never prints a value.
-2. Bump `config/legal.php` `updated_at` in the same deploy, because the privacy policy starts showing the email paragraphs (digest and account email) and the provider.
-3. Deploy. Run `php artisan config:cache` as `deploy` with `umask 007`, then `systemctl restart alphapulse-queue` (root step, confirmed with the user).
-
-## Verification
-
-- `GET /api/legal` returns `email_digest: {provider: "Brevo", provider_location: "UE (Francia)"}`, and `/privacidad` shows the email paragraphs in es and en.
-- With an owner account: the Portal box appears unticked, ticking it stores the opt-in, and the next `alerts:evaluate` (or a manual run) delivers one email.
-- Check the received email:
-  - it lands in the inbox, not spam;
-  - SPF, DKIM and DMARC are all `pass` in the headers;
-  - it renders in Gmail and Outlook;
-  - it has the `List-Unsubscribe` and `List-Unsubscribe-Post` headers;
-  - the unsubscribe page and Gmail's one-click unsubscribe both work.
-- Check that `laravel.log` contains no address, and that the `alert_email_digests` row has `sent_at`.
-- Received emails have no tracking pixel, and their links point straight at `www.chartiko.com` (not a Brevo redirect).
-- Email verification (when enabled): `GET /api/legal` returns `account_email` with Brevo; register a new test account, which sees only the "Confirma tu correo" screen; the confirmation email arrives in the inbox with SPF/DKIM/DMARC `pass`, From `no-reply@`, Reply-To `contacto@`; its link opens `/verificar-correo/...` and confirms the account; resend works. Delete the test account afterwards from `/portal/cuenta`.
-- Rollback: `ALERT_EMAIL_DIGEST_ENABLED=false` and/or `AUTH_EMAIL_VERIFICATION_ENABLED=false` (pending accounts get full access at once), `config:cache`, restart the worker.
-
-## Risks
-
-- Deliverability on a new domain: keep the volume low, and tighten DMARC to `quarantine` only after a few clean weeks.
-- Free-plan daily cap: if it is reached, the job retries and then logs. Monitor the counts in the Brevo panel. Confirmation emails share the cap with the digest; registration is throttled per IP (`auth-email-verification`).
-- Secrets: the SMTP key lives only in `shared/.env` on the server.
+- Brevo's `delivered` event does not show the inbox's authentication results.
+- Tracking and data-processing terms require account-level review before
+  enabling user mail. Brevo states its storage is in the EU (France, Germany
+  and Belgium); the legal text therefore says `UE` rather than one country.
+- The full repository startup gate had one Vitest pagination timeout on the
+  initial run, which passed when rerun alone. A complete green run is required
+  before deployment.

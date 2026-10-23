@@ -28,18 +28,20 @@ return [
     | Off by default. The digest is available only when `enabled` is true AND
     | the sending provider and its data location are both set: the privacy
     | policy names them from these values, so no email can go out before the
-    | legal text covers it. The transport itself is Laravel's mail
+    | legal text covers it, and the mailer must really deliver (not `log` or
+    | `array` in production). The transport itself is Laravel's mail
     | configuration (MAIL_MAILER, MAIL_HOST…, MAIL_FROM_ADDRESS).
     |
     */
 
     'email_digest' => [
         'enabled' => (bool) env('ALERT_EMAIL_DIGEST_ENABLED', false),
-        // A blank value falls back to the shared MAIL_PROVIDER* pair, so one
-        // pair names the provider for account and alert emails alike
-        // (docs/specs/auth-email-verification.md).
-        'provider' => env('ALERT_EMAIL_PROVIDER') ?: env('MAIL_PROVIDER'),
-        'provider_location' => env('ALERT_EMAIL_PROVIDER_LOCATION') ?: env('MAIL_PROVIDER_LOCATION'),
+        // One provider for account and alert emails: the shared MAIL_PROVIDER*
+        // pair, so the privacy policy can never name two different senders
+        // (docs/specs/alerts-email-golive.md, D3.2; ALERT_EMAIL_PROVIDER* is
+        // retired). The keys stay so tests can still set them.
+        'provider' => env('MAIL_PROVIDER'),
+        'provider_location' => env('MAIL_PROVIDER_LOCATION'),
         'max_items' => 50,
         'ledger_retention_days' => (int) env('ALERT_EMAIL_LEDGER_RETENTION_DAYS', 90),
     ],

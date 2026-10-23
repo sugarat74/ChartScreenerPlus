@@ -241,15 +241,34 @@ describe('daily alert email in the privacy policy (alerts-email-digest)', () => 
     mockApi({
       ...PRIVACY_ONLY,
       retention: { ...RETENTION, email_digest_days: 90 },
-      email_digest: { provider: 'Acme Mail', provider_location: 'UE (Irlanda)' },
+      email_digest: { provider: 'Brevo', provider_location: 'UE' },
     })
     renderAt('/privacidad')
     await screen.findByRole('heading', { name: 'Alertas y notificaciones' })
     expect(document.body.textContent).toMatch(/resumen diario por email \(está desactivado si no lo eliges\)/)
     expect(document.body.textContent).toMatch(/se borra a los 90 días/)
-    expect(document.body.textContent).toMatch(/se envían a Acme Mail, el proveedor de envío de correo/)
-    expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE \(Irlanda\)/)
+    expect(document.body.textContent).toMatch(/se envían a Brevo, el proveedor de envío de correo/)
+    expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE/)
     expectNoMailtoOrPlaceholders()
+  })
+})
+
+describe('"what we do not do" in the privacy policy (alerts-email-golive)', () => {
+  it('no longer says alert emails are not sent, in Spanish and English', async () => {
+    mockApi(PRIVACY_ONLY)
+    renderAt('/privacidad')
+    const es = (await screen.findByRole('heading', { name: 'Lo que no hacemos' })).nextElementSibling
+    expect(es?.textContent).toMatch(/no enviamos comunicaciones comerciales, no elaboramos perfiles/)
+    expect(es?.textContent).not.toMatch(/emails de alertas/)
+    cleanup()
+    resetLegalInfoCache()
+
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, 'en')
+    mockApi(PRIVACY_ONLY)
+    renderAt('/privacidad')
+    const en = (await screen.findByRole('heading', { name: 'What we do not do' })).nextElementSibling
+    expect(en?.textContent).toMatch(/send no marketing communications, and do no profiling/)
+    expect(en?.textContent).not.toMatch(/alert emails/)
   })
 })
 
@@ -263,12 +282,12 @@ describe('account emails in the privacy policy and the register form (auth-email
     cleanup()
     resetLegalInfoCache()
 
-    mockApi({ ...PRIVACY_ONLY, account_email: { provider: 'Brevo', provider_location: 'UE (Francia)' } })
+    mockApi({ ...PRIVACY_ONLY, account_email: { provider: 'Brevo', provider_location: 'UE' } })
     renderAt('/privacidad')
     await screen.findByRole('heading', { name: 'Cuenta de usuario' })
     expect(document.body.textContent).toMatch(/un enlace que caduca a las 24 horas/)
     expect(document.body.textContent).toMatch(/Los emails de tu cuenta \(como la confirmación de tu dirección\) se envían a través de Brevo/)
-    expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE \(Francia\)/)
+    expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE/)
     // The daily alert email paragraphs stay off.
     expect(document.body.textContent).not.toMatch(/resumen diario por email/)
     expectNoMailtoOrPlaceholders()
@@ -282,7 +301,7 @@ describe('account emails in the privacy policy and the register form (auth-email
     cleanup()
     resetLegalInfoCache()
 
-    mockApi({ ...PRIVACY_ONLY, account_email: { provider: 'Brevo', provider_location: 'UE (Francia)' } })
+    mockApi({ ...PRIVACY_ONLY, account_email: { provider: 'Brevo', provider_location: 'UE' } })
     renderAt('/register')
     expect((await screen.findByTestId('register-verify-hint')).textContent).toBe(
       'Después de crear la cuenta te enviaremos un email para confirmar tu dirección.',
