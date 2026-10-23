@@ -78,9 +78,14 @@ supersedes the earlier Bird and SMTP plans for this feature.
 ## Current risks
 
 - Brevo's `delivered` event does not show the inbox's authentication results.
-- Tracking and data-processing terms require account-level review before
-  enabling user mail. Brevo states its storage is in the EU (France, Germany
-  and Belgium); the legal text therefore says `UE` rather than one country.
-- The full repository startup gate had one Vitest pagination timeout on the
-  initial run, which passed when rerun alone. A complete green run is required
-  before deployment.
+- The received message's raw headers and body still require review in a
+  recipient inbox. Brevo's stored copy of the production text-only test has
+  direct links and no tracking host or image. Provider domain authentication
+  reports both DKIM records and DMARC active. Brevo states its data storage is
+  in the EU; the legal text says `UE` rather than one country. Its DPA is
+  incorporated into its terms; account-level acceptance should be retained.
+- PRs 61, 62 and 63 passed CI including PostgreSQL and deployed. The final
+  full `./init.ps1` gate passed before activation. Production configuration
+  and `/api/legal` confirm both flags active and Brevo/UE on 2026-10-23.
+- A disposable live account registration, resend, digest and unsubscribe
+  still needs a receiving inbox for complete end-to-end acceptance.
