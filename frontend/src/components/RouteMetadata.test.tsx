@@ -49,3 +49,11 @@ it('an unknown path is still titled as not found', () => {
 
   expect(document.title).toBe('Página no encontrada | Chartiko')
 })
+
+it('the Market page is titled and not indexed', () => {
+  show('/mercado')
+
+  expect(document.title).toBe('Contexto de mercado | Chartiko')
+  expect(robots()).toBe('noindex, follow')
+  expect(canonical()).toBeNull()
+})

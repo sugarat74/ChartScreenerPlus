@@ -94,7 +94,7 @@ Company Fundamentals: per-Instrument financial inputs (revenue, operating income
 
 ### Market Context (Contexto de mercado)
 
-The daily set of sector, Breadth and macro readings around the market, each with its own date. Descriptive only: never a forecast, a target or advice.
+The daily set of sector, Breadth and macro readings around the market, each with its own date, shown on `/mercado` (public once the owner turns it on; Admins preview it before). Descriptive only: never a forecast, a target or advice.
 
 ### Market Regime (Entorno de mercado)
 

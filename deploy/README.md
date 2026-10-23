@@ -100,8 +100,20 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    tras ese pipeline): `count(*)`, `min(date)` y `max(date)` de `market_regime_snapshots` (unas tantas filas
    como sesiones desde 2025-10-22, `min(date)` = 2025-10-22), y anota la distribución de `regime` para la
    calibración. Si en esa primera ejecución faltaban datos macro (filas `insufficient` por falta de curva o
-   liquidez), relanza `php artisan market-regime:compute --from=2025-10-22`. No se muestra nada todavía
-   en la web (lo hará `market-context-ui`).
+   liquidez), relanza `php artisan market-regime:compute --from=2025-10-22`. Se muestra en `/mercado`
+   (punto 10).
+10. Contexto de mercado (`market-context-ui`, `docs/specs/market-context-ui.md`): página `/mercado`,
+   `GET /api/market-context` (+ historia) y la pestaña Admin «Contexto de mercado». **Desactivada para el
+   público por defecto** (`MARKET_CONTEXT_PUBLIC=false`): solo los administradores ven el enlace «Mercado»,
+   la página (con el aviso «Vista previa») y la API; el resto recibe 404 y «Esta página aún no está
+   disponible». Tras el despliegue, como Admin: abre `/mercado` y `/admin/market-context`, compara el
+   entorno (fecha 2026-10-22 o posterior, etiqueta y puntuación), la distribución y las fechas de cada serie
+   con la base de datos, y abre cada historia en 1 y 3 años. **Decisión del titular (2026-10-23, opción b):**
+   no se activa hasta que el aviso legal (`/aviso-legal`, que ya incluye la cláusula de las condiciones de uso
+   de FRED) esté publicado, es decir, con NIF y domicilio configurados. Para activarla entonces: pon
+   `MARKET_CONTEXT_PUBLIC=true` en `shared/.env`, ejecuta `php artisan config:cache` como `deploy`
+   (con `umask 007`) y comprueba la página sin sesión. La caché del contexto se renueva sola cuando termina
+   cada uno de los tres comandos; los botones «Recalcular» de la pestaña Admin usan la cola `database`.
 
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno

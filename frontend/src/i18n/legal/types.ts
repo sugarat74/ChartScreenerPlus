@@ -11,7 +11,9 @@
  * `{aiCardLogDays}` `{aiScreenerLogDays}`,
  * `{emailProvider}` `{emailProviderLocation}` `{emailDigestDays}` (only in
  * `emailDigest` paragraphs, rendered while the daily alert email is active),
- * `{cookiesLink}` `{privacyLink}` (in-app links).
+ * `{cookiesLink}` `{privacyLink}` (in-app links),
+ * `{fredTermsLink}` (external link to the FRED® API Terms of Use; only in
+ * `marketContext` texts).
  */
 export type LegalSection = {
   heading: string
@@ -22,6 +24,12 @@ export type LegalSection = {
    */
   emailDigest?: string[]
   items?: string[]
+  /**
+   * FRED® clauses of the Market Context (market-context-ui), shown only while
+   * `GET /api/legal` reports `market_context` on: appended to `items` as list
+   * items when the section has items, otherwise to its paragraphs.
+   */
+  marketContext?: string[]
 }
 
 export type LegalDocument = {

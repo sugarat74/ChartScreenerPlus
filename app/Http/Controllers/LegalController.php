@@ -61,6 +61,10 @@ class LegalController extends Controller
                 'provider' => AlertEmailDigestAvailability::provider(),
                 'provider_location' => AlertEmailDigestAvailability::providerLocation(),
             ] : null,
+            // market-context-ui: the Market Context go-live switch. The SPA
+            // shows the header link and the FRED clauses of the legal notice
+            // only while it is on.
+            'market_context' => (bool) config('market_context.public'),
         ]);
     }
 

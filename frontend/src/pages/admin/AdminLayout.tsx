@@ -9,6 +9,7 @@ import { DEFAULT_ROUTE, LOGIN_ROUTE } from '../../nav.ts'
 /** Admin sections; the path is relative to `/admin`. */
 const ADMIN_SECTIONS: ReadonlyArray<{ to: string; labelKey: MessageKey; end: boolean }> = [
   { to: '/admin', labelKey: 'adminUsers.navIngestion', end: true },
+  { to: '/admin/market-context', labelKey: 'admin.marketContext.nav', end: true },
   { to: '/admin/backtesting', labelKey: 'backtesting.nav', end: true },
   { to: '/admin/users', labelKey: 'adminUsers.navUsers', end: false },
   { to: '/admin/sessions', labelKey: 'adminUsers.navSessions', end: true },

@@ -174,11 +174,17 @@ export const legalEn: LegalTexts = {
           'You can stop using the service and delete your account at any time from the Account page in your Portal or by writing to {ownerEmail}.',
           'We may change the service and these terms; the update date shows the latest version.',
         ],
+        marketContext: [
+          'The macroeconomic data on the Market page come from the FRED® API of the Federal Reserve Bank of St. Louis. By using Chartiko you agree to be bound by the {fredTermsLink}.',
+        ],
       },
       {
         heading: 'Intellectual property',
         paragraphs: [
           'The design, software, brand and texts of Chartiko belong to its owner or are used under licence. Market data comes from third-party sources and may be subject to their own terms; it may not be reused commercially through Chartiko. Company financial figures are computed from public filings in the EDGAR system of the U.S. Securities and Exchange Commission (SEC).',
+        ],
+        marketContext: [
+          'The macroeconomic data come from FRED® and their original sources (the Federal Reserve Board, the U.S. Department of Labor and Census Bureau, the European Central Bank and the OECD), cited next to each figure. Chartiko uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.',
         ],
       },
       {

@@ -52,6 +52,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       formatCompact: (v) => format.formatCompact(locale, v),
       formatDateTime: (iso) => format.formatDateTime(locale, iso),
       formatMarketDate: (iso) => format.formatMarketDate(locale, iso),
+      formatMarketMonth: (iso) => format.formatMarketMonth(locale, iso),
     }
   }, [locale, setLocale])
 

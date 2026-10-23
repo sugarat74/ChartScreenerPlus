@@ -5,6 +5,7 @@ import AdminPage from './pages/AdminPage.tsx'
 import AdminBacktestingPage from './pages/admin/AdminBacktestingPage.tsx'
 import AdminActivityPage from './pages/admin/AdminActivityPage.tsx'
 import AdminLayout from './pages/admin/AdminLayout.tsx'
+import AdminMarketContextPage from './pages/admin/AdminMarketContextPage.tsx'
 import AdminSessionsPage from './pages/admin/AdminSessionsPage.tsx'
 import AdminUserDetailPage from './pages/admin/AdminUserDetailPage.tsx'
 import AdminUsersPage from './pages/admin/AdminUsersPage.tsx'
@@ -13,6 +14,7 @@ import LegalPage from './pages/LegalPage.tsx'
 import InstrumentChartPage from './pages/InstrumentChartPage.tsx'
 import LegacyScreenerRedirect from './pages/LegacyScreenerRedirect.tsx'
 import LoginPage from './pages/LoginPage.tsx'
+import MarketPage from './pages/MarketPage.tsx'
 import NotFoundPage from './pages/NotFoundPage.tsx'
 import NotificationsPage from './pages/NotificationsPage.tsx'
 import PortalPage from './pages/PortalPage.tsx'
@@ -23,6 +25,7 @@ import {
   COOKIES_ROUTE,
   LEGAL_NOTICE_ROUTE,
   LOGIN_ROUTE,
+  MARKET_ROUTE,
   NOTIFICATIONS_ROUTE,
   PRIVACY_ROUTE,
   REGISTER_ROUTE,
@@ -36,6 +39,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <ScreenerPage /> },
       { path: 'screener', element: <LegacyScreenerRedirect /> },
+      { path: routeSegment(MARKET_ROUTE), element: <MarketPage /> },
       { path: 'como-funciona', element: <HowItWorksPage /> },
       { path: 'chart', element: <InstrumentChartPage /> },
       { path: 'instruments/:ticker', element: <InstrumentChartPage /> },
@@ -46,6 +50,7 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { index: true, element: <AdminPage /> },
+          { path: 'market-context', element: <AdminMarketContextPage /> },
           { path: 'backtesting', element: <AdminBacktestingPage /> },
           { path: 'users', element: <AdminUsersPage /> },
           { path: 'users/:userId', element: <AdminUserDetailPage /> },

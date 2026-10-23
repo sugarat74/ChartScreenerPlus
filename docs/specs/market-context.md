@@ -236,11 +236,13 @@ Implementation contract: `docs/specs/market-regime.md`. It has the exact compone
 
 ## Feature 4 — `market-context-ui`
 
+Implementation contract, exact JSON shapes, the go-live flag and the legal gate: `docs/specs/market-context-ui.md`. That spec wins where it is more precise; the items below were corrected on 2026-10-23 to match it (history metric `spread_10y3m`, Admin tab, cache invalidation, `MARKET_CONTEXT_PUBLIC`).
+
 ### Scope
 
 1. **API.**
-   - `GET /api/market-context`, public: the latest regime with its components; the 11 sectors (ticker, i18n sector key, `ret_5`, `ret_20`, `ret_60`, `rs_60`, `rs_rank`, `trend`, `breadth_200`); breadth; rates and curve; liquidity; central banks (current rate, last move, next meeting); leading data; and the sources with the `as_of` date per block. Cached until the next pipeline run.
-   - `GET /api/market-context/history?metric=…&range=1y|3y`, **Registered Users only**, enforced server-side: a closed list of metrics (`regime_score`, `pct_above_sma200`, `dgs10`, `t10y3m`, `net_liquidity`, `icsa_4w`, `nfci`, `sector_rs_60:{ticker}`).
+   - `GET /api/market-context`, public once `MARKET_CONTEXT_PUBLIC=true` (Admins can preview it before): the latest regime with its components; the 11 sectors (ticker, i18n sector key, `ret_5`, `ret_20`, `ret_60`, `rs_60`, `rs_rank`, `trend`, `breadth_200`); breadth; rates and curve; liquidity; central banks (current rate, last change, last and next meeting); leading data; and the sources with the `as_of` date per block. Cached under a version token that `market-context:compute`, `macro:refresh` and `market-regime:compute` renew when they finish.
+   - `GET /api/market-context/history?metric=…&range=1y|3y`, **Registered Users only**, enforced server-side: a closed list of metrics (`regime_score`, `pct_above_sma200`, `dgs10`, `spread_10y3m`, `net_liquidity`, `icsa_4w`, `nfci`, `sector_rs_60:{ticker}`). `spread_10y3m` is Chartiko's `DGS10 − DGS3MO`, not FRED's copyrighted `T10Y3M`.
 2. **Page `/mercado`.** A SPA route with a "Mercado" / "Market" header link. It follows `DESIGN.md`, dark mode and es/en i18n. Layout:
    1. **Regime light:** large label with icon and text (never colour alone), the score, the reasons list and "Datos del {date}".
    2. **Sector table/heatmap:** the 11 sectors sorted by `rs_rank`, a toggle for 1 week / 1 month / 3 months, a trend chip and sector breadth. Each row links to `/instruments/{ticker}`.
@@ -259,8 +261,8 @@ Implementation contract: `docs/specs/market-regime.md`. It has the exact compone
       - a link to `https://fred.stlouisfed.org/docs/api/terms_of_use.html`;
       - per-card attribution from `config('macro.series.*.attribution')`.
 
-      Before going public, Chartiko's terms of use (legal texts) must state that users agree to be bound by the FRED API Terms of Use.
-3. **Admin.** A "Contexto de mercado" section in the existing Admin ingestion area showing:
+      Before going public, Chartiko's terms of use (legal texts) must state that users agree to be bound by the FRED API Terms of Use. The terms are part of the legal notice, which is withheld in production until a NIF and an address exist, so the page also carries the binding sentence itself and the public link waits for the owner to set `MARKET_CONTEXT_PUBLIC=true` (`docs/specs/market-context-ui.md` → "Legal Gate").
+3. **Admin.** A "Contexto de mercado" tab (`/admin/market-context`) in the Admin area, next to Ingestion, showing:
    - the last `market-context:compute` and `market-regime:compute` runs;
    - per series: last observation date, last refresh and last error;
    - buttons to rerun each command, as for ingestion.

@@ -5,6 +5,7 @@ import {
   formatDateTime,
   formatDecimal,
   formatMarketDate,
+  formatMarketMonth,
   formatMultiple,
   formatPrice,
 } from './format.ts'
@@ -58,5 +59,14 @@ describe('market-session dates', () => {
   it('passes through values that are not ISO calendar dates', () => {
     expect(formatMarketDate('es', '2026/10/05')).toBe('2026/10/05')
     expect(formatMarketDate('en', null)).toBe('—')
+  })
+})
+
+describe('monthly observation dates', () => {
+  it('formats the month and year in UTC', () => {
+    expect(formatMarketMonth('es', '2026-09-01')).toBe('septiembre de 2026')
+    expect(formatMarketMonth('en', '2026-09-01')).toBe('September 2026')
+    expect(formatMarketMonth('en', '2026-01-01')).toBe('January 2026')
+    expect(formatMarketMonth('es', null)).toBe('—')
   })
 })

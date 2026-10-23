@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\ForecastReportController;
 use App\Http\Controllers\Admin\ForecastBacktestController;
 use App\Http\Controllers\InstrumentController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\MarketContextController;
+use App\Http\Controllers\Admin\MarketContextAdminController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SavedScreenerController;
 use App\Http\Controllers\ScreenerController;
@@ -43,6 +45,12 @@ Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throt
 // Public facts for the legal pages (owner identity once configured, retention
 // figures). Anonymous and throttled; see docs/specs/legal-compliance-eu.md.
 Route::get('/legal', [LegalController::class, 'show'])->middleware('throttle:60,1,legal');
+
+// Market Context (market-context-ui): anonymous and throttled once the owner
+// sets MARKET_CONTEXT_PUBLIC=true; until then `market-context.public` answers a
+// JSON 404 to everyone but Admins (a preview). A release gate, not authorization.
+Route::get('/market-context', [MarketContextController::class, 'show'])
+    ->middleware(['market-context.public', 'throttle:60,1,market-context']);
 
 // Daily alert email unsubscribe (alerts-email-digest): no session, a valid
 // signature over the user id instead (403 otherwise). GET only shows a page
@@ -100,6 +108,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/screeners', [SavedScreenerController::class, 'index']);
     Route::post('/screeners', [SavedScreenerController::class, 'store']);
     Route::delete('/screeners/{screener}', [SavedScreenerController::class, 'destroy']);
+
+    // Market Context history (market-context-ui): Registered Users only, a
+    // closed metric list (422 otherwise), behind the same release gate.
+    Route::get('/market-context/history', [MarketContextController::class, 'history'])
+        ->middleware(['market-context.public', 'throttle:60,1,market-context-history']);
 });
 
 // Admin-only boundary. `auth:sanctum` runs first (guests -> 401) and `admin`
@@ -130,4 +143,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/sessions', [SessionController::class, 'index']);
     Route::delete('/sessions/{reference}', [SessionController::class, 'destroy'])->where('reference', '[a-f0-9]{40}');
     Route::get('/activity', [ActivityController::class, 'index']);
+
+    // Market Context status and reruns (market-context-ui): only the three
+    // commands, without options, as a queued RunMarketContextCommand.
+    Route::get('/market-context', [MarketContextAdminController::class, 'show']);
+    Route::post('/market-context/runs', [MarketContextAdminController::class, 'rerun']);
 });

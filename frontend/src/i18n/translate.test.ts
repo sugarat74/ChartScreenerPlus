@@ -53,6 +53,25 @@ describe('catalog completeness', () => {
   })
 })
 
+describe('Market Context wording (market-context-ui)', () => {
+  const ADVICE = /compra|comprar|venta|vender|recomend|objetivo|probabilidad|previsi[oó]n|pron[oó]stico|\bbuy\b|\bsell\b|target|recommend|probabilit|forecast|predict/i
+
+  it.each(SUPPORTED_LOCALES)('%s: no advice, target, probability or forecast wording', (locale) => {
+    const catalog = flatten(MESSAGES[locale].marketContext, 'marketContext')
+    expect(Object.keys(catalog).length).toBeGreaterThan(100)
+    for (const [key, text] of Object.entries(catalog)) {
+      expect(text, `${locale}: ${key}`).not.toMatch(ADVICE)
+    }
+  })
+
+  it('keeps the FRED notice verbatim in English in both catalogs', () => {
+    const notice = 'This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.'
+    for (const locale of SUPPORTED_LOCALES) {
+      expect(MESSAGES[locale].marketContext.legal.fredNotice).toBe(notice)
+    }
+  })
+})
+
 describe('describeSavedFilters', () => {
   const definition: SavedScreenerFilters = {
     signal: ['golden_cross'],
