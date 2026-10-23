@@ -91,6 +91,17 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    Comprobación (como `deploy`, en `current`): `php artisan macro:refresh --series=DGS10` imprime
    `DGS10: N stored (…), latest AAAA-MM-DD`; `invalid_key` indica una clave mal copiada. Nada de FRED se
    muestra todavía en la web (lo hará `market-context-ui`, con el aviso que exigen los términos de FRED).
+9. Entorno de mercado (`market-regime`, `docs/specs/market-regime.md`): sin configuración ni variables nuevas.
+   `ingestion:pipeline` ejecuta `market-regime:compute` tras la etapa macro y antes de `screener:refresh`
+   (siempre, aunque las series macro estén desactivadas); un fallo se registra pero no cambia el código de
+   salida ni salta el Screener ni las alertas. **El primer pipeline tras el despliegue rellena la historia
+   por sí solo**: con la tabla vacía calcula todas las sesiones desde la primera instantánea de amplitud
+   (unas 252 desde 2025-10-22); después recalcula las 5 últimas. Comprobación (como `deploy`, en `current`,
+   tras ese pipeline): `count(*)`, `min(date)` y `max(date)` de `market_regime_snapshots` (unas tantas filas
+   como sesiones desde 2025-10-22, `min(date)` = 2025-10-22), y anota la distribución de `regime` para la
+   calibración. Si en esa primera ejecución faltaban datos macro (filas `insufficient` por falta de curva o
+   liquidez), relanza `php artisan market-regime:compute --from=2025-10-22`. No se muestra nada todavía
+   en la web (lo hará `market-context-ui`).
 
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno

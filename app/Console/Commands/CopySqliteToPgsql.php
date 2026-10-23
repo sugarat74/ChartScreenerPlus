@@ -84,6 +84,9 @@ class CopySqliteToPgsql extends Command
         // `macro:refresh` (it backfills by itself).
         'macro_series',
         'macro_observations',
+        // Market Regime: derived, rebuilt by `market-regime:compute`;
+        // postdates the cut-over.
+        'market_regime_snapshots',
     ];
 
     private const CHUNK = 500;

@@ -8,6 +8,7 @@ use App\Models\Instrument;
 use App\Models\MacroObservation;
 use App\Models\MacroSeries;
 use App\Models\MarketBreadthSnapshot;
+use App\Models\MarketRegimeSnapshot;
 use App\Models\MarketSectorSnapshot;
 use App\Models\Signal;
 use App\Models\Universe;
@@ -183,6 +184,37 @@ class MarketDataSchemaTest extends TestCase
 
         $observation->series->delete();
         $this->assertDatabaseCount('macro_observations', 0);
+    }
+
+    public function test_regime_snapshots_are_unique_per_date_and_round_trip_their_components(): void
+    {
+        $regime = MarketRegimeSnapshot::factory()->create([
+            'date' => '2026-10-15',
+            'regime' => MarketRegimeSnapshot::REGIME_INSUFFICIENT,
+            'score' => null,
+            'available' => 2,
+        ]);
+
+        $fresh = $regime->fresh();
+        $this->assertSame('2026-10-15', $fresh->date->toDateString());
+        $this->assertNull($fresh->score);
+        $this->assertSame(2, $fresh->available);
+        $this->assertSame(1, $fresh->rules_version);
+        $this->assertIsArray($fresh->components);
+        $this->assertSame($regime->components, $fresh->components);
+        $this->assertSame(['status', 'score', 'value', 'as_of', 'stale'], array_keys($fresh->components['breadth']));
+        $this->assertSame('ok', $fresh->components['breadth']['status']);
+        $this->assertSame('mixed', $fresh->components['index_trend']['value']);
+
+        try {
+            // A savepoint (PostgreSQL-safe), as above.
+            DB::transaction(fn () => MarketRegimeSnapshot::factory()->create(['date' => '2026-10-15']));
+            $this->fail('A duplicate regime date was accepted.');
+        } catch (QueryException) {
+            // Expected.
+        }
+
+        $this->assertDatabaseCount('market_regime_snapshots', 1);
     }
 
     public function test_universe_and_instrument_pivot_resolves_both_ways(): void

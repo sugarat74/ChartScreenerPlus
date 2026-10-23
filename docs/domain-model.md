@@ -20,6 +20,7 @@
 - **Breadth Snapshot:** the S&P 500 Universe's Breadth on one session: members with data, % above SMA50/SMA200, new 52-week highs/lows, advancers/decliners and SPY's trend. Derived, rebuilt by `market-context:compute`.
 - **Macro Series:** one public series of the closed FRED list (code, source, category, frequency, title, units) with its refresh state (last observation date, FRED's last update, last attempt, last success, last error code). Rebuilt by `macro:refresh`.
 - **Macro Observation:** one published value of a Macro Series on its own date, stored as published (no conversion); FRED's missing value is never stored and revisions replace the old value.
+- **Regime Snapshot:** the Market Regime of one session: label (favourable / neutral / adverse / insufficient), score, number of available components, the rules version and each component's status (ok / stale / missing / disabled), score, value and date. Derived, rebuilt by `market-regime:compute`; no text.
 - **User:** Visitor (anonymous), Registered User, or Admin.
 
 ## Relationships
@@ -34,6 +35,7 @@
 - An **Instrument** has at most one **Company Fundamentals** row; Instruments of one company (GOOG/GOOGL) share the same CIK and figures.
 - A sector **ETF** has one **Sector Snapshot** per session; it maps to the S&P 500 stocks of the same GICS sector. A **Universe** (the main one) has one **Breadth Snapshot** per session.
 - A **Macro Series** has many **Macro Observations**, at most one per date.
+- A **Regime Snapshot** (one per session) is computed from the main Universe's **Breadth Snapshots**, the **Sector Snapshots** and the **Macro Observations** dated on or before its session (macro ones only once published); it references none of them by key.
 
 ## States and Lifecycles
 
