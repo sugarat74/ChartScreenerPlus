@@ -43,8 +43,8 @@ from pathlib import Path
 ENV_PATH = Path('/var/www/alphapulse/shared/.env')
 APP_DIR = Path('/var/www/alphapulse/current')
 
-# Keep both features dormant until the deployed transport and privacy text pass.
-EMAIL_FLAGS = False
+# Brevo API, DNS and the production text-only test passed on 2026-10-23.
+EMAIL_FLAGS = True
 
 FLAG_NAMES = ('AUTH_EMAIL_VERIFICATION_ENABLED', 'ALERT_EMAIL_DIGEST_ENABLED')
 SETTINGS = {

@@ -38,3 +38,4 @@ ai-expert-project-main.zip
 
 # Machine-local Claude permissions
 /.claude/settings.local.json
+**/__pycache__/
