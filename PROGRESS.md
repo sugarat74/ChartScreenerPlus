@@ -1,5 +1,14 @@
 # Progress Log
 
+## Brevo outbound email migration (`alerts-email-golive`, in progress) — 2026-10-23
+
+- Owner superseded the Bird choice with Brevo and supplied Brevo API, MCP and Cloudflare token files outside the repository. Only the Brevo API key is used for application sending; none of the secrets was copied into the repository.
+- `chartiko.com` was added and authenticated in Brevo. Cloudflare has the Brevo verification TXT and both DKIM CNAMEs; DMARC aggregate reports now go to Brevo. Bird's DKIM TXT and `send` CNAME were removed. The Cloudflare Email Routing MX, DKIM and apex SPF were left intact.
+- Brevo sender `no-reply@chartiko.com` was created; Brevo returned no DKIM/SPF setup errors. One direct API test and one local Laravel `mail:test` were accepted; Brevo reported `delivered` for both. Final inbox headers and links still need confirmation.
+- Code in progress: custom Brevo mailer, API key deployment script, CI config step, updated provider fixtures and spec. Both production flags remain false and production mailer remains `log` until the release and live checks. Initial `init.ps1` reached 839 passing PHP tests but one Vitest pagination case timed out; its focused rerun passed. The second full run is underway.
+- Verification: the second `./init.ps1` exited 0 (Laravel 841 passed / 6 skipped, Vitest 346 in 43 files, SPA lint/build, engine 101). Focused deploy-script unit tests: 3 passed. Focused Laravel transport tests: 2 passed; legal/command fixtures were updated after their first focused run found stale Bird expectations. The first full-gate pagination timeout passed in isolation and in the second full run.
+- Remaining: deploy the code and install the API key in `shared/.env`, verify the live test email's inbox headers and unmodified links, review Brevo tracking/DPA, then enable both flags, verify the account and digest flows and record final evidence. Keep `alerts-email-golive` in progress until that work is done.
+
 ## Email verification for new accounts (`auth-email-verification`, accepted) — 2026-10-23
 
 - User request: "quiero que para registrarse haya que validar el correo". Spec `docs/specs/auth-email-verification.md` (implementation notes appended). Accepted by the independent validator in round 1.

@@ -103,7 +103,7 @@ export const legalEn: LegalTexts = {
       {
         heading: 'What we do not do',
         paragraphs: [
-          'We use no analytics, advertising or social media tools, send no marketing communications or alert emails, and do no profiling or automated decision-making that affects you. The market data Chartiko shows is fetched by the server and involves no visitor data.',
+          'We use no analytics, advertising or social media tools, send no marketing communications, and do no profiling or automated decision-making that affects you. The market data Chartiko shows is fetched by the server and involves no visitor data.',
         ],
       },
       {

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\AlertTriggered;
 use App\Services\Alerts\AlertDigestContent;
 use App\Services\Alerts\AlertDigestSender;
+use App\Services\Alerts\AlertEmailDigestAvailability;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
@@ -424,5 +425,27 @@ class AlertEmailDigestTest extends TestCase
 
         $this->enable(false);
         $this->getJson('/api/legal')->assertOk()->assertJsonPath('email_digest', null);
+    }
+
+    public function test_the_digest_needs_a_delivering_mailer_in_production(): void
+    {
+        // alerts-email-golive D3.1: flag and provider set, but the `log`
+        // mailer in production would write the address into the log.
+        Mail::fake();
+        $user = $this->optedIn();
+        $this->twoNotifications($user);
+        $this->app->detectEnvironment(fn (): string => 'production');
+
+        foreach (['log', 'array'] as $mailer) {
+            config(['mail.default' => $mailer]);
+            $this->assertFalse(AlertEmailDigestAvailability::available());
+            $this->assertSame(0, app(AlertDigestSender::class)->queue(self::AS_OF));
+            $this->getJson('/api/legal')->assertOk()->assertJsonPath('email_digest', null);
+        }
+        Mail::assertNothingOutgoing();
+
+        config(['mail.default' => 'smtp']);
+        $this->assertTrue(AlertEmailDigestAvailability::available());
+        $this->getJson('/api/legal')->assertOk()->assertJsonPath('email_digest.provider', 'Acme Mail');
     }
 }
