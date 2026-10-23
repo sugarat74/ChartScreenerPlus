@@ -1768,5 +1768,41 @@
     ],
     "evidence": [],
     "notes": "Found 2026-10-23 in production after deploying market-context-ui: curl without Accept on /api/watchlist and /api/market-context/history returned 500; with 'Accept: application/json' it returns 401 correctly. The SPA always sends JSON, so users are not affected. Likely cause (to confirm): the auth middleware tries to redirect non-JSON guests to a 'login' route that does not exist. Candidate fix: render JSON for api/* (Exceptions::shouldRenderJsonWhen) or redirectGuestsTo returning no redirect for API routes. Requested by the owner: 'apunta el error 500 para corregir'."
+  },
+  {
+    "id": "auth-email-verification",
+    "area": "auth",
+    "title": "Email verification required for new accounts",
+    "user_visible_behavior": "After registering, a new Registered User receives a confirmation email (es/en) with a link valid for 24 h; until they click it they can sign in but only see a 'Confirma tu correo' screen with a resend button, and every feature that needs an account behaves as for a Visitor. Accounts that existed before the release are treated as verified. Enforcement can be switched on only once outbound email works in production.",
+    "depends_on": [
+      "auth-registration-login"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Feature tests: register sends one verification email (log/array mailer), the signed link verifies and expires after 24 h, resend is throttled, tampered or expired links are rejected",
+      "Unverified users get the localized 'verify your email' response on every auth-only API (Watchlist, Saved Screeners, alerts, AI features, Market Context) and can still sign out and resend; verified users are unaffected",
+      "Migration marks every existing user as verified; Admin accounts never get locked out",
+      "Vitest: verify-email screen, resend button states, es/en, no hardcoded text",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-23: 'quiero que para registrarse haya que validar el correo'. Owner choices: existing accounts treated as verified; unverified accounts can sign in but only see the confirm-email screen with resend (link valid 24 h). Needs real outbound email in production (MAIL_MAILER is log today): shares the Brevo setup of alerts-email-golive (owner actions: Brevo account, Cloudflare DNS records, SMTP key). The planner decides whether enforcement ships behind a flag so it can deploy before email works without locking out new sign-ups. Privacy policy must name the email provider when it goes live."
+  },
+  {
+    "id": "auth-password-reset",
+    "area": "auth",
+    "title": "Forgot password: reset by email",
+    "user_visible_behavior": "The sign-in page has a 'He olvidado mi contraseña' link; the user enters their email, receives a reset link (es/en, valid 60 min) and sets a new password. The response never reveals whether the email has an account, and other sessions are signed out after a reset.",
+    "depends_on": [
+      "auth-email-verification"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Feature tests: request always returns the same generic response, one email for an existing account and none otherwise, throttled; valid token resets the password and invalidates other sessions; expired or reused tokens rejected",
+      "Vitest: forgot and reset forms, validation, es/en, no hardcoded text",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-23 together with email verification (owner answered yes to adding it in the same batch). Uses the existing password_reset_tokens table and the same production email setup."
   }
 ]
