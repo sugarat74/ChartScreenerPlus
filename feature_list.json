@@ -1841,5 +1841,25 @@
       "PR 70 and main run 40119598548 passed CI and deployed. Production recovery routes return 200; live reset-mail delivery was not re-tested with a disposable account. Independent validation pending."
     ],
     "notes": "Requested 2026-10-23 together with email verification (owner answered yes to adding it in the same batch). Uses the existing password_reset_tokens table and the same production email setup."
+  },
+  {
+    "id": "stock-comparison",
+    "area": "trader-ui",
+    "planning_spec": "docs/specs/stock-comparison.md (prepared 2026-10-24)",
+    "title": "Compare stocks by price history and technical indicators",
+    "user_visible_behavior": "A Visitor can select two to four active stock Instruments, compare their price evolution on the same indexed chart and inspect their latest technical values with dates in a shareable es/en view.",
+    "depends_on": [
+      "screener-api",
+      "chart-interactive"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Public stock lookup excludes ETFs and inactive Instruments, remains bounded and works without a session",
+      "Two to four stocks use exact common dates and a 100-point price base; missing history and indicator dates remain explicit",
+      "es/en Compare page, URL restore, entry links, keyboard and 390 px/desktop states pass focused tests and visual smoke",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-24. Owner selected technical indicators and price history for the first version; fundamentals SEC are outside this feature. Planning only, no application code yet."
   }
 ]

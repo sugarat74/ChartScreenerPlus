@@ -1,5 +1,10 @@
 # Progress Log
 
+## Stock comparison specification (`stock-comparison`, not started) — 2026-10-24
+
+- Added `docs/specs/stock-comparison.md` and a backlog entry for a public, shareable comparison of two to four active stocks. Owner chose daily price history and technical indicators for the first version; fundamentals SEC are outside scope. The spec defines a bounded stock search, exact common-date alignment with each price line indexed to 100, dated latest indicators, URL state, es/en responsive UI and verification. No application code or production behavior changed.
+- Planning baseline `./init.ps1` exited 0: Laravel 853 passed/6 skipped, SPA lint/typecheck, 351 Vitest in 45 files and build, engine 101 passed. Next step is implementation followed by independent validation; `stock-comparison` remains `not_started`.
+
 ## Password recovery and Screener classification deployment — 2026-10-24
 
 - PR 70 passed SQLite/frontend/engine CI and the full PostgreSQL/PgBouncer job, then merged as `a558b54`. The `main` CI/deploy run 40119598548 completed successfully, including the production release activation and Screener refresh.
