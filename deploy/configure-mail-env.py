@@ -43,9 +43,9 @@ from pathlib import Path
 ENV_PATH = Path('/var/www/alphapulse/shared/.env')
 APP_DIR = Path('/var/www/alphapulse/current')
 
-# Recipient-source smoke found Brevo adds an open pixel even to textContent.
-# Keep user mail dormant until tracking is disabled and a fresh inbox test passes.
-EMAIL_FLAGS = False
+# Owner accepted Brevo's received open pixel on 2026-10-24. Keep the API's
+# per-recipient tracking consent false; do not opt users into individual tracking.
+EMAIL_FLAGS = True
 
 FLAG_NAMES = ('AUTH_EMAIL_VERIFICATION_ENABLED', 'ALERT_EMAIL_DIGEST_ENABLED')
 SETTINGS = {

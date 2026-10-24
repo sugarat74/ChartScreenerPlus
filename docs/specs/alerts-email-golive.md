@@ -9,14 +9,14 @@ supersedes the earlier Bird and SMTP plans for this feature.
 
 ## Owner direction (2026-10-24)
 
-The owner wants delivery without recipient tracking. Brevo's
-`contactPixelTrackingConsent=false` does not remove its open pixel from the
-received message, and direct tracking-off headers did not help. Keep account
-verification and digest off. Mailjet is a candidate replacement: its published
-tracking settings can disable both the pixel and link rewriting, and its data
-is stored in the EU. It needs a separate account and credentials, DNS records
-and a received-message test before activation. Do not treat Brevo's stored
-message or anonymous tracking as proof of a tracking-free delivery.
+The owner first requested delivery without recipient tracking, then explicitly
+accepted Brevo's opening pixel and requested activation of both account
+confirmation and the daily alert digest. Brevo's `contactPixelTrackingConsent`
+remains `false`; Chartiko does not request individual open/click tracking.
+The privacy policy and both first-layer notices must disclose the pixel. The
+received text links remain direct. The provider may still process opening
+events; this must not be described as tracking-free. A privacy lawyer should
+review the basis for Brevo's pixel before a wider public launch.
 
 Provider documentation reviewed: [Brevo API consent behavior](https://developers.brevo.com/changelog/2026/7/21),
 [Mailjet tracking controls](https://documentation.mailjet.com/hc/en-us/articles/51109335532571-Email-Tracking-Pixels-and-Consent-CNIL-and-Garante-Guidance),
@@ -30,8 +30,9 @@ and [Mailjet plan limits](https://www.mailjet.com/es/es-tarifas/).
 - Keep both features dormant until production delivery and legal text are
   verified. `AUTH_EMAIL_VERIFICATION_ENABLED` and
   `ALERT_EMAIL_DIGEST_ENABLED` turn on together after that gate.
-- No marketing mail, chat, attachments, tracking pixels, link tracking,
-  alternate inbound mail routing or SPF change.
+- No marketing mail, chat, attachments, application-added pixels, link
+  rewriting, alternate inbound mail routing or SPF change. Brevo adds its
+  opening pixel to the received message with the owner's approval.
 
 ## DNS and provider evidence
 
@@ -55,8 +56,8 @@ and [Mailjet plan limits](https://www.mailjet.com/es/es-tarifas/).
   A text-only test preserved the direct Chartiko URL and showed no tracking
   domain or image in Brevo's stored copy. A later test of the **received**
   source proved that Brevo converts `textContent` to HTML and adds an opening
-  pixel. The stored copy was insufficient evidence. Sending is disabled until
-  a received message meets the no-tracking requirement.
+  pixel. The stored copy was insufficient evidence. The owner accepted that
+  pixel on 2026-10-24 and the public texts now disclose it.
 - It rejects attachments, which neither current mail flow uses. It never
   includes the provider response body, email addresses or signed links in a
   transport error. A non-201 result fails the queued job.
@@ -78,13 +79,12 @@ and [Mailjet plan limits](https://www.mailjet.com/es/es-tarifas/).
 2. Production stays dormant until a release contains the transport. Install
    the API key from the owner's local file via the script's stdin mode and
    verify `mail.default=brevo`, the provider/location and both flags false.
-3. Run `php artisan mail:test` to the owner's address. Brevo must report
+3. Run `php artisan mail:test` to an accessible address. Brevo must report
    delivery; inspect received headers for SPF, DKIM and DMARC and the body
-   for direct links without a tracking pixel.
+   for direct links. The received opening pixel is disclosed.
 4. Review Brevo's DPA and transactional tracking configuration. The API
-   payload opts each recipient out of pixel tracking, but that did not stop
-   HTML link rewriting. The received text-only message must confirm direct
-   links and no HTML/pixel part.
+   payload sets per-recipient tracking consent to false; do not claim that
+   this removes the pixel. Check received links for direct Chartiko URLs.
 5. Set both flags true only after the test above, bump `config/legal.php`
    `updated_at`, rebuild config and restart the queue/FPM. Verify `/api/legal`
    names Brevo / UE. Register a throwaway account and test confirmation,
@@ -99,8 +99,9 @@ and [Mailjet plan limits](https://www.mailjet.com/es/es-tarifas/).
   Direct test headers `X-Mailin-Track-Open: 0` and `X-Mailin-Track-Click: 0`
   did not suppress it. The account/digest flags were rolled back to false and
   the deploy default is false. The tracking configuration must actually remove
-  the pixel, or the owner must review a changed privacy/consent approach,
-  before sending resumes.
+  the pixel. The owner accepted it for this activation; the residual consent
+  question needs professional review, and Chartiko must not use opening
+  events for profiling or personalization.
 - The temporary mailbox reported SPF/DKIM false and provided no
   Authentication-Results. The raw source included aligned `d=chartiko.com`
   and `s=brevo1`, but independent DKIM verification of the mailbox's exported

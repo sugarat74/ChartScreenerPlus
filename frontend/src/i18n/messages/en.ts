@@ -245,7 +245,7 @@ export const en: Messages = {
     checkingBadge: 'Portal',
     checkingTitle: 'Checking session',
     checkingBody: 'Verifying your session…',
-    registerVerifyHint: 'After you create the account we will send you an email to confirm your address.',
+    registerVerifyHint: 'After you create the account we will send you an email to confirm your address. Brevo includes an open tracking pixel; see the privacy policy.',
   },
   verifyEmail: {
     badge: 'Confirm your email',
@@ -570,7 +570,7 @@ export const en: Messages = {
     title: 'Daily email summary',
     intro: 'Get a single email a day with your alert notices, after the daily data update.',
     label: 'I want to receive the daily summary of my alerts by email',
-    hint: 'Off unless you tick it. No tracking; you can unsubscribe from the email itself.',
+    hint: 'Off unless you tick it. Brevo includes an open tracking pixel; you can unsubscribe from the email itself.',
     privacy: 'Privacy policy',
     on: 'On: you will get the summary on days your alerts find something.',
   },

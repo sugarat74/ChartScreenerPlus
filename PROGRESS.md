@@ -1,5 +1,11 @@
 # Progress Log
 
+## Brevo mail activation with disclosed opening pixel (`alerts-email-golive`, in progress) — 2026-10-24
+
+- Owner superseded the no-tracking choice: accept the opening pixel in received Brevo mail and activate account confirmation and the opt-in daily alert digest. The API still sends `contactPixelTrackingConsent=false` and only `textContent`, which kept Chartiko links direct in the previous recipient-source smoke. Privacy text, registration notice and digest hint now disclose the pixel in es/en. `config/legal.php` date is 2026-10-24.
+- Cloudflare read-only check: the `contacto@chartiko.com` Email Routing rule is enabled, forwards to a verified destination, and MX still points to Cloudflare. This verifies routing configuration, not receipt in the destination inbox. Production before deployment: `mail.default=brevo`, provider Brevo/UE, both feature flags false.
+- Baseline and post-edit `./init.ps1` both exited 0 (Laravel 842 passed / 6 skipped, Vitest 346/43, SPA lint/build, engine 101). Focused legal page tests 18 passed and deploy-mail tests 4 passed. An intermediate gate invocation that redirected all output stopped at Vite's warning in PowerShell; the direct standard invocation completed successfully. Production deployment is underway. Sender authentication in a reliable recipient inbox and legal review of Brevo's pixel remain open.
+
 ## Outbound email without recipient tracking (`alerts-email-golive`, in progress) — 2026-10-24
 
 - Owner chose delivery without tracking after the received Brevo message exposed an open pixel. The production account-verification and digest flags remain off. Brevo's `contactPixelTrackingConsent=false` anonymizes open events rather than removing the pixel; direct `X-Mailin-Track-Open/Click: 0` tests did not remove it. The supplied Brevo account is on the free plan and its MCP endpoint returned 403.

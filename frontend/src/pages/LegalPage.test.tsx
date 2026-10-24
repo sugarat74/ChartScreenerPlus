@@ -247,6 +247,8 @@ describe('daily alert email in the privacy policy (alerts-email-digest)', () => 
     await screen.findByRole('heading', { name: 'Alertas y notificaciones' })
     expect(document.body.textContent).toMatch(/resumen diario por email \(está desactivado si no lo eliges\)/)
     expect(document.body.textContent).toMatch(/se borra a los 90 días/)
+    expect(document.body.textContent).toMatch(/Brevo añade un píxel invisible/)
+    expect(document.body.textContent).not.toMatch(/no lleva píxeles ni enlaces de seguimiento/)
     expect(document.body.textContent).toMatch(/se envían a Brevo, el proveedor de envío de correo/)
     expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE/)
     expectNoMailtoOrPlaceholders()
@@ -286,6 +288,7 @@ describe('account emails in the privacy policy and the register form (auth-email
     renderAt('/privacidad')
     await screen.findByRole('heading', { name: 'Cuenta de usuario' })
     expect(document.body.textContent).toMatch(/un enlace que caduca a las 24 horas/)
+    expect(document.body.textContent).toMatch(/Brevo, el proveedor de envío, añade al email un píxel invisible/)
     expect(document.body.textContent).toMatch(/Los emails de tu cuenta \(como la confirmación de tu dirección\) se envían a través de Brevo/)
     expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE/)
     // The daily alert email paragraphs stay off.
@@ -304,7 +307,7 @@ describe('account emails in the privacy policy and the register form (auth-email
     mockApi({ ...PRIVACY_ONLY, account_email: { provider: 'Brevo', provider_location: 'UE' } })
     renderAt('/register')
     expect((await screen.findByTestId('register-verify-hint')).textContent).toBe(
-      'Después de crear la cuenta te enviaremos un email para confirmar tu dirección.',
+      'Después de crear la cuenta te enviaremos un email para confirmar tu dirección. Brevo incluye un píxel de apertura; consulta la política de privacidad.',
     )
   })
 })

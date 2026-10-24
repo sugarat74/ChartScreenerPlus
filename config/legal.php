@@ -36,8 +36,8 @@ return [
     |
     */
 
-    // Brevo account and alert email went live later this same calendar day.
-    'updated_at' => '2026-10-23',
+    // Brevo's received opening pixel is disclosed with the email activation.
+    'updated_at' => '2026-10-24',
 
     /*
     |--------------------------------------------------------------------------
