@@ -105,9 +105,11 @@ and [Mailjet plan limits](https://www.mailjet.com/es/es-tarifas/).
 - The temporary mailbox reported SPF/DKIM false and provided no
   Authentication-Results. The raw source included aligned `d=chartiko.com`
   and `s=brevo1`, but independent DKIM verification of the mailbox's exported
-  source found a body hash mismatch. Confirm authentication with a reliable
-  recipient before go-live. Brevo's DNS authentication API reports both DKIM
-  records and DMARC active; this alone does not prove a received message passes.
+  source found a body hash mismatch. A later production test message sent to
+  `contacto@chartiko.com` was forwarded by Cloudflare Email Routing to its
+  verified destination (`delivered` event, SPF and DKIM `pass`, DMARC `none`,
+  2026-10-24 11:10:04 UTC). This confirms authentication at Cloudflare's
+  receiving edge; destination inbox placement was not inspected.
 - Brevo states its data storage is in the EU; the legal text says `UE` rather
   than one country. Its DPA is incorporated into its terms; account-level
   acceptance should be retained.
