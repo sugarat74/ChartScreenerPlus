@@ -16,9 +16,10 @@ use Throwable;
  * (docs/specs/auth-email-verification.md, D6).
  *
  * Queued, HTML + plain text (Brevo sends the text part only), in the locale
- * of the request that sent it. It
- * carries no user-supplied text (not even the name), no images, no tracking
- * and no List-Unsubscribe header (transactional, not list mail). The signed
+ * of the request that sent it. It carries no user-supplied text (not even
+ * the name), application images or List-Unsubscribe header (transactional,
+ * not list mail). Brevo adds its own opening pixel to the received message.
+ * The signed
  * URL is built at request time, so its 24 h run from "create" or "resend".
  */
 class VerifyEmailAddress extends Mailable implements ShouldQueue

@@ -13,6 +13,14 @@ spec.loader.exec_module(mail_env)
 class ConfigureMailEnvTest(unittest.TestCase):
     KEY = 'xkeysib-' + 'a' * 48
 
+    def test_owner_approved_both_email_flags_on_with_installed_key(self):
+        self.assertTrue(mail_env.EMAIL_FLAGS)
+        original = f'BREVO_API_KEY="{self.KEY}"\nAPP_KEY=unchanged\n'
+        updated, installed = mail_env.build_env(original, flags=mail_env.EMAIL_FLAGS)
+        self.assertTrue(installed)
+        self.assertIn('AUTH_EMAIL_VERIFICATION_ENABLED=true\n', updated)
+        self.assertIn('ALERT_EMAIL_DIGEST_ENABLED=true\n', updated)
+
     def test_missing_key_keeps_both_features_off_and_retires_bird(self):
         original = 'MAIL_PASSWORD="bk_eu1_old"\nMAIL_HOST=eu1.smtp.bird.com\nAPP_KEY=unchanged\n'
         updated, installed = mail_env.build_env(original, flags=True)

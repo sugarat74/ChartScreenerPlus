@@ -248,7 +248,7 @@ export const es = {
     checkingBadge: 'Portal',
     checkingTitle: 'Comprobando sesión',
     checkingBody: 'Verificando tu sesión…',
-    registerVerifyHint: 'Después de crear la cuenta te enviaremos un email para confirmar tu dirección.',
+    registerVerifyHint: 'Después de crear la cuenta te enviaremos un email para confirmar tu dirección. Brevo incluye un píxel de apertura; consulta la política de privacidad.',
   },
   verifyEmail: {
     badge: 'Confirma tu email',
@@ -573,7 +573,7 @@ export const es = {
     title: 'Resumen diario por email',
     intro: 'Recibe un único email al día con los avisos de tus alertas, después de la actualización diaria de datos.',
     label: 'Quiero recibir el resumen diario de mis alertas por email',
-    hint: 'Desactivado salvo que lo marques. Sin seguimiento; puedes darte de baja desde el propio email.',
+    hint: 'Desactivado salvo que lo marques. Brevo incluye un píxel de apertura; puedes darte de baja desde el propio email.',
     privacy: 'Política de privacidad',
     on: 'Activado: recibirás el resumen los días en que tus alertas detecten algo.',
   },

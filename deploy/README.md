@@ -306,9 +306,11 @@ PostgreSQL y PgBouncer no se exponen: usa un túnel SSH
 La configuración vigente es [alerts-email-golive](../docs/specs/alerts-email-golive.md).
 El transporte de Brevo usa su API transaccional con `textContent`. El servicio
 convierte el mensaje recibido a HTML y añade un píxel de apertura incluso con
-`contactPixelTrackingConsent=false`; también reescribe enlaces del HTML. Por
-eso **la confirmación de cuenta y el resumen diario están desactivados** hasta
-resolver el seguimiento y verificar SPF/DKIM/DMARC en un destinatario fiable.
+`contactPixelTrackingConsent=false`; también reescribe enlaces del HTML. El
+propietario aceptó el píxel el 2026-10-24. Los mensajes se envían con
+`textContent`, cuyos enlaces se comprobaron directos en el buzón de prueba;
+los textos de privacidad informan del píxel. Queda pendiente una comprobación
+independiente de SPF/DKIM/DMARC en un destinatario fiable.
 La clave de API se instala sólo en `shared/.env`; el token MCP no
 se usa en la aplicación. Los registros DNS de Brevo están publicados en
 Cloudflare. No se modifican los MX ni el SPF del dominio.
@@ -319,16 +321,16 @@ Tras desplegar el transporte, instala la clave desde el equipo del propietario:
 (Get-Content -LiteralPath 'C:\laragon\www\claveapibrevo.txt' -Raw).Trim() | ssh -i "$HOME\.ssh\alphapulse_deploy" deploy@51.222.158.148 'python3 /var/www/alphapulse/current/deploy/configure-mail-env.py --api-key-stdin --apply'
 ```
 
-El script deja ambos interruptores desactivados hasta completar la prueba de
-entrega, las cabeceras y la revisión de seguimiento descritas en la spec.
+El script activa ambos interruptores cuando la clave está instalada. Si falta,
+usa el mailer `log` y deja ambos desactivados.
 `php artisan mail:test <dirección>` envía una prueba sin activar las funciones.
 Para suspenderlas: `python3 deploy/configure-mail-env.py --flags-off --apply`
 como `deploy` en el servidor. No copies la clave a Git ni la muestres en logs.
 
 ### Confirmación del email al registrarse (`auth-email-verification`)
 
-La confirmación del email de las cuentas nuevas se despliega **dormida**: el script de correo actualiza las variables no secretas del `.env` pero mantiene ambos interruptores desactivados. La migración marca como verificadas todas las cuentas existentes y, mientras no esté activa, las cuentas nuevas también nacen verificadas, no se envía ningún email y `GET /api/legal` devuelve `account_email: null`.
+La migración marcó como verificadas todas las cuentas existentes. Con la clave Brevo instalada, el script de correo activa la confirmación de nuevas cuentas; sin clave, las cuentas nuevas nacen verificadas, no se envía ningún email y `GET /api/legal` devuelve `account_email: null`.
 
 - **Se activa** después de probar la entrega con Brevo, con `AUTH_EMAIL_VERIFICATION_ENABLED=true` además de `MAIL_MAILER=brevo`, `BREVO_API_KEY` y `MAIL_PROVIDER*`. Solo surte efecto si `MAIL_PROVIDER` y `MAIL_PROVIDER_LOCATION` están rellenas y `MAIL_MAILER` no es `log` ni `array` (con `log`, las direcciones y los enlaces acabarían en `laravel.log`). Sube `updated_at` en `config/legal.php` al activar la función, ejecuta `config:cache` y **reinicia `alphapulse-queue`**: los emails de confirmación salen de la cola.
-- **Prueba:** registra una cuenta de prueba, comprueba que solo ve «Confirma tu correo», que llega un email (es/en, sin imágenes ni seguimiento, Reply-To `contacto@`) y que su enlace `https://www.chartiko.com/verificar-correo/…` confirma la cuenta (también en una ventana privada).
+- **Prueba:** registra una cuenta de prueba, comprueba que solo ve «Confirma tu correo», que llega un email (es/en, con el píxel de Brevo comunicado, Reply-To `contacto@`) y que su enlace `https://www.chartiko.com/verificar-correo/…` confirma la cuenta (también en una ventana privada).
 - **Marcha atrás:** `AUTH_EMAIL_VERIFICATION_ENABLED=false`, `config:cache` y reinicia el worker. Las cuentas pendientes pasan a tener acceso completo al momento; no hace falta tocar la base de datos.
