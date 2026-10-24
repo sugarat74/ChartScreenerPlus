@@ -1,5 +1,12 @@
 # Progress Log
 
+## Password recovery and Screener classification planning — 2026-10-24
+
+- Prepared `docs/specs/auth-password-reset.md` and `docs/specs/screener-company-classification.md` as separate implementation contracts. Both features remain `not_started` in `feature_list.json`; no application code or production configuration changed.
+- Recovery reuses the 60-minute Laravel password broker, the Brevo-ready account mail path and the session directory. Its contract covers a generic request response, one-use token, all-session invalidation, es/en UI and no automatic sign-in. The existing verification state remains unchanged.
+- Classification extends the committed offline S&P 500 dataset to GICS sub-industry and headquarters country, then carries the values through Instrument, precomputed Screener row, API and Candidate table. The implementation must review source provenance/licensing and ambiguous locations before committing data; unknowns stay null. Existing filters/ranking and ETF exclusion remain unchanged.
+- Planning review: `git diff --check` clean; `feature_list.json` parses. Standard `./init.ps1` baseline exited 0: Laravel 842 passed / 6 skipped, SPA Vitest 346 in 43 files, lint/typecheck/build passed, engine 101 passed. No product implementation was run because this session prepared specs only.
+
 ## Brevo mail activation with disclosed opening pixel (`alerts-email-golive`, passing) — 2026-10-24
 
 - PR 67 passed CI (including PostgreSQL), merged and deployed successfully. Production config reports `mail.default=brevo`, provider `Brevo` / `UE`, `auth.verification.enabled=true`, `alerts.email_digest.enabled=true` and `EMAIL_FLAGS=True` in the deployed script. Public `/api/legal` reports `updated_at=2026-10-24`, published privacy text and Brevo for both mail flows; the served SPA bundle contains the new pixel notices and no former “Sin seguimiento” hint.

@@ -1753,6 +1753,7 @@
   {
     "id": "screener-company-classification",
     "area": "screener",
+    "planning_spec": "docs/specs/screener-company-classification.md (prepared 2026-10-24; implementation not started)",
     "title": "Sector, industry and country of each stock in the Screener",
     "user_visible_behavior": "The Screener candidate list shows each stock's sector, industry (GICS sub-industry) and country next to its ticker and company name, translated where the labels are fixed lists (sectors), on desktop and in a compact form on mobile.",
     "depends_on": [
@@ -1816,6 +1817,7 @@
   {
     "id": "auth-password-reset",
     "area": "auth",
+    "planning_spec": "docs/specs/auth-password-reset.md (prepared 2026-10-24; implementation not started)",
     "title": "Forgot password: reset by email",
     "user_visible_behavior": "The sign-in page has a 'He olvidado mi contraseña' link; the user enters their email, receives a reset link (es/en, valid 60 min) and sets a new password. The response never reveals whether the email has an account, and other sessions are signed out after a reset.",
     "depends_on": [
