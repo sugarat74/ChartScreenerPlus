@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['ticker', 'company', 'sector', 'exchange', 'active', 'kind'])]
+#[Fillable(['ticker', 'company', 'sector', 'industry', 'country', 'exchange', 'active', 'kind'])]
 class Instrument extends Model
 {
     /** @use HasFactory<InstrumentFactory> */

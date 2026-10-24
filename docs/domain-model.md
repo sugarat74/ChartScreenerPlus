@@ -2,7 +2,7 @@
 
 ## Core Concepts
 
-- **Instrument (Ticker):** a listed security (`NVDA`), with company, sector, exchange and a **kind**: `stock` (default) or `etf` (Market Context ETFs; chart only, never in stock features).
+- **Instrument (Ticker):** a listed security (`NVDA`), with company, sector, optional GICS sub-industry (`industry`), optional headquarters country (two-letter `country` code), exchange and a **kind**: `stock` (default) or `etf` (Market Context ETFs; chart only, never in stock features).
 - **Universe:** a named set of Instruments a Screener runs against. First real Universe: S&P 500. The `market-context` Universe holds SPY and the 11 SPDR sector ETFs and is not a Screener universe.
 - **Daily Bar (OHLCV):** one trading day for one Instrument. Stored per Instrument and date.
 - **Indicator Snapshot:** computed indicators for an Instrument on a given Daily Bar (SMA/EMA, RSI, MACD, ADX, Bollinger, RVOL...).

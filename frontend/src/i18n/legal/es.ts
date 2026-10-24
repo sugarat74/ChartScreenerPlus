@@ -24,7 +24,7 @@ export const legalEs: LegalTexts = {
         ],
         accountEmail: [
           'Al registrarte te enviamos un email para confirmar que la dirección es tuya, con un enlace que caduca a las 24 horas. Hasta que la confirmes, la cuenta solo permite reenviar ese email, gestionarla o eliminarla. Guardamos la fecha de confirmación.',
-          'Brevo, el proveedor de envío, añade al email un píxel invisible que puede registrar su apertura al cargar imágenes. Chartiko no utiliza las aperturas para elaborar perfiles ni personalizar mensajes. El enlace de confirmación lleva directamente a Chartiko.',
+          'Si olvidas tu contraseña, puedes pedir un email con un enlace de un solo uso que caduca en 60 minutos. Brevo, el proveedor de envío, añade a los emails de cuenta un píxel invisible que puede registrar su apertura al cargar imágenes. Chartiko no utiliza las aperturas para elaborar perfiles ni personalizar mensajes. Los enlaces llevan directamente a Chartiko.',
         ],
         items: [
           'Finalidad: crear y mantener tu cuenta y ofrecerte las funciones de usuario registrado.',
@@ -115,7 +115,7 @@ export const legalEs: LegalTexts = {
           'El servidor está situado en Canadá (Beauharnois, Quebec). La Comisión Europea reconoce a Canadá un nivel de protección adecuado (Decisión 2002/2/CE), en el que se basa esta transferencia internacional.',
         ],
         accountEmail: [
-          'Los emails de tu cuenta (como la confirmación de tu dirección) se envían a través de {emailProvider}, el proveedor de envío de correo, que los trata por cuenta de Chartiko como encargado del tratamiento. Ubicación del tratamiento: {emailProviderLocation}.',
+          'Los emails de tu cuenta (como la confirmación de tu dirección y la recuperación de contraseña) se envían a través de {emailProvider}, el proveedor de envío de correo, que los trata por cuenta de Chartiko como encargado del tratamiento. Ubicación del tratamiento: {emailProviderLocation}.',
         ],
         emailDigest: [
           'Si activas el resumen diario por email, tu dirección de correo y el contenido del email se envían a {emailProvider}, el proveedor de envío de correo, que los trata por cuenta de Chartiko como encargado del tratamiento. Ubicación del tratamiento: {emailProviderLocation}.',

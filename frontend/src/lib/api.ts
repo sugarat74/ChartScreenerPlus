@@ -199,6 +199,23 @@ export const authApi = {
   },
 }
 
+export const passwordResetApi = {
+  async request(email: string): Promise<string> {
+    await ensureCsrfCookie()
+    const payload = await request<{ message: string }>('/api/password/forgot', {
+      method: 'POST', body: JSON.stringify({ email }),
+    })
+    return payload.message
+  },
+  async reset(email: string, token: string, password: string, confirmation: string): Promise<string> {
+    await ensureCsrfCookie()
+    const payload = await request<{ message: string }>('/api/password/reset', {
+      method: 'POST', body: JSON.stringify({ email, token, password, password_confirmation: confirmation }),
+    })
+    return payload.message
+  },
+}
+
 /**
  * Email verification (auth-email-verification). `verify` POSTs the signed
  * link of the email (the signature is the credential: it works without a
@@ -543,7 +560,9 @@ export type CandidatePattern = {
 export type ScreenerCandidate = {
   ticker: string
   company: string
-  sector: string
+  sector: string | null
+  industry: string | null
+  country: string | null
   exchange: string
   active: boolean
   date: string

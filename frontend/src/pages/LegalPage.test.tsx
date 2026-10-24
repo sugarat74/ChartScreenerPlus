@@ -288,8 +288,8 @@ describe('account emails in the privacy policy and the register form (auth-email
     renderAt('/privacidad')
     await screen.findByRole('heading', { name: 'Cuenta de usuario' })
     expect(document.body.textContent).toMatch(/un enlace que caduca a las 24 horas/)
-    expect(document.body.textContent).toMatch(/Brevo, el proveedor de envío, añade al email un píxel invisible/)
-    expect(document.body.textContent).toMatch(/Los emails de tu cuenta \(como la confirmación de tu dirección\) se envían a través de Brevo/)
+    expect(document.body.textContent).toMatch(/Brevo, el proveedor de envío, añade a los emails de cuenta un píxel invisible/)
+    expect(document.body.textContent).toMatch(/recuperación de contraseña\) se envían a través de Brevo/)
     expect(document.body.textContent).toMatch(/Ubicación del tratamiento: UE/)
     // The daily alert email paragraphs stay off.
     expect(document.body.textContent).not.toMatch(/resumen diario por email/)

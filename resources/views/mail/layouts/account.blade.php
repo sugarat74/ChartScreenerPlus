@@ -1,6 +1,6 @@
 {{-- Shared frame of the account emails, HTML part (auth-email-verification;
      reused by auth-password-reset). Same look as the alert digest; no images,
-     no tracking. Sections: `title`, `heading`, `body`, optional `ignore` and `why`
+     no application tracking; Brevo adds the disclosed opening pixel. Sections: `title`, `heading`, `body`, optional `ignore` and `why`
      (default: the account-creation lines). Needs `$privacyUrl`. --}}
 <!doctype html>
 <html lang="{{ app()->getLocale() }}">

@@ -21,6 +21,11 @@ return [
     'universe_not_found' => 'Universo no encontrado.',
     'admin_required' => 'Se requiere acceso de administrador.',
     'stateful_session_required' => 'Se requiere una sesión con estado.',
+    'password_reset' => [
+        'requested' => 'Si existe una cuenta con ese email, te enviaremos un enlace para restablecer la contraseña.',
+        'invalid_link' => 'El enlace no es válido o ha caducado. Solicita uno nuevo.',
+        'changed' => 'Contraseña actualizada. Inicia sesión de nuevo.',
+    ],
     'user_not_found' => 'Usuario no encontrado.',
     'session_not_found' => 'Sesión no encontrada o ya finalizada.',
     'session_is_current' => 'No puedes cerrar la sesión que estás usando ahora mismo.',

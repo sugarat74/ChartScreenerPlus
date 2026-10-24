@@ -193,6 +193,8 @@ class CandidateQuery
             'ticker' => $row->ticker,
             'company' => $row->company,
             'sector' => $row->sector,
+            'industry' => $row->industry,
+            'country' => $row->country,
             'exchange' => $row->exchange,
             'active' => $row->active,
             'date' => $row->date->format('Y-m-d'),

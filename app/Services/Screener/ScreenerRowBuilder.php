@@ -106,6 +106,8 @@ class ScreenerRowBuilder
             'ticker' => $instrument->ticker,
             'company' => $instrument->company,
             'sector' => $instrument->sector,
+            'industry' => $instrument->industry,
+            'country' => $instrument->country,
             'exchange' => $instrument->exchange,
             'active' => (bool) $instrument->active,
             'date' => $bar->date->format('Y-m-d'),

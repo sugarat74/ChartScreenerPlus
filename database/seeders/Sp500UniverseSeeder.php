@@ -13,12 +13,14 @@ use RuntimeException;
  * Seeds the S&P 500 universe from the committed dataset.
  *
  * Dataset: `database/data/sp500.csv` with the header
- * `ticker,company,sector,exchange` (UTF-8, one row per constituent).
+ * `ticker,company,sector,industry,country,exchange` (UTF-8, one row per constituent).
  *
  * Source: Wikipedia, "List of S&P 500 companies"
  * (https://en.wikipedia.org/wiki/List_of_S%26P_500_companies).
  * Generated once at implementation time (2026-09-29): 503 constituents taken
  * from the component table's Symbol / Security / GICS Sector columns. The
+ * 2026-10-24 industry/country snapshot and its exceptions are documented in
+ * `database/data/sp500-classification.md`.
  * `exchange` value is derived from each symbol's listing link (NYSE / NASDAQ /
  * CBOE) and is left empty when the source does not identify an exchange.
  *
@@ -57,6 +59,8 @@ class Sp500UniverseSeeder extends Seeder
                     [
                         'company' => $row['company'],
                         'sector' => $row['sector'] === '' ? null : $row['sector'],
+                        'industry' => $row['industry'] === '' ? null : $row['industry'],
+                        'country' => $row['country'] === '' ? null : $row['country'],
                         'exchange' => $row['exchange'] === '' ? null : $row['exchange'],
                         'active' => true,
                     ],
@@ -76,7 +80,7 @@ class Sp500UniverseSeeder extends Seeder
     /**
      * Read the committed constituent dataset.
      *
-     * @return list<array{ticker: string, company: string, sector: string, exchange: string}>
+     * @return list<array{ticker: string, company: string, sector: string, industry: string, country: string, exchange: string}>
      */
     private function readDataset(): array
     {
@@ -147,7 +151,7 @@ class Sp500UniverseSeeder extends Seeder
             $header[$name] = $index;
         }
 
-        foreach (['ticker', 'company', 'sector', 'exchange'] as $column) {
+        foreach (['ticker', 'company', 'sector', 'industry', 'country', 'exchange'] as $column) {
             if (! array_key_exists($column, $header)) {
                 throw new RuntimeException(
                     "The S&P 500 dataset at {$path} is missing the `{$column}` column."
@@ -163,7 +167,7 @@ class Sp500UniverseSeeder extends Seeder
      *
      * @param  list<string|null>  $cells
      * @param  array<string, int>  $header
-     * @return array{ticker: string, company: string, sector: string, exchange: string}|null
+     * @return array{ticker: string, company: string, sector: string, industry: string, country: string, exchange: string}|null
      */
     private function mapRow(array $cells, array $header, string $path, int $line): ?array
     {
@@ -186,6 +190,8 @@ class Sp500UniverseSeeder extends Seeder
             'ticker' => $ticker,
             'company' => $company,
             'sector' => $value('sector'),
+            'industry' => $value('industry'),
+            'country' => $value('country'),
             'exchange' => $value('exchange'),
         ];
     }

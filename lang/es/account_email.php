@@ -18,6 +18,16 @@ return [
         'fallback' => 'Si el botón no funciona, copia este enlace en tu navegador:',
         'expires' => 'El enlace caduca en 24 horas. Si caduca, inicia sesión y pide otro.',
     ],
+    'reset' => [
+        'subject' => 'Restablece tu contraseña de Chartiko',
+        'heading' => 'Restablece tu contraseña',
+        'intro' => 'Hemos recibido una solicitud para cambiar la contraseña de tu cuenta de Chartiko.',
+        'button' => 'Cambiar contraseña',
+        'fallback' => 'Si el botón no funciona, copia este enlace en tu navegador:',
+        'expires' => 'El enlace caduca en 60 minutos y solo puede usarse una vez.',
+        'ignore' => 'Si no has solicitado el cambio, ignora este email. Tu contraseña no cambiará.',
+        'why' => 'Recibes este email porque se ha pedido recuperar la contraseña de una cuenta de chartiko.com con esta dirección.',
+    ],
     'test' => [
         'subject' => 'Email de prueba de Chartiko',
         'heading' => 'Email de prueba de Chartiko',

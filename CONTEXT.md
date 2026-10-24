@@ -14,7 +14,7 @@ Daily closing data. Chartiko works exclusively with end-of-day values, never int
 
 ### Instrument (Ticker / Symbol)
 
-A listed security identified by a ticker (e.g. `NVDA`). Carries company name, sector and exchange. An Instrument is a **stock** (a listed company, the default) or an **ETF** (an exchange-traded fund of the Market Context universe: SPY and the sector ETFs). ETFs have a chart but never appear in the Screener, the Watchlist, alerts, the Company Card, Fundamentals or the forecast.
+A listed security identified by a ticker (e.g. `NVDA`). Carries company name, sector, optional GICS sub-industry, optional headquarters country and exchange. An Instrument is a **stock** (a listed company, the default) or an **ETF** (an exchange-traded fund of the Market Context universe: SPY and the sector ETFs). ETFs have a chart but never appear in the Screener, the Watchlist, alerts, the Company Card, Fundamentals or the forecast.
 
 ### Universe
 

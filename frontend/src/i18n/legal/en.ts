@@ -24,7 +24,7 @@ export const legalEn: LegalTexts = {
         ],
         accountEmail: [
           'When you register we send you an email to confirm that the address is yours, with a link that expires after 24 hours. Until you confirm it, the account only lets you resend that email, manage the account or delete it. We store the confirmation date.',
-          'Brevo, the delivery provider, adds an invisible pixel to the email that may record an open when images load. Chartiko does not use opens to build profiles or personalize messages. The confirmation link goes directly to Chartiko.',
+          'If you forget your password, you can request an email with a one-use link that expires after 60 minutes. Brevo, the delivery provider, adds an invisible pixel to account emails that may record an open when images load. Chartiko does not use opens to build profiles or personalize messages. The links go directly to Chartiko.',
         ],
         items: [
           'Purpose: to create and maintain your account and provide the features for registered users.',
@@ -115,7 +115,7 @@ export const legalEn: LegalTexts = {
           'The server is located in Canada (Beauharnois, Quebec). The European Commission recognises an adequate level of protection in Canada (Decision 2002/2/EC), on which this international transfer relies.',
         ],
         accountEmail: [
-          'The emails of your account (such as the confirmation of your address) are sent through {emailProvider}, the email delivery provider, which processes them on behalf of Chartiko as a data processor. Processing location: {emailProviderLocation}.',
+          'The emails of your account (such as address confirmation and password recovery) are sent through {emailProvider}, the email delivery provider, which processes them on behalf of Chartiko as a data processor. Processing location: {emailProviderLocation}.',
         ],
         emailDigest: [
           'If you turn on the daily email summary, your email address and the email content are sent to {emailProvider}, the email delivery provider, which processes them on behalf of Chartiko as a data processor. Processing location: {emailProviderLocation}.',
