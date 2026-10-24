@@ -1,5 +1,11 @@
 # Progress Log
 
+## Outbound email without recipient tracking (`alerts-email-golive`, in progress) — 2026-10-24
+
+- Owner chose delivery without tracking after the received Brevo message exposed an open pixel. The production account-verification and digest flags remain off. Brevo's `contactPixelTrackingConsent=false` anonymizes open events rather than removing the pixel; direct `X-Mailin-Track-Open/Click: 0` tests did not remove it. The supplied Brevo account is on the free plan and its MCP endpoint returned 403.
+- Provider research: Mailjet documents an account setting that disables open and click tracking entirely, including the pixel and link rewriting, and EU data storage. Its free plan is 200 messages/day. Postmark also supports per-message tracking controls but stores data in the US. A change of provider requires the owner's account credentials, DNS authentication and a received-message smoke test. No new provider was configured or mail feature enabled.
+- Baseline `./init.ps1` exited 0 on clean `main`: Laravel tests passed, Vitest 346/43 passed, SPA lint/build passed and engine 101 passed. No product code or live provider settings changed in this session.
+
 ## Brevo outbound email migration (`alerts-email-golive`, in progress) — 2026-10-23
 
 - Owner superseded the Bird choice with Brevo and supplied Brevo API, MCP and Cloudflare token files outside the repository. Only the Brevo API key is used for application sending; none of the secrets was copied into the repository.

@@ -7,6 +7,22 @@ transactional HTTP API because the supplied credential is an API key, not an
 SMTP key. The Brevo MCP token is not used by the application. This decision
 supersedes the earlier Bird and SMTP plans for this feature.
 
+## Owner direction (2026-10-24)
+
+The owner wants delivery without recipient tracking. Brevo's
+`contactPixelTrackingConsent=false` does not remove its open pixel from the
+received message, and direct tracking-off headers did not help. Keep account
+verification and digest off. Mailjet is a candidate replacement: its published
+tracking settings can disable both the pixel and link rewriting, and its data
+is stored in the EU. It needs a separate account and credentials, DNS records
+and a received-message test before activation. Do not treat Brevo's stored
+message or anonymous tracking as proof of a tracking-free delivery.
+
+Provider documentation reviewed: [Brevo API consent behavior](https://developers.brevo.com/changelog/2026/7/21),
+[Mailjet tracking controls](https://documentation.mailjet.com/hc/en-us/articles/51109335532571-Email-Tracking-Pixels-and-Consent-CNIL-and-Garante-Guidance),
+[Mailjet EU storage](https://documentation.mailjet.com/hc/en-us/articles/360042712274-Where-is-my-personal-data-stored)
+and [Mailjet plan limits](https://www.mailjet.com/es/es-tarifas/).
+
 ## Scope
 
 - Send account confirmation and opt-in daily alert email from
