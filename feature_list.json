@@ -1770,7 +1770,8 @@
     "evidence": [
         "2026-10-24: committed 503-row offline classification dataset with dated source snapshot and provenance. Exact ticker join: 500 industries and 499 headquarters countries; CTVA, PSKY and WBD unmatched; XYZ headquarters unknown. Seeder remains offline/idempotent; additive migration backfills only new fields on existing Instruments.",
         "Screener rows and public API expose nullable industry/country alongside sector; Candidate table renders localized fixed sector/country names and verbatim GICS sub-industry with null dash. Focused Laravel seeder/API/migration tests and es/en Candidate table Vitest passed; ETF exclusion and Admin data preservation covered.",
-        "Standard .\\init.ps1 exit 0 after integration: Laravel 853 passed/6 skipped (6567 assertions); frontend lint/typecheck, 351 Vitest in 45 files and production build passed; engine 101 passed. git diff --check clean. Independent validation and production deployment pending."
+        "Standard .\\init.ps1 exit 0 after integration: Laravel 853 passed/6 skipped (6567 assertions); frontend lint/typecheck, 351 Vitest in 45 files and production build passed; engine 101 passed. git diff --check clean.",
+        "PR 70 and main run 40119598548 passed SQLite and PostgreSQL/PgBouncer CI; deployment succeeded. Production /api/screener returns classification, and 390 px/1440 px Edge screenshots confirmed the table layout. Independent validation pending."
     ],
     "notes": "Implemented from the existing offline S&P 500 dataset plus a dated classification source snapshot. Sector/industry/country filters remain outside this feature. Independent validation pending."
   },
@@ -1836,7 +1837,8 @@
     "evidence": [
       "2026-10-24 implementation: public CSRF-backed forgot/reset endpoints; Laravel one-use 60-minute broker; generic request response; localized queued Brevo account mail; all-session invalidation; es/en SPA forms and privacy disclosure.",
       "php artisan test --filter=PasswordResetTest -> 9 passed, 43 assertions, including email-link-to-reset-to-login integration, expiry/reuse, enumeration, rate limit, pending verification and signed-in session invalidation.",
-      "Focused SPA tests PasswordResetPage + LegalPage -> 21 passed; SPA lint/typecheck passed; standard .\\init.ps1 exit 0 (Laravel suite, Vitest 349/44, SPA lint/build, engine 101); git diff --check clean. Independent validation pending."
+      "Focused SPA tests PasswordResetPage + LegalPage -> 21 passed; SPA lint/typecheck passed; standard .\\init.ps1 exit 0 (Laravel suite, Vitest 349/44, SPA lint/build, engine 101); git diff --check clean.",
+      "PR 70 and main run 40119598548 passed CI and deployed. Production recovery routes return 200; live reset-mail delivery was not re-tested with a disposable account. Independent validation pending."
     ],
     "notes": "Requested 2026-10-23 together with email verification (owner answered yes to adding it in the same batch). Uses the existing password_reset_tokens table and the same production email setup."
   }
