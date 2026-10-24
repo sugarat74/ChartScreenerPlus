@@ -14,6 +14,8 @@ import LegalPage from './pages/LegalPage.tsx'
 import InstrumentChartPage from './pages/InstrumentChartPage.tsx'
 import LegacyScreenerRedirect from './pages/LegacyScreenerRedirect.tsx'
 import LoginPage from './pages/LoginPage.tsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.tsx'
 import MarketPage from './pages/MarketPage.tsx'
 import NotFoundPage from './pages/NotFoundPage.tsx'
 import NotificationsPage from './pages/NotificationsPage.tsx'
@@ -26,6 +28,8 @@ import {
   COOKIES_ROUTE,
   LEGAL_NOTICE_ROUTE,
   LOGIN_ROUTE,
+  FORGOT_PASSWORD_ROUTE,
+  RESET_PASSWORD_ROUTE,
   MARKET_ROUTE,
   NOTIFICATIONS_ROUTE,
   PRIVACY_ROUTE,
@@ -64,6 +68,8 @@ export const router = createBrowserRouter([
       { path: routeSegment(NOTIFICATIONS_ROUTE), element: <NotificationsPage /> },
       { path: routeSegment(ACCOUNT_ROUTE), element: <AccountPage /> },
       { path: routeSegment(LOGIN_ROUTE), element: <LoginPage /> },
+      { path: routeSegment(FORGOT_PASSWORD_ROUTE), element: <ForgotPasswordPage /> },
+      { path: routeSegment(RESET_PASSWORD_ROUTE), element: <ResetPasswordPage /> },
       { path: routeSegment(REGISTER_ROUTE), element: <RegisterPage /> },
       { path: routeSegment(PRIVACY_ROUTE), element: <LegalPage kind="privacy" /> },
       { path: routeSegment(LEGAL_NOTICE_ROUTE), element: <LegalPage kind="notice" /> },

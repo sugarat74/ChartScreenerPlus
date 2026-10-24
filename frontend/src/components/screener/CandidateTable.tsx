@@ -13,6 +13,7 @@ import { COMPANY_CARD_ANCHOR } from '../chart/CompanyCardPanel.tsx'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerCandidate } from '../../lib/api.ts'
 import { patternLabel, signalLabel } from '../../lib/screenerFilters.ts'
+import { countryLabel, sectorLabel } from '../../lib/companyClassification.ts'
 
 /** Sign + color for the change column; the sign is the non-color cue. */
 function changeColorClass(value: number | null): string {
@@ -77,6 +78,11 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
                   <p className="max-w-56 truncate text-xs text-on-surface-variant">
                     {candidate.company}
                   </p>
+                  <dl className="mt-1 flex max-w-72 flex-wrap gap-x-2 gap-y-0.5 text-[10px] leading-4 text-on-surface-variant">
+                    <div><dt className="inline font-bold">{t('screener.classificationSector')}: </dt><dd className="inline">{sectorLabel(candidate.sector, t)}</dd></div>
+                    <div><dt className="inline font-bold">{t('screener.classificationIndustry')}: </dt><dd className="inline break-words">{candidate.industry || t('screener.classificationUnknown')}</dd></div>
+                    <div><dt className="inline font-bold">{t('screener.classificationCountry')}: </dt><dd className="inline">{countryLabel(candidate.country, t)}</dd></div>
+                  </dl>
                   {showCompanyCardLink ? (
                     <Link
                       to={`/instruments/${encodeURIComponent(candidate.ticker)}#${COMPANY_CARD_ANCHOR}`}

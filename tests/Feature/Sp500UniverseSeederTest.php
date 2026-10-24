@@ -37,9 +37,16 @@ class Sp500UniverseSeederTest extends TestCase
         $this->assertNotNull($nvda, 'NVDA is missing from the seeded universe.');
         $this->assertSame('Nvidia', $nvda->company);
         $this->assertSame('Information Technology', $nvda->sector);
+        $this->assertSame('Semiconductors', $nvda->industry);
+        $this->assertSame('US', $nvda->country);
         $this->assertSame('NASDAQ', $nvda->exchange);
         $this->assertTrue($nvda->active);
         $this->assertTrue($nvda->universes()->whereKey($universe->getKey())->exists());
+        $this->assertSame('IE', Instrument::query()->where('ticker', 'ACN')->sole()->country);
+        $this->assertNull(Instrument::query()->where('ticker', 'CTVA')->sole()->industry);
+        $this->assertNull(Instrument::query()->where('ticker', 'XYZ')->sole()->country);
+        $this->assertSame(500, Instrument::query()->whereNotNull('industry')->count());
+        $this->assertSame(499, Instrument::query()->whereNotNull('country')->count());
     }
 
     public function test_re_seeding_is_idempotent(): void
@@ -48,6 +55,8 @@ class Sp500UniverseSeederTest extends TestCase
 
         $expected = $this->datasetRowCount();
         $this->assertSame($expected, Instrument::query()->count());
+        $nvda = Instrument::query()->where('ticker', 'NVDA')->sole();
+        $nvda->update(['industry' => null, 'country' => null]);
 
         // Run a second time: no duplicates, no extra pivots, no second universe.
         $this->seed(Sp500UniverseSeeder::class);
@@ -55,6 +64,8 @@ class Sp500UniverseSeederTest extends TestCase
         $this->assertSame(1, Universe::query()->count());
         $this->assertSame($expected, Instrument::query()->count());
         $this->assertSame($expected, DB::table('instrument_universe')->count());
+        $this->assertSame('Semiconductors', $nvda->fresh()->industry);
+        $this->assertSame('US', $nvda->fresh()->country);
     }
 
     /**
@@ -77,7 +88,7 @@ class Sp500UniverseSeederTest extends TestCase
             $header = fgetcsv($handle, null, ',', '"', '');
 
             $this->assertSame(
-                ['ticker', 'company', 'sector', 'exchange'],
+                ['ticker', 'company', 'sector', 'industry', 'country', 'exchange'],
                 array_map(static fn ($cell) => strtolower(trim((string) $cell, " \t\n\r\0\x0B\xEF\xBB\xBF")), $header),
             );
 

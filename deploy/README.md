@@ -46,6 +46,7 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    CI falla si falta el secret o cambia la clave. No uses `ssh-keyscan` sin verificación.
 5. HTTPS: `certbot --nginx -d www.chartiko.com`.
 6. Push a `main`: tests -> despliegue automático. Rollback manual: apuntar `current` a una release anterior.
+   La migración `2026_10_27_000001` rellena industria y país de sede solo para Instrumentos existentes a partir del CSV confirmado; el `screener:refresh` ya incluido copia ambos campos a los Candidatos. No se reejecuta el seeder completo del S&P 500 durante el despliegue, para conservar cambios del Admin.
    El despliegue ejecuta `php artisan screener:refresh` (filas precalculadas del Screener) tras la
    comprobación de PgBouncer, antes de activar (si falla, la release no se activa), y otra vez tras activar
    (no fatal). Las ingestas (`ingestion:run`, consultas de Admin, `ingestion:scrape`) refrescan solas; si

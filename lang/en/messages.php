@@ -20,6 +20,11 @@ return [
     'universe_not_found' => 'Universe not found.',
     'admin_required' => 'Admin access required.',
     'stateful_session_required' => 'A stateful session is required.',
+    'password_reset' => [
+        'requested' => 'If an account exists for that email, we will send a password reset link.',
+        'invalid_link' => 'The link is invalid or has expired. Request a new one.',
+        'changed' => 'Password updated. Sign in again.',
+    ],
     'user_not_found' => 'User not found.',
     'session_not_found' => 'Session not found or already ended.',
     'session_is_current' => 'You cannot end the session you are using right now.',

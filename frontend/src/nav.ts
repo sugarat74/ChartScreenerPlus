@@ -38,6 +38,8 @@ export const DEFAULT_ROUTE: string = NAV_ITEMS[0].path
  */
 export const LOGIN_ROUTE = '/login'
 export const REGISTER_ROUTE = '/register'
+export const FORGOT_PASSWORD_ROUTE = '/olvide-contrasena'
+export const RESET_PASSWORD_ROUTE = '/restablecer-contrasena'
 
 /** Market Context page (market-context-ui). */
 export const MARKET_ROUTE = '/mercado'
@@ -74,6 +76,8 @@ export const EMAIL_VERIFICATION_EXEMPT_ROUTES: readonly string[] = [
   LEGAL_NOTICE_ROUTE,
   COOKIES_ROUTE,
   ACCOUNT_ROUTE,
+  FORGOT_PASSWORD_ROUTE,
+  RESET_PASSWORD_ROUTE,
 ]
 
 /** Whether `pathname` stays reachable while the account is pending verification. */

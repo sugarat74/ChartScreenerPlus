@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/useI18n.ts'
 import AuthField from '../components/AuthField.tsx'
 import { ApiError } from '../lib/api.ts'
 import type { ValidationErrors } from '../lib/api.ts'
-import { DEFAULT_ROUTE, REGISTER_ROUTE } from '../nav.ts'
+import { DEFAULT_ROUTE, FORGOT_PASSWORD_ROUTE, REGISTER_ROUTE } from '../nav.ts'
 
 export default function LoginPage() {
   const { user, login } = useAuth()
@@ -93,6 +93,9 @@ export default function LoginPage() {
           onChange={setPassword}
           error={errors.password?.[0]}
         />
+        <Link to={FORGOT_PASSWORD_ROUTE} className="text-sm font-bold text-on-surface underline">
+          {t('auth.forgotPassword')}
+        </Link>
 
         <button
           type="submit"

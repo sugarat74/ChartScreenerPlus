@@ -10,6 +10,7 @@ use App\Http\Controllers\AlertEmailPreferenceController;
 use App\Http\Controllers\AlertEmailUnsubscribeController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\CompanyCardController;
 use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\Admin\ForecastReportController;
@@ -35,6 +36,8 @@ use Illuminate\Support\Facades\Route;
 // daily cap).
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,60,register');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1,login');
+Route::post('/password/forgot', [PasswordResetController::class, 'forgot'])->middleware('throttle:6,1,password-forgot');
+Route::post('/password/reset', [PasswordResetController::class, 'reset'])->middleware('throttle:12,1,password-reset');
 
 // Public read-only market data: browsing charts requires no session
 // (docs/user-and-access-model.md). The payload is bounded and the 404 for an

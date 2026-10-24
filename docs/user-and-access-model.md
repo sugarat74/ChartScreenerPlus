@@ -3,6 +3,7 @@
 ## User Types
 
 - **Visitor (anonymous):** can browse the Screener, view Candidate lists and charts.
+- **Password recovery:** a Visitor can request a password reset email and submit a one-use 60-minute link. The request response does not reveal whether the email has an account. A successful reset ends all sessions and returns to sign-in; it does not verify an unconfirmed email.
 - **Registered User:** an authenticated Visitor who can additionally save Screeners and maintain a Watchlist.
   - **Pending email verification** (account state, `auth-email-verification`; only while verification is required, i.e. `AUTH_EMAIL_VERIFICATION_ENABLED` on and outbound email ready): a Registered User who has not yet opened the confirmation link. They can sign in and out, read `GET /api/user`, use `/api/account*` (export, delete, change name or password) and resend the email; every other account-only API answers `403 {code: "email_verification.required"}` and every capability is `false`. Admins are never pending; accounts created while verification is not required count as verified.
 - **Admin (Operator):** controls and supervises Ingestion Runs and the Instrument universe.

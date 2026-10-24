@@ -18,6 +18,16 @@ return [
         'fallback' => 'If the button does not work, copy this link into your browser:',
         'expires' => 'The link expires in 24 hours. If it expires, sign in and ask for a new one.',
     ],
+    'reset' => [
+        'subject' => 'Reset your Chartiko password',
+        'heading' => 'Reset your password',
+        'intro' => 'We received a request to change the password for your Chartiko account.',
+        'button' => 'Change password',
+        'fallback' => 'If the button does not work, copy this link into your browser:',
+        'expires' => 'The link expires in 60 minutes and can be used only once.',
+        'ignore' => 'If you did not request this, ignore this email. Your password will not change.',
+        'why' => 'You are receiving this email because a password recovery was requested for a chartiko.com account with this address.',
+    ],
     'test' => [
         'subject' => 'Chartiko test email',
         'heading' => 'Chartiko test email',

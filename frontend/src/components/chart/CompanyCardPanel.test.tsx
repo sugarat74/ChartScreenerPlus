@@ -394,7 +394,7 @@ describe('companyCard catalog', () => {
 
 describe('CandidateTable AI card link', () => {
   const candidate: ScreenerCandidate = {
-    ticker: 'NVDA', company: 'NVIDIA', sector: 'Tech', exchange: 'NASDAQ', active: true,
+    ticker: 'NVDA', company: 'NVIDIA', sector: 'Tech', industry: null, country: null, exchange: 'NASDAQ', active: true,
     date: '2026-10-02', close: 100, change_percent: 1, rvol: 1.2, rsi14: 55, signals: [], patterns: [],
   }
 

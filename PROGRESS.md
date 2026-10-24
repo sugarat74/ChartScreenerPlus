@@ -1,5 +1,17 @@
 # Progress Log
 
+## Screener company classification implementation (`screener-company-classification`, passing) — 2026-10-24
+
+- Extended the offline 503-member S&P 500 CSV with GICS sub-industry and headquarters country, retaining its existing identity, sector and exchange fields. The dated source snapshot and conversion rules are in `database/data/sp500-classification.md`. Exact ticker join yielded 500 industries and 499 countries; CTVA, PSKY and WBD are unmatched, and XYZ has no known headquarters country. Unknown values remain null.
+- Additive migrations store both values on Instruments and Screener rows; the Instrument migration backfills only the new fields on existing rows, preserving Admin edits and universe membership. Seeder, row builder, public API and Candidate table now carry the values. Fixed sector/country labels are localized in es/en; source industry is displayed verbatim. ETF exclusion and existing Screener filters/ranking remain intact.
+- Focused Laravel seeder, migration and API tests passed; es/en Candidate table Vitest passed. Standard `.\init.ps1` exited 0: Laravel 853 passed/6 skipped (6567 assertions), frontend lint/typecheck, 351 Vitest in 45 files and build, engine 101 passed. `git diff --check` clean. Independent validation, CI PostgreSQL verification, visual width check and deployment pending.
+
+## Password recovery implementation (`auth-password-reset`, passing) — 2026-10-24
+
+- Added public, CSRF-backed forgot/reset endpoints using Laravel's existing 60-minute password broker. A request gets the same response for known and unknown email; only a known address receives a queued, localized account email while outbound mail is ready. Successful reset consumes the token, changes the hashed password, rotates `remember_token`, deletes all sessions and never signs anyone in. The existing email-verification state stays unchanged.
+- Added es/en SPA request and reset pages, a login link, shared mail layout content and privacy wording for Brevo's opening pixel. Updated `ARCHITECTURE.md`, `CONSTRAINTS.md` and `docs/user-and-access-model.md`.
+- Focused Laravel `PasswordResetTest`: 9 passed / 43 assertions, including an email-link-to-reset-to-new-login integration. Focused Vitest `PasswordResetPage` + `LegalPage`: 21 passed. `npm --prefix frontend run lint` passed. Standard `./init.ps1` exited 0: Laravel suite, Vitest 349 in 44 files, SPA lint/build, engine 101. `git diff --check` clean. No production delivery check yet; independent validation pending.
+
 ## Password recovery and Screener classification planning — 2026-10-24
 
 - Prepared `docs/specs/auth-password-reset.md` and `docs/specs/screener-company-classification.md` as separate implementation contracts. Both features remain `not_started` in `feature_list.json`; no application code or production configuration changed.
