@@ -119,3 +119,8 @@ and [Mailjet plan limits](https://www.mailjet.com/es/es-tarifas/).
 - A disposable live registration, resend, signed verification, opt-in,
   digest and unsubscribe passed against a temporary receiving inbox. The
   Chartiko account and mailbox were deleted after the test.
+- PR 67 passed CI and PostgreSQL and deployed on 2026-10-24. Both production
+  flags are true, `/api/legal` exposes Brevo/UE and the revised date, and a
+  fresh disposable registration received its confirmation with the Brevo pixel.
+  The signed link verified and the digest preference could be enabled. The
+  temporary Chartiko account and mailbox were deleted. No new mail job failed.
