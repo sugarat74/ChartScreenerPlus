@@ -139,7 +139,7 @@ describe('ScreenerPage pagination', () => {
   it('changing the ranking restarts at page 1 and keeps the page size', async () => {
     renderAt('/screener?page=2&limit=25')
     await screen.findByText('Página 2 de 5')
-    fireEvent.change(screen.getByLabelText(/Ordenar|Orden/), { target: { value: 'rsi_desc' } })
+    fireEvent.change(screen.getByRole('combobox', { name: /Ordenar|Orden/ }), { target: { value: 'rsi_desc' } })
     await waitFor(() => expect(screen.getByTestId('url').textContent).toBe('?limit=25&sort=rsi_desc'))
     await screen.findByText('Página 1 de 5')
   })

@@ -24,6 +24,12 @@ const countries: Record<string, MessageKey> = {
   CA: 'screener.countries.ca',
 }
 
+/** The eleven GICS sector names (canonical API values), alphabetical. */
+export const CLASSIFICATION_SECTORS: readonly string[] = Object.keys(sectors)
+
+/** The HQ country codes present in the committed dataset (canonical API values). */
+export const CLASSIFICATION_COUNTRIES: readonly string[] = Object.keys(countries)
+
 export function sectorLabel(value: string | null, t: Translate): string {
   if (!value) return t('screener.classificationUnknown')
   return sectors[value] ? t(sectors[value]) : value

@@ -57,7 +57,8 @@ export const guideEn: GuideTexts = {
         },
       ],
       notes: [
-        'Sort by: "Relative volume (highest RVOL)" (default), "Confidence (most signals)" —the number of active signals, not a probability—, "Daily change" highest or lowest and "RSI" highest or lowest. Stocks without a value always go last and ties are ordered by ticker.',
+        'Sort by: pick an order in the selector or click a column heading (click again to reverse it; the ▲/▼ arrow shows the active order). Available orders: "Relative volume (highest RVOL)" (default), "Relative volume (lowest RVOL)", "Confidence (most signals)" and "Confidence (fewest signals)" —the number of active signals, not a probability—, "Daily change" highest or lowest, "RSI" highest or lowest, "Close" highest or lowest, "Company (A–Z)", "Company (Z–A)", "Sector (GICS name, A–Z)", "Sector (GICS name, Z–A)", "Industry (A–Z)", "Industry (Z–A)", "HQ country (code, A–Z)" and "HQ country (code, Z–A)". Stocks without a value always go last and ties are ordered by ticker.',
+        'Column filters: the funnel button next to each heading opens its filter: text for Symbol / Company (ticker or name) and Industry, a list for Sector and HQ country, a minimum and maximum (both included) for Close, Chg %, RVOL and RSI, and the same signals and patterns as the technical criteria for Signals. They apply to every candidate, not only the visible page; they show as chips above the table and "Clear filters" removes them too.',
         'Pagination: "Previous" and "Next" move through the pages and "Per page" chooses 25, 50, 100 or 200 candidates. Changing filters, order or page size goes back to page 1.',
         'Filters, order and page are kept in the page address: bookmark or share it and it opens the same way.',
       ],

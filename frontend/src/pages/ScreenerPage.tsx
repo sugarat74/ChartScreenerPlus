@@ -6,7 +6,9 @@
  * and ranking stay server-side; this page only serializes the filters/sort,
  * issues the request and renders loading / refreshing / empty / error / result
  * states. The signed-in affordances (natural-language input, Saved Screeners)
- * live in their own components and only patch the URL like `update`.
+ * live in their own components and only patch the URL like `update`. The table
+ * headings sort and filter by column (screener-table-column-controls) through
+ * the same `update`; the column filter editor sits above the table.
  *
  * The sector context filters (market-context-patterns) need Market Context
  * access: the page reads `useMarketContextAccess` (the bootstrapped session,
@@ -22,6 +24,7 @@ import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
 import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
 import ScreenerAiQuery from '../components/screener/ScreenerAiQuery.tsx'
+import ScreenerColumnFilters from '../components/screener/ScreenerColumnFilters.tsx'
 import ScreenerFilterPanel from '../components/screener/ScreenerFilterPanel.tsx'
 import ScreenerPagination from '../components/screener/ScreenerPagination.tsx'
 import ScreenerSortControl from '../components/screener/ScreenerSortControl.tsx'
@@ -40,6 +43,7 @@ import {
   usesMarketContext,
   withoutMarketContext,
 } from '../lib/screenerFilters.ts'
+import type { CandidateColumnId } from '../lib/screenerColumns.ts'
 import { LOGIN_ROUTE } from '../nav.ts'
 import {
   parseScreenerPagination,
@@ -95,6 +99,9 @@ export default function ScreenerPage() {
   const [data, setData] = useState<ScreenerData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [retryToken, setRetryToken] = useState(0)
+  // The column whose filter editor is open (screener-table-column-controls);
+  // UI state only, the criteria themselves live in the URL.
+  const [openColumn, setOpenColumn] = useState<CandidateColumnId | null>(null)
 
   const dataRef = useRef<ScreenerData | null>(null)
   const lastKeyRef = useRef<string | null>(null)
@@ -302,6 +309,14 @@ export default function ScreenerPage() {
         </div>
       </div>
 
+      <ScreenerColumnFilters
+        filters={effective}
+        openColumn={openColumn}
+        onChange={update}
+        onOpen={setOpenColumn}
+        onClose={() => setOpenColumn(null)}
+      />
+
       <CandidateResults
         status={status}
         candidates={data?.candidates ?? []}
@@ -309,6 +324,12 @@ export default function ScreenerPage() {
         error={error}
         onRetry={retry}
         onClearFilters={clearFilters}
+        controls={{
+          filters: effective,
+          openColumn,
+          onSort: (sort) => update({ sort }),
+          onToggleFilter: (column) => setOpenColumn((current) => (current === column ? null : column)),
+        }}
       />
 
       {data !== null && data.total > 0 && status !== 'error' ? (

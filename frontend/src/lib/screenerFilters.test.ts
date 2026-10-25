@@ -64,11 +64,12 @@ describe('sector context filters (market-context-patterns)', () => {
     expect(withoutMarketContext(EMPTY_SCREENER_FILTERS)).toBe(EMPTY_SCREENER_FILTERS)
   })
 
-  it('serializes the eleven-key definition', () => {
+  it('serializes the twenty-key definition', () => {
     const saved = serializeScreenerFilters({ ...EMPTY_SCREENER_FILTERS, sectorTrend: 'uptrend', sectorRsRankMax: 3 })
     expect(Object.keys(saved).sort()).toEqual([
-      'ma_cross', 'min_rvol', 'pattern', 'pattern_status', 'price_above_sma200', 'rsi_max', 'rsi_min',
-      'sector_rs_rank_max', 'sector_trend', 'signal', 'sort',
+      'change_max', 'change_min', 'close_max', 'close_min', 'country', 'industry',
+      'ma_cross', 'min_rvol', 'pattern', 'pattern_status', 'price_above_sma200', 'rsi_max', 'rsi_min', 'rvol_max',
+      'search', 'sector', 'sector_rs_rank_max', 'sector_trend', 'signal', 'sort',
     ])
     expect(saved.sector_trend).toBe('uptrend')
     expect(saved.sector_rs_rank_max).toBe(3)

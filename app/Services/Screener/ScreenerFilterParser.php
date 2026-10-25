@@ -52,7 +52,9 @@ class ScreenerFilterParser
     public const MA_CROSSES = ['bullish', 'bearish'];
 
     /**
-     * The supported sort orders (all with a ticker-ASC tie-break, nulls last).
+     * The original six sort orders. They are also the closed sort enum of the
+     * natural-language Screener schema (`ScreenerQuerySchema`), which this
+     * feature deliberately does not expand (screener-table-column-controls).
      */
     public const SORTS = [
         'rvol_desc',
@@ -63,7 +65,89 @@ class ScreenerFilterParser
         'signal_count_desc',
     ];
 
+    /**
+     * The per-column orders added by `screener-table-column-controls`, so every
+     * displayed Candidate column sorts both ways.
+     */
+    public const COLUMN_SORTS = [
+        'company_asc',
+        'company_desc',
+        'sector_asc',
+        'sector_desc',
+        'industry_asc',
+        'industry_desc',
+        'country_asc',
+        'country_desc',
+        'close_asc',
+        'close_desc',
+        'rvol_asc',
+        'signal_count_asc',
+    ];
+
+    /**
+     * Every order accepted by `?sort` (all with a ticker-ASC tie-break, nulls
+     * last in both directions).
+     */
+    public const ALL_SORTS = [...self::SORTS, ...self::COLUMN_SORTS];
+
     public const DEFAULT_SORT = 'rvol_desc';
+
+    /**
+     * The fixed GICS sector names accepted by `?sector`: the canonical source
+     * values stored on Instruments (`database/data/sp500.csv`); the SPA
+     * localizes the labels.
+     */
+    public const SECTORS = [
+        'Communication Services',
+        'Consumer Discretionary',
+        'Consumer Staples',
+        'Energy',
+        'Financials',
+        'Health Care',
+        'Industrials',
+        'Information Technology',
+        'Materials',
+        'Real Estate',
+        'Utilities',
+    ];
+
+    /**
+     * Maximum length of `?search` (ticker or company fragment).
+     */
+    public const SEARCH_MAX_LENGTH = 100;
+
+    /**
+     * Maximum length of `?industry` (the stored column is 120 characters).
+     */
+    public const INDUSTRY_MAX_LENGTH = 120;
+
+    /**
+     * Inclusive bounds accepted by every numeric column param.
+     *
+     * @var array<string, array{float, float}>
+     */
+    public const NUMERIC_BOUNDS = [
+        'rsi_min' => [0.0, 100.0],
+        'rsi_max' => [0.0, 100.0],
+        'min_rvol' => [0.0, 1000.0],
+        'rvol_max' => [0.0, 1000.0],
+        'close_min' => [0.0, 1000000.0],
+        'close_max' => [0.0, 1000000.0],
+        'change_min' => [-100.0, 1000.0],
+        'change_max' => [-100.0, 1000.0],
+    ];
+
+    /**
+     * Each `[min, max]` pair: a min greater than its max is a `422` (on the min
+     * key), so an inverted range is rejected instead of silently matching
+     * nothing.
+     */
+    public const RANGE_PAIRS = [
+        ['rsi_min', 'rsi_max'],
+        ['min_rvol', 'rvol_max'],
+        ['close_min', 'close_max'],
+        ['change_min', 'change_max'],
+    ];
 
     /**
      * Values accepted by `?sector_trend` (the `MarketSectorSnapshot` trends):
@@ -89,14 +173,20 @@ class ScreenerFilterParser
      * Resolve and validate the filter/sort params from a raw input array
      * (a query string array or decoded JSON).
      *
+     * The table column criteria (screener-table-column-controls) are `search`
+     * (ticker or company fragment), `sector` (GICS name), `industry`
+     * (fragment), `country` (ISO alpha-2) and the inclusive bounds
+     * `close_min`/`close_max`, `change_min`/`change_max` and `rvol_max`; RSI
+     * and the RVOL minimum keep `rsi_min`/`rsi_max`/`min_rvol`.
+     *
      * @param  array<mixed>  $input
-     * @return array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int}
+     * @return array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int, search: ?string, sector: ?string, industry: ?string, country: ?string, rvol_max: ?float, close_min: ?float, close_max: ?float, change_min: ?float, change_max: ?float}
      *
      * @throws ValidationException
      */
     public static function fromArray(array $input): array
     {
-        return [
+        $filters = [
             'signal' => self::signalTypes($input['signal'] ?? null),
             'rsi_min' => self::numeric($input, 'rsi_min'),
             'rsi_max' => self::numeric($input, 'rsi_max'),
@@ -108,7 +198,97 @@ class ScreenerFilterParser
             'sort' => self::sort($input['sort'] ?? null),
             'sector_trend' => self::sectorTrend($input['sector_trend'] ?? null),
             'sector_rs_rank_max' => self::sectorRsRankMax($input['sector_rs_rank_max'] ?? null),
+            'search' => self::text($input['search'] ?? null, 'search', self::SEARCH_MAX_LENGTH),
+            'sector' => self::sector($input['sector'] ?? null),
+            'industry' => self::text($input['industry'] ?? null, 'industry', self::INDUSTRY_MAX_LENGTH),
+            'country' => self::country($input['country'] ?? null),
+            'rvol_max' => self::numeric($input, 'rvol_max'),
+            'close_min' => self::numeric($input, 'close_min'),
+            'close_max' => self::numeric($input, 'close_max'),
+            'change_min' => self::numeric($input, 'change_min'),
+            'change_max' => self::numeric($input, 'change_max'),
         ];
+
+        foreach (self::RANGE_PAIRS as [$minKey, $maxKey]) {
+            if ($filters[$minKey] !== null && $filters[$maxKey] !== null && $filters[$minKey] > $filters[$maxKey]) {
+                throw ValidationException::withMessages([
+                    $minKey => [__('messages.screener.range_inverted', ['min' => $minKey, 'max' => $maxKey])],
+                ]);
+            }
+        }
+
+        return $filters;
+    }
+
+    /**
+     * Resolve a free-text fragment (`search`, `industry`): trimmed, inner
+     * whitespace collapsed; absent/blank is off. A non-string, invalid UTF-8,
+     * a control character or more than `$max` characters is a `422`. The value
+     * is only ever bound as a `LIKE` parameter, never used as SQL structure.
+     */
+    private static function text(mixed $value, string $key, int $max): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_string($value) || ! mb_check_encoding($value, 'UTF-8') || preg_match('/[\p{Cc}\p{Cf}]/u', $value) === 1) {
+            throw ValidationException::withMessages([
+                $key => [__('messages.screener.text_invalid', ['parameter' => $key, 'max' => $max])],
+            ]);
+        }
+
+        $text = trim((string) preg_replace('/\s+/u', ' ', $value));
+
+        if ($text === '') {
+            return null;
+        }
+
+        if (mb_strlen($text) > $max) {
+            throw ValidationException::withMessages([
+                $key => [__('messages.screener.text_invalid', ['parameter' => $key, 'max' => $max])],
+            ]);
+        }
+
+        return $text;
+    }
+
+    /**
+     * Resolve `sector` to one of the eleven GICS sector names; anything else
+     * (an array included) is a `422`.
+     */
+    private static function sector(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_string($value) || ! in_array($value, self::SECTORS, true)) {
+            throw ValidationException::withMessages([
+                'sector' => [__('messages.screener.sector_invalid')],
+            ]);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Resolve `country` to an upper-case ISO 3166-1 alpha-2 code; anything but
+     * two ASCII letters is a `422`. An unused code simply matches nothing.
+     */
+    private static function country(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_string($value) || preg_match('/^[A-Za-z]{2}$/', $value) !== 1) {
+            throw ValidationException::withMessages([
+                'country' => [__('messages.screener.country_invalid')],
+            ]);
+        }
+
+        return strtoupper($value);
     }
 
     /**
@@ -271,8 +451,9 @@ class ScreenerFilterParser
     /**
      * Resolve a nullable numeric param; a bad value is a `422`.
      *
-     * An absent or empty value means the filter is not applied. An explicit
-     * `rsi_min` greater than `rsi_max` is valid and simply matches nothing.
+     * An absent or empty value means the filter is not applied. A value outside
+     * its `NUMERIC_BOUNDS` (inclusive) is a `422`, and so is a min greater than
+     * its max (checked in `fromArray()`).
      *
      * @param  array<mixed>  $input
      */
@@ -290,7 +471,24 @@ class ScreenerFilterParser
             ]);
         }
 
-        return (float) $value;
+        $number = (float) $value;
+        [$min, $max] = self::NUMERIC_BOUNDS[$key];
+
+        if (! is_finite($number) || $number < $min || $number > $max) {
+            throw ValidationException::withMessages([
+                $key => [__('messages.screener.parameter_range', ['parameter' => $key, 'min' => self::bound($min), 'max' => self::bound($max)])],
+            ]);
+        }
+
+        return $number;
+    }
+
+    /**
+     * A bound for a validation message (`100`, not `100.0`).
+     */
+    private static function bound(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
     }
 
     /**
@@ -346,9 +544,9 @@ class ScreenerFilterParser
             return self::DEFAULT_SORT;
         }
 
-        if (! is_string($value) || ! in_array($value, self::SORTS, true)) {
+        if (! is_string($value) || ! in_array($value, self::ALL_SORTS, true)) {
             throw ValidationException::withMessages([
-                'sort' => [__('messages.screener.sort_invalid', ['values' => implode(', ', self::SORTS)])],
+                'sort' => [__('messages.screener.sort_invalid', ['values' => implode(', ', self::ALL_SORTS)])],
             ]);
         }
 

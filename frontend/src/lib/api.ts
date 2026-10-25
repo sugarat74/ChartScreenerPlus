@@ -513,14 +513,30 @@ export type PatternStatus = 'forming' | 'confirmed'
 /** `any` matches both statuses; it only narrows a non-empty pattern filter. */
 export type ScreenerPatternStatus = 'any' | PatternStatus
 
-/** The six ranking orders the frozen screener API supports. */
+/**
+ * The ranking orders the screener API supports: the original six plus one
+ * order per direction for every Candidate table column
+ * (screener-table-column-controls).
+ */
 export type ScreenerSort =
   | 'rvol_desc'
+  | 'rvol_asc'
   | 'signal_count_desc'
+  | 'signal_count_asc'
   | 'change_desc'
   | 'change_asc'
   | 'rsi_desc'
   | 'rsi_asc'
+  | 'company_asc'
+  | 'company_desc'
+  | 'sector_asc'
+  | 'sector_desc'
+  | 'industry_asc'
+  | 'industry_desc'
+  | 'country_asc'
+  | 'country_desc'
+  | 'close_asc'
+  | 'close_desc'
 
 /**
  * The subset of the prototype `FilterState` that the frozen screener API can
@@ -546,6 +562,21 @@ export type ScreenerFilters = {
    */
   sectorTrend: MarketTrend | null
   sectorRsRankMax: number | null
+  /**
+   * Table column criteria (screener-table-column-controls), public like the
+   * technical filters: a ticker/company fragment, a GICS sector name, an
+   * industry fragment, an ISO country code and inclusive numeric bounds (RSI
+   * and the RVOL minimum reuse `rsiMin`/`rsiMax`/`minRvol`).
+   */
+  search: string | null
+  sector: string | null
+  industry: string | null
+  country: string | null
+  rvolMax: number | null
+  closeMin: number | null
+  closeMax: number | null
+  changeMin: number | null
+  changeMax: number | null
   sort: ScreenerSort
 }
 
@@ -619,6 +650,29 @@ function screenerQueryString(filters: ScreenerFilters): string {
   if (filters.sectorRsRankMax !== null) {
     params.set('sector_rs_rank_max', String(filters.sectorRsRankMax))
   }
+  const text: [string, string | null][] = [
+    ['search', filters.search],
+    ['sector', filters.sector],
+    ['industry', filters.industry],
+    ['country', filters.country],
+  ]
+  for (const [key, value] of text) {
+    if (value !== null) {
+      params.set(key, value)
+    }
+  }
+  const numbers: [string, number | null][] = [
+    ['rvol_max', filters.rvolMax],
+    ['close_min', filters.closeMin],
+    ['close_max', filters.closeMax],
+    ['change_min', filters.changeMin],
+    ['change_max', filters.changeMax],
+  ]
+  for (const [key, value] of numbers) {
+    if (value !== null) {
+      params.set(key, String(value))
+    }
+  }
   params.set('sort', filters.sort)
   return params.toString()
 }
@@ -670,10 +724,11 @@ export type ScreenerInterpretation = {
 }
 
 /**
- * The eleven-key canonical definition stored with a Saved Screener. It uses the
+ * The twenty-key canonical definition stored with a Saved Screener. It uses the
  * API's own param names (snake_case) and includes `sort`, so applying a Screener
- * restores the exact filters and ranking the user saved. The pattern and sector
- * context keys are optional on read: older deployments may omit them.
+ * restores the exact filters and ranking the user saved. The pattern, sector
+ * context and table column keys are optional on read: older deployments (and
+ * the natural-language interpreter's answer) may omit them.
  */
 export type SavedScreenerFilters = {
   signal: ScreenerSignalType[]
@@ -686,6 +741,15 @@ export type SavedScreenerFilters = {
   pattern_status?: ScreenerPatternStatus
   sector_trend?: MarketTrend | null
   sector_rs_rank_max?: number | null
+  search?: string | null
+  sector?: string | null
+  industry?: string | null
+  country?: string | null
+  rvol_max?: number | null
+  close_min?: number | null
+  close_max?: number | null
+  change_min?: number | null
+  change_max?: number | null
   sort: ScreenerSort
 }
 

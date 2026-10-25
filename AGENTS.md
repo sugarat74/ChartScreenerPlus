@@ -75,7 +75,7 @@ Before writing code:
 
 1. Confirm the working directory with `Get-Location` (should be `C:\laragon\www\ChartScreenPlus`).
 2. Run `.\scripts\harness-context.ps1` to see the current branch, local changes, recorded verification, dependency-ready work and open risks.
-3. Read `PROGRESS.md` and `feature_list.json` for the full evidence and pick the first ready unfinished feature in list order, unless the user requested a specific task. A `passing` feature needs independent validation; dependencies are ready only when `accepted`.
+3. Pick the work from the hook output: the user's requested task, otherwise the first ready unfinished feature in list order. A `passing` feature needs independent validation; dependencies are ready only when `accepted`. Then read only what that work needs: its entry in `feature_list.json` (search by `id`), its spec in `docs/specs/`, and the `PROGRESS.md` sections that mention it. Do not read `feature_list.json`, `PROGRESS.md` or `docs/archive/` in full; search them.
 4. Run `.\init.ps1`.
 5. If baseline verification fails, fix the baseline before starting new feature work.
 
@@ -95,7 +95,9 @@ Before writing code:
 - `feature_list.json` — source of truth for feature state.
   Status lifecycle: `not_started` -> `in_progress` -> `passing` (implemented and self-verified) -> `accepted` (an independent validator returned accept).
   `passing` is not done. A feature in `depends_on` is only ready when it is `accepted`.
-- `PROGRESS.md` — current verified state and lightweight session log.
+  An `accepted` entry keeps only `id`, `area`, `title`, `status` and `depends_on`; its full record (behavior, verification, evidence, notes) moves verbatim to `docs/archive/feature-evidence-accepted.json` in the same change that accepts it.
+- `PROGRESS.md` — current verified state and lightweight session log, newest first, at most the latest 10 sessions. Older sessions move verbatim to the top of `docs/archive/progress-log.md` (also newest first).
+- `docs/archive/` — history moved out of the two files above. Never delete it; search it when you need past evidence instead of reading it in full.
 - `init.ps1` — standard Windows (PowerShell) startup and verification path. `init.sh` is the optional cross-platform/Git Bash equivalent.
 
 > Harness status: active. Use `scripts/harness-context.ps1` for a quick session summary and `init.ps1` for the full verification path. See `PROGRESS.md` for the current verified state.
@@ -114,7 +116,7 @@ A feature is done only when all are true:
 
 Before ending a session:
 
-1. Update `PROGRESS.md`.
-2. Update `feature_list.json`.
+1. Update `PROGRESS.md`, adding the new session at the top; if it now has more than 10 sessions, move the oldest to `docs/archive/progress-log.md`.
+2. Update `feature_list.json`; if a feature became `accepted`, archive its full record as described in Required Artifacts.
 3. Record unresolved risks or blockers.
 4. Leave the repo clean enough for the next session to run `.\init.ps1` immediately.

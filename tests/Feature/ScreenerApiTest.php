@@ -222,8 +222,13 @@ class ScreenerApiTest extends TestCase
 
         $this->assertSame(
             [],
-            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?rsi_min=200')->assertOk()->json('candidates')),
+            $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?rsi_min=100')->assertOk()->json('candidates')),
         );
+
+        // screener-table-column-controls: RSI is bounded to 0..100 and an
+        // inverted range is rejected instead of silently matching nothing.
+        $this->getJson('/api/screener?rsi_min=200')->assertUnprocessable()->assertJsonValidationErrors(['rsi_min']);
+        $this->getJson('/api/screener?rsi_min=70&rsi_max=30')->assertUnprocessable()->assertJsonValidationErrors(['rsi_min']);
     }
 
     public function test_min_rvol_narrows_results(): void

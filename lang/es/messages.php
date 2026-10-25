@@ -77,5 +77,10 @@ return [
         'sort_invalid' => 'El parámetro sort debe ser uno de: :values.',
         'sector_trend_invalid' => 'El parámetro sector_trend debe ser uptrend, mixed o downtrend.',
         'sector_rs_rank_max_invalid' => 'El parámetro sector_rs_rank_max debe ser un número entero del 1 al 11.',
+        'parameter_range' => 'El parámetro :parameter debe estar entre :min y :max.',
+        'range_inverted' => 'El parámetro :min no puede ser mayor que :max.',
+        'text_invalid' => 'El parámetro :parameter debe ser texto plano de como máximo :max caracteres.',
+        'sector_invalid' => 'El parámetro sector debe ser uno de los once sectores GICS.',
+        'country_invalid' => 'El parámetro country debe ser un código de país de dos letras.',
     ],
 ];

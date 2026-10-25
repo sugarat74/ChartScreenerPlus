@@ -149,7 +149,10 @@ class ScreenerQuerySchema
         ];
 
         try {
-            $filters = ScreenerFilterParser::fromArray($raw);
+            // Only the schema's own keys: the table column criteria the parser
+            // also resolves (screener-table-column-controls) are not part of
+            // this contract, so the answer keeps exactly these eleven keys.
+            $filters = array_intersect_key(ScreenerFilterParser::fromArray($raw), array_flip(self::FILTER_KEYS));
         } catch (ValidationException) {
             throw new InvalidScreenerQuery('parser');
         }

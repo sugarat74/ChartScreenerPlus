@@ -76,5 +76,10 @@ return [
         'sort_invalid' => 'The sort parameter must be one of: :values.',
         'sector_trend_invalid' => 'The sector_trend parameter must be one of: uptrend, mixed, downtrend.',
         'sector_rs_rank_max_invalid' => 'The sector_rs_rank_max parameter must be a whole number from 1 to 11.',
+        'parameter_range' => 'The :parameter parameter must be between :min and :max.',
+        'range_inverted' => 'The :min parameter cannot be greater than :max.',
+        'text_invalid' => 'The :parameter parameter must be plain text of at most :max characters.',
+        'sector_invalid' => 'The sector parameter must be one of the eleven GICS sectors.',
+        'country_invalid' => 'The country parameter must be a two-letter country code.',
     ],
 ];

@@ -25,20 +25,52 @@ use Illuminate\Database\Eloquent\Builder;
  * market-context-patterns C5) read the `screener_rows` sector columns; a null
  * column never matches. Callers check the `view-market-context` ability first.
  *
- * @phpstan-type Filters array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int}
+ * The table column criteria (screener-table-column-controls: `search`,
+ * `sector`, `industry`, `country`, `rvol_max`, `close_min`/`close_max`,
+ * `change_min`/`change_max`) are optional keys: absent means off, so older
+ * callers keep working. Every sort maps to a fixed expression in `SORTS`.
+ *
+ * @phpstan-type Filters array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int, search?: ?string, sector?: ?string, industry?: ?string, country?: ?string, rvol_max?: ?float, close_min?: ?float, close_max?: ?float, change_min?: ?float, change_max?: ?float}
  */
 class CandidateQuery
 {
     /**
-     * The sortable column and direction for each supported order.
+     * The fixed sort expression, direction and text flag for each supported
+     * order. Only these constant strings ever reach `orderByRaw`; a request's
+     * `sort` value is just a lookup key (validated by `ScreenerFilterParser`).
+     * Text orders compare a stable value (lower-cased company or industry, the
+     * GICS sector name, the ISO country code) in byte order.
      */
     private const SORTS = [
-        'rvol_desc' => ['rvol', 'desc'],
-        'rsi_desc' => ['rsi14', 'desc'],
-        'rsi_asc' => ['rsi14', 'asc'],
-        'change_desc' => ['change_percent', 'desc'],
-        'change_asc' => ['change_percent', 'asc'],
-        'signal_count_desc' => ['signal_count', 'desc'],
+        'rvol_desc' => ['rvol', 'desc', false],
+        'rvol_asc' => ['rvol', 'asc', false],
+        'rsi_desc' => ['rsi14', 'desc', false],
+        'rsi_asc' => ['rsi14', 'asc', false],
+        'change_desc' => ['change_percent', 'desc', false],
+        'change_asc' => ['change_percent', 'asc', false],
+        'signal_count_desc' => ['signal_count', 'desc', false],
+        'signal_count_asc' => ['signal_count', 'asc', false],
+        'close_desc' => ['close', 'desc', false],
+        'close_asc' => ['close', 'asc', false],
+        'company_asc' => ['lower(company)', 'asc', true],
+        'company_desc' => ['lower(company)', 'desc', true],
+        'sector_asc' => ['sector', 'asc', true],
+        'sector_desc' => ['sector', 'desc', true],
+        'industry_asc' => ['lower(industry)', 'asc', true],
+        'industry_desc' => ['lower(industry)', 'desc', true],
+        'country_asc' => ['country', 'asc', true],
+        'country_desc' => ['country', 'desc', true],
+    ];
+
+    /**
+     * Case-insensitive "contains" predicates over fixed columns; `\` is the
+     * explicit LIKE escape on SQLite and PostgreSQL. Only the bound value
+     * comes from the request.
+     */
+    private const CONTAINS_SQL = [
+        'ticker' => "lower(ticker) like ? escape '\\'",
+        'company' => "lower(company) like ? escape '\\'",
+        'industry' => "lower(industry) like ? escape '\\'",
     ];
 
     /**
@@ -113,7 +145,34 @@ class CandidateQuery
                 && $stored['sector_rs_rank_max'] <= ScreenerFilterParser::SECTOR_RS_RANK_MAX
                 ? $stored['sector_rs_rank_max']
                 : null,
+            // screener-table-column-controls: absent on rows saved before it.
+            'search' => self::storedText($stored['search'] ?? null, ScreenerFilterParser::SEARCH_MAX_LENGTH),
+            'sector' => in_array($stored['sector'] ?? null, ScreenerFilterParser::SECTORS, true) ? $stored['sector'] : null,
+            'industry' => self::storedText($stored['industry'] ?? null, ScreenerFilterParser::INDUSTRY_MAX_LENGTH),
+            'country' => is_string($stored['country'] ?? null) && preg_match('/^[A-Z]{2}$/', $stored['country']) === 1
+                ? $stored['country']
+                : null,
+            'rvol_max' => $number($stored['rvol_max'] ?? null),
+            'close_min' => $number($stored['close_min'] ?? null),
+            'close_max' => $number($stored['close_max'] ?? null),
+            'change_min' => $number($stored['change_min'] ?? null),
+            'change_max' => $number($stored['change_max'] ?? null),
         ];
+    }
+
+    /**
+     * A stored text fragment, or `null` when it is not a non-blank string of
+     * at most `$max` characters.
+     */
+    private static function storedText(mixed $value, int $max): ?string
+    {
+        if (! is_string($value) || ! mb_check_encoding($value, 'UTF-8')) {
+            return null;
+        }
+
+        $text = trim($value);
+
+        return $text === '' || mb_strlen($text) > $max ? null : $text;
     }
 
     /**
@@ -149,7 +208,35 @@ class CandidateQuery
             ->when($filters['price_above_sma200'], fn (Builder $query) => $query->where('price_above_sma200', true))
             ->when($filters['ma_cross'] !== null, fn (Builder $query) => $query->where('ma_cross', $filters['ma_cross']))
             ->when(($filters['sector_trend'] ?? null) !== null, fn (Builder $query) => $query->where('sector_trend', $filters['sector_trend']))
-            ->when(($filters['sector_rs_rank_max'] ?? null) !== null, fn (Builder $query) => $query->where('sector_rs_rank', '<=', $filters['sector_rs_rank_max']));
+            ->when(($filters['sector_rs_rank_max'] ?? null) !== null, fn (Builder $query) => $query->where('sector_rs_rank', '<=', $filters['sector_rs_rank_max']))
+            // Table column criteria (screener-table-column-controls). Text
+            // fragments are bound LIKE values with escaped wildcards; a null
+            // column never matches.
+            ->when(($filters['search'] ?? null) !== null, fn (Builder $query) => $query->where(
+                fn (Builder $either) => $either
+                    ->whereRaw(self::CONTAINS_SQL['ticker'], [self::containsPattern($filters['search'])])
+                    ->orWhereRaw(self::CONTAINS_SQL['company'], [self::containsPattern($filters['search'])])
+            ))
+            ->when(($filters['sector'] ?? null) !== null, fn (Builder $query) => $query->where('sector', $filters['sector']))
+            ->when(($filters['industry'] ?? null) !== null, fn (Builder $query) => $query->whereRaw(
+                self::CONTAINS_SQL['industry'],
+                [self::containsPattern($filters['industry'])]
+            ))
+            ->when(($filters['country'] ?? null) !== null, fn (Builder $query) => $query->where('country', $filters['country']))
+            ->when(($filters['rvol_max'] ?? null) !== null, fn (Builder $query) => $query->where('rvol', '<=', $filters['rvol_max']))
+            ->when(($filters['close_min'] ?? null) !== null, fn (Builder $query) => $query->where('close', '>=', $filters['close_min']))
+            ->when(($filters['close_max'] ?? null) !== null, fn (Builder $query) => $query->where('close', '<=', $filters['close_max']))
+            ->when(($filters['change_min'] ?? null) !== null, fn (Builder $query) => $query->where('change_percent', '>=', $filters['change_min']))
+            ->when(($filters['change_max'] ?? null) !== null, fn (Builder $query) => $query->where('change_percent', '<=', $filters['change_max']));
+    }
+
+    /**
+     * `%fragment%` with the LIKE wildcards of the fragment escaped, so `%`,
+     * `_` and `\` typed by a user match literally.
+     */
+    private static function containsPattern(string $fragment): string
+    {
+        return '%'.addcslashes(mb_strtolower($fragment), '\\%_').'%';
     }
 
     /**
@@ -161,11 +248,21 @@ class CandidateQuery
      */
     private function ranked(Builder $query, string $sort): Builder
     {
-        [$column, $direction] = self::SORTS[$sort] ?? self::SORTS['rvol_desc'];
+        [$expression, $direction, $text] = self::SORTS[$sort] ?? self::SORTS['rvol_desc'];
+        $pgsql = $query->getConnection()->getDriverName() === 'pgsql';
 
-        $query->orderByRaw("{$column} is null")->orderBy($column, $direction);
+        // Plain columns are quoted by the grammar (`close` is an SQL keyword).
+        $null = $text ? $expression : $query->getQuery()->getGrammar()->wrap($expression);
+        $query->orderByRaw("{$null} is null");
 
-        return $query->getConnection()->getDriverName() === 'pgsql'
+        if ($text) {
+            // Byte order on both drivers, like the ticker tie-break.
+            $query->orderByRaw($pgsql ? "{$expression} collate \"C\" {$direction}" : "{$expression} {$direction}");
+        } else {
+            $query->orderBy($expression, $direction);
+        }
+
+        return $pgsql
             ? $query->orderByRaw('ticker collate "C" asc')
             : $query->orderBy('ticker');
     }
