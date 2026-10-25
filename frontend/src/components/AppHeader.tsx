@@ -17,16 +17,9 @@ export default function AppHeader() {
   const verificationPending = useEmailVerificationPending()
   const [signingOut, setSigningOut] = useState(false)
   const isAdmin = user?.role === 'admin'
-  // The Market Context link (market-context-patterns): for a session with
-  // access, and for a Visitor once the go-live flag is on (the page then asks
-  // them to sign in); nothing while loading. The API is the real gate.
-  const showMarket = marketAccess.status === 'allowed' || marketAccess.status === 'signIn'
-
   // Admin-only tabs are hidden for everyone else; the API is the real gate.
   const visibleNavItems = NAV_ITEMS.filter(
-    (item) =>
-      (item.adminOnly !== true || isAdmin) &&
-      (!('marketContext' in item) || item.marketContext !== true || showMarket),
+    (item) => item.adminOnly !== true || isAdmin,
   )
 
   async function handleSignOut() {
@@ -123,23 +116,34 @@ export default function AppHeader() {
         aria-label={t('header.navAria')}
         className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto border-t border-outline-variant px-4"
       >
-        {visibleNavItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={!('nested' in item && item.nested)}
-            className={({ isActive }) =>
-              [
-                'whitespace-nowrap border-b-2 px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider transition-colors',
-                isActive
-                  ? 'border-outline bg-surface-container text-on-surface'
-                  : 'border-transparent text-on-surface-variant hover:bg-surface-bright hover:text-on-surface',
-              ].join(' ')
-            }
-          >
-            {t(item.labelKey)}
-          </NavLink>
-        ))}
+        {visibleNavItems.map((item) =>
+          'marketContext' in item && item.marketContext === true && marketAccess.status !== 'allowed' ? (
+            <span
+              key={item.path}
+              aria-disabled="true"
+              title={t(user ? 'nav.marketUnavailable' : 'nav.marketSignIn')}
+              className="cursor-not-allowed whitespace-nowrap border-b-2 border-transparent px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface-variant opacity-50"
+            >
+              {t(item.labelKey)}
+            </span>
+          ) : (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={!('nested' in item && item.nested)}
+              className={({ isActive }) =>
+                [
+                  'whitespace-nowrap border-b-2 px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider transition-colors',
+                  isActive
+                    ? 'border-outline bg-surface-container text-on-surface'
+                    : 'border-transparent text-on-surface-variant hover:bg-surface-bright hover:text-on-surface',
+                ].join(' ')
+              }
+            >
+              {t(item.labelKey)}
+            </NavLink>
+          ),
+        )}
       </nav>
     </header>
   )

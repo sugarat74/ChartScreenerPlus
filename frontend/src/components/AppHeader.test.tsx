@@ -47,6 +47,7 @@ function show(user: AuthUser | null) {
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))
 
 const marketLink = () => screen.queryByRole('link', { name: 'Mercado' })
+const disabledMarket = () => screen.getByText('Mercado')
 
 beforeEach(() => {
   resetLegalInfoCache()
@@ -60,33 +61,40 @@ afterEach(() => {
 })
 
 describe('AppHeader Market link (market-context-ui, market-context-patterns)', () => {
-  it('is hidden while the legal info loads', () => {
+  it('is visible but disabled while access loads', () => {
     vi.mocked(legalApi.info).mockReturnValue(new Promise(() => {}))
     show(null)
     expect(screen.getByRole('link', { name: 'Screener' })).toBeTruthy()
     expect(marketLink()).toBeNull()
+    expect(disabledMarket().getAttribute('aria-disabled')).toBe('true')
   })
 
-  it('is hidden for Visitors and Registered Users while the page is not public', async () => {
+  it('is disabled for Visitors and Registered Users while the page is not public', async () => {
     vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: false })
     show(null)
     await waitFor(() => expect(legalApi.info).toHaveBeenCalled())
     await settle()
     expect(marketLink()).toBeNull()
+    expect(disabledMarket().getAttribute('aria-disabled')).toBe('true')
+    expect(disabledMarket().getAttribute('title')).toBe('Inicia sesión para acceder a Mercado')
     cleanup()
 
     show(USER)
     await settle()
     expect(marketLink()).toBeNull()
+    expect(disabledMarket().getAttribute('aria-disabled')).toBe('true')
+    expect(disabledMarket().getAttribute('title')).toBe('Mercado aún no está disponible')
   })
 
-  it('is shown to a Visitor (sign-in on the page) right after Screener once the page is public', async () => {
+  it('stays disabled for a Visitor after the page is available to registered users', async () => {
     vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
     show(null)
-    const link = await screen.findByRole('link', { name: 'Mercado' })
-    expect(link.getAttribute('href')).toBe('/mercado')
+    await settle()
+    expect(marketLink()).toBeNull()
+    expect(disabledMarket().getAttribute('aria-disabled')).toBe('true')
     const tabs = screen.getByRole('navigation', { name: 'Secciones principales' }).querySelectorAll('a')
-    expect([...tabs].map((tab) => tab.textContent)).toEqual(['Screener', 'Mercado', 'Cómo funciona', 'Portal'])
+    expect([...tabs].map((tab) => tab.textContent)).toEqual(['Screener', 'Cómo funciona', 'Portal'])
+    expect([...screen.getByRole('navigation', { name: 'Secciones principales' }).children].map((tab) => tab.textContent)).toEqual(['Screener', 'Mercado', 'Cómo funciona', 'Portal'])
   })
 
   it('is shown to Admins as a preview while the page is not public', async () => {

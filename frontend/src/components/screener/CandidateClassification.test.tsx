@@ -26,15 +26,16 @@ afterEach(() => { cleanup(); window.localStorage.clear() })
 
 it('shows translated sector and HQ country, source industry, and honest unknowns in Spanish', () => {
   const { container } = show()
+  const headers = screen.getAllByRole('columnheader').map((header) => header.textContent)
+  expect(headers.slice(0, 5)).toEqual(['Símbolo / Empresa', 'Sector', 'Industria', 'País de sede', 'Cierre'])
   const row = screen.getByRole('row', { name: /ACN/ })
-  expect(within(row).getByText('Tecnología de la información')).toBeTruthy()
-  expect(within(row).getByText('IT Consulting & Other Services')).toBeTruthy()
-  expect(within(row).getByText('Irlanda')).toBeTruthy()
-  expect(within(row).getByText('País de sede:')).toBeTruthy()
+  const cells = within(row).getAllByRole('cell')
+  expect(cells.slice(0, 3).map((cell) => cell.textContent)).toEqual([
+    'Tecnología de la información', 'IT Consulting & Other Services', 'Irlanda',
+  ])
   const empty = screen.getByRole('row', { name: /CTVA/ })
-  expect(within(empty.querySelector('dl')!).getAllByText('—')).toHaveLength(3)
+  expect(within(empty).getAllByRole('cell').slice(0, 3).map((cell) => cell.textContent)).toEqual(['—', '—', '—'])
   expect(container.querySelector('.overflow-x-auto')).toBeTruthy()
-  expect(container.querySelector('dl.flex.flex-wrap')).toBeTruthy()
 })
 
 it('shows English fixed labels while preserving the original sub-industry', () => {
@@ -44,5 +45,5 @@ it('shows English fixed labels while preserving the original sub-industry', () =
   expect(within(row).getByText('Information technology')).toBeTruthy()
   expect(within(row).getByText('IT Consulting & Other Services')).toBeTruthy()
   expect(within(row).getByText('Ireland')).toBeTruthy()
-  expect(within(row).getByText('HQ country:')).toBeTruthy()
+  expect(screen.getByRole('columnheader', { name: 'HQ country' })).toBeTruthy()
 })

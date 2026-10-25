@@ -1,5 +1,17 @@
 # Progress Log
 
+## Screener classification columns — 2026-10-25
+
+- Moved Sector, GICS sub-industry and headquarters country from the ticker/company cell into three adjacent Candidate table columns, before price and technical values. The public API, ranking, filters, null handling and mobile horizontal scrolling are unchanged.
+- Focused Spanish/English CandidateClassification Vitest: 2 passed, including header order and per-row column values. Full post-change `.\init.ps1` exited 0: Laravel 853 passed / 6 skipped, SPA lint/typecheck (existing RequireAuth.test warning only), 351 Vitest in 45 files, production build, engine 101 passed. `git diff --check` passed. Production not deployed in this session.
+- Prior Mercado tab changes from this session remain uncommitted; the legal publication gate remains off by the owner's explicit choice.
+
+## Mercado tab visibility follow-up — 2026-10-25
+
+- The Mercado tab is now always visible in the header. It is a link only when the signed-in session has `capabilities.market_context`; guests and denied accounts see a muted, noninteractive tab with a localized reason. The server's `view-market-context` ability remains the access gate.
+- The owner reconfirmed that `MARKET_CONTEXT_PUBLIC` stays off until the legal notice with the FRED terms clause is published. Registered Users therefore see a disabled tab for now; Admins retain preview access. Once the flag is enabled, Registered Users get an active tab and Visitors continue to see a disabled one.
+- Focused AppHeader Vitest: 5 passed. Full post-change `.\init.ps1` exited 0: Laravel 853 passed / 6 skipped, SPA lint/typecheck (existing RequireAuth.test warning only), 351 Vitest in 45 files, production build, engine 101 passed. `git diff --check` and feature-list JSON parsing passed. Production not deployed in this session.
+
 ## Stock comparison specification (`stock-comparison`, not started) — 2026-10-24
 
 - Added `docs/specs/stock-comparison.md` and a backlog entry for a public, shareable comparison of two to four active stocks. Owner chose daily price history and technical indicators for the first version; fundamentals SEC are outside scope. The spec defines a bounded stock search, exact common-date alignment with each price line indexed to 100, dated latest indicators, URL state, es/en responsive UI and verification. No application code or production behavior changed.

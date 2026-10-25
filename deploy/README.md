@@ -105,9 +105,10 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    (punto 10).
 10. Contexto de mercado (`market-context-ui`, `docs/specs/market-context-ui.md`): página `/mercado`,
    `GET /api/market-context` (+ historia) y la pestaña Admin «Contexto de mercado». **Desactivada para el
-   público por defecto** (`MARKET_CONTEXT_PUBLIC=false`): solo los administradores ven el enlace «Mercado»,
-   la página (con el aviso «Vista previa») y la API; el resto recibe 404 y «Esta página aún no está
-   disponible». Tras el despliegue, como Admin: abre `/mercado` y `/admin/market-context`, compara el
+   público por defecto** (`MARKET_CONTEXT_PUBLIC=false`): solo los administradores pueden activar la pestaña
+   «Mercado», abrir la página (con el aviso «Vista previa») y consultar la API. Los demás ven la pestaña
+   desactivada; la página responde 404 a usuarios sin acceso (401 a visitantes). Tras el despliegue, como Admin:
+   abre `/mercado` y `/admin/market-context`, compara el
    entorno (fecha 2026-10-22 o posterior, etiqueta y puntuación), la distribución y las fechas de cada serie
    con la base de datos, y abre cada historia en 1 y 3 años. **Decisión del titular (2026-10-23, opción b):**
    no se activa hasta que el aviso legal (`/aviso-legal`, que ya incluye la cláusula de las condiciones de uso
@@ -118,8 +119,9 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
 
    **Solo usuarios registrados (`market-context-patterns`, decisión del titular 2026-10-23).** Activar
    `MARKET_CONTEXT_PUBLIC` significa que lo ven los **usuarios registrados**, nunca los visitantes: sin sesión,
-   el enlace «Mercado», `/mercado`, la franja «Contexto de mercado» del gráfico y los filtros «Contexto
-   sectorial» del Screener solo muestran un aviso para iniciar sesión, y toda la API de contexto responde 401.
+   la pestaña «Mercado» permanece visible pero desactivada; `/mercado`, la franja «Contexto de mercado» del
+   gráfico y los filtros «Contexto sectorial» del Screener muestran un aviso para iniciar sesión, y toda la API
+   de contexto responde 401.
    El acceso es una única habilidad, `view-market-context` (`AppServiceProvider`), punto de entrada de un
    futuro plan de pago. La migración añade `screener_rows.sector_trend` y `sector_rs_rank` (las rellena el
    `screener:refresh` del despliegue). Tras el despliegue, con la bandera aún apagada: como Admin, abre el

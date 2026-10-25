@@ -155,6 +155,8 @@ export const es = {
     admin: 'Admin',
     portal: 'Portal',
     market: 'Mercado',
+    marketSignIn: 'Inicia sesión para acceder a Mercado',
+    marketUnavailable: 'Mercado aún no está disponible',
   },
   meta: {
     homeTitle: 'Chartiko | Screener de análisis técnico de acciones',

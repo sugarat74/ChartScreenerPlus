@@ -40,6 +40,15 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
             <th scope="col" className="px-4 py-2">
               {t('screener.colSymbol')}
             </th>
+            <th scope="col" className="px-4 py-2">
+              {t('screener.classificationSector')}
+            </th>
+            <th scope="col" className="px-4 py-2">
+              {t('screener.classificationIndustry')}
+            </th>
+            <th scope="col" className="px-4 py-2">
+              {t('screener.classificationCountry')}
+            </th>
             <th scope="col" className="px-4 py-2 text-right">
               {t('screener.colClose')}
             </th>
@@ -63,7 +72,7 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
 
             return (
               <tr key={candidate.ticker} className="border-b border-outline-variant align-top">
-                <th scope="row" className="px-4 py-2 text-left font-normal">
+                <th scope="row" className="min-w-44 px-4 py-2 text-left font-normal">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       to={`/instruments/${encodeURIComponent(candidate.ticker)}`}
@@ -78,11 +87,6 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
                   <p className="max-w-56 truncate text-xs text-on-surface-variant">
                     {candidate.company}
                   </p>
-                  <dl className="mt-1 flex max-w-72 flex-wrap gap-x-2 gap-y-0.5 text-[10px] leading-4 text-on-surface-variant">
-                    <div><dt className="inline font-bold">{t('screener.classificationSector')}: </dt><dd className="inline">{sectorLabel(candidate.sector, t)}</dd></div>
-                    <div><dt className="inline font-bold">{t('screener.classificationIndustry')}: </dt><dd className="inline break-words">{candidate.industry || t('screener.classificationUnknown')}</dd></div>
-                    <div><dt className="inline font-bold">{t('screener.classificationCountry')}: </dt><dd className="inline">{countryLabel(candidate.country, t)}</dd></div>
-                  </dl>
                   {showCompanyCardLink ? (
                     <Link
                       to={`/instruments/${encodeURIComponent(candidate.ticker)}#${COMPANY_CARD_ANCHOR}`}
@@ -93,6 +97,16 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
                     </Link>
                   ) : null}
                 </th>
+
+                <td className="min-w-36 px-4 py-2 text-xs text-on-surface-variant">
+                  {sectorLabel(candidate.sector, t)}
+                </td>
+                <td className="min-w-44 max-w-64 break-words px-4 py-2 text-xs text-on-surface-variant">
+                  {candidate.industry || t('screener.classificationUnknown')}
+                </td>
+                <td className="min-w-28 px-4 py-2 text-xs text-on-surface-variant">
+                  {countryLabel(candidate.country, t)}
+                </td>
 
                 <td className="px-4 py-2 text-right font-mono text-xs text-on-surface">
                   {formatPrice(candidate.close)}

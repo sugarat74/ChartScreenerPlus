@@ -8,6 +8,8 @@
 
 ## Goal and job story
 
+**Presentation update (2026-10-25, user request):** Sector, GICS sub-industry and headquarters country now occupy three separate Candidate table columns immediately to the right of ticker/company. This supersedes the compact first-cell layout described below; data sourcing, public access and null handling are unchanged.
+
 When I review ranked Candidates, I can see the sector, GICS sub-industry and country of each stock beside its name, in a compact desktop/mobile layout. The information comes from the committed S&P 500 constituent dataset, is available to Visitors and is never inferred from the AI Company Card.
 
 ## Non-goals
