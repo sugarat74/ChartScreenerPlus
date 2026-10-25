@@ -257,6 +257,7 @@ Además de usarse para construir, la IA forma parte de Chartiko, con salvaguarda
    - Las diferencias entre entornos: Windows y PowerShell 5.1 en local frente a Linux en el VPS, y SQLite frente a PostgreSQL.
    - Mantener la documentación al día en cada feature.
    - El tamaño de las specs: algunas features rozaron el límite y hubo que dividirlas o dejarlas en fases.
+   - El coste en tokens creció con el historial: `feature_list.json` y `PROGRESS.md` llegaron a ~150k tokens leídos en cada arranque. Se resolvió archivando lo cerrado en `docs/archive/`; ver `docs/eficiencia-de-tokens-con-agentes.md`.
 
 ## 12. Dónde mirar en el repositorio
 
@@ -264,7 +265,8 @@ Además de usarse para construir, la IA forma parte de Chartiko, con salvaguarda
 |---|---|
 | Las reglas que siguen los agentes | `AGENTS.md`, `CONSTRAINTS.md` |
 | El backlog y su estado | `feature_list.json` |
-| El diario de desarrollo | `PROGRESS.md` |
+| El diario de desarrollo | `PROGRESS.md` (sesiones antiguas en `docs/archive/progress-log.md`) |
+| Cómo contener el coste en tokens | `docs/eficiencia-de-tokens-con-agentes.md` |
 | Una spec completa de ejemplo | `docs/specs/ingestion-scheduler.md` |
 | Las skills | `.opencode/skills/<nombre>/SKILL.md` |
 | Los roles de los agentes | `.opencode/agents/{planner,implementer,validator}.md` |
