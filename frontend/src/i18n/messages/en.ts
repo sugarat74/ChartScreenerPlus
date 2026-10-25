@@ -152,6 +152,8 @@ export const en: Messages = {
     admin: 'Admin',
     portal: 'Portal',
     market: 'Market',
+    marketSignIn: 'Sign in to access Market',
+    marketUnavailable: 'Market is not available yet',
   },
   meta: {
     homeTitle: 'Chartiko | Technical analysis stock screener',
