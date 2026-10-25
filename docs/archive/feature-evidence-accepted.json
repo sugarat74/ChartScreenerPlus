@@ -1784,5 +1784,36 @@
       "2026-10-25 independent validator accept: re-derived industry/country for all 503 tickers from sp500-classification-source.csv with the documented rules (0 mismatches; original ticker/company/sector/exchange unchanged; nulls CTVA/PSKY/WBD industry+country, XYZ country). Reviewed migrations (additive, backfill only new fields), seeder, ScreenerRowBuilder/CandidateQuery (payload only, no filter/order change), SPA table and tests. Production /api/screener paged 503/503 rows matching the dataset (US 475, IE 11, GB 5, CH 3, BM 2, NL 2, CA 1, null 4), no ETFs; Playwright 390 px (table scrolls inside its container, no page overflow) and 1440 px show the three es columns. .\\init.ps1 exit 0: Laravel 853 passed/6 skipped (6567 assertions), SPA lint (existing RequireAuth.test warning), 351 Vitest, build, engine 101 passed. Low follow-ups: future-dated migration names, unlabeled dash for unknowns, non-sticky ticker column on mobile."
     ],
     "notes": "Implemented from the existing offline S&P 500 dataset plus a dated classification source snapshot. Sector/industry/country filters remain outside this feature. Independently accepted 2026-10-25."
+  },
+  {
+    "id": "screener-table-column-controls",
+    "area": "screener",
+    "title": "Filter and sort Candidates by table columns",
+    "user_visible_behavior": "A user can filter and sort the Candidate table by every displayed column, with criteria applied across the full result set before pagination.",
+    "depends_on": [
+      "screener-api",
+      "screener-filters-ui",
+      "candidate-list-ranking",
+      "screener-pagination",
+      "screener-precomputed",
+      "saved-screeners",
+      "screener-company-classification"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Every displayed column exposes its specified filter and ascending/descending sort behavior",
+      "Filtering, sorting, counting and pagination are consistent and server-side",
+      "Column filter/sort state round-trips through URLs and Saved Screeners",
+      "Visitors and registered users retain access and all criteria are validated safely"
+    ],
+    "evidence": [
+      "2026-10-25 implementation: ScreenerFilterParser adds search/sector/industry/country/rvol_max/close_min/close_max/change_min/change_max (strict lengths, GICS enum, ISO alpha-2, NUMERIC_BOUNDS, inverted pairs 422 incl. rsi_min>rsi_max) and COLUMN_SORTS (18 sorts total); CandidateQuery applies them in SQL before count/paging with bound wildcard-escaped LIKE and a fixed sort map (nulls last, ticker tie-break, byte-order text). Saved Screeners store a twenty-key definition re-checked by the parser; AI schema/prompt/response unchanged (11 keys, 6 sorts).",
+      "php artisan test tests/Feature/ScreenerColumnControlsTest.php: 14 tests (search incl. literal %/_ and SQL fragment, paging, classification nulls, inclusive AND ranges, invalid/inverted 422 incl. es message, all 18 sorts with ties/nulls, pagination order, malformed sort, Visitor access vs sector_trend 401, old queries unchanged, saved round trip == URL filters, invalid saved criteria, legacy rows, AI schema unchanged). Focused filter Screener|SavedScreeners|AlertEvaluation|AlertSectorContext|ChartPatternsApi|Localization: 191 passed.",
+      "Vitest screenerColumns.test.ts (URL parse/patch/normalize/swap, request key, clear keeps sort, saved round trip and es/en summaries, column sort/filter helpers) and ScreenerColumnControls.test.tsx (heading aria-sort/labels es/en, chips, text/range/select/signals editors, Escape, ScreenerPage URL+API integration, empty state, shared URL restore).",
+      ".\\init.ps1 exit 0: Laravel 867 passed / 6 skipped (6846 assertions), SPA lint/typecheck (existing RequireAuth.test warning), Vitest 375 in 47 files, build, engine 101 passed; git diff --check clean.",
+      "Manual Playwright against a scratch SQLite DB (503 seeded rows, dev DB untouched): 1440 px and 390 px, sector=Energy 21/21 across limit=10 pages, close/rsi sorts with nulls last, chips visible, keyboard Enter opens editor with focus in field and Escape returns focus to the toggle, no page-level horizontal overflow; curl close_min>close_max -> 422 localized, malicious sort -> 422. PostgreSQL path covered only by CI.",
+      "Independent validator verdict accept (2026-10-25): reran .\\init.ps1 exit 0 (Laravel 867 passed / 6 skipped, 6846 assertions; SPA lint/typecheck with existing RequireAuth.test warning; 375 Vitest in 47 files; build; engine 101) and focused screener/saved/AI/alerts suites 80 passed; reviewed full diff and changed tests (not weakened); accepted all seven declared deviations. Non-blocking: CI test-pgsql must pass before merge (LIKE escape, collate \"C\" sorts); table headings hidden on empty results (chips/sort select remain); AI answers with inverted RSI now invalid_provider_response; legacy saved rows with rsi_min > rsi_max match nothing in alerts."
+    ],
+    "notes": "Deliberate contract tightening: rsi_min/rsi_max now bounded 0..100 and min_rvol 0..1000, and an inverted range is 422 instead of an empty 200 (ScreenerApiTest updated). Sector and country sort by canonical GICS name / ISO code, not by localized label (sort labels say so). SQLite lower() is ASCII-only, so non-ASCII case-insensitive matching is exact only on PostgreSQL. Independently accepted 2026-10-25."
   }
 ]

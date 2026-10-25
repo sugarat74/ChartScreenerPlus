@@ -13,6 +13,7 @@ import { useSignedIn } from '../../auth/useSignedIn.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerCandidate } from '../../lib/api.ts'
 import CandidateTable from './CandidateTable.tsx'
+import type { CandidateTableControls } from './CandidateTable.tsx'
 
 export type ScreenerStatus = 'loading' | 'refreshing' | 'ready' | 'error'
 
@@ -23,6 +24,8 @@ interface CandidateResultsProps {
   error: string | null
   onRetry: () => void
   onClearFilters: () => void
+  /** Column sort/filter controls for the table headings (screener-table-column-controls). */
+  controls?: CandidateTableControls
 }
 
 function LoadingPanel() {
@@ -114,6 +117,7 @@ export default function CandidateResults({
   error,
   onRetry,
   onClearFilters,
+  controls,
 }: CandidateResultsProps) {
   const { t } = useI18n()
   const signedIn = useSignedIn()
@@ -136,7 +140,7 @@ export default function CandidateResults({
       {candidates.length === 0 ? (
         <EmptyPanel hasFilters={hasFilters} onClearFilters={onClearFilters} />
       ) : (
-        <CandidateTable candidates={candidates} showCompanyCardLink={signedIn} />
+        <CandidateTable candidates={candidates} showCompanyCardLink={signedIn} controls={controls} />
       )}
     </div>
   )

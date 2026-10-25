@@ -791,7 +791,7 @@
     "id": "screener-table-column-controls",
     "area": "screener",
     "title": "Filter and sort Candidates by table columns",
-    "user_visible_behavior": "A user can filter and sort the Candidate table by every displayed column, with criteria applied across the full result set before pagination.",
+    "status": "accepted",
     "depends_on": [
       "screener-api",
       "screener-filters-ui",
@@ -800,13 +800,6 @@
       "screener-precomputed",
       "saved-screeners",
       "screener-company-classification"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Every displayed column exposes its specified filter and ascending/descending sort behavior",
-      "Filtering, sorting, counting and pagination are consistent and server-side",
-      "Column filter/sort state round-trips through URLs and Saved Screeners",
-      "Visitors and registered users retain access and all criteria are validated safely"
     ]
   }
 ]

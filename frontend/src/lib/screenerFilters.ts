@@ -2,12 +2,15 @@
  * Screener filter helpers. Pure functions with no React dependency so the URL
  * round-trip (parse -> patch -> canonical key) is auditable and deterministic.
  *
- * The SPA owns exactly eleven query keys, all named after the screener API
+ * The SPA owns exactly twenty query keys, all named after the screener API
  * params: the criteria (`signal`, `rsi_min`, `rsi_max`, `min_rvol`,
- * `price_above_sma200`, `ma_cross`, `pattern`, `pattern_status`, and the
- * sector context keys `sector_trend` and `sector_rs_rank_max` of
- * market-context-patterns) plus the ranking key `sort`; any other query param
- * (a campaign tag, a future `limit`) is preserved untouched.
+ * `price_above_sma200`, `ma_cross`, `pattern`, `pattern_status`, the sector
+ * context keys `sector_trend` and `sector_rs_rank_max` of
+ * market-context-patterns, and the table column keys `search`, `sector`,
+ * `industry`, `country`, `rvol_max`, `close_min`, `close_max`, `change_min`,
+ * `change_max` of screener-table-column-controls) plus the ranking key
+ * `sort`; any other query param (a campaign tag, `page`) is preserved
+ * untouched.
  */
 
 import type {
@@ -21,6 +24,11 @@ import type {
   ScreenerSort,
 } from './api.ts'
 import type { MessageKey, Translate } from '../i18n/translate.ts'
+import {
+  CLASSIFICATION_SECTORS,
+  countryLabel,
+  sectorLabel,
+} from './companyClassification.ts'
 
 /** Canonical order used for the URL and for deterministic request keys. */
 export const SCREENER_SIGNAL_TYPES: readonly ScreenerSignalType[] = [
@@ -76,15 +84,50 @@ export const MIN_RVOL_PRESETS: readonly number[] = [1, 1.5, 2, 3]
 /** API default ranking; also what an absent/invalid `sort` resolves to. */
 export const DEFAULT_SCREENER_SORT: ScreenerSort = 'rvol_desc'
 
-/** The six selectable ranking orders (display order); labels live in the catalogs. */
+/**
+ * Every selectable ranking order (display order: the original six first, each
+ * followed by its opposite direction, then the remaining table columns);
+ * labels live in the catalogs.
+ */
 export const SCREENER_SORT_OPTIONS: readonly { value: ScreenerSort; labelKey: MessageKey }[] = [
   { value: 'rvol_desc', labelKey: 'sorts.rvol_desc' },
+  { value: 'rvol_asc', labelKey: 'sorts.rvol_asc' },
   { value: 'signal_count_desc', labelKey: 'sorts.signal_count_desc' },
+  { value: 'signal_count_asc', labelKey: 'sorts.signal_count_asc' },
   { value: 'change_desc', labelKey: 'sorts.change_desc' },
   { value: 'change_asc', labelKey: 'sorts.change_asc' },
   { value: 'rsi_desc', labelKey: 'sorts.rsi_desc' },
   { value: 'rsi_asc', labelKey: 'sorts.rsi_asc' },
+  { value: 'close_desc', labelKey: 'sorts.close_desc' },
+  { value: 'close_asc', labelKey: 'sorts.close_asc' },
+  { value: 'company_asc', labelKey: 'sorts.company_asc' },
+  { value: 'company_desc', labelKey: 'sorts.company_desc' },
+  { value: 'sector_asc', labelKey: 'sorts.sector_asc' },
+  { value: 'sector_desc', labelKey: 'sorts.sector_desc' },
+  { value: 'industry_asc', labelKey: 'sorts.industry_asc' },
+  { value: 'industry_desc', labelKey: 'sorts.industry_desc' },
+  { value: 'country_asc', labelKey: 'sorts.country_asc' },
+  { value: 'country_desc', labelKey: 'sorts.country_desc' },
 ]
+
+/** Max length of the `search` (ticker/company) fragment; mirrors the API. */
+export const SEARCH_MAX_LENGTH = 100
+
+/** Max length of the `industry` fragment; mirrors the API. */
+export const INDUSTRY_MAX_LENGTH = 120
+
+/** Inclusive bounds of each numeric column; mirrors the API. */
+export const NUMERIC_BOUNDS = {
+  rsi: [0, 100],
+  rvol: [0, 1000],
+  close: [0, 1_000_000],
+  change: [-100, 1000],
+} as const satisfies Record<string, readonly [number, number]>
+
+export type NumericColumn = keyof typeof NUMERIC_BOUNDS
+
+/** The GICS sector names accepted by `sector` (canonical API values). */
+export const SCREENER_SECTORS: readonly string[] = CLASSIFICATION_SECTORS
 
 export const EMPTY_SCREENER_FILTERS: ScreenerFilters = {
   signals: [],
@@ -97,13 +140,22 @@ export const EMPTY_SCREENER_FILTERS: ScreenerFilters = {
   patternStatus: 'any',
   sectorTrend: null,
   sectorRsRankMax: null,
+  search: null,
+  sector: null,
+  industry: null,
+  country: null,
+  rvolMax: null,
+  closeMin: null,
+  closeMax: null,
+  changeMin: null,
+  changeMax: null,
   sort: DEFAULT_SCREENER_SORT,
 }
 
 /**
- * The six criterion fields only, for "Limpiar filtros". `sort` is a ranking
- * preference, not a filter, so clearing criteria must preserve the user's
- * selected order.
+ * Every criterion field (technical, sector context and table column), for
+ * "Limpiar filtros". `sort` is a ranking preference, not a filter, so
+ * clearing criteria must preserve the user's selected order.
  */
 export const EMPTY_SCREENER_CRITERIA: Partial<ScreenerFilters> = {
   signals: [],
@@ -116,6 +168,15 @@ export const EMPTY_SCREENER_CRITERIA: Partial<ScreenerFilters> = {
   patternStatus: 'any',
   sectorTrend: null,
   sectorRsRankMax: null,
+  search: null,
+  sector: null,
+  industry: null,
+  country: null,
+  rvolMax: null,
+  closeMin: null,
+  closeMax: null,
+  changeMin: null,
+  changeMax: null,
 }
 
 function isKnownSignalType(value: string): value is ScreenerSignalType {
@@ -168,7 +229,10 @@ export function parseRsiInput(raw: string | null): number | null {
   return Math.min(100, Math.max(0, value))
 }
 
-/** Parse one Min RVOL value: empty/invalid/negative -> `null` (off). */
+/**
+ * Parse one Min RVOL value: empty/invalid/negative -> `null` (off); above the
+ * API bound it is clamped to it.
+ */
 function parseMinRvol(raw: string | null): number | null {
   if (raw === null || raw.trim() === '') {
     return null
@@ -177,7 +241,62 @@ function parseMinRvol(raw: string | null): number | null {
   if (!Number.isFinite(value) || value < 0) {
     return null
   }
-  return value
+  return Math.min(value, NUMERIC_BOUNDS.rvol[1])
+}
+
+/**
+ * Parse one numeric column bound: empty/invalid -> `null` (off), otherwise a
+ * finite number clamped to the column's API bounds.
+ */
+export function parseBoundInput(raw: string | null | undefined, column: NumericColumn): number | null {
+  if (raw === null || raw === undefined || raw.trim() === '') {
+    return null
+  }
+  const value = Number(raw)
+  if (!Number.isFinite(value)) {
+    return null
+  }
+  const [min, max] = NUMERIC_BOUNDS[column]
+  return Math.min(max, Math.max(min, value))
+}
+
+/** A stored/typed number re-parsed through `parseBoundInput`. */
+function boundNumber(value: unknown, column: NumericColumn): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? parseBoundInput(String(value), column) : null
+}
+
+/**
+ * A `[min, max]` pair in order: an inverted pair (the API would answer `422`)
+ * is swapped, so a hand-edited URL keeps its meaning and never errors.
+ */
+function orderedRange(min: number | null, max: number | null): [number | null, number | null] {
+  return min !== null && max !== null && min > max ? [max, min] : [min, max]
+}
+
+/**
+ * Normalize a free-text fragment like the API: control characters become
+ * spaces, format characters are removed, whitespace collapses, blank is
+ * `null` and the text is cut to `max` characters (code points).
+ */
+export function parseTextInput(raw: unknown, max: number): string | null {
+  if (typeof raw !== 'string') {
+    return null
+  }
+  const text = raw
+    .replace(/\p{Cf}+/gu, '')
+    .replace(/[\p{Cc}\s]+/gu, ' ')
+    .trim()
+  return text === '' ? null : Array.from(text).slice(0, max).join('').trim()
+}
+
+/** A known GICS sector name, otherwise `null` (off). */
+function parseSector(raw: unknown): string | null {
+  return typeof raw === 'string' && SCREENER_SECTORS.includes(raw) ? raw : null
+}
+
+/** Two ASCII letters upper-cased (ISO alpha-2), otherwise `null` (off). */
+function parseCountry(raw: unknown): string | null {
+  return typeof raw === 'string' && /^[A-Za-z]{2}$/.test(raw) ? raw.toUpperCase() : null
 }
 
 function parseMaCross(raw: string | null): ScreenerMaCross | null {
@@ -200,12 +319,19 @@ export function parseScreenerSort(value: string | null): ScreenerSort {
 export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
   const rawSignals = params.getAll('signal').flatMap((value) => value.split(','))
   const patterns = normalizePatterns(params.getAll('pattern').flatMap((value) => value.split(',')))
+  const [rsiMin, rsiMax] = orderedRange(parseRsiInput(params.get('rsi_min')), parseRsiInput(params.get('rsi_max')))
+  const [minRvol, rvolMax] = orderedRange(parseMinRvol(params.get('min_rvol')), parseBoundInput(params.get('rvol_max'), 'rvol'))
+  const [closeMin, closeMax] = orderedRange(parseBoundInput(params.get('close_min'), 'close'), parseBoundInput(params.get('close_max'), 'close'))
+  const [changeMin, changeMax] = orderedRange(
+    parseBoundInput(params.get('change_min'), 'change'),
+    parseBoundInput(params.get('change_max'), 'change'),
+  )
 
   return {
     signals: normalizeSignals(rawSignals),
-    rsiMin: parseRsiInput(params.get('rsi_min')),
-    rsiMax: parseRsiInput(params.get('rsi_max')),
-    minRvol: parseMinRvol(params.get('min_rvol')),
+    rsiMin,
+    rsiMax,
+    minRvol,
     priceAboveSma200: params.get('price_above_sma200') === '1' || params.get('price_above_sma200') === 'true',
     maCross: parseMaCross(params.get('ma_cross')),
     patterns,
@@ -213,6 +339,15 @@ export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
     patternStatus: patterns.length > 0 ? parsePatternStatus(params.get('pattern_status')) : 'any',
     sectorTrend: parseSectorTrend(params.get('sector_trend')),
     sectorRsRankMax: parseSectorRsRankMax(params.get('sector_rs_rank_max')),
+    search: parseTextInput(params.get('search'), SEARCH_MAX_LENGTH),
+    sector: parseSector(params.get('sector')),
+    industry: parseTextInput(params.get('industry'), INDUSTRY_MAX_LENGTH),
+    country: parseCountry(params.get('country')),
+    rvolMax,
+    closeMin,
+    closeMax,
+    changeMin,
+    changeMax,
     sort: parseScreenerSort(params.get('sort')),
   }
 }
@@ -270,6 +405,32 @@ export function patchScreenerFilters(
     const rank = parseSectorRsRankMax(patch.sectorRsRankMax)
     setOrDelete(next, 'sector_rs_rank_max', rank === null ? null : String(rank))
   }
+  if (patch.search !== undefined) {
+    setOrDelete(next, 'search', parseTextInput(patch.search, SEARCH_MAX_LENGTH))
+  }
+  if (patch.sector !== undefined) {
+    setOrDelete(next, 'sector', parseSector(patch.sector))
+  }
+  if (patch.industry !== undefined) {
+    setOrDelete(next, 'industry', parseTextInput(patch.industry, INDUSTRY_MAX_LENGTH))
+  }
+  if (patch.country !== undefined) {
+    setOrDelete(next, 'country', parseCountry(patch.country))
+  }
+  const bounds: [keyof ScreenerFilters, string, NumericColumn][] = [
+    ['rvolMax', 'rvol_max', 'rvol'],
+    ['closeMin', 'close_min', 'close'],
+    ['closeMax', 'close_max', 'close'],
+    ['changeMin', 'change_min', 'change'],
+    ['changeMax', 'change_max', 'change'],
+  ]
+  for (const [field, key, column] of bounds) {
+    const value = patch[field]
+    if (value !== undefined) {
+      const bound = boundNumber(value, column)
+      setOrDelete(next, key, bound === null ? null : String(bound))
+    }
+  }
   if (patch.sort !== undefined) {
     setOrDelete(next, 'sort', patch.sort === DEFAULT_SCREENER_SORT ? null : patch.sort)
   }
@@ -277,18 +438,23 @@ export function patchScreenerFilters(
   return next
 }
 
+/** The table column criteria that are single values (one count each). */
+function columnCriteria(filters: ScreenerFilters): unknown[] {
+  return [
+    filters.search,
+    filters.sector,
+    filters.industry,
+    filters.country,
+    filters.rvolMax,
+    filters.closeMin,
+    filters.closeMax,
+    filters.changeMin,
+    filters.changeMax,
+  ]
+}
+
 export function hasActiveFilters(filters: ScreenerFilters): boolean {
-  return (
-    filters.signals.length > 0 ||
-    filters.rsiMin !== null ||
-    filters.rsiMax !== null ||
-    filters.minRvol !== null ||
-    filters.priceAboveSma200 ||
-    filters.maCross !== null ||
-    filters.patterns.length > 0 ||
-    filters.sectorTrend !== null ||
-    filters.sectorRsRankMax !== null
-  )
+  return countActiveFilters(filters) > 0
 }
 
 /** Number of active criteria, used for the "Limpiar filtros" affordance. */
@@ -302,7 +468,8 @@ export function countActiveFilters(filters: ScreenerFilters): number {
     (filters.maCross !== null ? 1 : 0) +
     filters.patterns.length +
     (filters.sectorTrend !== null ? 1 : 0) +
-    (filters.sectorRsRankMax !== null ? 1 : 0)
+    (filters.sectorRsRankMax !== null ? 1 : 0) +
+    columnCriteria(filters).filter((value) => value !== null).length
   )
 }
 
@@ -332,14 +499,22 @@ export function screenerFiltersKey(filters: ScreenerFilters): string {
     filters.patterns.length > 0 ? filters.patternStatus : 'any',
     filters.sectorTrend ?? '',
     filters.sectorRsRankMax ?? '',
+    // Text values are JSON-encoded so a `|` typed in a fragment cannot
+    // collide with the separator.
+    JSON.stringify([filters.search, filters.sector, filters.industry, filters.country]),
+    filters.rvolMax ?? '',
+    filters.closeMin ?? '',
+    filters.closeMax ?? '',
+    filters.changeMin ?? '',
+    filters.changeMax ?? '',
     filters.sort,
   ].join('|')
 }
 
 /**
- * Serialize the live filter state into the canonical eleven-key definition
+ * Serialize the live filter state into the canonical twenty-key definition
  * that is stored with a Saved Screener (API param names, `sort` included). The
- * SPA always emits all eleven keys, so a stored definition is always complete
+ * SPA always emits all twenty keys, so a stored definition is always complete
  * and re-appliable without defaults.
  */
 export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreenerFilters {
@@ -354,6 +529,15 @@ export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreene
     pattern_status: filters.patterns.length > 0 ? filters.patternStatus : 'any',
     sector_trend: filters.sectorTrend,
     sector_rs_rank_max: filters.sectorRsRankMax,
+    search: filters.search,
+    sector: filters.sector,
+    industry: filters.industry,
+    country: filters.country,
+    rvol_max: filters.rvolMax,
+    close_min: filters.closeMin,
+    close_max: filters.closeMax,
+    change_min: filters.changeMin,
+    change_max: filters.changeMax,
     sort: filters.sort,
   }
 }
@@ -373,16 +557,26 @@ function storedNumber(value: unknown): number | null {
 export function deserializeScreenerFilters(
   payload: SavedScreenerFilters,
 ): Partial<ScreenerFilters> {
-  const rsiMin = storedNumber(payload.rsi_min)
-  const rsiMax = storedNumber(payload.rsi_max)
-  const minRvol = storedNumber(payload.min_rvol)
+  const storedRsiMin = storedNumber(payload.rsi_min)
+  const storedRsiMax = storedNumber(payload.rsi_max)
+  const storedMinRvol = storedNumber(payload.min_rvol)
   const storedPatterns = normalizePatterns(Array.isArray(payload.pattern) ? payload.pattern : [])
+  const [rsiMin, rsiMax] = orderedRange(
+    storedRsiMin === null ? null : parseRsiInput(String(storedRsiMin)),
+    storedRsiMax === null ? null : parseRsiInput(String(storedRsiMax)),
+  )
+  const [minRvol, rvolMax] = orderedRange(
+    storedMinRvol !== null && storedMinRvol >= 0 ? Math.min(storedMinRvol, NUMERIC_BOUNDS.rvol[1]) : null,
+    boundNumber(payload.rvol_max, 'rvol'),
+  )
+  const [closeMin, closeMax] = orderedRange(boundNumber(payload.close_min, 'close'), boundNumber(payload.close_max, 'close'))
+  const [changeMin, changeMax] = orderedRange(boundNumber(payload.change_min, 'change'), boundNumber(payload.change_max, 'change'))
 
   return {
     signals: normalizeSignals(Array.isArray(payload.signal) ? payload.signal : []),
-    rsiMin: rsiMin === null ? null : parseRsiInput(String(rsiMin)),
-    rsiMax: rsiMax === null ? null : parseRsiInput(String(rsiMax)),
-    minRvol: minRvol !== null && minRvol >= 0 ? minRvol : null,
+    rsiMin,
+    rsiMax,
+    minRvol,
     priceAboveSma200: payload.price_above_sma200 === true,
     maCross:
       payload.ma_cross === 'bullish' || payload.ma_cross === 'bearish' ? payload.ma_cross : null,
@@ -391,6 +585,17 @@ export function deserializeScreenerFilters(
     // Absent on Screeners saved before market-context-patterns: off.
     sectorTrend: parseSectorTrend(payload.sector_trend),
     sectorRsRankMax: parseSectorRsRankMax(payload.sector_rs_rank_max),
+    // Absent on Screeners saved before screener-table-column-controls (and in
+    // the natural-language answer): off.
+    search: parseTextInput(payload.search, SEARCH_MAX_LENGTH),
+    sector: parseSector(payload.sector),
+    industry: parseTextInput(payload.industry, INDUSTRY_MAX_LENGTH),
+    country: parseCountry(payload.country),
+    rvolMax,
+    closeMin,
+    closeMax,
+    changeMin,
+    changeMax,
     sort: parseScreenerSort(typeof payload.sort === 'string' ? payload.sort : null),
   }
 }
@@ -452,12 +657,73 @@ export function describeSavedFilters(
     parts.push(t('screener.sectorContext.summaryRank', { n: sectorRank }))
   }
 
+  parts.push(...describeColumnCriteria(deserializeScreenerFilters(filters), t, formatValue))
+
   const sort = SCREENER_SORT_OPTIONS.find((option) => option.value === filters.sort)
   if (sort !== undefined) {
     parts.push(t('saved.describeSort', { label: t(sort.labelKey) }))
   }
 
   return parts.length > 0 ? parts.join(' · ') : t('saved.describeNone')
+}
+
+/**
+ * Summary of an inclusive range on a column: `Cierre 10–20`, `Cierre ≥ 10`
+ * or `Cierre ≤ 20`; `null` when both bounds are off.
+ */
+export function describeRange(
+  column: string,
+  min: number | null,
+  max: number | null,
+  t: Translate,
+  formatValue: (value: number) => string,
+): string | null {
+  if (min !== null && max !== null) {
+    return t('screener.columns.summary.between', { column, min: formatValue(min), max: formatValue(max) })
+  }
+  if (min !== null) {
+    return t('screener.columns.summary.atLeast', { column, value: formatValue(min) })
+  }
+  if (max !== null) {
+    return t('screener.columns.summary.atMost', { column, value: formatValue(max) })
+  }
+  return null
+}
+
+/**
+ * Localized summaries of the table column criteria that the technical
+ * summary does not already describe (RSI and the RVOL minimum are described
+ * with the technical criteria).
+ */
+export function describeColumnCriteria(
+  filters: Partial<ScreenerFilters>,
+  t: Translate,
+  formatValue: (value: number) => string,
+): string[] {
+  const parts: string[] = []
+  if (filters.search) {
+    parts.push(t('screener.columns.summary.search', { value: filters.search }))
+  }
+  if (filters.sector) {
+    parts.push(t('screener.columns.summary.sector', { value: sectorLabel(filters.sector, t) }))
+  }
+  if (filters.industry) {
+    parts.push(t('screener.columns.summary.industry', { value: filters.industry }))
+  }
+  if (filters.country) {
+    parts.push(t('screener.columns.summary.country', { value: countryLabel(filters.country, t) }))
+  }
+  const ranges = [
+    describeRange(t('screener.colClose'), filters.closeMin ?? null, filters.closeMax ?? null, t, formatValue),
+    describeRange(t('screener.colChange'), filters.changeMin ?? null, filters.changeMax ?? null, t, formatValue),
+    describeRange(t('screener.colRvol'), null, filters.rvolMax ?? null, t, formatValue),
+  ]
+  for (const range of ranges) {
+    if (range !== null) {
+      parts.push(range)
+    }
+  }
+  return parts
 }
 
 /**

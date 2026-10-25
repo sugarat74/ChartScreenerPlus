@@ -57,7 +57,8 @@ export const guideEs: GuideTexts = {
         },
       ],
       notes: [
-        'Ordenar por: «Volumen relativo (RVOL mayor)» (por defecto), «Confianza (más señales)» —número de señales activas, no una probabilidad—, «Variación diaria» mayor o menor y «RSI» mayor o menor. Los valores sin dato van siempre al final y los empates se ordenan por ticker.',
+        'Ordenar por: elige un orden en el selector o pulsa el encabezado de una columna (otra pulsación invierte el sentido; la flecha ▲/▼ indica el orden activo). Órdenes disponibles: «Volumen relativo (RVOL mayor)» (por defecto), «Volumen relativo (RVOL menor)», «Confianza (más señales)» y «Confianza (menos señales)» —número de señales activas, no una probabilidad—, «Variación diaria» mayor o menor, «RSI» mayor o menor, «Cierre» mayor o menor, «Empresa (A–Z)», «Empresa (Z–A)», «Sector (nombre GICS, A–Z)», «Sector (nombre GICS, Z–A)», «Industria (A–Z)», «Industria (Z–A)», «País de sede (código, A–Z)» y «País de sede (código, Z–A)». Los valores sin dato van siempre al final y los empates se ordenan por ticker.',
+        'Filtros por columna: el botón con forma de embudo junto a cada encabezado abre su filtro: texto en Símbolo / Empresa (ticker o nombre) e Industria, una lista en Sector y País de sede, mínimo y máximo (ambos incluidos) en Cierre, Var %, RVOL y RSI, y las mismas señales y patrones de los criterios técnicos en Señales. Se aplican a todos los candidatos, no solo a la página visible; aparecen como etiquetas sobre la tabla y «Limpiar filtros» también los quita.',
         'Paginación: «Anterior» y «Siguiente» recorren las páginas y «Por página» elige 25, 50, 100 o 200 candidatos. Cambiar filtros, orden o tamaño vuelve a la página 1.',
         'Los filtros, el orden y la página quedan en la dirección de la página: puedes guardarla en favoritos o compartirla y se abrirá igual.',
       ],

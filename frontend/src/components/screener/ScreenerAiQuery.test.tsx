@@ -62,6 +62,16 @@ describe('interpretedFiltersToPatch', () => {
       patternStatus: 'confirmed',
       sectorTrend: null,
       sectorRsRankMax: null,
+      // The interpreter never fills the table column keys: applying clears them.
+      search: null,
+      sector: null,
+      industry: null,
+      country: null,
+      rvolMax: null,
+      closeMin: null,
+      closeMax: null,
+      changeMin: null,
+      changeMax: null,
       sort: 'rsi_asc',
     })
   })

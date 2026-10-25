@@ -26,6 +26,12 @@ use Illuminate\Support\Facades\Gate;
  * every other param can change which rows or the order, so a bad value is a
  * `422` (see `CONSTRAINTS.md` -> Public API). Filter resolution lives in
  * `ScreenerFilterParser`, shared with the natural-language interpreter.
+ *
+ * The table column criteria (`search`, `sector`, `industry`, `country`,
+ * `close_min`/`close_max`, `change_min`/`change_max`, `rvol_max`, and the
+ * per-column `sort` values of screener-table-column-controls) are public
+ * like the technical filters: basic company metadata needs no Market Context
+ * access, and they are applied before counting and paging.
  */
 class ScreenerController extends Controller
 {

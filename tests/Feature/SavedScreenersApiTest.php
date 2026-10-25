@@ -12,8 +12,9 @@ use Tests\TestCase;
  *
  * The invariant under test is ownership: every query is scoped to
  * `$request->user()->savedScreeners()`, no endpoint accepts a `user_id`, the
- * stored definition is the canonical eleven-key filter object (including
- * `sort` and the sector context keys of market-context-patterns), and a
+ * stored definition is the canonical twenty-key filter object (including
+ * `sort`, the sector context keys of market-context-patterns and the table
+ * column keys of screener-table-column-controls), and a
  * duplicate name is a `422` on `errors.name`.
  */
 class SavedScreenersApiTest extends TestCase
@@ -31,6 +32,21 @@ class SavedScreenersApiTest extends TestCase
         'price_above_sma200' => false,
         'ma_cross' => null,
         'sort' => 'rvol_desc',
+    ];
+
+    /**
+     * The table column keys (screener-table-column-controls) when off.
+     */
+    private const COLUMN_NULLS = [
+        'search' => null,
+        'sector' => null,
+        'industry' => null,
+        'country' => null,
+        'rvol_max' => null,
+        'close_min' => null,
+        'close_max' => null,
+        'change_min' => null,
+        'change_max' => null,
     ];
 
     /**
@@ -96,6 +112,7 @@ class SavedScreenersApiTest extends TestCase
             'sort' => 'rsi_desc',
             'sector_trend' => null,
             'sector_rs_rank_max' => null,
+            ...self::COLUMN_NULLS,
         ], $saved->filters);
     }
 
@@ -363,6 +380,7 @@ class SavedScreenersApiTest extends TestCase
             'signal' => [], 'rsi_min' => null, 'rsi_max' => null, 'min_rvol' => null, 'price_above_sma200' => false,
             'ma_cross' => null, 'pattern' => [], 'pattern_status' => 'any', 'sort' => 'rvol_desc',
             'sector_trend' => 'uptrend', 'sector_rs_rank_max' => 3,
+            ...self::COLUMN_NULLS,
         ], $listed);
     }
 
@@ -373,9 +391,11 @@ class SavedScreenersApiTest extends TestCase
 
         $filters = $this->actingAs($user)->getJson('/api/screeners')->assertOk()->json('screeners.0.filters');
 
-        $this->assertCount(11, $filters);
+        $this->assertCount(20, $filters);
         $this->assertNull($filters['sector_trend']);
         $this->assertNull($filters['sector_rs_rank_max']);
+        // screener-table-column-controls: rows saved before it read as off.
+        $this->assertSame(self::COLUMN_NULLS, array_intersect_key($filters, self::COLUMN_NULLS));
     }
 
     public function test_invalid_sector_context_values_are_422(): void
