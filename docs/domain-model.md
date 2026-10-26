@@ -3,7 +3,7 @@
 ## Core Concepts
 
 - **Instrument (Ticker):** a listed security (`NVDA`), with company, sector, optional GICS sub-industry (`industry`), optional headquarters country (two-letter `country` code), exchange and a **kind**: `stock` (default) or `etf` (Market Context ETFs; chart only, never in stock features).
-- **Listing Market (planned 2026-10-26):** `US`, `XMAD` or `XETR`: calendar, close time, currency and source symbol rules of an Instrument (`instruments.market`, `instruments.currency`). See `docs/specs/multi-market-universes.md`.
+- **Listing Market (implemented by `universe-registry`):** `US`, `XMAD` or `XETR`: calendar, close time, currency and source symbol rules of an Instrument (`instruments.market`, `instruments.currency`). See `docs/specs/multi-market-universes.md`.
 - **Universe:** a named set of Instruments a Screener runs against. First real Universe: S&P 500 (default); Nasdaq-100, IBEX 35 and DAX planned, each a Screener universe with one Listing Market and currency. The `market-context` Universe holds SPY and the 11 SPDR sector ETFs and is not a Screener universe.
 - **Daily Bar (OHLCV):** one trading day for one Instrument. Stored per Instrument and date.
 - **Indicator Snapshot:** computed indicators for an Instrument on a given Daily Bar (SMA/EMA, RSI, MACD, ADX, Bollinger, RVOL...).

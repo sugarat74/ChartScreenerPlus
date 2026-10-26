@@ -24,6 +24,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SavedScreenerController;
 use App\Http\Controllers\ScreenerController;
 use App\Http\Controllers\ScreenerInterpretController;
+use App\Http\Controllers\UniverseController;
 use App\Http\Controllers\WatchlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -49,6 +50,10 @@ Route::get('/instruments/{ticker}', [InstrumentController::class, 'show']);
 // bad semantic filter/sort values are a `422` and an unknown universe is a JSON
 // `404` (`CONSTRAINTS.md` -> Public API).
 Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throttle:60,1,screener');
+
+// Public list of the Screener universes the caller can see (universe-registry):
+// the non-public ones only for an Admin; Market Context is never listed.
+Route::get('/universes', [UniverseController::class, 'index'])->middleware('throttle:60,1,universes');
 
 // Public facts for the legal pages (owner identity once configured, retention
 // figures). Anonymous and throttled; see docs/specs/legal-compliance-eu.md.

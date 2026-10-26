@@ -2,6 +2,17 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Stock comparison specification (`stock-comparison`, not started) — 2026-10-24
+
+- Added `docs/specs/stock-comparison.md` and a backlog entry for a public, shareable comparison of two to four active stocks. Owner chose daily price history and technical indicators for the first version; fundamentals SEC are outside scope. The spec defines a bounded stock search, exact common-date alignment with each price line indexed to 100, dated latest indicators, URL state, es/en responsive UI and verification. No application code or production behavior changed.
+- Planning baseline `./init.ps1` exited 0: Laravel 853 passed/6 skipped, SPA lint/typecheck, 351 Vitest in 45 files and build, engine 101 passed. Next step is implementation followed by independent validation; `stock-comparison` remains `not_started`.
+
+## Password recovery and Screener classification deployment — 2026-10-24
+
+- PR 70 passed SQLite/frontend/engine CI and the full PostgreSQL/PgBouncer job, then merged as `a558b54`. The `main` CI/deploy run 40119598548 completed successfully, including the production release activation and Screener refresh.
+- Production smoke: `/`, `/recuperar-contrasena` and `/restablecer-contrasena` return 200. Public `/api/screener` returns `sector`, `industry` and `country` for ranked Candidates (e.g. CCI, FIX, GL), with nulls retained for unmatched source values. Headless Edge screenshots at 390 px and 1440 px confirmed readable labels, compact wrapping and that price, RVOL, RSI, Signals and chart links remain present. A live reset email to a disposable production account was not sent; focused end-to-end mail-link integration and the previously verified Brevo delivery path are the available evidence.
+- Both features remain `passing` pending independent validation. The data-source licensing/staleness risk remains documented in `docs/risks-and-open-questions.md` and `database/data/sp500-classification.md`.
+
 ## Screener company classification implementation (`screener-company-classification`, passing) — 2026-10-24
 
 - Extended the offline 503-member S&P 500 CSV with GICS sub-industry and headquarters country, retaining its existing identity, sector and exchange fields. The dated source snapshot and conversion rules are in `database/data/sp500-classification.md`. Exact ticker join yielded 500 industries and 499 countries; CTVA, PSKY and WBD are unmatched, and XYZ has no known headquarters country. Unknown values remain null.

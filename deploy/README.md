@@ -133,6 +133,16 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    Si ejecutas `php artisan market-context:compute` a mano (p. ej. un relleno con `--from`), ejecuta después
    `php artisan screener:refresh` para que las columnas sectoriales del Screener se actualicen (el pipeline
    diario y el botón «Recalcular» de Admin ya lo hacen).
+11. Universos del Screener (`universe-registry`, `docs/specs/multi-market-universes.md`): la migración
+   `2026_10_28_000001_*` añade mercado de cotización y divisa a instrumentos y universos y marca `sp500` como
+   universo del Screener. `SCREENER_UNIVERSES_PUBLIC` (lista separada por comas, por defecto `sp500`) decide qué
+   universos ven los visitantes; un universo sembrado que no esté en la lista solo lo ve un Admin (vista
+   previa). Es también el interruptor de retirada: quita el slug de `shared/.env`, ejecuta
+   `php artisan config:cache` como `deploy` y ese universo desaparece al instante de toda superficie no Admin
+   (`GET /api/universes`, `?universe=` responde 404, Saved Screeners; las alertas sobre él se omiten) sin
+   borrar datos; volver a añadirlo lo restaura. Esta función no siembra ningún índice nuevo todavía. Tras
+   desplegar: `GET /api/universes` sin sesión devuelve solo `sp500` y `GET /api/screener` no cambia salvo los
+   campos añadidos `market` y `currency`.
 
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno

@@ -805,26 +805,14 @@
   {
     "id": "universe-registry",
     "area": "backend",
-    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
     "title": "Listing Market, currency and Screener universe registry with universe-aware Screener, Saved Screeners and alerts",
-    "user_visible_behavior": "The Screener API, Saved Screeners and screener alerts work on any visible Screener universe (default S&P 500 unchanged); Instruments and payloads carry Listing Market (US/XMAD/XETR) and currency; universes not in SCREENER_UNIVERSES_PUBLIC (the kill-switch) are Admin preview only; sector context filters, Company Card, fundamentals and forecast stay US-only.",
+    "status": "accepted",
     "depends_on": [
       "screener-table-column-controls",
       "saved-screeners",
       "alerts-engine",
       "market-context-patterns"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Additive migrations: existing rows US/USD, sp500 the only Screener universe, existing Screener/Saved Screener/alert tests unchanged",
-      "GET /api/universes and ?universe= honour is_screener and SCREENER_UNIVERSES_PUBLIC (404 for unknown, non-Screener or hidden slugs) with a fixture XMAD universe",
-      "IndexUniverseSeeder: suffix/market checks, exact membership sync without deleting history, active flag, S&P fields kept for overlapping tickers, idempotent",
-      "One screener row per Instrument in two universes; Saved Screener universe round-trip with legacy rows as sp500; screener alerts evaluate in their universe",
-      "Sector context filters 422 outside US; Company Card, fundamentals and forecast 404 for non-US Instruments with availability flags",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+    ]
   },
   {
     "id": "ingestion-multi-market",

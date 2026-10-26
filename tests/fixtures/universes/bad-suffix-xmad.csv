@@ -1,0 +1,4 @@
+ticker,company,sector,industry,country,exchange
+SAN.MC,Banco Santander,Financials,Banks,ES,BME
+ITX.MC,Inditex,Consumer Discretionary,Apparel Retail,ES,BME
+SAP.DE,SAP,Information Technology,Software,DE,XETRA

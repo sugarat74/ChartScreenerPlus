@@ -5,9 +5,10 @@ namespace Database\Seeders;
 use App\Models\Instrument;
 use App\Models\Universe;
 use App\Services\Screener\ScreenerRowBuilder;
+use App\Support\ConstituentCsv;
+use App\Support\ListingMarket;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 /**
  * Seeds the S&P 500 universe from the committed dataset.
@@ -48,7 +49,13 @@ class Sp500UniverseSeeder extends Seeder
         DB::transaction(function () use ($rows): void {
             $universe = Universe::query()->updateOrCreate(
                 ['slug' => self::UNIVERSE_SLUG],
-                ['name' => self::UNIVERSE_NAME],
+                [
+                    'name' => self::UNIVERSE_NAME,
+                    'market' => ListingMarket::US,
+                    'currency' => 'USD',
+                    'is_screener' => true,
+                    'position' => 0,
+                ],
             );
 
             $instrumentIds = [];
@@ -84,115 +91,6 @@ class Sp500UniverseSeeder extends Seeder
      */
     private function readDataset(): array
     {
-        $path = base_path(self::DATASET_PATH);
-
-        if (! is_file($path)) {
-            throw new RuntimeException("S&P 500 dataset not found at {$path}.");
-        }
-
-        $handle = fopen($path, 'rb');
-
-        if ($handle === false) {
-            throw new RuntimeException("Unable to open the S&P 500 dataset at {$path}.");
-        }
-
-        try {
-            $header = $this->readHeader($handle, $path);
-            $rows = [];
-            $line = 1;
-
-            while (($cells = fgetcsv($handle, null, ',', '"', '')) !== false) {
-                $line++;
-
-                // A fully blank line parses as [null].
-                if ($cells === [null]) {
-                    continue;
-                }
-
-                $row = $this->mapRow($cells, $header, $path, $line);
-
-                if ($row === null) {
-                    continue;
-                }
-
-                // Deduplicate by ticker, keeping the first occurrence.
-                $rows[$row['ticker']] ??= $row;
-            }
-        } finally {
-            fclose($handle);
-        }
-
-        if ($rows === []) {
-            throw new RuntimeException("The S&P 500 dataset at {$path} contains no usable rows.");
-        }
-
-        return array_values($rows);
-    }
-
-    /**
-     * Read and normalize the CSV header.
-     *
-     * @param  resource  $handle
-     * @return array<string, int>
-     */
-    private function readHeader($handle, string $path): array
-    {
-        $cells = fgetcsv($handle, null, ',', '"', '');
-
-        if ($cells === false || $cells === [null]) {
-            throw new RuntimeException("The S&P 500 dataset at {$path} has no header row.");
-        }
-
-        $header = [];
-
-        foreach ($cells as $index => $cell) {
-            // Strip a UTF-8 byte order mark if the file carries one.
-            $name = strtolower(trim((string) $cell, " \t\n\r\0\x0B\xEF\xBB\xBF"));
-            $header[$name] = $index;
-        }
-
-        foreach (['ticker', 'company', 'sector', 'industry', 'country', 'exchange'] as $column) {
-            if (! array_key_exists($column, $header)) {
-                throw new RuntimeException(
-                    "The S&P 500 dataset at {$path} is missing the `{$column}` column."
-                );
-            }
-        }
-
-        return $header;
-    }
-
-    /**
-     * Map one CSV row to a normalized dataset row.
-     *
-     * @param  list<string|null>  $cells
-     * @param  array<string, int>  $header
-     * @return array{ticker: string, company: string, sector: string, industry: string, country: string, exchange: string}|null
-     */
-    private function mapRow(array $cells, array $header, string $path, int $line): ?array
-    {
-        $value = fn (string $column): string => trim((string) ($cells[$header[$column]] ?? ''));
-
-        $ticker = strtoupper($value('ticker'));
-        $company = $value('company');
-
-        if ($ticker === '') {
-            return null;
-        }
-
-        if ($company === '') {
-            throw new RuntimeException(
-                "The S&P 500 dataset at {$path} has no company for ticker `{$ticker}` (line {$line})."
-            );
-        }
-
-        return [
-            'ticker' => $ticker,
-            'company' => $company,
-            'sector' => $value('sector'),
-            'industry' => $value('industry'),
-            'country' => $value('country'),
-            'exchange' => $value('exchange'),
-        ];
+        return ConstituentCsv::read(base_path(self::DATASET_PATH), 'S&P 500');
     }
 }

@@ -173,6 +173,14 @@ A stale snapshot is a known, documented risk. It is not detected automatically.
 8. **Sector context.** `ScreenerRowBuilder::sectorContext` returns nulls for non-`US` Instruments.
 9. **US-only gates (D10).** Company Card (GET/POST), fundamentals and forecast endpoints return 404 with `messages.not_available_for_market` (es/en in `lang/*`) for non-`US` Instruments, like the existing ETF rule. `fundamentals:refresh` skips non-`US` Instruments. The instrument payload gains `market`, `currency` and an `availability` object (`company_card`, `fundamentals`, `forecast` booleans) so the SPA does not hardcode market rules.
 
+### Implementation notes (`universe-registry`, 2026-10-26)
+
+- Saved Screener universe: the `universe` key is stored in `filters` only when it is not the default universe, so S&P 500 definitions keep their twenty keys and existing payloads/tests are unchanged. The list/create payload always returns a top-level `universe: {slug, name}` (legacy rows read as the default). Validation is `filters.universe` `Rule::in` the caller's visible Screener universes.
+- The sector-context 422 is `{message, code: "filter_not_available_for_universe", errors: {<key>: [...]}}` and runs before the 401/403 Market Context check.
+- `Universe::visibleTo` / `isVisibleTo` is the single visibility seam; the factory default for `is_screener` is `true` (tests), the column default is `false`.
+- The alert skip for a no-longer-visible universe logs once per evaluation (`Log::info`) and leaves `last_state` untouched.
+- Fundamentals: the only fundamentals surfaces are the Company Card responses and `fundamentals:refresh`; both are gated.
+
 ### Acceptance
 
 - With migrations applied, existing Instruments are `US`/`USD`, `sp500` is the only Screener universe, and every existing Screener, Saved Screener and alert test passes unchanged. The default response is identical except for the added `market` and `currency` fields.

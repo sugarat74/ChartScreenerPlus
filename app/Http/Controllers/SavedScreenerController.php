@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\ChartPattern;
 use App\Models\SavedScreener;
+use App\Models\Universe;
 use App\Services\Screener\ScreenerFilterParser;
+use App\Support\ListingMarket;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -84,6 +86,10 @@ class SavedScreenerController extends Controller
     {
         $this->normalizeNameInput($request);
 
+        // The universe must be a Screener universe visible to the caller
+        // (universe-registry): hidden, unknown and non-Screener slugs are 422.
+        $visibleUniverses = Universe::query()->visibleTo($request->user())->pluck('slug')->all();
+
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -95,8 +101,9 @@ class SavedScreenerController extends Controller
             ],
             'filters' => [
                 'required',
-                'array:signal,rsi_min,rsi_max,min_rvol,price_above_sma200,ma_cross,pattern,pattern_status,sort,sector_trend,sector_rs_rank_max,'.implode(',', self::COLUMN_KEYS),
+                'array:signal,rsi_min,rsi_max,min_rvol,price_above_sma200,ma_cross,pattern,pattern_status,sort,sector_trend,sector_rs_rank_max,universe,'.implode(',', self::COLUMN_KEYS),
             ],
+            'filters.universe' => ['sometimes', 'nullable', 'string', Rule::in($visibleUniverses)],
             'filters.signal' => ['present', 'array'],
             'filters.signal.*' => ['required', 'string', Rule::in(self::SIGNAL_TYPES)],
             'filters.rsi_min' => ['present', 'nullable', 'numeric', 'between:0,100'],
@@ -209,6 +216,13 @@ class SavedScreenerController extends Controller
     {
         $patterns = array_unique(is_array($filters['pattern'] ?? null) ? $filters['pattern'] : []);
 
+        // universe-registry: a Saved Screener of another universe stores its
+        // slug; the default universe is the absence of the key (legacy rows),
+        // so the twenty-key definition of S&P 500 screeners is unchanged.
+        $universe = is_string($filters['universe'] ?? null) && $filters['universe'] !== Universe::defaultSlug()
+            ? ['universe' => $filters['universe']]
+            : [];
+
         return [
             'signal' => $this->canonicalSignals(is_array($filters['signal'] ?? null) ? $filters['signal'] : []),
             'rsi_min' => $filters['rsi_min'] ?? null,
@@ -241,7 +255,7 @@ class SavedScreenerController extends Controller
             'close_max' => is_numeric($filters['close_max'] ?? null) ? $filters['close_max'] + 0 : null,
             'change_min' => is_numeric($filters['change_min'] ?? null) ? $filters['change_min'] + 0 : null,
             'change_max' => is_numeric($filters['change_max'] ?? null) ? $filters['change_max'] + 0 : null,
-        ];
+        ] + $universe;
     }
 
     /**
@@ -270,7 +284,7 @@ class SavedScreenerController extends Controller
     private function assertScreenerAccepts(array $filters): void
     {
         try {
-            ScreenerFilterParser::fromArray($filters);
+            $parsed = ScreenerFilterParser::fromArray($filters);
         } catch (ValidationException $exception) {
             $errors = [];
             foreach ($exception->errors() as $key => $messages) {
@@ -279,19 +293,41 @@ class SavedScreenerController extends Controller
 
             throw ValidationException::withMessages($errors);
         }
+
+        // D10: the sector context filters need a US universe (the stored one).
+        if (ScreenerFilterParser::usesMarketContext($parsed)) {
+            $slug = is_string($filters['universe'] ?? null) ? $filters['universe'] : Universe::defaultSlug();
+            $market = Universe::query()->where('slug', $slug)->value('market');
+
+            if ($market !== null && $market !== ListingMarket::US) {
+                throw ValidationException::withMessages([
+                    ($parsed['sector_trend'] ?? null) !== null ? 'filters.sector_trend' : 'filters.sector_rs_rank_max' => [
+                        __('messages.screener.filter_not_available_for_universe'),
+                    ],
+                ]);
+            }
+        }
     }
 
     /**
-     * Shape one Saved Screener for the API.
+     * Shape one Saved Screener for the API. `universe` is the slug and name of
+     * the universe it screens (S&P 500 for rows saved before universes).
      *
-     * @return array{id: int, name: string, filters: array<string, mixed>}
+     * @return array{id: int, name: string, universe: array{slug: string, name: string}, filters: array<string, mixed>}
      */
     private function screenerPayload(SavedScreener $screener): array
     {
+        $filters = $this->canonicalFilters(is_array($screener->filters) ? $screener->filters : []);
+        $slug = is_string($filters['universe'] ?? null) ? $filters['universe'] : Universe::defaultSlug();
+
         return [
             'id' => $screener->id,
             'name' => $screener->name,
-            'filters' => $this->canonicalFilters(is_array($screener->filters) ? $screener->filters : []),
+            'universe' => [
+                'slug' => $slug,
+                'name' => Universe::query()->where('slug', $slug)->value('name') ?? $slug,
+            ],
+            'filters' => $filters,
         ];
     }
 }

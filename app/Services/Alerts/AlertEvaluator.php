@@ -13,6 +13,7 @@ use App\Services\Screener\ScreenerFilterParser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Evaluates one Alert against the current data (docs/specs/alerts-engine.md).
@@ -64,6 +65,17 @@ class AlertEvaluator
         // Market Context access is skipped, never broadened: no notification
         // and its state is untouched (market-context-patterns, C6).
         if ($alert->kind === Alert::KIND_SCREENER && $this->lacksMarketContext($alert)) {
+            return self::SKIPPED;
+        }
+
+        // A screener alert runs in its Saved Screener's universe; if that is no
+        // longer a Screener universe visible to the owner (kill-switch, removed
+        // or demoted), it is skipped, never broadened to another universe.
+        if ($alert->kind === Alert::KIND_SCREENER && $this->universeFor($alert) === false) {
+            Log::info('Skipped a screener alert: its universe is no longer visible to the owner.', [
+                'alert_id' => $alert->id,
+            ]);
+
             return self::SKIPPED;
         }
 
@@ -126,6 +138,28 @@ class AlertEvaluator
     }
 
     /**
+     * The universe a screener alert evaluates in: the stored `universe` slug,
+     * or the default one for rows saved before universes. `false` when that
+     * universe exists but the owner may no longer see it (or it is not a
+     * Screener universe); `null` when the default universe is not seeded.
+     */
+    private function universeFor(Alert $alert): Universe|false|null
+    {
+        $stored = $alert->savedScreener?->filters;
+        $slug = is_array($stored) && is_string($stored['universe'] ?? null) && $stored['universe'] !== ''
+            ? $stored['universe']
+            : Universe::defaultSlug();
+
+        $universe = Universe::query()->where('slug', $slug)->first();
+
+        if ($universe === null) {
+            return $slug === Universe::defaultSlug() ? null : false;
+        }
+
+        return $universe->isVisibleTo($alert->user) ? $universe : false;
+    }
+
+    /**
      * The tickers currently returned by the Alert's Saved Screener.
      *
      * @return array{tickers: list<string>}
@@ -133,9 +167,9 @@ class AlertEvaluator
     private function screenerState(Alert $alert): array
     {
         $screener = $alert->savedScreener;
-        $universe = Universe::query()->where('slug', (string) config('ingestion.universe'))->first();
+        $universe = $this->universeFor($alert);
 
-        if ($screener === null || $universe === null) {
+        if ($screener === null || ! $universe instanceof Universe) {
             return ['tickers' => []];
         }
 
