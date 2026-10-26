@@ -4,9 +4,9 @@ use App\Models\AiCompanyCardGeneration;
 use App\Models\AiScreenerQuery;
 use App\Models\AlertEmailDigest;
 use App\Models\LoginEvent;
-use App\Services\Market\MarketCalendar;
+use App\Services\Market\PipelineSchedule;
+use Illuminate\Console\Scheduling\Schedule as ScheduleManager;
 use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
@@ -19,14 +19,16 @@ Artisan::command('inspire', function () {
 | Daily EOD pipeline
 |--------------------------------------------------------------------------
 |
-| One event fires on weekdays after the configured US market close, evaluated
-| in the market timezone so the wall-clock time is DST-aware (the UTC fire
-| instant shifts by an hour across DST). config/app.php stays UTC; only the
-| event carries the market timezone.
+| One event per Listing Market (App\Services\Market\PipelineSchedule) fires on
+| weekdays after that market's close plus buffer (US 16:30 New York; Madrid and
+| Xetra 18:15 local when a Screener universe of that market is seeded),
+| evaluated in the market timezone so the wall-clock time is DST-aware (the UTC
+| fire instant shifts by an hour across DST). config/app.php stays UTC; only
+| the event carries the market timezone.
 |
-| Weekends are skipped by `weekdays()` and committed NYSE holidays by the
-| `skip()` filter; `ingestion:pipeline` re-checks the trading day as defense in
-| depth. A missed run is triggered manually via `ingestion:pipeline` (or
+| Weekends are skipped by `weekdays()` and the market's committed holidays by
+| the `skip()` filter; `ingestion:pipeline` re-checks the trading day as defense
+| in depth. A missed run is triggered manually via `ingestion:pipeline` (or
 | `ingestion:run`), not by catch-up logic. Production still needs a host
 | scheduler/cron entry; this only defines the schedule.
 |
@@ -34,17 +36,7 @@ Artisan::command('inspire', function () {
 
 $timezone = config('ingestion.timezone');
 
-$runTime = Carbon::createFromFormat('H:i', config('ingestion.market_close'), $timezone)
-    ->addMinutes((int) config('ingestion.schedule_buffer_minutes'))
-    ->format('H:i');
-
-Schedule::command('ingestion:pipeline', ['--universe' => config('ingestion.universe')])
-    ->name('ingestion-pipeline')
-    ->dailyAt($runTime)
-    ->timezone($timezone)
-    ->weekdays()
-    ->skip(fn () => app(MarketCalendar::class)->isHoliday(now($timezone)))
-    ->withoutOverlapping(120);
+app(PipelineSchedule::class)->register(app(ScheduleManager::class));
 
 /*
 |--------------------------------------------------------------------------

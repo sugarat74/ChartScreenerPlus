@@ -817,24 +817,12 @@
   {
     "id": "ingestion-multi-market",
     "area": "ingestion",
-    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
     "title": "Per-market EOD ingestion: engine symbol mapping, exchange calendars, schedules and freshness",
-    "user_visible_behavior": "Each Listing Market is ingested after its own session close on its own trading days (US 16:30 New York, Madrid and Xetra 18:15 local); overlapping Nasdaq-100/S&P 500 members are fetched once; European bar dates are correct session dates; Admins see per-universe freshness.",
+    "status": "accepted",
     "depends_on": [
       "universe-registry",
       "ingestion-scheduler"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Engine fixtures: market param, .MC/.DE symbols verbatim, US dot-to-hyphen unchanged, exchange-timezone session dates for midnight-local Yahoo timestamps, currency returned, default call unchanged",
-      "currency_mismatch fails the item without storing bars",
-      "MarketCalendar per market: own holidays, latestSession around close+buffer and across US/EU DST changes",
-      "Pipeline --market with --except-universe dedupe, isolated secondary-universe failures, US-only stages only in the US run, lock wait",
-      "Schedule events per seeded market and Admin freshness endpoint (fresh/partial/stale, Admin only)",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+    ]
   },
   {
     "id": "universe-selector-ui",

@@ -21,6 +21,7 @@ class EodResponse(BaseModel):
 
     symbol: str
     bars: list[Bar]
+    currency: str | None = None
 
 
 class Snapshot(BaseModel):

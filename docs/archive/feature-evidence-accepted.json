@@ -1844,5 +1844,33 @@
       "Independent validator verdict accept (2026-10-26): reran .\\init.ps1 exit 0 (Laravel 894 passed / 6 skipped, 7031 assertions; 375 Vitest; build; engine 101), UniverseRegistry tests 27 passed (175 assertions), migrate/rollback/migrate on scratch SQLite; reviewed full diff; all six declared deviations accepted, edited existing tests not weakened. PostgreSQL covered only by CI test-pgsql."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Implemented 2026-10-26 (passing, pending independent validation). Deviations: the Saved Screener universe key lives in filters only when not the default (plus a top-level universe {slug,name} in the payload) so existing 20-key payloads/tests stay unchanged; existing tests EtfExclusionTest (market-context now 404), ScreenerApiTest, ScreenerSectorFiltersTest and InstrumentDetailApiTest only gained the new fields. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Independently accepted 2026-10-26."
+  },
+  {
+    "id": "ingestion-multi-market",
+    "area": "ingestion",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "Per-market EOD ingestion: engine symbol mapping, exchange calendars, schedules and freshness",
+    "user_visible_behavior": "Each Listing Market is ingested after its own session close on its own trading days (US 16:30 New York, Madrid and Xetra 18:15 local); overlapping Nasdaq-100/S&P 500 members are fetched once; European bar dates are correct session dates; Admins see per-universe freshness.",
+    "depends_on": [
+      "universe-registry",
+      "ingestion-scheduler"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Engine fixtures: market param, .MC/.DE symbols verbatim, US dot-to-hyphen unchanged, exchange-timezone session dates for midnight-local Yahoo timestamps, currency returned, default call unchanged",
+      "currency_mismatch fails the item without storing bars",
+      "MarketCalendar per market: own holidays, latestSession around close+buffer and across US/EU DST changes",
+      "Pipeline --market with --except-universe dedupe, isolated secondary-universe failures, US-only stages only in the US run, lock wait",
+      "Schedule events per seeded market and Admin freshness endpoint (fresh/partial/stale, Admin only)",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-10-26 init.ps1 exit 0 (child process, output redirected): Laravel 914 passed / 6 skipped (7125 assertions), SPA lint/typecheck, 375 Vitest, build, engine 115 passed",
+      "Engine: tests/test_stooq.py market param, suffix 422, US dot-to-hyphen, verbatim .MC/.DE, no European Stooq fallback, currency, midnight-Berlin fixture engine/tests/fixtures/yahoo_sap_de.json gives weekday session dates",
+      "Laravel: tests/Feature/MultiMarketIngestionTest.php (14): currency_mismatch, once-only overlapping fetch, isolated second-universe failure, US-only stages, lock wait/skip, schedule events, freshness fresh/partial/stale and Admin-only; tests/Unit/MarketCalendarTest.php per-market holidays, latestSession and US/EU DST changes",
+      "Not verified: real Yahoo .MC/.DE responses (live smoke belongs to universe-ibex35/universe-dax)",
+      "Independent validator verdict accept (2026-10-26): reran .\\init.ps1 exit 0 (Laravel 914 passed / 6 skipped; 375 Vitest; build; engine 115) and focused suites 50 passed (335 assertions); reviewed full diff; sp500 production schedule/behavior unchanged in effect; all thirteen review points accepted. Real Yahoo .MC/.DE output unverified until the index features; PostgreSQL covered only by CI test-pgsql."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Independently accepted 2026-10-26."
   }
 ]

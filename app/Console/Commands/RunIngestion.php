@@ -27,6 +27,7 @@ class RunIngestion extends Command
      */
     protected $signature = 'ingestion:run
                             {--universe=sp500 : Universe slug to ingest}
+                            {--except-universe=* : Skip members of these universe slugs (handled earlier in the same pipeline run)}
                             {--retry= : Re-run only the failed instruments of this ingestion run id}';
 
     /**
@@ -47,7 +48,10 @@ class RunIngestion extends Command
             if ($retry !== null && $retry !== '') {
                 $run = $runner->startRetryRun((int) $retry);
             } else {
-                $run = $runner->startUniverseRun((string) $this->option('universe'));
+                $run = $runner->startUniverseRun(
+                    (string) $this->option('universe'),
+                    array_values(array_filter(array_map('strval', (array) $this->option('except-universe')))),
+                );
             }
         } catch (Throwable $exception) {
             // Pre-flight failures (unknown universe/run) are command errors;

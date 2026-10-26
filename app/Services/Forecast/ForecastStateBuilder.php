@@ -89,7 +89,7 @@ class ForecastStateBuilder
             if (! isset($coveredYears[$date->format('Y')])) {
                 throw new ForecastUnavailable('calendar_unavailable');
             }
-            if ($this->calendar->isTradingDay($date)) {
+            if ($this->calendar->isTradingDay('US', $date)) {
                 $sessions++;
             }
         }

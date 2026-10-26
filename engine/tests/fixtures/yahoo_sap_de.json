@@ -1,0 +1,58 @@
+{
+  "chart": {
+    "result": [
+      {
+        "meta": {
+          "currency": "EUR",
+          "symbol": "SAP.DE",
+          "exchangeName": "GER",
+          "exchangeTimezoneName": "Europe/Berlin",
+          "instrumentType": "EQUITY"
+        },
+        "timestamp": [
+          1792620000,
+          1792706400,
+          1792969200,
+          1793055600
+        ],
+        "indicators": {
+          "quote": [
+            {
+              "open": [
+                220.1,
+                221.0,
+                219.5,
+                222.2
+              ],
+              "high": [
+                223.0,
+                222.4,
+                221.9,
+                224.0
+              ],
+              "low": [
+                219.0,
+                219.8,
+                218.7,
+                221.1
+              ],
+              "close": [
+                221.5,
+                220.3,
+                221.2,
+                223.4
+              ],
+              "volume": [
+                1500000,
+                1320000,
+                1410000,
+                1280000
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "error": null
+  }
+}

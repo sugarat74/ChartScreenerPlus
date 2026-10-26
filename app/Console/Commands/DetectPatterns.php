@@ -33,7 +33,8 @@ class DetectPatterns extends Command
      */
     protected $signature = 'patterns:detect
                             {--ticker= : Detect patterns for one instrument ticker}
-                            {--universe= : Universe slug to detect patterns for (defaults to sp500)}';
+                            {--universe= : Universe slug to detect patterns for (defaults to sp500)}
+                            {--except-universe=* : Skip members of these universe slugs (handled earlier in the same pipeline run)}';
 
     /**
      * The console command description.
@@ -110,6 +111,7 @@ class DetectPatterns extends Command
         }
 
         return $universe->instruments()
+            ->notInUniverses($this->exceptUniverses())
             ->whereHas('dailyBars')
             ->orderBy('ticker')
             ->get();
@@ -250,5 +252,15 @@ class DetectPatterns extends Command
     private function isDate(mixed $value): bool
     {
         return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+    }
+
+    /**
+     * The universe slugs whose members this run must skip.
+     *
+     * @return list<string>
+     */
+    private function exceptUniverses(): array
+    {
+        return array_values(array_filter(array_map('strval', (array) $this->option('except-universe'))));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Ingestion;
 
+use App\Exceptions\CurrencyMismatchException;
 use App\Exceptions\EmptyIngestionResponseException;
 use App\Models\DailyBar;
 use App\Models\Instrument;
@@ -43,10 +44,19 @@ class InstrumentIngestor
      * @throws RequestException when the engine responds with an error status.
      * @throws ConnectionException when the engine is unreachable.
      * @throws EmptyIngestionResponseException when the engine returns no bars.
+     * @throws CurrencyMismatchException when the engine reports another currency (nothing is stored).
      */
     public function ingestDetailed(Instrument $instrument): array
     {
-        $bars = $this->client->eodBars($instrument->ticker);
+        $series = $this->client->eodSeries($instrument->ticker, $instrument->listingMarket());
+        $bars = $series['bars'];
+
+        // A wrong symbol mapping (a line in another currency) must never reach
+        // the database. A source that reports no currency (Stooq) is accepted.
+        $expectedCurrency = strtoupper((string) ($instrument->currency ?? 'USD'));
+        if ($series['currency'] !== null && $series['currency'] !== $expectedCurrency) {
+            throw CurrencyMismatchException::forTicker($instrument->ticker, $expectedCurrency, $series['currency']);
+        }
 
         if ($bars === []) {
             throw EmptyIngestionResponseException::forTicker($instrument->ticker);

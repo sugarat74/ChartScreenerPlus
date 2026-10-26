@@ -35,11 +35,14 @@ class IngestionRunner
     /**
      * Resolve a universe and create its `queued` run.
      *
-     * Throws (creating no run row) when the universe slug is unknown.
+     * Throws (creating no run row) when the universe slug is unknown. Members
+     * of any `$exceptUniverses` slug are left out (the pipeline fetches a
+     * ticker that is in several universes once).
      *
+     * @param  list<string>  $exceptUniverses
      * @return array{run: IngestionRun, instrumentIds: list<int>}
      */
-    public function prepareUniverseRun(string $slug): array
+    public function prepareUniverseRun(string $slug, array $exceptUniverses = []): array
     {
         $universe = Universe::query()->where('slug', $slug)->first();
 
@@ -48,6 +51,7 @@ class IngestionRunner
         }
 
         $instrumentIds = $universe->instruments()
+            ->notInUniverses($exceptUniverses)
             ->orderBy('instruments.ticker')
             ->pluck('instruments.id')
             ->map(fn (mixed $id): int => (int) $id)
@@ -168,10 +172,12 @@ class IngestionRunner
 
     /**
      * Resolve the universe, create the run and process it synchronously.
+     *
+     * @param  list<string>  $exceptUniverses
      */
-    public function startUniverseRun(string $slug): IngestionRun
+    public function startUniverseRun(string $slug, array $exceptUniverses = []): IngestionRun
     {
-        $prepared = $this->prepareUniverseRun($slug);
+        $prepared = $this->prepareUniverseRun($slug, $exceptUniverses);
 
         return $this->process($prepared['run']->id, $prepared['instrumentIds']);
     }

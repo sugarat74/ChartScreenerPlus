@@ -2,6 +2,17 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## Independent validation: Multi-market ingestion (`ingestion-multi-market`, accepted) — 2026-10-26
+
+- Verdict **accept**. Validator reran `.\init.ps1` (Laravel 914 passed / 6 skipped; SPA lint/typecheck/375 Vitest/build; engine 115) and the focused ingestion/calendar/schedule suites (50 passed, 335 assertions). Production S&P 500 behavior judged unchanged in effect: same `ingestion-pipeline` event at 16:30 New York, same steps, lock and run records; only the command argument changed to `--market=US`. All thirteen review points accepted (lock wait then skip, `market` sent only for non-US tickers, empty XMAD/XETR holiday lists until their index features, Stooq US-only, `tzdata` installed by `deploy.sh`, currency mismatch stores no bars, exchange-timezone bar dates, once-only overlap fetching, Admin-only freshness endpoint).
+- Non-blocking: seeding Nasdaq-100 in production widens the US run to all seeded US Screener universes (intended); real Yahoo output for `.MC`/`.DE` is unverified until the IBEX 35 and DAX features; PostgreSQL covered by CI `test-pgsql`. `universe-selector-ui` is now unblocked. Full record archived.
+
+## Multi-market ingestion implementation (`ingestion-multi-market`, passing) — 2026-10-26
+
+- Feature 2 of `docs/specs/multi-market-universes.md`. Engine: `GET /eod/{symbol}?market=US|XMAD|XETR` (default US; symbol must carry the market suffix or 422; `.MC`/`.DE` verbatim to Yahoo, US dot-to-hyphen unchanged; Stooq stays US-only, no European mapping verified; bar dates in `meta.exchangeTimezoneName` else the market timezone; response adds `currency`; `tzdata` added to `engine/requirements.txt`). Laravel: `EngineClient::eodSeries` (market sent only for non-US, so US URLs are unchanged), `currency_mismatch` fails the item without storing bars, `MarketCalendar` per market (`isTradingDay($market, $d)`, `latestSession`, `runTime`) with `ingestion.markets.XMAD|XETR` (17:30 + 45 min, holidays empty until Features 5/6), `ingestion:pipeline {--market=US} {--universe=} {--force}` over the market's Screener universes by position with `--except-universe` on the four stage commands (overlap fetched once), isolated later-universe failures, US-only Market Context/macro/regime/alerts/forecast, global lock that waits `ingestion.lock_wait_seconds` (900), `PipelineSchedule` (one event per market, EU only when a Screener universe is seeded), Admin `GET /api/admin/universes/freshness`.
+- Verified: `.\init.ps1` exit 0 (run as a child process with redirected output): Laravel 914 passed / 6 skipped (7125 assertions), SPA lint/typecheck, 375 Vitest, build, engine 115 passed. New: `MultiMarketIngestionTest` (14), 6 `MarketCalendarTest` cases (DST across US/EU change dates), 10 engine tests with the fixture `engine/tests/fixtures/yahoo_sap_de.json` (midnight Berlin timestamps give weekday session dates). Existing tests changed: `MarketCalendarTest` signatures, schedule test now `--market="US"`, the Market Context pipeline fixture universe is `notScreener()` like the real seeder, `phpunit.xml` sets `INGESTION_LOCK_WAIT_SECONDS=0`. Docs: ARCHITECTURE, CONSTRAINTS (new section), `.env.example`.
+- Not verified: real Yahoo behavior for `.MC`/`.DE` (live smoke belongs to Features 5/6); PostgreSQL only by CI. Existing engine venvs need `pip install -r engine/requirements.txt` for `tzdata` (deploy does it). Next: independent validation, then `universe-selector-ui`.
+
 ## Independent validation: Universe registry (`universe-registry`, accepted) — 2026-10-26
 
 - Verdict **accept**. Validator reran `.\init.ps1` (Laravel 894 passed / 6 skipped, 7031 assertions; SPA lint/typecheck/375 Vitest/build; engine 101), `UniverseRegistry` tests (27 passed, 175 assertions) and a migrate / rollback / migrate round trip on scratch SQLite; reviewed the full diff. All six declared deviations accepted (default-universe omitted from `filters` with a top-level `universe` object, test-only factory default, alert skip when the owner cannot see the universe, fundamentals gating on Company Card and `fundamentals:refresh`, edited existing tests not weakened, 422 after the 404 resolution).
@@ -54,15 +65,3 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 ## Screener column filters and sorting specification — 2026-10-25
 
 - Added the future feature `screener-table-column-controls` to `feature_list.json` and wrote `docs/specs/screener-table-column-controls.md`. It covers filters and sort directions for all nine current Candidate columns, server-side behavior before pagination, URL/Saved Screener persistence, accessible controls and API safety. It depends on `screener-company-classification`, which is still `passing` pending independent validation. No application code or product behavior changed.
-
-## Screener classification columns — 2026-10-25
-
-- Moved Sector, GICS sub-industry and headquarters country from the ticker/company cell into three adjacent Candidate table columns, before price and technical values. The public API, ranking, filters, null handling and mobile horizontal scrolling are unchanged.
-- Focused Spanish/English CandidateClassification Vitest: 2 passed, including header order and per-row column values. Full post-change `.\init.ps1` exited 0: Laravel 853 passed / 6 skipped, SPA lint/typecheck (existing RequireAuth.test warning only), 351 Vitest in 45 files, production build, engine 101 passed. `git diff --check` passed. Production not deployed in this session.
-- Prior Mercado tab changes from this session remain uncommitted; the legal publication gate remains off by the owner's explicit choice.
-
-## Mercado tab visibility follow-up — 2026-10-25
-
-- The Mercado tab is now always visible in the header. It is a link only when the signed-in session has `capabilities.market_context`; guests and denied accounts see a muted, noninteractive tab with a localized reason. The server's `view-market-context` ability remains the access gate.
-- The owner reconfirmed that `MARKET_CONTEXT_PUBLIC` stays off until the legal notice with the FRED terms clause is published. Registered Users therefore see a disabled tab for now; Admins retain preview access. Once the flag is enabled, Registered Users get an active tab and Visitors continue to see a disabled one.
-- Focused AppHeader Vitest: 5 passed. Full post-change `.\init.ps1` exited 0: Laravel 853 passed / 6 skipped, SPA lint/typecheck (existing RequireAuth.test warning only), 351 Vitest in 45 files, production build, engine 101 passed. `git diff --check` and feature-list JSON parsing passed. Production not deployed in this session.

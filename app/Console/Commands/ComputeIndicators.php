@@ -33,7 +33,8 @@ class ComputeIndicators extends Command
      */
     protected $signature = 'indicators:compute
                             {--ticker= : Compute indicators for one instrument ticker}
-                            {--universe= : Universe slug to compute indicators for (defaults to sp500)}';
+                            {--universe= : Universe slug to compute indicators for (defaults to sp500)}
+                            {--except-universe=* : Skip members of these universe slugs (handled earlier in the same pipeline run)}';
 
     /**
      * The console command description.
@@ -135,6 +136,7 @@ class ComputeIndicators extends Command
         }
 
         return $universe->instruments()
+            ->notInUniverses($this->exceptUniverses())
             ->whereHas('dailyBars')
             ->orderBy('ticker')
             ->get();
@@ -222,5 +224,15 @@ class ComputeIndicators extends Command
         }
 
         return ['date' => $date, 'values' => $values];
+    }
+
+    /**
+     * The universe slugs whose members this run must skip.
+     *
+     * @return list<string>
+     */
+    private function exceptUniverses(): array
+    {
+        return array_values(array_filter(array_map('strval', (array) $this->option('except-universe'))));
     }
 }

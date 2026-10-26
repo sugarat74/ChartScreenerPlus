@@ -25,6 +25,10 @@ return [
     // own, so a crashed run cannot hold the pipeline forever.
     'lock_ttl_seconds' => (int) env('INGESTION_LOCK_TTL_SECONDS', 7200),
 
+    // How long a pipeline that finds the global pipeline lock held waits for it
+    // before skipping with a warning. Per-market pipelines may share a time.
+    'lock_wait_seconds' => (int) env('INGESTION_LOCK_WAIT_SECONDS', 900),
+
     /*
     |--------------------------------------------------------------------------
     | NYSE market holidays
@@ -69,6 +73,39 @@ return [
         '2027-09-06',
         '2027-11-25',
         '2027-12-24',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Listing Market calendars and schedules (non-US)
+    |--------------------------------------------------------------------------
+    |
+    | `US` is configured by the keys above (timezone, market_close,
+    | schedule_buffer_minutes, holidays), unchanged. Every other Listing Market
+    | (App\Support\ListingMarket) has its own entry here: `timezone`, `close`
+    | (local wall clock), `buffer_minutes` after the close, and `holidays`
+    | (weekday closures, Y-m-d; half days are trading days). The 45-minute
+    | European buffer covers the closing auction and source publication.
+    |
+    | The official BME (XMAD) and Xetra (XETR) holiday lists arrive with the
+    | universe-ibex35 and universe-dax features; until then they are empty.
+    | REFRESH ANNUALLY, like the NYSE list above.
+    |
+    */
+
+    'markets' => [
+        'XMAD' => [
+            'timezone' => env('INGESTION_XMAD_TIMEZONE', 'Europe/Madrid'),
+            'close' => env('INGESTION_XMAD_MARKET_CLOSE', '17:30'),
+            'buffer_minutes' => (int) env('INGESTION_XMAD_BUFFER_MINUTES', 45),
+            'holidays' => [],
+        ],
+        'XETR' => [
+            'timezone' => env('INGESTION_XETR_TIMEZONE', 'Europe/Berlin'),
+            'close' => env('INGESTION_XETR_MARKET_CLOSE', '17:30'),
+            'buffer_minutes' => (int) env('INGESTION_XETR_BUFFER_MINUTES', 45),
+            'holidays' => [],
+        ],
     ],
 
 ];

@@ -93,6 +93,23 @@ class Instrument extends Model
     }
 
     /**
+     * Instruments that belong to none of the given universe slugs. An empty
+     * list leaves the query untouched. A pipeline run uses it so a ticker in
+     * several universes is handled once, by the first universe that has it.
+     *
+     * @param  Builder<Instrument>  $query
+     * @param  list<string>  $slugs
+     */
+    public function scopeNotInUniverses(Builder $query, array $slugs): void
+    {
+        if ($slugs === []) {
+            return;
+        }
+
+        $query->whereDoesntHave('universes', fn (Builder $universes) => $universes->whereIn('universes.slug', $slugs));
+    }
+
+    /**
      * The universes this instrument belongs to.
      *
      * @return BelongsToMany<Universe, $this>

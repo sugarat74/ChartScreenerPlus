@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\IngestionRunController;
 use App\Http\Controllers\Admin\SessionController;
+use App\Http\Controllers\Admin\UniverseFreshnessController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\AlertEmailPreferenceController;
@@ -174,6 +175,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/ingestion/runs', [IngestionRunController::class, 'store']);
     Route::get('/ingestion/runs/{run}', [IngestionRunController::class, 'show']);
     Route::post('/ingestion/runs/{run}/retry', [IngestionRunController::class, 'retry']);
+
+    // Per-universe freshness of the Daily Bars against each Listing Market's
+    // latest session (ingestion-multi-market). Read-only.
+    Route::get('/universes/freshness', [UniverseFreshnessController::class, 'index']);
 
     // Admin overview of users, sessions and sign-in activity
     // (admin-users-sessions). Read-only except ending sessions; session ids

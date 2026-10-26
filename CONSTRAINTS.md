@@ -325,3 +325,11 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 
 - **MUST** keep `init.ps1` a non-blocking gate: it runs the Laravel checks (`php artisan --version`, `php artisan test`), the SPA typecheck/lint/build when `frontend/` exists, and the engine tests when `engine/requirements.txt` exists. It **MUST NOT** start long-running processes such as `php artisan serve`, the Vite dev server or uvicorn.
 - **MUST** keep the repository restartable via `.\init.ps1` after every accepted feature.
+
+## Multi-market ingestion
+
+- Engine symbol mapping and bar dates **MUST** follow the Listing Market: `.MC`/`.DE` tickers go to Yahoo verbatim, US dots become hyphens, and daily bar dates are taken in the exchange timezone, **MUST NOT** in UTC. Stooq **MUST** stay US-only unless a European mapping is verified with a recorded fixture. Reason: midnight-local Yahoo timestamps are the previous UTC day in Europe.
+- A currency reported by the engine that differs from the Instrument's **MUST** fail the item and store no bars. Reason: it is the guard against a wrong symbol mapping.
+- Market Context, macro, Market Regime, alerts and forecast stages **MUST** run only in the US pipeline; a non-US pipeline **MUST NOT** call them. Reason: US-only features (D10 of `docs/specs/multi-market-universes.md`).
+- The `ingestion:pipeline` lock **MUST** stay global and a held lock **MUST** be waited on (`ingestion.lock_wait_seconds`), not skipped at once. Reason: per-market events can share a time.
+- Per-market holiday lists in `config/ingestion.php` **MUST** be refreshed annually, like the NYSE list.

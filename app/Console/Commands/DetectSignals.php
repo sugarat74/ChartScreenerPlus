@@ -33,7 +33,8 @@ class DetectSignals extends Command
      */
     protected $signature = 'signals:detect
                             {--ticker= : Detect signals for one instrument ticker}
-                            {--universe= : Universe slug to detect signals for (defaults to sp500)}';
+                            {--universe= : Universe slug to detect signals for (defaults to sp500)}
+                            {--except-universe=* : Skip members of these universe slugs (handled earlier in the same pipeline run)}';
 
     /**
      * The console command description.
@@ -113,6 +114,7 @@ class DetectSignals extends Command
         }
 
         return $universe->instruments()
+            ->notInUniverses($this->exceptUniverses())
             ->whereHas('dailyBars')
             ->orderBy('ticker')
             ->get();
@@ -222,5 +224,15 @@ class DetectSignals extends Command
         }
 
         return ['date' => $date, 'type' => $type, 'metadata' => $metadata];
+    }
+
+    /**
+     * The universe slugs whose members this run must skip.
+     *
+     * @return list<string>
+     */
+    private function exceptUniverses(): array
+    {
+        return array_values(array_filter(array_map('strval', (array) $this->option('except-universe'))));
     }
 }
