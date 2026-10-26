@@ -87,9 +87,15 @@ return [
     | (weekday closures, Y-m-d; half days are trading days). The 45-minute
     | European buffer covers the closing auction and source publication.
     |
-    | The official BME (XMAD) and Xetra (XETR) holiday lists arrive with the
-    | universe-ibex35 and universe-dax features; until then they are empty.
-    | REFRESH ANNUALLY, like the NYSE list above.
+    | XMAD (Bolsa de Madrid): official BME trading calendar
+    | (https://www.bolsasymercados.es/en/bme-exchange/trading/trading-calendar.html).
+    | 2026 is as published by BME (non-trading days: 1 Jan, 3 Apr, 6 Apr, 1 May,
+    | 25 Dec). 24 and 31 December are trading days that close at 14:00 CET: they
+    | are half days and are NOT listed. 2027 is DERIVED from BME's pattern
+    | (1 Jan, Good Friday, Easter Monday, 1 May, 25 and 26 Dec; weekends are not
+    | listed) because BME had not published it yet: CONFIRM it against BME's 2027
+    | calendar when published. The XETR (Xetra) list arrives with universe-dax
+    | and is empty until then. REFRESH ANNUALLY, like the NYSE list above.
     |
     */
 
@@ -98,7 +104,18 @@ return [
             'timezone' => env('INGESTION_XMAD_TIMEZONE', 'Europe/Madrid'),
             'close' => env('INGESTION_XMAD_MARKET_CLOSE', '17:30'),
             'buffer_minutes' => (int) env('INGESTION_XMAD_BUFFER_MINUTES', 45),
-            'holidays' => [],
+            'holidays' => [
+                // 2026 (BME official)
+                '2026-01-01',
+                '2026-04-03',
+                '2026-04-06',
+                '2026-05-01',
+                '2026-12-25',
+                // 2027 (derived, confirm when BME publishes it)
+                '2027-01-01',
+                '2027-03-26',
+                '2027-03-29',
+            ],
         ],
         'XETR' => [
             'timezone' => env('INGESTION_XETR_TIMEZONE', 'Europe/Berlin'),

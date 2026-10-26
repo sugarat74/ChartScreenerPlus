@@ -348,3 +348,25 @@ def test_eod_endpoint_rejects_a_symbol_that_does_not_match_the_market(
     monkeypatch.setattr(main_module, "fetch_eod", must_not_fetch)
 
     assert client.get(path).status_code == 422
+
+
+# --- IBEX 35 (docs/specs/multi-market-universes.md, Feature 5) ---------------------
+
+SAN_FIXTURE = Path(__file__).parent / "fixtures" / "yahoo_san_mc.json"
+
+
+def test_yahoo_san_mc_recording_has_madrid_session_dates_and_skips_bme_closures() -> None:
+    # Trimmed real Yahoo response for SAN.MC (recorded 2026-10-26) around Easter 2026:
+    # Good Friday (2026-04-03) and Easter Monday (2026-04-06) are BME non-trading days.
+    result = parse_yahoo_eod(SAN_FIXTURE.read_text(encoding="utf-8"), "XMAD")
+
+    assert [bar.date for bar in result.bars] == [
+        date(2026, 3, 30),
+        date(2026, 3, 31),
+        date(2026, 4, 1),
+        date(2026, 4, 2),
+        date(2026, 4, 7),
+        date(2026, 4, 8),
+    ]
+    assert all(bar.date.weekday() < 5 for bar in result.bars)
+    assert result.currency == "EUR"

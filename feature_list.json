@@ -846,22 +846,11 @@
   {
     "id": "universe-ibex35",
     "area": "data",
-    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
     "title": "IBEX 35 Screener universe (Bolsa de Madrid, EUR)",
-    "user_visible_behavior": "Everyone, Visitors included, can screen the IBEX 35 with EUR prices, .MC tickers and data updated after the Madrid close on Bolsa de Madrid trading days.",
+    "status": "accepted",
     "depends_on": [
       "universe-selector-ui"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Seeder test: 35 rows, .MC suffix, XMAD/EUR, valid GICS sectors and ISO countries, idempotent",
-      "Committed official BME holidays (weekdays only) and the 18:15 Europe/Madrid schedule event",
-      "Live engine smoke on SAN.MC recorded as fixture; local XMAD pipeline run computes indicators, signals and patterns",
-      "Public enablement (ibex35 in SCREENER_UNIVERSES_PUBLIC) after the verified production run; licensing risk owner-accepted 2026-10-26; kill-switch procedure documented in deploy/README.md",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+    ]
   },
   {
     "id": "universe-dax",

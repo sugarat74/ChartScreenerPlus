@@ -1,0 +1,36 @@
+ticker,company,sector,industry,country,exchange
+ACS.MC,ACS,Industrials,Construction,ES,BME
+ACX.MC,Acerinox,Materials,Steel,ES,BME
+AENA.MC,Aena,Industrials,Aviation,ES,BME
+AMS.MC,Amadeus IT Group,Information Technology,Tourism,ES,BME
+ANA.MC,Acciona,Industrials,Construction,ES,BME
+ANE.MC,Acciona Energía,Utilities,Energy,ES,BME
+BBVA.MC,BBVA,Financials,Financial Services,ES,BME
+BKT.MC,Bankinter,Financials,Financial Services,ES,BME
+CABK.MC,CaixaBank,Financials,Financial Services,ES,BME
+CLNX.MC,Cellnex Telecom,Communication Services,Telecommunications,ES,BME
+COL.MC,Inmobiliaria Colonial,Real Estate,Real Estate,ES,BME
+ELE.MC,Endesa,Utilities,Energy,ES,BME
+ENG.MC,Enagás,Utilities,Energy,ES,BME
+FDR.MC,Fluidra,Industrials,Manufacturing,ES,BME
+FER.MC,Ferrovial,Industrials,Infrastructure,NL,BME
+GRF.MC,Grifols,Health Care,Pharmaceuticals,ES,BME
+IAG.MC,International Airlines Group,Industrials,Aviation,ES,BME
+IBE.MC,Iberdrola,Utilities,Energy,ES,BME
+IDR.MC,Indra Sistemas,Information Technology,Information Technology,ES,BME
+ITX.MC,Inditex,Consumer Discretionary,Textile,ES,BME
+LOG.MC,Logista,Consumer Staples,Logistics,ES,BME
+MAP.MC,Mapfre,Financials,Insurance,ES,BME
+MRL.MC,Merlin Properties,Real Estate,Real Estate,ES,BME
+MTS.MC,ArcelorMittal,Materials,Steel,LU,BME
+NTGY.MC,Naturgy,Utilities,Energy,ES,BME
+PUIG.MC,Puig,Consumer Staples,Clothes and Cosmetics,ES,BME
+RED.MC,Redeia,Utilities,Energy,ES,BME
+REP.MC,Repsol,Energy,Oil and Gas,ES,BME
+ROVI.MC,Laboratorios Rovi,Health Care,Pharmaceuticals,ES,BME
+SAB.MC,Banco Sabadell,Financials,Financial Services,ES,BME
+SAN.MC,Banco Santander,Financials,Financial Services,ES,BME
+SCYR.MC,Sacyr,Industrials,Construction,ES,BME
+SLR.MC,Solaria,Utilities,Solar Energy,ES,BME
+TEF.MC,Telefónica,Communication Services,Telecommunications,ES,BME
+UNI.MC,Unicaja,Financials,Financial Services,ES,BME

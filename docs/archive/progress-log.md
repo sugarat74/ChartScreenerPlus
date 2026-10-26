@@ -2,6 +2,25 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Multi-market universes planning (Nasdaq-100, IBEX 35, DAX; not started) — 2026-10-26
+
+- At the user's explicit request ("prepara la feature para nasdaq, ibex 35 y dax 40") wrote the umbrella spec `docs/specs/multi-market-universes.md` and appended six `not_started` features: `universe-registry`, `ingestion-multi-market`, `universe-selector-ui`, `universe-nasdaq100`, `universe-ibex35`, `universe-dax`. "Nasdaq" is read as the Nasdaq-100; the Composite is deferred.
+- Key decisions: Listing Market (`US`/`XMAD`/`XETR`) and currency per Instrument and Universe; globally unique tickers with `.MC`/`.DE` suffixes for European stocks (`MRK.DE` vs `MRK`); one Instrument per company across universes (Nasdaq-100 overlap fetched once); dated offline snapshots with exact membership sync; per-market calendars, schedules (Madrid/Xetra 18:15 local) and a waiting global lock; alerts once a day in the US run; per-universe public flag (`SCREENER_UNIVERSES_PUBLIC`, default `sp500`); Market Context, Breadth, sector context filters, Fundamentals, Company Card and forecast stay US-only.
+- Same day, two more future features at explicit request: `market-hours-status` (`docs/specs/market-hours-status.md`, home-page open/closed markets from the static schedule only) and `market-events-calendar` (`docs/specs/market-events-calendar.md`, reuses the FOMC/ECB calendar; blocked on owner decisions about earnings and release sources).
+- Updated the `AGENTS.md` scope guard (narrowed the non-US exclusion), `CONTEXT.md`, `docs/domain-model.md` and `docs/risks-and-open-questions.md`. Planning only: no application code changed and `init.ps1` was not run.
+- Owner answers applied the same day:
+  - Nasdaq-100 is confirmed; the Composite stays deferred.
+  - New universes are public to everyone, Visitors included.
+  - IBEX 35 and DAX are published via Yahoo as an owner-accepted licensing risk. The kill-switch is `SCREENER_UNIVERSES_PUBLIC`.
+  - The label is "DAX": `universe-dax40` was renamed to `universe-dax`, slug `dax`.
+  - The events calendar will use an external earnings-date source, but the provider and its display licence are still pending. EODHD, FMP and Finnhub are recorded as candidates.
+- Still open: the earnings provider and budget, and the events calendar coverage (US only or also Europe).
+
+## Independent validation: Screener table column controls (`screener-table-column-controls`, accepted) — 2026-10-25
+
+- Verdict **accept**. Validator reran `.\init.ps1` (exit 0: Laravel 867 passed / 6 skipped, 6846 assertions; SPA lint/typecheck with the existing RequireAuth.test warning; 375 Vitest in 47 files; build; engine 101) and focused screener/saved/AI/alerts suites (80 passed), reviewed the full diff and confirmed the modified tests were not weakened. All seven declared deviations accepted (RSI/RVOL bounds and inverted ranges now `422`; sector/country sort by GICS name/ISO code; only sector/country are selects; AI apply clears column filters; PostgreSQL checked only by CI; SQLite ASCII-only case folding; updated tests).
+- Non-blocking follow-ups: CI `test-pgsql` must pass before merge (LIKE escape, `collate "C"` sorts); table headings are hidden on empty results (chips and the sort select remain); an AI answer with an inverted RSI range is now `invalid_provider_response`; a legacy Saved Screener with `rsi_min > rsi_max` still matches nothing in alerts. Full record archived to `docs/archive/feature-evidence-accepted.json`.
+
 ## Screener table column controls implementation (`screener-table-column-controls`, passing) — 2026-10-25
 
 - Every Candidate table heading now has a sort button (both directions, `aria-sort`, nulls last, ticker tie-break) and a filter toggle opening one editor above the table: ticker/company and industry fragments, localized GICS sector and HQ country selects, inclusive Close/Change/RVOL/RSI bounds and the existing Signal/Pattern selection. Active column criteria show as removable chips (also in the empty state); «Limpiar filtros» clears them and keeps the sort.

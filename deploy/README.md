@@ -169,6 +169,35 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    5. Rebalanceo (revisión anual en diciembre y sustituciones puntuales): procedimiento en
       `database/data/nasdaq100.md`; la siembra del despliegue aplica el CSV nuevo.
 
+13. IBEX 35 (`universe-ibex35`, `database/data/ibex35.md`): cada despliegue ejecuta
+   `php artisan db:seed --class=Ibex35UniverseSeeder --force` tras el del Nasdaq-100 (sin red e idempotente).
+   Crea el universo `ibex35` (XMAD, EUR, posición 2) con 35 Instrumentos `.MC` nuevos (mercado `XMAD`, divisa
+   EUR). Sigue **sin ser público**: lo ve solo un Admin hasta que se añada a `SCREENER_UNIVERSES_PUBLIC`. Al
+   sembrarse, el planificador crea el evento `ingestion:pipeline --market=XMAD` (18:15 Europe/Madrid, días
+   hábiles de la Bolsa de Madrid). Calendario: `config/ingestion.php` `markets.XMAD.holidays` (2026 oficial de
+   BME; **2027 derivado, confirmarlo cuando BME publique su calendario** y renovar la lista cada año). Pasos de
+   salida a producción, en orden:
+
+   1. Desplegar (migra y siembra). Comprobar con `php artisan schedule:list` como `deploy` que aparece
+      `ingestion:pipeline --market=XMAD` a las 18:15 Europe/Madrid, y con sesión de Admin que
+      `GET /api/universes` lista `ibex35` (sin sesión solo `sp500`).
+   2. Primera ingesta (unos 2 años de velas por valor): la lanza el evento programado, o a mano como `deploy`,
+      en `current`: `php artisan ingestion:pipeline --market=XMAD --force`.
+   3. Verificar los datos de Yahoo para `.MC`: la última Ingestion Run de `ibex35` tiene `total` = 35 y sin
+      fallos (un `currency_mismatch` o un símbolo vacío indica un `.MC` mal mapeado: revisar ese valor en
+      `database/data/ibex35.csv`); en Admin la tabla de frescura de universos muestra `ibex35` como `fresh`; las
+      velas tienen fechas de sesión de Madrid (sin fines de semana ni festivos de BME), divisa EUR y sin huecos
+      (por ejemplo, `SAN.MC` en `/instruments/SAN.MC`); con sesión de Admin, `/screener?universe=ibex35` lista
+      Candidatos con precios en EUR. No hay respaldo Stooq para `.MC`: si Yahoo falla, el valor falla.
+   4. Hacer público: en `shared/.env` poner `SCREENER_UNIVERSES_PUBLIC=sp500,nasdaq100,ibex35` (con los
+      slugs que ya fueran públicos) y ejecutar `php artisan config:cache` como `deploy`. Anotarlo en
+      `PROGRESS.md`. Para retirarlo, quitar el slug y volver a ejecutar `config:cache` (interruptor de la
+      entrada 11). No cambies el valor por defecto de `.env.example` ni de `config/universes.php`. El riesgo de
+      licencia de los datos de la Bolsa de Madrid lo aceptó el responsable el 2026-10-26.
+   5. Rebalanceo (revisiones del Comité Asesor Técnico de BME: marzo, junio, septiembre y diciembre):
+      procedimiento en `database/data/ibex35.md`; la siembra del despliegue aplica el CSV nuevo. Cada año,
+      renovar `markets.XMAD.holidays`.
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.
