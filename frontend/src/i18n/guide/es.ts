@@ -8,7 +8,7 @@ export const guideEs: GuideTexts = {
   eyebrow: 'Manual de uso',
   title: 'Cómo funciona Chartiko',
   intro:
-    'Chartiko es un screener técnico de acciones del S&P 500: filtra los valores con criterios de análisis técnico, los ordena y te deja revisar cada uno en un gráfico. Este manual explica cada pantalla, cada filtro y cada indicador, señal y patrón que verás.',
+    'Chartiko es un screener técnico de acciones de índices de EE. UU. como el S&P 500: filtra los valores con criterios de análisis técnico, los ordena y te deja revisar cada uno en un gráfico. Este manual explica cada pantalla, cada filtro y cada indicador, señal y patrón que verás.',
   openScreener: 'Abrir el Screener',
   tocTitle: 'Contenido',
   sections: [
@@ -34,7 +34,7 @@ export const guideEs: GuideTexts = {
       id: 'datos',
       title: 'Qué datos usa Chartiko',
       paragraphs: [
-        'El universo es el S&P 500 (unas 500 acciones de EE. UU.). Chartiko trabaja con datos diarios: una vela por valor y sesión, con apertura, máximo, mínimo, cierre y volumen.',
+        'El universo por defecto es el S&P 500 (unas 500 acciones de EE. UU.). Cuando el selector de universo aparece en la parte superior del Screener, también puedes cambiar al Nasdaq-100 (unas 100 acciones de EE. UU., la mayoría también en el S&P 500). Un valor que está en ambos índices tiene un único conjunto de datos y aparece en las dos listas. Chartiko trabaja con datos diarios: una vela por valor y sesión, con apertura, máximo, mínimo, cierre y volumen.',
         'Los datos se actualizan una vez al día, cada día hábil del mercado estadounidense, a partir de las 16:30 (hora de Nueva York), unos 30 minutos después del cierre de la sesión. Después se recalculan los indicadores, las señales, los patrones y el listado. No hay cotizaciones en tiempo real ni intradía.',
         'La fecha de la última sesión aparece en la ficha de cada valor. Si un valor tiene poco historial (por ejemplo, menos de 200 sesiones para la SMA 200), ese indicador queda vacío en lugar de mostrar un valor inventado, y los filtros que lo necesitan no lo incluyen.',
       ],
@@ -340,7 +340,7 @@ export const guideEs: GuideTexts = {
   faq: [
     {
       question: '¿Qué mercado analiza Chartiko?',
-      answer: 'Las acciones del índice S&P 500 de EE. UU., con datos diarios.',
+      answer: 'Las acciones del índice S&P 500 de EE. UU. y, donde el selector de universo lo ofrezca, el Nasdaq-100, con datos diarios.',
     },
     {
       question: '¿Con qué frecuencia se actualizan los datos?',

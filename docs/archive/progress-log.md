@@ -2,6 +2,18 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Screener table column controls implementation (`screener-table-column-controls`, passing) — 2026-10-25
+
+- Every Candidate table heading now has a sort button (both directions, `aria-sort`, nulls last, ticker tie-break) and a filter toggle opening one editor above the table: ticker/company and industry fragments, localized GICS sector and HQ country selects, inclusive Close/Change/RVOL/RSI bounds and the existing Signal/Pattern selection. Active column criteria show as removable chips (also in the empty state); «Limpiar filtros» clears them and keeps the sort.
+- API: new public params `search`, `sector`, `industry`, `country`, `rvol_max`, `close_min`/`close_max`, `change_min`/`change_max` and 12 per-column sorts, validated in `ScreenerFilterParser` and applied in SQL before count/paging (bound, wildcard-escaped LIKE; fixed sort map). Contract tightening: numeric bounds (`rsi_*` 0–100, `min_rvol` 0–1000) and inverted ranges, including `rsi_min > rsi_max`, are now `422`. Saved Screeners store the twenty-key definition and re-check it with the parser; old rows read the new keys as null. The AI schema, prompt and response stay at eleven keys (`ScreenerQuerySchema` projects the parser output).
+- Verified: new `ScreenerColumnControlsTest` (14 tests) plus focused screener/saved/alerts/AI/localization suites 191 passed; Vitest `screenerColumns.test.ts` + `ScreenerColumnControls.test.tsx`; standard `.\init.ps1` exit 0: Laravel 867 passed / 6 skipped (6846 assertions), SPA lint/typecheck (existing RequireAuth warning), 375 Vitest in 47 files, build, engine 101. Manual Playwright on a scratch SQLite copy (503 seeded rows): 1440 px and 390 px, Energy filter 21/21 across two 10-row pages, RSI-ascending nulls last, keyboard open/Escape focus return, no page-level horizontal overflow. PostgreSQL behavior (LIKE escape, `collate "C"` text sorts) is only covered by CI. Independent validation pending.
+
+## Independent validation: Screener company classification (`screener-company-classification`, accepted) — 2026-10-25
+
+- Verdict **accept**. Independently re-derived GICS sub-industry and headquarters country for all 503 tickers from the committed source snapshot with the documented mapping: 0 mismatches, original columns untouched, nulls exactly CTVA/PSKY/WBD (both) and XYZ (country). Migrations are additive and backfill only the new fields; row builder and public payload add fields without filter/order changes.
+- Production `/api/screener` paged 503/503 rows matching the dataset, no ETFs; Playwright at 390 px and 1440 px confirmed the three separate columns with in-table horizontal scroll. `.\init.ps1` exit 0: Laravel 853 passed / 6 skipped (6567 assertions), SPA lint (existing RequireAuth.test warning), 351 Vitest in 45 files, build, engine 101 passed.
+- Non-blocking follow-ups: migration file names are dated 2026-10-27 (later migrations created before that date would sort earlier); unknown values render a bare dash without screen-reader text; the ticker column is not sticky when scrolling the table on mobile. `screener-table-column-controls` is now unblocked.
+
 ## Harness token diet: archived history — 2026-10-25
 
 - Moved the full records of the 64 `accepted` features to `docs/archive/feature-evidence-accepted.json` (entries in `feature_list.json` keep `id`, `area`, `title`, `status`, `depends_on`) and the 88 oldest `PROGRESS.md` sessions to `docs/archive/progress-log.md`, verbatim. Session-start reading dropped from ~580 KB to ~48 KB.

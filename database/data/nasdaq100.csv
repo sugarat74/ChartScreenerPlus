@@ -1,0 +1,102 @@
+ticker,company,sector,industry,country,exchange
+AAPL,Apple Inc.,Information Technology,"Technology Hardware, Storage & Peripherals",US,NASDAQ
+ABNB,Airbnb,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",US,NASDAQ
+ADBE,Adobe Inc.,Information Technology,Application Software,US,NASDAQ
+ADI,Analog Devices,Information Technology,Semiconductors,US,NASDAQ
+ADP,Automatic Data Processing,Industrials,Human Resource & Employment Services,US,NASDAQ
+ADSK,Autodesk,Information Technology,Application Software,US,NASDAQ
+AEP,American Electric Power,Utilities,Electric Utilities,US,NASDAQ
+ALAB,Astera Labs,Information Technology,Semiconductors,US,NASDAQ
+ALNY,Alnylam Pharmaceuticals,Health Care,Biotechnology,US,NASDAQ
+AMAT,Applied Materials,Information Technology,Semiconductor Materials & Equipment,US,NASDAQ
+AMD,Advanced Micro Devices,Information Technology,Semiconductors,US,NASDAQ
+AMGN,Amgen,Health Care,Biotechnology,US,NASDAQ
+AMZN,Amazon,Consumer Discretionary,Broadline Retail,US,NASDAQ
+APP,AppLovin,Communication Services,Advertising,US,NASDAQ
+ARM,Arm Holdings,Information Technology,Semiconductors,GB,NASDAQ
+ASML,ASML Holding,Information Technology,Industrial Machinery,NL,NASDAQ
+AVGO,Broadcom,Information Technology,Semiconductors,US,NASDAQ
+AXON,Axon Enterprise,Industrials,Aerospace & Defense,US,NASDAQ
+BKNG,Booking Holdings,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",US,NASDAQ
+BKR,Baker Hughes,Energy,Oil & Gas Equipment & Services,US,NASDAQ
+CCEP,Coca-Cola Europacific Partners,Consumer Staples,Soft Drinks,GB,NASDAQ
+CDNS,Cadence Design Systems,Information Technology,Application Software,US,NASDAQ
+CEG,Constellation Energy,Utilities,Electric Utilities,US,NASDAQ
+CMCSA,Comcast,Communication Services,Cable & Satellite,US,NASDAQ
+COST,Costco,Consumer Staples,Consumer Staples Merchandise Retail,US,NASDAQ
+CPRT,Copart,Industrials,Diversified Support Services,US,NASDAQ
+CRWD,CrowdStrike,Information Technology,Systems Software,US,NASDAQ
+CRWV,CoreWeave,Information Technology,Computer Services,US,NASDAQ
+CSCO,Cisco,Information Technology,Communications Equipment,US,NASDAQ
+CSX,CSX Corporation,Industrials,Rail Transportation,US,NASDAQ
+CTAS,Cintas,Industrials,Diversified Support Services,US,NASDAQ
+DASH,DoorDash,Consumer Discretionary,Specialized Consumer Services,US,NASDAQ
+DDOG,Datadog,Information Technology,Application Software,US,NASDAQ
+DXCM,Dexcom,Health Care,Health Care Equipment,US,NASDAQ
+EXC,Exelon,Utilities,Electric Utilities,US,NASDAQ
+FANG,Diamondback Energy,Energy,Oil & Gas Exploration & Production,US,NASDAQ
+FAST,Fastenal,Industrials,Trading Companies & Distributors,US,NASDAQ
+FER,Ferrovial,Industrials,"Military, Government, Technical",NL,NASDAQ
+FTNT,Fortinet,Information Technology,Systems Software,US,NASDAQ
+GEHC,GE HealthCare,Health Care,Health Care Equipment,US,NASDAQ
+GILD,Gilead Sciences,Health Care,Biotechnology,US,NASDAQ
+GOOG,Alphabet Inc. (Class C),Communication Services,Interactive Media & Services,US,NASDAQ
+GOOGL,Alphabet Inc. (Class A),Communication Services,Interactive Media & Services,US,NASDAQ
+HON,Honeywell Technologies,Industrials,Industrial Conglomerates,US,NASDAQ
+HONA,Honeywell Aerospace,Industrials,Aerospace & Defense,US,NASDAQ
+IDXX,Idexx Laboratories,Health Care,Health Care Equipment,US,NASDAQ
+INTC,Intel,Information Technology,Semiconductors,US,NASDAQ
+INTU,Intuit,Information Technology,Application Software,US,NASDAQ
+ISRG,Intuitive Surgical,Health Care,Health Care Equipment,US,NASDAQ
+KDP,Keurig Dr Pepper,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,US,NASDAQ
+KLAC,KLA Corporation,Information Technology,Semiconductor Materials & Equipment,US,NASDAQ
+LIN,Linde plc,Materials,Industrial Gases,GB,NASDAQ
+LITE,Lumentum,Information Technology,Communications Equipment,US,NASDAQ
+LRCX,Lam Research,Information Technology,Semiconductor Materials & Equipment,US,NASDAQ
+MAR,Marriott International,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",US,NASDAQ
+MCHP,Microchip Technology,Information Technology,Semiconductors,US,NASDAQ
+MDLZ,Mondelez International,Consumer Staples,Packaged Foods & Meats,US,NASDAQ
+MELI,Mercado Libre,Consumer Discretionary,Catalog/Specialty Distribution,UY,NASDAQ
+META,Meta Platforms,Communication Services,Interactive Media & Services,US,NASDAQ
+MNST,Monster Beverage,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,US,NASDAQ
+MPWR,Monolithic Power Systems,Information Technology,Semiconductors,US,NASDAQ
+MRNA,Moderna,Health Care,Biotechnology,US,NASDAQ
+MRVL,Marvell Technology,Information Technology,Semiconductors,US,NASDAQ
+MSFT,Microsoft,Information Technology,Systems Software,US,NASDAQ
+MSTR,MicroStrategy,Information Technology,Software,US,NASDAQ
+MU,Micron Technology,Information Technology,Semiconductors,US,NASDAQ
+NBIS,Nebius Group,Information Technology,Computer Services,NL,NASDAQ
+NFLX,Netflix,Communication Services,Movies & Entertainment,US,NASDAQ
+NVDA,Nvidia,Information Technology,Semiconductors,US,NASDAQ
+NXPI,NXP Semiconductors,Information Technology,Semiconductors,NL,NASDAQ
+ODFL,Old Dominion,Industrials,Cargo Ground Transportation,US,NASDAQ
+ORLY,O'Reilly Automotive,Consumer Discretionary,Automotive Retail,US,NASDAQ
+PANW,Palo Alto Networks,Information Technology,Systems Software,US,NASDAQ
+PAYX,Paychex,Industrials,Human Resource & Employment Services,US,NASDAQ
+PCAR,Paccar,Industrials,Construction Machinery & Heavy Transportation Equipment,US,NASDAQ
+PDD,PDD Holdings,Consumer Discretionary,EDP Services,IE,NASDAQ
+PEP,PepsiCo,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,US,NASDAQ
+PLTR,Palantir Technologies,Information Technology,Application Software,US,NASDAQ
+PYPL,PayPal,Financials,Transaction & Payment Processing Services,US,NASDAQ
+QCOM,Qualcomm,Information Technology,Semiconductors,US,NASDAQ
+REGN,Regeneron Pharmaceuticals,Health Care,Biotechnology,US,NASDAQ
+RKLB,Rocket Lab,Industrials,Aerospace,US,NASDAQ
+ROP,Roper Technologies,Information Technology,Electronic Equipment & Instruments,US,NASDAQ
+ROST,Ross Stores,Consumer Discretionary,Apparel Retail,US,NASDAQ
+SBUX,Starbucks,Consumer Discretionary,Restaurants,US,NASDAQ
+SHOP,Shopify,Information Technology,Software,CA,NASDAQ
+SNDK,Sandisk,Information Technology,"Technology Hardware, Storage & Peripherals",US,NASDAQ
+SNPS,Synopsys,Information Technology,Application Software,US,NASDAQ
+SPCX,SpaceX,Industrials,Telecommunications Services,US,NASDAQ
+STX,Seagate Technology,Information Technology,"Technology Hardware, Storage & Peripherals",IE,NASDAQ
+TER,Teradyne,Information Technology,Semiconductor Materials & Equipment,US,NASDAQ
+TMUS,T-Mobile US,Communication Services,Wireless Telecommunication Services,US,NASDAQ
+TRI,Thomson Reuters,Industrials,Software,CA,NASDAQ
+TSLA,"Tesla, Inc.",Consumer Discretionary,Automobile Manufacturers,US,NASDAQ
+TTWO,Take-Two Interactive,Communication Services,Interactive Home Entertainment,US,NASDAQ
+TXN,Texas Instruments,Information Technology,Semiconductors,US,NASDAQ
+VRTX,Vertex Pharmaceuticals,Health Care,Biotechnology,US,NASDAQ
+WDAY,"Workday, Inc.",Information Technology,Application Software,US,NASDAQ
+WDC,Western Digital,Information Technology,"Technology Hardware, Storage & Peripherals",US,NASDAQ
+WMT,Walmart,Consumer Staples,Consumer Staples Merchandise Retail,US,NASDAQ
+XEL,Xcel Energy,Utilities,Multi-Utilities,US,NASDAQ

@@ -140,9 +140,34 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
    previa). Es también el interruptor de retirada: quita el slug de `shared/.env`, ejecuta
    `php artisan config:cache` como `deploy` y ese universo desaparece al instante de toda superficie no Admin
    (`GET /api/universes`, `?universe=` responde 404, Saved Screeners; las alertas sobre él se omiten) sin
-   borrar datos; volver a añadirlo lo restaura. Esta función no siembra ningún índice nuevo todavía. Tras
+   borrar datos; volver a añadirlo lo restaura. Esta función no siembra ningún índice (el Nasdaq-100 se siembra en el punto 12). Tras
    desplegar: `GET /api/universes` sin sesión devuelve solo `sp500` y `GET /api/screener` no cambia salvo los
    campos añadidos `market` y `currency`.
+
+12. Nasdaq-100 (`universe-nasdaq100`, `database/data/nasdaq100.md`): cada despliegue ejecuta
+   `php artisan db:seed --class=Nasdaq100UniverseSeeder --force` tras el de Market Context (sin red e
+   idempotente; el S&P 500 ya debe estar sembrado). Crea el universo `nasdaq100` (US, USD, posición 1) con
+   101 valores: los 86 que ya están en el S&P 500 son el mismo Instrumento (mismas velas y misma fila del
+   Screener) y solo ganan pertenencia; se crean 15 Instrumentos nuevos. Sigue **sin ser público**: lo ve solo un
+   Admin hasta que se añada a `SCREENER_UNIVERSES_PUBLIC`. Pasos de salida a producción, en orden:
+
+   1. Desplegar (migra y siembra). Comprobar con sesión de Admin: `GET /api/universes` lista `sp500` y
+      `nasdaq100`; sin sesión solo `sp500`.
+   2. Primera ingesta: la lanza el `ingestion:pipeline` programado (16:30 Nueva York) o a mano como `deploy`,
+      en `current`: `php artisan ingestion:pipeline --force`. El Nasdaq-100 se procesa tras `sp500` con
+      `--except-universe=sp500`, así que solo descarga los 15 miembros nuevos (unos 2 años de velas cada uno).
+      Solo esa parte, si hace falta: `php artisan ingestion:run --universe=nasdaq100 --except-universe=sp500`,
+      luego `indicators:compute`, `signals:detect` y `patterns:detect` con los mismos `--universe` y
+      `--except-universe`, y `php artisan screener:refresh`.
+   3. Verificar: la última Ingestion Run del universo `nasdaq100` tiene `total` = 15 y sin fallos; en Admin la
+      tabla de frescura de universos muestra `nasdaq100` como `fresh`; con sesión de Admin,
+      `/screener?universe=nasdaq100` lista Candidatos (101 valores en total, los solapados con S&P 500 incluidos).
+   4. Hacer público: en `shared/.env` poner `SCREENER_UNIVERSES_PUBLIC=sp500,nasdaq100` y ejecutar
+      `php artisan config:cache` como `deploy`. Anotarlo en `PROGRESS.md`. Para retirarlo, quitar el slug y
+      volver a ejecutar `config:cache` (interruptor de la entrada 11). No cambies el valor por defecto de
+      `.env.example` ni de `config/universes.php`.
+   5. Rebalanceo (revisión anual en diciembre y sustituciones puntuales): procedimiento en
+      `database/data/nasdaq100.md`; la siembra del despliegue aplica el CSV nuevo.
 
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
