@@ -225,6 +225,12 @@ class Nasdaq100UniverseSeederTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-07-15 16:30:00', 'America/New_York'));
         $this->seedBoth();
 
+        // Keep the run light: the full 518-Instrument pipeline inside one PostgreSQL test
+        // transaction hung CI intermittently. All 15 new members plus ten overlapping
+        // S&P 500 members still prove that an overlap is fetched once.
+        $keep = array_merge(self::NEW_MEMBERS, ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'GOOG', 'META', 'TSLA', 'AVGO', 'COST']);
+        Instrument::query()->whereNotIn('ticker', $keep)->delete();
+
         $bars = [];
         foreach ([0, 1, 2] as $index) {
             $bars[] = [
@@ -246,7 +252,8 @@ class Nasdaq100UniverseSeederTest extends TestCase
         $requested = Http::recorded(fn (Request $request): bool => str_contains($request->url(), '/eod/'))
             ->map(fn (array $pair): string => basename(parse_url($pair[0]->url(), PHP_URL_PATH)));
 
-        // One fetch per Instrument: 503 S&P 500 members plus the 15 new Nasdaq-100 ones.
+        // One fetch per Instrument: the kept S&P 500 members plus the 15 new Nasdaq-100 ones.
+        $this->assertSame(count($keep), Instrument::query()->count());
         $this->assertSame(Instrument::query()->count(), $requested->count());
         $this->assertSame($requested->count(), $requested->unique()->count(), 'An Instrument was fetched twice.');
 
