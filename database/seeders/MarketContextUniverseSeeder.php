@@ -58,7 +58,7 @@ class MarketContextUniverseSeeder extends Seeder
         DB::transaction(function (): void {
             $universe = Universe::query()->updateOrCreate(
                 ['slug' => (string) config('market_context.universe')],
-                ['name' => self::UNIVERSE_NAME],
+                ['name' => self::UNIVERSE_NAME, 'is_screener' => false],
             );
 
             $instrumentIds = [];

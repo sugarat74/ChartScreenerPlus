@@ -130,6 +130,11 @@ class InstrumentController extends Controller
             // Additive: `stock` or `etf` (Market Context); the SPA hides the
             // stock-only panels for an ETF.
             'kind' => $instrument->kind ?? Instrument::KIND_STOCK,
+            // Listing Market (US, XMAD, XETR) and currency; `availability`
+            // tells the SPA which US-only panels exist for this Instrument.
+            'market' => $instrument->listingMarket(),
+            'currency' => $instrument->currency ?? 'USD',
+            'availability' => $instrument->availability(),
         ];
     }
 

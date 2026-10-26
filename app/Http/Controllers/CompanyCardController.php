@@ -30,6 +30,9 @@ class CompanyCardController extends Controller
         if ($instrument === null) {
             return $this->notFound();
         }
+        if (! $instrument->supportsUsOnlyFeatures()) {
+            return $this->notAvailableForMarket();
+        }
 
         return response()->json([
             'card' => $service->current($instrument, $this->locale()),
@@ -45,6 +48,9 @@ class CompanyCardController extends Controller
         $instrument = $this->instrument($ticker);
         if ($instrument === null) {
             return $this->notFound();
+        }
+        if (! $instrument->supportsUsOnlyFeatures()) {
+            return $this->notAvailableForMarket();
         }
 
         try {
@@ -69,6 +75,14 @@ class CompanyCardController extends Controller
     private function notFound(): JsonResponse
     {
         return response()->json(['message' => __('messages.instrument_not_found')], 404);
+    }
+
+    /**
+     * The card and the SEC figures cover US listings only (D10).
+     */
+    private function notAvailableForMarket(): JsonResponse
+    {
+        return response()->json(['message' => __('messages.not_available_for_market')], 404);
     }
 
     private function locale(): string

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ListingMarket;
 use Database\Factories\InstrumentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['ticker', 'company', 'sector', 'industry', 'country', 'exchange', 'active', 'kind'])]
+#[Fillable(['ticker', 'company', 'sector', 'industry', 'country', 'exchange', 'active', 'kind', 'market', 'currency'])]
 class Instrument extends Model
 {
     /** @use HasFactory<InstrumentFactory> */
@@ -46,6 +47,37 @@ class Instrument extends Model
     public function isEtf(): bool
     {
         return ($this->kind ?? self::KIND_STOCK) === self::KIND_ETF;
+    }
+
+    /**
+     * The Listing Market of this Instrument. A model built in memory without
+     * one is a US listing, like the column default.
+     */
+    public function listingMarket(): string
+    {
+        return $this->market ?? ListingMarket::US;
+    }
+
+    /**
+     * Whether the US-only stock features (AI Company Card, SEC fundamentals,
+     * forecast) apply: a US-listed stock.
+     */
+    public function supportsUsOnlyFeatures(): bool
+    {
+        return ! $this->isEtf() && $this->listingMarket() === ListingMarket::US;
+    }
+
+    /**
+     * Which feature panels exist for this Instrument, so the SPA does not
+     * hardcode market rules.
+     *
+     * @return array{company_card: bool, fundamentals: bool, forecast: bool}
+     */
+    public function availability(): array
+    {
+        $usOnly = $this->supportsUsOnlyFeatures();
+
+        return ['company_card' => $usOnly, 'fundamentals' => $usOnly, 'forecast' => $usOnly];
     }
 
     /**

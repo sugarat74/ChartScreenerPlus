@@ -5,6 +5,7 @@ namespace App\Services\Fundamentals;
 use App\Models\CompanyFundamental;
 use App\Models\Instrument;
 use App\Models\Universe;
+use App\Support\ListingMarket;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -56,14 +57,14 @@ class FundamentalsRefresher
                 $wanted[] = str_replace('-', '.', $ticker);
             }
 
-            return Instrument::query()->stocks()->whereIn('ticker', array_unique($wanted))->orderBy('ticker')->get();
+            return Instrument::query()->stocks()->where('market', ListingMarket::US)->whereIn('ticker', array_unique($wanted))->orderBy('ticker')->get();
         }
 
         $universe = Universe::query()->where('slug', (string) config('ingestion.universe'))->first();
 
         return $universe === null
             ? new Collection
-            : $universe->instruments()->stocks()->where('active', true)->orderBy('ticker')->get();
+            : $universe->instruments()->stocks()->where('instruments.market', ListingMarket::US)->where('active', true)->orderBy('ticker')->get();
     }
 
     /**

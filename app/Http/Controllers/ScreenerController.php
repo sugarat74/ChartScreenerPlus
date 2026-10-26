@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Universe;
 use App\Services\Screener\CandidateQuery;
 use App\Services\Screener\ScreenerFilterParser;
+use App\Support\ListingMarket;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -58,6 +59,20 @@ class ScreenerController extends Controller
 
         $filters = ScreenerFilterParser::fromArray($request->query());
 
+        // The sector context filters read US sector ETFs: outside the US
+        // Listing Market they are a 422, for any caller (D10).
+        if (ScreenerFilterParser::usesMarketContext($filters) && $universe->market !== ListingMarket::US) {
+            return response()->json([
+                'message' => __('messages.screener.filter_not_available_for_universe'),
+                'code' => 'filter_not_available_for_universe',
+                'errors' => [
+                    ($filters['sector_trend'] ?? null) !== null ? 'sector_trend' : 'sector_rs_rank_max' => [
+                        __('messages.screener.filter_not_available_for_universe'),
+                    ],
+                ],
+            ], 422);
+        }
+
         // The one documented access check of this public route
         // (market-context-patterns, C5): the sector context filters are for
         // Registered Users with the `view-market-context` ability. It runs
@@ -102,8 +117,11 @@ class ScreenerController extends Controller
     /**
      * Resolve the `universe` slug, defaulting to `config('ingestion.universe')`.
      *
-     * An unknown slug is a bad request (JSON `404`), not an empty list; a valid
-     * universe that matches nothing is a `200` with an empty candidate list.
+     * An unknown slug, a universe that is not a Screener universe (Market
+     * Context) and a Screener universe the caller may not see (not in
+     * `SCREENER_UNIVERSES_PUBLIC`, for a non-Admin) are all the same JSON
+     * `404`, not an empty list; a visible universe that matches nothing is a
+     * `200` with an empty candidate list.
      */
     private function resolveUniverse(Request $request): ?Universe
     {
@@ -117,7 +135,10 @@ class ScreenerController extends Controller
             return null;
         }
 
-        return Universe::query()->where('slug', $slug)->first();
+        return Universe::query()
+            ->visibleTo($request->user('sanctum'))
+            ->where('slug', $slug)
+            ->first();
     }
 
     /**

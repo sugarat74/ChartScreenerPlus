@@ -6,6 +6,7 @@ use App\Models\ChartPattern;
 use App\Models\Instrument;
 use App\Models\ScreenerRow;
 use App\Services\MarketRegime\MarketRegimeRules;
+use App\Support\ListingMarket;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -109,6 +110,8 @@ class ScreenerRowBuilder
             'industry' => $instrument->industry,
             'country' => $instrument->country,
             'exchange' => $instrument->exchange,
+            'market' => $instrument->listingMarket(),
+            'currency' => $instrument->currency ?? 'USD',
             'active' => (bool) $instrument->active,
             'date' => $bar->date->format('Y-m-d'),
             'close' => $bar->close,
@@ -188,6 +191,12 @@ class ScreenerRowBuilder
      */
     private function sectorContext(Instrument $instrument, string $barDate, array $sectors): ?array
     {
+        // The sector ETFs are US funds: only US listings get sector context
+        // (docs/specs/multi-market-universes.md, D10).
+        if ($instrument->listingMarket() !== ListingMarket::US) {
+            return null;
+        }
+
         $context = $instrument->sector === null ? null : ($sectors['rows'][$instrument->sector] ?? null);
 
         if ($context === null || $sectors['date'] === null) {

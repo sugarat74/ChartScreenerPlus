@@ -1,0 +1,3 @@
+ticker,company,sector,industry,country,exchange
+AAA,Alpha Inc OVERWRITE,Energy,Other,GB,NYSE
+NEW,New Co,Information Technology,Software,US,NASDAQ

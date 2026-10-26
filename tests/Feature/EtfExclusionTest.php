@@ -39,7 +39,7 @@ class EtfExclusionTest extends TestCase
 
         config(['ingestion.universe' => 'sp500', 'market_context.universe' => 'market-context']);
         $this->sp500 = Universe::factory()->create(['slug' => 'sp500', 'name' => 'S&P 500']);
-        $this->market = Universe::factory()->create(['slug' => 'market-context', 'name' => 'Market Context']);
+        $this->market = Universe::factory()->notScreener()->create(['slug' => 'market-context', 'name' => 'Market Context']);
         Http::preventStrayRequests();
     }
 
@@ -82,15 +82,15 @@ class EtfExclusionTest extends TestCase
         $this->assertSame(['NVDA'], ScreenerRow::query()->pluck('ticker')->all());
     }
 
-    public function test_the_screener_returns_no_candidates_for_the_market_context_universe(): void
+    public function test_the_market_context_universe_is_not_a_screener_universe(): void
     {
         $this->stock('NVDA');
         $this->xlk();
         $this->refreshScreenerRows();
 
         $this->getJson('/api/screener?universe=market-context')
-            ->assertOk()
-            ->assertJsonPath('candidates', []);
+            ->assertNotFound()
+            ->assertExactJson(['message' => 'Universe not found.']);
         $this->getJson('/api/screener')
             ->assertOk()
             ->assertJsonPath('candidates.0.ticker', 'NVDA')

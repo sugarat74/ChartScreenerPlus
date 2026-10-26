@@ -1815,5 +1815,34 @@
       "Independent validator verdict accept (2026-10-25): reran .\\init.ps1 exit 0 (Laravel 867 passed / 6 skipped, 6846 assertions; SPA lint/typecheck with existing RequireAuth.test warning; 375 Vitest in 47 files; build; engine 101) and focused screener/saved/AI/alerts suites 80 passed; reviewed full diff and changed tests (not weakened); accepted all seven declared deviations. Non-blocking: CI test-pgsql must pass before merge (LIKE escape, collate \"C\" sorts); table headings hidden on empty results (chips/sort select remain); AI answers with inverted RSI now invalid_provider_response; legacy saved rows with rsi_min > rsi_max match nothing in alerts."
     ],
     "notes": "Deliberate contract tightening: rsi_min/rsi_max now bounded 0..100 and min_rvol 0..1000, and an inverted range is 422 instead of an empty 200 (ScreenerApiTest updated). Sector and country sort by canonical GICS name / ISO code, not by localized label (sort labels say so). SQLite lower() is ASCII-only, so non-ASCII case-insensitive matching is exact only on PostgreSQL. Independently accepted 2026-10-25."
+  },
+  {
+    "id": "universe-registry",
+    "area": "backend",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "Listing Market, currency and Screener universe registry with universe-aware Screener, Saved Screeners and alerts",
+    "user_visible_behavior": "The Screener API, Saved Screeners and screener alerts work on any visible Screener universe (default S&P 500 unchanged); Instruments and payloads carry Listing Market (US/XMAD/XETR) and currency; universes not in SCREENER_UNIVERSES_PUBLIC (the kill-switch) are Admin preview only; sector context filters, Company Card, fundamentals and forecast stay US-only.",
+    "depends_on": [
+      "screener-table-column-controls",
+      "saved-screeners",
+      "alerts-engine",
+      "market-context-patterns"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Additive migrations: existing rows US/USD, sp500 the only Screener universe, existing Screener/Saved Screener/alert tests unchanged",
+      "GET /api/universes and ?universe= honour is_screener and SCREENER_UNIVERSES_PUBLIC (404 for unknown, non-Screener or hidden slugs) with a fixture XMAD universe",
+      "IndexUniverseSeeder: suffix/market checks, exact membership sync without deleting history, active flag, S&P fields kept for overlapping tickers, idempotent",
+      "One screener row per Instrument in two universes; Saved Screener universe round-trip with legacy rows as sp500; screener alerts evaluate in their universe",
+      "Sector context filters 422 outside US; Company Card, fundamentals and forecast 404 for non-US Instruments with availability flags",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-10-26 implementer: .\\init.ps1 exit 0 (run via Start-Process): Laravel 894 passed / 6 skipped (7031 assertions), SPA lint/typecheck, 375 Vitest in 47 files, build, engine 101 passed. git diff --check clean.",
+      "New UniverseRegistryTest (26 tests) and UniverseRegistrySectorContextTest (1) cover every spec acceptance bullet with the fixture XMAD universe fixture-eu (tests/fixtures/universes/*.csv): defaults US/USD, GET /api/universes visibility and kill-switch, ?universe= 404 for market-context/unknown/hidden, seeder rules (suffix both ways, market and currency mismatch, no-op rerun, exact sync keeping bars and active only for orphans, S&P fields kept for overlap), one screener row for an overlapping Instrument, Saved Screener universe round-trip with legacy as sp500, 422 sector filters outside US (API and Saved Screener), alert evaluated in its universe and skipped when hidden, 404 Company Card/forecast with localized message, availability flags, fundamentals refresh skips non-US.",
+      "Migration verified on a scratch SQLite: up, rollback and up again with an existing sp500 row backfilled (is_screener=1, position 0) and market-context left 0. PostgreSQL only covered by CI test-pgsql (not run locally).",
+      "Independent validator verdict accept (2026-10-26): reran .\\init.ps1 exit 0 (Laravel 894 passed / 6 skipped, 7031 assertions; 375 Vitest; build; engine 101), UniverseRegistry tests 27 passed (175 assertions), migrate/rollback/migrate on scratch SQLite; reviewed full diff; all six declared deviations accepted, edited existing tests not weakened. PostgreSQL covered only by CI test-pgsql."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Implemented 2026-10-26 (passing, pending independent validation). Deviations: the Saved Screener universe key lives in filters only when not the default (plus a top-level universe {slug,name} in the payload) so existing 20-key payloads/tests stay unchanged; existing tests EtfExclusionTest (market-context now 404), ScreenerApiTest, ScreenerSectorFiltersTest and InstrumentDetailApiTest only gained the new fields. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Independently accepted 2026-10-26."
   }
 ]

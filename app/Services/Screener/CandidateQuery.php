@@ -293,6 +293,8 @@ class CandidateQuery
             'industry' => $row->industry,
             'country' => $row->country,
             'exchange' => $row->exchange,
+            'market' => $row->market,
+            'currency' => $row->currency,
             'active' => $row->active,
             'date' => $row->date->format('Y-m-d'),
             'close' => (float) $row->close,

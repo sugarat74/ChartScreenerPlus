@@ -18,6 +18,7 @@ return [
     'not_in_watchlist' => 'Instrument is not in your watchlist.',
     'screener_not_found' => 'Screener not found.',
     'universe_not_found' => 'Universe not found.',
+    'not_available_for_market' => 'This feature is not available for instruments listed on this market.',
     'admin_required' => 'Admin access required.',
     'stateful_session_required' => 'A stateful session is required.',
     'password_reset' => [
@@ -81,5 +82,6 @@ return [
         'text_invalid' => 'The :parameter parameter must be plain text of at most :max characters.',
         'sector_invalid' => 'The sector parameter must be one of the eleven GICS sectors.',
         'country_invalid' => 'The country parameter must be a two-letter country code.',
+        'filter_not_available_for_universe' => 'The sector context filters are only available for United States universes.',
     ],
 ];

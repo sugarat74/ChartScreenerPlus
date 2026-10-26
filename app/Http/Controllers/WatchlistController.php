@@ -130,6 +130,8 @@ class WatchlistController extends Controller
             'sector' => $instrument->sector,
             'exchange' => $instrument->exchange,
             'active' => $instrument->active,
+            'market' => $instrument->listingMarket(),
+            'currency' => $instrument->currency ?? 'USD',
         ];
     }
 }

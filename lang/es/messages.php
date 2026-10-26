@@ -19,6 +19,7 @@ return [
     'not_in_watchlist' => 'El instrumento no está en tu watchlist.',
     'screener_not_found' => 'Screener no encontrado.',
     'universe_not_found' => 'Universo no encontrado.',
+    'not_available_for_market' => 'Esta función no está disponible para instrumentos cotizados en este mercado.',
     'admin_required' => 'Se requiere acceso de administrador.',
     'stateful_session_required' => 'Se requiere una sesión con estado.',
     'password_reset' => [
@@ -82,5 +83,6 @@ return [
         'text_invalid' => 'El parámetro :parameter debe ser texto plano de como máximo :max caracteres.',
         'sector_invalid' => 'El parámetro sector debe ser uno de los once sectores GICS.',
         'country_invalid' => 'El parámetro country debe ser un código de país de dos letras.',
+        'filter_not_available_for_universe' => 'Los filtros de contexto sectorial solo están disponibles para universos de Estados Unidos.',
     ],
 ];

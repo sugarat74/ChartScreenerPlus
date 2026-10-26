@@ -337,7 +337,7 @@ class InstrumentDetailApiTest extends TestCase
         );
 
         $this->assertSame(
-            ['ticker', 'company', 'sector', 'exchange', 'active', 'kind'],
+            ['ticker', 'company', 'sector', 'exchange', 'active', 'kind', 'market', 'currency', 'availability'],
             array_keys($payload['instrument']),
         );
 

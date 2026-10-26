@@ -20,6 +20,11 @@ class ForecastController extends Controller
         // Stocks only: the forecast state reads Signals, which ETFs never get.
         $instrument = Instrument::query()->stocks()->where('ticker', strtoupper($ticker))->firstOrFail();
 
+        // The forecast model is trained on US stocks only (docs/specs/multi-market-universes.md, D10).
+        if (! $instrument->supportsUsOnlyFeatures()) {
+            return response()->json(['message' => __('messages.not_available_for_market')], 404);
+        }
+
         try {
             return response()->json(['forecast' => $service->predict($instrument, (int) $validated['horizon'], (float) $validated['minimum_probability'])]);
         } catch (ForecastUnavailable $exception) {
