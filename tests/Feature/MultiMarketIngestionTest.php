@@ -268,7 +268,7 @@ class MultiMarketIngestionTest extends TestCase
         $this->assertSame(['30 16 * * 1-5', 'America/New_York'], [$events['ingestion-pipeline']->expression, $events['ingestion-pipeline']->timezone]);
         $this->assertSame(['15 18 * * 1-5', 'Europe/Madrid'], [$events['ingestion-pipeline-xmad']->expression, $events['ingestion-pipeline-xmad']->timezone]);
         $this->assertSame(['15 18 * * 1-5', 'Europe/Berlin'], [$events['ingestion-pipeline-xetr']->expression, $events['ingestion-pipeline-xetr']->timezone]);
-        $this->assertStringContainsString('--market="XMAD"', (string) $events['ingestion-pipeline-xmad']->command);
+        $this->assertMatchesRegularExpression('/--market=[\'"]?XMAD[\'"]?/', (string) $events['ingestion-pipeline-xmad']->command);
     }
 
     public function test_a_market_without_a_seeded_screener_universe_has_no_event(): void

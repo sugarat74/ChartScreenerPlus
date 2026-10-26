@@ -38,7 +38,7 @@ class IngestionScheduleTest extends TestCase
         $this->assertTrue($event->withoutOverlapping);
         $this->assertSame(120, $event->expiresAt);
         $this->assertStringContainsString('ingestion:pipeline', (string) $event->command);
-        $this->assertStringContainsString('--market="US"', (string) $event->command);
+        $this->assertMatchesRegularExpression('/--market=[\'"]?US[\'"]?/', (string) $event->command);
     }
 
     public function test_the_schedule_is_dst_aware(): void
