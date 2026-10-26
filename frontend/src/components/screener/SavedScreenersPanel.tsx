@@ -37,17 +37,26 @@ const SECONDARY_BUTTON_CLASS =
 const NAME_INPUT_CLASS =
   'w-full rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none sm:w-64'
 
+/** The universe slug of a stored Screener: its own, else the key in its filters, else the default (null). */
+function savedUniverseSlug(screener: SavedScreener): string | null {
+  const slug = screener.universe?.slug ?? screener.filters.universe ?? null
+  return typeof slug === 'string' && slug !== '' ? slug : null
+}
+
 interface SavedScreenersPanelProps {
   /** The current URL-backed filter state; saving persists exactly this. */
   filters: ScreenerFilters
-  /** Apply a stored definition: the page patches the URL and refetches. */
-  onApply: (patch: Partial<ScreenerFilters>) => void
+  /** The selected non-default universe slug (null = the default); saved with the filters. */
+  universe?: string | null
+  /** Apply a stored definition and its universe: the page patches the URL and refetches. */
+  onApply: (patch: Partial<ScreenerFilters>, universe: string | null) => void
   /** Optional external reload trigger; a save also bumps an internal token. */
   reloadToken?: number
 }
 
 export default function SavedScreenersPanel({
   filters,
+  universe = null,
   onApply,
   reloadToken = 0,
 }: SavedScreenersPanelProps) {
@@ -129,7 +138,10 @@ export default function SavedScreenersPanel({
     setSavedName(null)
 
     try {
-      await savedScreenersApi.create(trimmed, serializeScreenerFilters(filters))
+      await savedScreenersApi.create(trimmed, {
+        ...serializeScreenerFilters(filters),
+        ...(universe !== null ? { universe } : {}),
+      })
       setName('')
       setSavedName(trimmed)
       reload()
@@ -299,8 +311,16 @@ export default function SavedScreenersPanel({
                 className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant py-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-mono text-sm font-bold text-on-surface">
-                    {screener.name}
+                  <p className="flex flex-wrap items-center gap-2 font-mono text-sm font-bold text-on-surface">
+                    <span className="truncate">{screener.name}</span>
+                    {screener.universe ? (
+                      <span
+                        data-testid="saved-universe-chip"
+                        className="rounded-[4px] border border-outline bg-surface-container px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant"
+                      >
+                        {t('saved.universeChip', { name: screener.universe.name })}
+                      </span>
+                    ) : null}
                   </p>
                   <p className="mt-0.5 max-w-2xl text-xs text-on-surface-variant">
                     {describeSavedFilters(screener.filters, t, formatDecimal)}
@@ -309,7 +329,7 @@ export default function SavedScreenersPanel({
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => onApply(deserializeScreenerFilters(screener.filters))}
+                    onClick={() => onApply(deserializeScreenerFilters(screener.filters), savedUniverseSlug(screener))}
                     className={PRIMARY_BUTTON_CLASS}
                   >
                     {t('saved.apply')}

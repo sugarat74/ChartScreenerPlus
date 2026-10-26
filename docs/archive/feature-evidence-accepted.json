@@ -1872,5 +1872,29 @@
       "Independent validator verdict accept (2026-10-26): reran .\\init.ps1 exit 0 (Laravel 914 passed / 6 skipped; 375 Vitest; build; engine 115) and focused suites 50 passed (335 assertions); reviewed full diff; sp500 production schedule/behavior unchanged in effect; all thirteen review points accepted. Real Yahoo .MC/.DE output unverified until the index features; PostgreSQL covered only by CI test-pgsql."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Independently accepted 2026-10-26."
+  },
+  {
+    "id": "universe-selector-ui",
+    "area": "frontend",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "Screener universe selector, currency labels and universe on Saved Screeners",
+    "user_visible_behavior": "The Screener shows a universe selector (S&P 500 default, URL param otherwise) with market label and data date; switching keeps compatible filters; Close shows the currency; Saved Screeners show and restore their universe; the chart hides US-only panels for European stocks; Admin sees a universe freshness table.",
+    "depends_on": [
+      "universe-registry",
+      "ingestion-multi-market"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Vitest: selector order/labels es/en, URL sync and fallback, switch rules (offset reset, close bounds cleared on currency change, sector context hidden outside US), Close (EUR), Saved Screener chip/restore, availability-driven chart panels, no hardcoded text",
+      "Playwright smoke 390/1440 px light/dark, no page overflow, visible focus",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      ".\\init.ps1 exit 0 (child process, redirected output): Laravel 916 passed / 6 skipped (7139 assertions), SPA lint/typecheck, 409 Vitest in 52 files, build, engine 115 passed.",
+      "New Vitest: lib/screenerUniverse.test.ts (switch rules, canonical URL), UniverseSelector.test.tsx (order, es/en labels, select, hidden for one), pages/ScreenerUniverse.test.tsx (selector hidden with one universe or on list failure, URL sync and refetch, invalid slug fallback, filters kept/page reset/Close cleared on currency change, sector context hidden and cleared for XMAD, Close (EUR), Saved Screener chip/restore/save, AI universe), InstrumentChartPage.test.tsx (availability-driven panels), UniverseFreshnessPanel.test.tsx, WatchlistTable.test.tsx. New PHP: 2 ScreenerInterpretTest cases (universe 404, non-US sector keys removed).",
+      "Manual Playwright (scratch SQLite, fixture universe IBEX 35 XMAD/EUR, SCREENER_UNIVERSES_PUBLIC=sp500,fixture-eu): 1440 px segmented control switched to the fixture universe (URL ?universe=fixture-eu, heading Cierre (EUR), SAN.MC/ITX.MC rows, no page overflow); 390 px dark: select shown, segments hidden, no overflow, yellow focus shadow; SAN.MC chart without forecast/Company Card. Servers and .playwright-mcp cleaned up. Light theme and Admin table checked by Vitest only.",
+      "Independent validator verdict accept (2026-10-26): reran .\\init.ps1 exit 0 (409 Vitest in 52 files, engine 115, Laravel suite) and focused PHP suites 99 passed (645 assertions); default sp500-only experience unchanged; interpret endpoint universe param leak-free and AI contract unchanged; existing tests only gained assertions. Guide update deferred to the index features; PostgreSQL covered by CI test-pgsql."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Independently accepted 2026-10-26."
   }
 ]

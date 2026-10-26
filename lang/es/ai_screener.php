@@ -12,4 +12,6 @@ return [
     // Se añade a `unsupported` cuando la respuesta usa los filtros sectoriales
     // y la cuenta no tiene acceso al contexto de mercado (market-context-patterns, C7).
     'market_context_unavailable' => 'Filtros de contexto sectorial (no disponibles para tu cuenta)',
+    // Se añade cuando la respuesta usa los filtros sectoriales y el universo elegido no es de EE. UU.
+    'sector_context_unavailable_for_universe' => 'Filtros de contexto sectorial (no disponibles para este mercado)',
 ];

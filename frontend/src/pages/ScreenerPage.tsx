@@ -15,10 +15,18 @@
  * no fetch, no redirect) and requests without them for anyone else, with a
  * notice; the URL keeps them. While access is still loading, a URL with those
  * keys waits instead of requesting twice.
+ *
+ * The universe selector (universe-selector-ui) is fed by `GET /api/universes`
+ * and shown only when more than one universe is visible. `universe=<slug>` is
+ * in the URL only for a non-default universe; an unknown or hidden slug falls
+ * back to the default and is dropped silently. Switching keeps the compatible
+ * criteria (`switchUniverse`) and the sector context filters exist only for a
+ * US universe (D10).
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { useAuth } from '../auth/useAuth.ts'
 import { useMarketContextAccess } from '../auth/useMarketContextAccess.ts'
 import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
@@ -28,11 +36,12 @@ import ScreenerColumnFilters from '../components/screener/ScreenerColumnFilters.
 import ScreenerFilterPanel from '../components/screener/ScreenerFilterPanel.tsx'
 import ScreenerPagination from '../components/screener/ScreenerPagination.tsx'
 import ScreenerSortControl from '../components/screener/ScreenerSortControl.tsx'
+import UniverseSelector from '../components/screener/UniverseSelector.tsx'
 import Interpolate from '../i18n/Interpolate.tsx'
 import type { Translate } from '../i18n/translate.ts'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
-import { ApiError, screenerApi } from '../lib/api.ts'
-import type { ScreenerCandidate, ScreenerFilters } from '../lib/api.ts'
+import { ApiError, screenerApi, universeApi } from '../lib/api.ts'
+import type { ScreenerCandidate, ScreenerFilters, ScreenerUniverse } from '../lib/api.ts'
 import {
   EMPTY_SCREENER_CRITERIA,
   countActiveFilters,
@@ -44,6 +53,15 @@ import {
   withoutMarketContext,
 } from '../lib/screenerFilters.ts'
 import type { CandidateColumnId } from '../lib/screenerColumns.ts'
+import {
+  UNIVERSE_PARAM,
+  canonicalUniverseParams,
+  hasSectorContext,
+  parseUniverseParam,
+  resolveUniverse,
+  switchUniverse,
+  withUniverseParam,
+} from '../lib/screenerUniverse.ts'
 import { LOGIN_ROUTE } from '../nav.ts'
 import {
   parseScreenerPagination,
@@ -61,6 +79,12 @@ interface ScreenerData {
   total: number
   universeName: string
 }
+
+/** The list behind the selector: loading, loaded, or failed (the Screener still works). */
+type UniverseList =
+  | { status: 'loading' }
+  | { status: 'ready'; items: ScreenerUniverse[] }
+  | { status: 'error' }
 
 function messageFor(error: unknown, t: Translate): string {
   if (error instanceof ApiError) {
@@ -80,19 +104,59 @@ export default function ScreenerPage() {
   const { t } = useI18n()
   const tRef = useTranslateRef()
 
+  const { user } = useAuth()
+  const userId = user?.id ?? null
+
+  // The universes the caller may see (an Admin also previews the unreleased ones).
+  const [universeList, setUniverseList] = useState<UniverseList>({ status: 'loading' })
+  useEffect(() => {
+    const controller = new AbortController()
+    universeApi
+      .list(controller.signal)
+      .then((items) => setUniverseList({ status: 'ready', items }))
+      .catch((caught: unknown) => {
+        if (!isAbortError(caught)) {
+          setUniverseList({ status: 'error' })
+        }
+      })
+    return () => controller.abort()
+  }, [userId])
+
+  const universes = useMemo(() => (universeList.status === 'ready' ? universeList.items : []), [universeList])
+  const rawUniverse = parseUniverseParam(searchParams)
+  const hasUniverseParam = searchParams.has(UNIVERSE_PARAM)
+  const currentUniverse = universeList.status === 'ready' ? resolveUniverse(rawUniverse, universes) : null
+  // Only a non-default universe is sent. While the list is unknown (or failed)
+  // the URL slug is trusted; the API answers 404 if it is not valid.
+  const requestUniverse =
+    universeList.status === 'ready'
+      ? universes.length > 1 && currentUniverse !== null && !currentUniverse.is_default
+        ? currentUniverse.slug
+        : null
+      : rawUniverse
+  const waitingUniverse = universeList.status === 'loading' && hasUniverseParam
+  const selectorVisible = universes.length > 1
+  // The Close heading carries the currency once there is more than one universe.
+  const currency = selectorVisible ? (currentUniverse?.currency ?? null) : null
+  const sectorContextAvailable = hasSectorContext(currentUniverse)
+
   const access = useMarketContextAccess()
   // The URL is the single source of truth for the filter state.
   const filters = useMemo(() => parseScreenerFilters(searchParams), [searchParams])
-  // What is requested: the sector context keys only with Market Context access.
-  const allowed = access.status === 'allowed'
+  // What is requested: the sector context keys only with Market Context access
+  // and a universe that has the US sector context (D10).
+  const allowed = access.status === 'allowed' && sectorContextAvailable
   const effective = useMemo(() => (allowed ? filters : withoutMarketContext(filters)), [allowed, filters])
-  const sectorKeysInUrl = usesMarketContext(filters)
+  const sectorKeysInUrl = usesMarketContext(filters) && sectorContextAvailable
   const dropped = sectorKeysInUrl && (access.status === 'signIn' || access.status === 'hidden') ? access.status : null
   // A URL with sector keys waits for the access to resolve (one request, not two).
   const waiting = sectorKeysInUrl && access.status === 'loading'
   const pagination = useMemo(() => parseScreenerPagination(searchParams), [searchParams])
-  // The fetch key covers the filters and the page, so paging refetches too.
-  const filtersKey = waiting ? null : `${screenerFiltersKey(effective)}|${pagination.page}|${pagination.limit}`
+  // The fetch key covers the universe, the filters and the page, so paging refetches too.
+  const filtersKey =
+    waiting || waitingUniverse
+      ? null
+      : `${requestUniverse ?? ''}|${screenerFiltersKey(effective)}|${pagination.page}|${pagination.limit}`
   const resultsRef = useRef<HTMLDivElement | null>(null)
 
   const [status, setStatus] = useState<ScreenerStatus>('loading')
@@ -110,14 +174,28 @@ export default function ScreenerPage() {
   // identity (which changes whenever any search param changes).
   const filtersRef = useRef(effective)
   const paginationRef = useRef(pagination)
+  const universeRef = useRef(requestUniverse)
   // react-router recreates `setSearchParams` on every URL change; reading it
   // through a ref keeps the fetch effect keyed on the query only.
   const setSearchParamsRef = useRef(setSearchParams)
   useEffect(() => {
     filtersRef.current = effective
     paginationRef.current = pagination
+    universeRef.current = requestUniverse
     setSearchParamsRef.current = setSearchParams
-  }, [effective, pagination, setSearchParams])
+  }, [effective, pagination, requestUniverse, setSearchParams])
+
+  // An unknown or hidden slug, the default slug, or a single available
+  // universe: the parameter goes away, with no error (D5).
+  useEffect(() => {
+    if (universeList.status !== 'ready') {
+      return
+    }
+    const canonical = canonicalUniverseParams(searchParams, universeList.items)
+    if (canonical !== null) {
+      setSearchParamsRef.current(canonical, { replace: true })
+    }
+  }, [searchParams, universeList])
 
   useEffect(() => {
     if (filtersKey === null) {
@@ -135,7 +213,11 @@ export default function ScreenerPage() {
 
     const page = paginationRef.current
     screenerApi
-      .search(filtersRef.current, controller.signal, { limit: page.limit, offset: screenerOffset(page) })
+      .search(filtersRef.current, controller.signal, {
+        limit: page.limit,
+        offset: screenerOffset(page),
+        universe: universeRef.current,
+      })
       .then((response) => {
         if (controller.signal.aborted) {
           return
@@ -181,15 +263,26 @@ export default function ScreenerPage() {
     setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, patch)), { replace: true })
   }
 
-  function applySavedFilters(patch: Partial<ScreenerFilters>) {
-    // Applying a stored Screener writes the same owned keys as `update`, so the
-    // fetch effect keyed on `screenerFiltersKey` restores the results.
-    setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, patch)), { replace: true })
+  function selectUniverse(target: ScreenerUniverse) {
+    setSearchParams((prev) => switchUniverse(prev, target, currentUniverse), { replace: true })
+  }
+
+  function applySavedFilters(patch: Partial<ScreenerFilters>, universeSlug: string | null = null) {
+    // Applying a stored Screener writes the same owned keys as `update` plus its
+    // universe, so the fetch effect keyed on `screenerFiltersKey` restores the
+    // results. A universe that is no longer visible falls back to the default.
+    const target = universes.find((universe) => universe.slug === universeSlug)
+    const slug = universes.length > 1 && target !== undefined && !target.is_default ? target.slug : null
+    setSearchParams((prev) => withUniverseParam(resetScreenerPage(patchScreenerFilters(prev, patch)), slug), {
+      replace: true,
+    })
   }
 
   function applyInterpretedFilters(patch: Partial<ScreenerFilters>) {
-    // The AI result is ordinary filter state, applied through the same path.
-    setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, patch)), { replace: true })
+    // The AI result is ordinary filter state, applied through the same path;
+    // the universe stays the selected one, whose sector context may not exist.
+    const safe = sectorContextAvailable ? patch : { ...patch, sectorTrend: null, sectorRsRankMax: null }
+    setSearchParams((prev) => resetScreenerPage(patchScreenerFilters(prev, safe)), { replace: true })
   }
 
   function restoreSearchParams(previous: URLSearchParams) {
@@ -247,7 +340,12 @@ export default function ScreenerPage() {
         </Link>
       </header>
 
+      {selectorVisible && currentUniverse !== null ? (
+        <UniverseSelector universes={universes} selected={currentUniverse.slug} onSelect={selectUniverse} />
+      ) : null}
+
       <ScreenerAiQuery
+        universe={requestUniverse}
         searchParams={searchParams}
         onApply={applyInterpretedFilters}
         onRestore={restoreSearchParams}
@@ -256,12 +354,12 @@ export default function ScreenerPage() {
       <ScreenerFilterPanel
         filters={effective}
         activeCount={activeCount}
-        access={access}
+        access={sectorContextAvailable ? access : undefined}
         onChange={update}
         onClear={clearFilters}
       />
 
-      <SavedScreenersPanel filters={effective} onApply={applySavedFilters} />
+      <SavedScreenersPanel filters={effective} universe={requestUniverse} onApply={applySavedFilters} />
 
       {dropped !== null ? (
         <p
@@ -315,6 +413,7 @@ export default function ScreenerPage() {
         onChange={update}
         onOpen={setOpenColumn}
         onClose={() => setOpenColumn(null)}
+        currency={currency}
       />
 
       <CandidateResults
@@ -324,6 +423,7 @@ export default function ScreenerPage() {
         error={error}
         onRetry={retry}
         onClearFilters={clearFilters}
+        currency={currency}
         controls={{
           filters: effective,
           openColumn,

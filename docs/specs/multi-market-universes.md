@@ -280,6 +280,13 @@ A stale snapshot is a known, documented risk. It is not detected automatically.
 7. **Admin.** A "Universos" freshness table on the Admin ingestion page, using Feature 2's endpoint. Admin text may say EOD.
 8. **i18n.** All new strings in `frontend/src/i18n/messages/{es,en}.ts`. Universe names come from the API and are not translated. No EOD wording in public UI.
 
+### Implementation notes (`universe-selector-ui`, 2026-10-26)
+
+- Currency in the Close heading, its sort label and its column filter is shown only while the selector is visible (more than one universe), so the single-universe Screener (production today) is byte-identical. The chart header (`exchange · currency`) and the Watchlist badge show it whenever the payload carries `currency`.
+- The Watchlist has no price column, so «the currency next to each price» is the `exchange · currency` badge on each row.
+- `POST /api/screener/interpret` gained an optional `universe` (the one small backend change): 404 for an unknown or hidden slug, and for a non-`US` universe the sector context keys are nulled and named once in `unsupported`.
+- The user guide (`frontend/src/i18n/guide`) is unchanged: it still says the universe is the S&P 500, which stays true until `universe-nasdaq100`, `universe-ibex35` or `universe-dax` is made public; those features must update it.
+
 ### Acceptance
 
 - Vitest:

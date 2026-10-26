@@ -51,7 +51,7 @@ export default function WatchlistTable({ items, removingTicker, onRemove }: Watc
                     {item.ticker}
                   </Link>
                   <span className="ml-2 rounded-[4px] border border-outline bg-surface-container px-1 py-0.5 font-mono text-[10px] font-bold text-on-surface-variant">
-                    {item.exchange}
+                    {item.currency ? `${item.exchange} · ${item.currency}` : item.exchange}
                   </span>
                 </th>
 

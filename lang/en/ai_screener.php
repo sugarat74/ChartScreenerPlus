@@ -12,4 +12,6 @@ return [
     // Appended to `unsupported` when the answer used the sector filters and
     // the account has no Market Context access (market-context-patterns, C7).
     'market_context_unavailable' => 'Sector context filters (not available for your account)',
+    // Appended when the answer used the sector filters and the selected universe is outside the US.
+    'sector_context_unavailable_for_universe' => 'Sector context filters (not available for this market)',
 ];

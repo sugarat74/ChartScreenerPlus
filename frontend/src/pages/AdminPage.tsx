@@ -6,6 +6,7 @@ import RunLogStream from '../components/admin/RunLogStream.tsx'
 import RunStatusBadge from '../components/admin/RunStatusBadge.tsx'
 import RunTelemetry from '../components/admin/RunTelemetry.tsx'
 import ForecastReportPanel from '../components/admin/ForecastReportPanel.tsx'
+import UniverseFreshnessPanel from '../components/admin/UniverseFreshnessPanel.tsx'
 import type { LogFilter } from '../components/admin/logFilter.ts'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { adminIngestionApi, apiErrorMessage, isTerminalRunStatus } from '../lib/api.ts'
@@ -240,6 +241,7 @@ export default function AdminPage() {
         </p>
       </form>
 
+      <UniverseFreshnessPanel />
       <ForecastReportPanel />
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
