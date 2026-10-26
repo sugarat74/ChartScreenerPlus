@@ -30,11 +30,11 @@ One trading day of an Instrument: Open, High, Low, Close, Volume. The atomic uni
 
 ### Indicator Snapshot
 
-The computed technical indicators for an Instrument for a given Daily Bar: moving averages (SMA/EMA), RSI, MACD, ADX, Bollinger Bands, RVOL, etc.
+The computed technical indicators for an Instrument for a given Daily Bar: moving averages (SMA/EMA), RSI, MACD, ADX (with +DI/-DI), Bollinger Bands, ATR, Stochastic oscillator, RVOL, etc. Periods are fixed: ADX/ATR/DI 14 (Wilder), Bollinger 20/2, Stochastic 14,3,3. ATR, +DI/-DI and Stochastic are planned (`docs/specs/technical-indicators-expansion.md`, 2026-10-26); derived values such as Bollinger %B, bandwidth and ATR as percent of price are computed for the Screener, not stored.
 
 ### Signal
 
-A deterministic, rule-based condition derived from Indicators (e.g. `Golden Cross`, `RSI oversold`, `RVOL > 2`) on the latest Daily Bar. Geometric formations are Chartist Patterns, a separate concept.
+A deterministic, rule-based condition derived from Indicators (e.g. `Golden Cross`, `RSI oversold`, `RVOL > 2`) on the latest Daily Bar. Geometric formations are Chartist Patterns, a separate concept. Planned since 2026-10-26 (`technical-indicators-expansion`): ADX trend strength (ADX crosses above 25), Bollinger squeeze (bandwidth at a 120-session low), close above the upper / below the lower Bollinger Band, and stochastic bullish / bearish %K-%D crosses out of the 20 / 80 zones. They describe a condition and are never advice.
 
 ### Golden Cross
 

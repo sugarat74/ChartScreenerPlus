@@ -2,6 +2,11 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Independent validation: Universe registry (`universe-registry`, accepted) — 2026-10-26
+
+- Verdict **accept**. Validator reran `.\init.ps1` (Laravel 894 passed / 6 skipped, 7031 assertions; SPA lint/typecheck/375 Vitest/build; engine 101), `UniverseRegistry` tests (27 passed, 175 assertions) and a migrate / rollback / migrate round trip on scratch SQLite; reviewed the full diff. All six declared deviations accepted (default-universe omitted from `filters` with a top-level `universe` object, test-only factory default, alert skip when the owner cannot see the universe, fundamentals gating on Company Card and `fundamentals:refresh`, edited existing tests not weakened, 422 after the 404 resolution).
+- Non-blocking: PostgreSQL covered only by CI `test-pgsql`. Production keeps `SCREENER_UNIVERSES_PUBLIC=sp500` until each index is verified. `ingestion-multi-market` is now unblocked. Full record archived to `docs/archive/feature-evidence-accepted.json`.
+
 ## Universe registry implementation (`universe-registry`, passing) — 2026-10-26
 
 - Backend foundation of the multi-market universes (`docs/specs/multi-market-universes.md`, Feature 1). Additive migration `2026_10_28_000001_*`: `instruments`/`screener_rows` get `market` (default `US`) and `currency` (`USD`), `universes` get `market`, `currency`, `is_screener` (default false) and `position`; `sp500` is backfilled to a Screener universe. New `ListingMarket` (US/XMAD/XETR), `config/universes.php` (`SCREENER_UNIVERSES_PUBLIC`, default `sp500`), `Universe::scopeScreener/scopeVisibleTo/isVisibleTo` as the single visibility seam, public `GET /api/universes`, abstract `IndexUniverseSeeder` (suffix rules, market/currency guard, exact membership sync, S&P-owned fields kept, orphans deactivated) over a shared `ConstituentCsv` reader (S&P 500 seeder behavior unchanged). No real index is seeded.

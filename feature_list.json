@@ -912,5 +912,142 @@
     ],
     "evidence": [],
     "notes": "Requested 2026-10-26 ('añadir un calendario de eventos económicos, presentación de resultados, reuniones de la fed... cosas que afecten al mercado'). Future feature. Owner chose an external source for earnings dates (2026-10-26); blocked until the owner picks the provider and its public-display licence/budget (candidates in the spec: EODHD, Financial Modeling Prep, Finnhub; personal tiers forbid public display). US macro release dates from FRED fred/releases/dates; FOMC/ECB from the existing calendar. Coverage US-only vs also Europe still open (if Europe, also depends on universe-ibex35 and universe-dax)."
+  },
+  {
+    "id": "indicators-expansion-engine",
+    "area": "engine",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Engine math for ATR, DI and Stochastic",
+    "user_visible_behavior": "No visible change yet: the engine computes ATR (14), +DI/-DI (14) and the Stochastic oscillator (14,3,3) for every bar, with the same warm-up rules as the other indicators.",
+    "depends_on": [
+      "indicators-compute"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Hand-calculated fixtures: constant-range series gives ATR 2.0 from index 14; flat series ATR 0 and stochastic 50; rising series %K/%D 100 from indices 15/17; first-defined indices exact",
+      "Existing ADX, Bollinger and all previous snapshot values unchanged on every existing fixture",
+      "POST /indicators/compute returns the five new keys, null when unavailable; ruff clean; no new dependency",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+  },
+  {
+    "id": "indicators-expansion-storage",
+    "area": "backend",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Store the new indicators and serve their history",
+    "user_visible_behavior": "The daily run stores ATR, +DI/-DI and Stochastic next to the existing indicators for every instrument of every universe, and a public series endpoint gives the chart their history; existing data is backfilled by the normal recompute.",
+    "depends_on": [
+      "indicators-expansion-engine"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Migration up/down on SQLite and PostgreSQL (CI); indicators:compute idempotent and fills the new columns; null on invalid values",
+      "GET /api/instruments/{ticker}/indicators ascending, clamped limit, warm-up null, 404 unknown; show keeps old keys and adds five",
+      "Forecast state and Company Card context identical before and after (tests); backfill procedure in deploy/README.md and measured recompute time recorded",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+  },
+  {
+    "id": "signals-expansion",
+    "area": "engine",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Six new Signals: ADX, Bollinger and Stochastic",
+    "user_visible_behavior": "The Screener, Saved Screeners, Watchlist alerts and the chart's active signals include six new descriptive Signals: ADX trend strength, Bollinger squeeze, close above upper band, close below lower band, stochastic bullish cross and stochastic bearish cross.",
+    "depends_on": [
+      "indicators-expansion-engine",
+      "signals-detect",
+      "alerts-engine"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Each rule fires on a hand-built series, not at the boundary (strict crosses, ADX exactly 25), returns None with missing history (squeeze needs 139 bars)",
+      "Previous nine signals emit identical types and metadata on existing fixtures",
+      "Vocabulary equal across engine, parser, controllers, factory, lang and SPA; AI Screener schema still lists the original nine and the prompt is unchanged; es/en labels",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+  },
+  {
+    "id": "screener-technical-filters-api",
+    "area": "screener",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Screener API: ADX, Bollinger, ATR and Stochastic filters and sorts",
+    "user_visible_behavior": "Anyone can filter and sort the Candidate list by ADX, Bollinger %B, Bollinger bandwidth, ATR as percent of price and Stochastic %K, in every universe; Saved Screeners keep these criteria.",
+    "depends_on": [
+      "indicators-expansion-storage",
+      "signals-expansion"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Five inclusive min/max ranges, null never matches, inverted or out-of-range values 422; five sort pairs null-last with ticker tie-break; original sorts and default unchanged",
+      "screener:refresh fills adx, bb_pctb, bb_width, atr_pct, stoch_k per the spec formulas with null propagation; row count unchanged",
+      "Candidate payload additive; Saved Screeners round-trip the ten keys and load old definitions; AI sort enum unchanged",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+  },
+  {
+    "id": "screener-technical-filters-ui",
+    "area": "frontend",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Screener UI: indicator columns and filters",
+    "user_visible_behavior": "The Screener offers an Indicators columns toggle (ADX, %B, ATR %, Stochastic %K) with heading sort and range filters, chips, URL and saved-screener support, and the new Signals in the Signals filter; the default table is unchanged.",
+    "depends_on": [
+      "screener-technical-filters-api"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Vitest: URL parse/patch/key, summaries, optional columns, toggle with a throwing localStorage; lint, typecheck, build",
+      "Default table and requests unchanged; criteria in the URL force the columns visible; Clear filters keeps the sort; null shows a dash",
+      "es/en complete, guide updated, no overflow at 390 px; manual check at desktop and narrow widths",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+  },
+  {
+    "id": "chart-indicator-overlays",
+    "area": "chart",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Chart: indicator picker and Bollinger Bands",
+    "user_visible_behavior": "On the chart, an Indicators control lets you switch the Bollinger Bands on and off (remembered in your browser), and the band Signals draw a line at the crossed band.",
+    "depends_on": [
+      "indicators-expansion-storage",
+      "signals-expansion"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Default chart unchanged and no indicators request until a toggle is on; bands align with candles, warm-up null omitted, theme/language/ticker changes leak no canvas",
+      "Failed series request shows a localized inline error and the chart keeps working; keyboard operable",
+      "Vitest for chartData helpers and picker with throwing localStorage; manual light/dark at 390 and 1440 px",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+  },
+  {
+    "id": "chart-indicator-panels",
+    "area": "chart",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Chart: ADX, ATR and Stochastic panels",
+    "user_visible_behavior": "The chart can show ADX (with +DI and -DI), ATR and Stochastic panels under the price, each switched on or off from the Indicators control and remembered in your browser.",
+    "depends_on": [
+      "chart-indicator-overlays"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Each pane draws the right series, ADX reference at 25, stochastic axis 0..100 with lines at 20 and 80, shared time scale",
+      "Last-bar values equal the show snapshot; height grows 120 px per pane; no overflow at 390 px; volume, markers and price lines unchanged",
+      "es/en complete, DESIGN.md updated, Vitest for the pane data helpers",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
   }
 ]
