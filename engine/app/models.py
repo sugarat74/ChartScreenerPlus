@@ -46,6 +46,11 @@ class Snapshot(BaseModel):
     bb_middle: float | None = None
     bb_lower: float | None = None
     rvol: float | None = None
+    atr14: float | None = None
+    plus_di: float | None = None
+    minus_di: float | None = None
+    stoch_k: float | None = None
+    stoch_d: float | None = None
 
 
 class IndicatorsComputeRequest(BaseModel):
