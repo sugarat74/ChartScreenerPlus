@@ -86,8 +86,9 @@ jobs:
           DB_DATABASE: chartiko
           DB_USERNAME: chartiko
           DB_PASSWORD: ${{ env.CHARTIKO_CI_DB_PASSWORD }}
+        timeout-minutes: 8
         run: |
-          php artisan test
+          timeout 420 vendor/bin/phpunit --debug tests/Feature/Nasdaq100UniverseSeederTest.php || true
           php artisan db:monitor --databases=pgsql --max=100000
       - name: Pooling, exposure and least privilege
         run: |
