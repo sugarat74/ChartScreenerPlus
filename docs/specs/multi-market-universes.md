@@ -315,6 +315,13 @@ A stale snapshot is a known, documented risk. It is not detected automatically.
 - `DatabaseSeeder` and `deploy/deploy.sh` (plus `deploy/README.md`) run it after `Sp500UniverseSeeder`.
 - The US pipeline picks it up automatically (Feature 2). The first run backfills about 2 years from the source for the new members.
 
+### Implementation notes (`universe-nasdaq100`, 2026-10-26)
+
+- Snapshot as_of 2026-10-26: 101 securities (100 companies; `GOOGL` and `GOOG`), membership cross-checked between Nasdaq's quote-list endpoint and Wikipedia (identical ticker sets). 86 are S&P 500 members, 15 are not (`ALAB`, `ALNY`, `ARM`, `ASML`, `CCEP`, `CRWV`, `FER`, `MELI`, `MSTR`, `NBIS`, `PDD`, `RKLB`, `SHOP`, `SPCX`, `TRI`). Sources, hashes and the per-ticker classification are in `database/data/nasdaq100.md`.
+- The editorial GICS sector and the headquarters country of the 15 non-S&P members are manual classifications (the `.md` lists them and flags the uncertain ones).
+- The user guide (es/en) now says the default universe is the S&P 500 and that the Nasdaq-100 is available where the selector appears (true whether or not it is public). The home/meta copy ("Filter S&P 500 stocks") is unchanged until the universe is made public.
+- `DatabaseSeeder` and `deploy/deploy.sh` run the seeder after the S&P 500; the production rollout is in `deploy/README.md` item 12.
+
 ### Acceptance
 
 - The seeder test on the committed CSV checks:

@@ -8,7 +8,7 @@ export const guideEn: GuideTexts = {
   eyebrow: 'User manual',
   title: 'How Chartiko works',
   intro:
-    'Chartiko is a technical stock screener for the S&P 500: it filters stocks with technical-analysis criteria, ranks them and lets you review each one on a chart. This manual explains every screen, filter, indicator, signal and pattern you will see.',
+    'Chartiko is a technical stock screener for US indices such as the S&P 500: it filters stocks with technical-analysis criteria, ranks them and lets you review each one on a chart. This manual explains every screen, filter, indicator, signal and pattern you will see.',
   openScreener: 'Open the Screener',
   tocTitle: 'Contents',
   sections: [
@@ -34,7 +34,7 @@ export const guideEn: GuideTexts = {
       id: 'datos',
       title: 'What data Chartiko uses',
       paragraphs: [
-        'The universe is the S&P 500 (about 500 US stocks). Chartiko works with daily data: one candle per stock and session, with open, high, low, close and volume.',
+        'The default universe is the S&P 500 (about 500 US stocks). When the universe selector appears at the top of the Screener you can also switch to the Nasdaq-100 (about 100 US stocks, most of them also in the S&P 500). A stock that belongs to both indices has a single set of data and appears in both lists. Chartiko works with daily data: one candle per stock and session, with open, high, low, close and volume.',
         'Data is updated once a day, every US market trading day, starting at 4:30 pm New York time, about 30 minutes after the session closes. Indicators, signals, patterns and the list are then recalculated. There are no real-time or intraday quotes.',
         'The date of the latest session is shown on each stock’s page. If a stock has little history (for example fewer than 200 sessions for the SMA 200), that indicator stays empty instead of showing an invented value, and filters that need it leave the stock out.',
       ],
@@ -340,7 +340,7 @@ export const guideEn: GuideTexts = {
   faq: [
     {
       question: 'Which market does Chartiko analyse?',
-      answer: 'The stocks of the US S&P 500 index, with daily data.',
+      answer: 'The stocks of the US S&P 500 index and, where the universe selector offers it, the Nasdaq-100, with daily data.',
     },
     {
       question: 'How often is the data updated?',

@@ -837,21 +837,11 @@
   {
     "id": "universe-nasdaq100",
     "area": "data",
-    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
     "title": "Nasdaq-100 Screener universe",
-    "user_visible_behavior": "Everyone, Visitors included, can screen the Nasdaq-100 once it is enabled after the production run; companies also in the S&P 500 share their existing data, and only the non-S&P members are fetched additionally.",
+    "status": "accepted",
     "depends_on": [
       "universe-selector-ui"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Seeder test on the committed dated snapshot: row count, overlapping tickers resolve to existing S&P Instruments unchanged, no duplicates, GICS sectors and ISO countries valid",
-      "Source hand check (count, sample, non-S&P list) and an ingestion run whose total equals the non-S&P members",
-      "Production enablement (nasdaq100 added to SCREENER_UNIVERSES_PUBLIC, owner-approved 2026-10-26) after the verified run, recorded in PROGRESS.md",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+    ]
   },
   {
     "id": "universe-ibex35",

@@ -1896,5 +1896,30 @@
       "Independent validator verdict accept (2026-10-26): reran .\\init.ps1 exit 0 (409 Vitest in 52 files, engine 115, Laravel suite) and focused PHP suites 99 passed (645 assertions); default sp500-only experience unchanged; interpret endpoint universe param leak-free and AI contract unchanged; existing tests only gained assertions. Guide update deferred to the index features; PostgreSQL covered by CI test-pgsql."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Independently accepted 2026-10-26."
+  },
+  {
+    "id": "universe-nasdaq100",
+    "area": "data",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "Nasdaq-100 Screener universe",
+    "user_visible_behavior": "Everyone, Visitors included, can screen the Nasdaq-100 once it is enabled after the production run; companies also in the S&P 500 share their existing data, and only the non-S&P members are fetched additionally.",
+    "depends_on": [
+      "universe-selector-ui"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Seeder test on the committed dated snapshot: row count, overlapping tickers resolve to existing S&P Instruments unchanged, no duplicates, GICS sectors and ISO countries valid",
+      "Source hand check (count, sample, non-S&P list) and an ingestion run whose total equals the non-S&P members",
+      "Production enablement (nasdaq100 added to SCREENER_UNIVERSES_PUBLIC, owner-approved 2026-10-26) after the verified run, recorded in PROGRESS.md",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-10-26 init.ps1 exit 0 (child process, redirected output): Laravel 923 passed / 6 skipped (7932 assertions), SPA lint/typecheck, 409 Vitest in 52 files, build, engine 115 passed, Baseline OK.",
+      "Nasdaq100UniverseSeederTest (7 tests, 793 assertions): 101 rows, no duplicate tickers, GOOGL+GOOG, all sectors in the 11 GICS names, countries ISO-2 or empty; after Sp500UniverseSeeder + Nasdaq100UniverseSeeder 518 Instruments (503 + 15), the 86 overlapping tickers are the existing S&P Instruments with byte-identical attributes and in both universes; re-seeding is a no-op; one screener_rows row for AAPL listed by sp500 and nasdaq100; universe hidden from Visitors (/api/universes lists only sp500, ?universe=nasdaq100 is 404) and visible to an Admin; ingestion:pipeline with faked engine fetches 518 distinct symbols once each, nasdaq100 Ingestion Run total = 15, AAPL has 3 bars not 6.",
+      "Source hand check: membership cross-checked between Nasdaq api.nasdaq.com quote-list nasdaq100 (101 records, page date Oct 23 2026, SHA-256 0f344118...) and Wikipedia List of Nasdaq-100 companies (101 rows, as of Oct 22 2026, SHA-256 039f0691...): ticker sets identical. 86 overlap with sp500.csv; 15 non-S&P: ALAB ALNY ARM ASML CCEP CRWV FER MELI MSTR NBIS PDD RKLB SHOP SPCX TRI. Their GICS sector and HQ country are manual classifications (database/data/nasdaq100.md).",
+      "Not done: real local/production ingestion run and Admin screener preview, and production enablement (nasdaq100 stays out of SCREENER_UNIVERSES_PUBLIC); rollout steps in deploy/README.md item 12.",
+      "Independent validator verdict accept (2026-10-26): re-fetched Nasdaq quote-list (101) and Wikipedia (101) lists, both identical to nasdaq100.csv; S&P overlap 86/15 recomputed; 15 manual classifications judged reasonable; .\\init.ps1 exit 0 (Laravel 923 passed / 6 skipped, 409 Vitest, engine 115), Nasdaq100UniverseSeederTest 7 passed; universe non-public by default. Production rollout (seed, first ingestion of 15 tickers, public switch) pending."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Independently accepted 2026-10-26."
   }
 ]
