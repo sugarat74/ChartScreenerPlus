@@ -2,6 +2,20 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## Multi-market universes planning (Nasdaq-100, IBEX 35, DAX; not started) — 2026-10-26
+
+- At the user's explicit request ("prepara la feature para nasdaq, ibex 35 y dax 40") wrote the umbrella spec `docs/specs/multi-market-universes.md` and appended six `not_started` features: `universe-registry`, `ingestion-multi-market`, `universe-selector-ui`, `universe-nasdaq100`, `universe-ibex35`, `universe-dax`. "Nasdaq" is read as the Nasdaq-100; the Composite is deferred.
+- Key decisions: Listing Market (`US`/`XMAD`/`XETR`) and currency per Instrument and Universe; globally unique tickers with `.MC`/`.DE` suffixes for European stocks (`MRK.DE` vs `MRK`); one Instrument per company across universes (Nasdaq-100 overlap fetched once); dated offline snapshots with exact membership sync; per-market calendars, schedules (Madrid/Xetra 18:15 local) and a waiting global lock; alerts once a day in the US run; per-universe public flag (`SCREENER_UNIVERSES_PUBLIC`, default `sp500`); Market Context, Breadth, sector context filters, Fundamentals, Company Card and forecast stay US-only.
+- Same day, two more future features at explicit request: `market-hours-status` (`docs/specs/market-hours-status.md`, home-page open/closed markets from the static schedule only) and `market-events-calendar` (`docs/specs/market-events-calendar.md`, reuses the FOMC/ECB calendar; blocked on owner decisions about earnings and release sources).
+- Updated the `AGENTS.md` scope guard (narrowed the non-US exclusion), `CONTEXT.md`, `docs/domain-model.md` and `docs/risks-and-open-questions.md`. Planning only: no application code changed and `init.ps1` was not run.
+- Owner answers applied the same day:
+  - Nasdaq-100 is confirmed; the Composite stays deferred.
+  - New universes are public to everyone, Visitors included.
+  - IBEX 35 and DAX are published via Yahoo as an owner-accepted licensing risk. The kill-switch is `SCREENER_UNIVERSES_PUBLIC`.
+  - The label is "DAX": `universe-dax40` was renamed to `universe-dax`, slug `dax`.
+  - The events calendar will use an external earnings-date source, but the provider and its display licence are still pending. EODHD, FMP and Finnhub are recorded as candidates.
+- Still open: the earnings provider and budget, and the events calendar coverage (US only or also Europe).
+
 ## Independent validation: Screener table column controls (`screener-table-column-controls`, accepted) — 2026-10-25
 
 - Verdict **accept**. Validator reran `.\init.ps1` (exit 0: Laravel 867 passed / 6 skipped, 6846 assertions; SPA lint/typecheck with the existing RequireAuth.test warning; 375 Vitest in 47 files; build; engine 101) and focused screener/saved/AI/alerts suites (80 passed), reviewed the full diff and confirmed the modified tests were not weakened. All seven declared deviations accepted (RSI/RVOL bounds and inverted ranges now `422`; sector/country sort by GICS name/ISO code; only sector/country are selects; AI apply clears column filters; PostgreSQL checked only by CI; SQLite ASCII-only case folding; updated tests).
@@ -51,9 +65,3 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 - PR 70 passed SQLite/frontend/engine CI and the full PostgreSQL/PgBouncer job, then merged as `a558b54`. The `main` CI/deploy run 40119598548 completed successfully, including the production release activation and Screener refresh.
 - Production smoke: `/`, `/recuperar-contrasena` and `/restablecer-contrasena` return 200. Public `/api/screener` returns `sector`, `industry` and `country` for ranked Candidates (e.g. CCI, FIX, GL), with nulls retained for unmatched source values. Headless Edge screenshots at 390 px and 1440 px confirmed readable labels, compact wrapping and that price, RVOL, RSI, Signals and chart links remain present. A live reset email to a disposable production account was not sent; focused end-to-end mail-link integration and the previously verified Brevo delivery path are the available evidence.
 - Both features remain `passing` pending independent validation. The data-source licensing/staleness risk remains documented in `docs/risks-and-open-questions.md` and `database/data/sp500-classification.md`.
-
-## Screener company classification implementation (`screener-company-classification`, passing) — 2026-10-24
-
-- Extended the offline 503-member S&P 500 CSV with GICS sub-industry and headquarters country, retaining its existing identity, sector and exchange fields. The dated source snapshot and conversion rules are in `database/data/sp500-classification.md`. Exact ticker join yielded 500 industries and 499 countries; CTVA, PSKY and WBD are unmatched, and XYZ has no known headquarters country. Unknown values remain null.
-- Additive migrations store both values on Instruments and Screener rows; the Instrument migration backfills only the new fields on existing rows, preserving Admin edits and universe membership. Seeder, row builder, public API and Candidate table now carry the values. Fixed sector/country labels are localized in es/en; source industry is displayed verbatim. ETF exclusion and existing Screener filters/ranking remain intact.
-- Focused Laravel seeder, migration and API tests passed; es/en Candidate table Vitest passed. Standard `.\init.ps1` exited 0: Laravel 853 passed/6 skipped (6567 assertions), frontend lint/typecheck, 351 Vitest in 45 files and build, engine 101 passed. `git diff --check` clean. Independent validation remains pending.

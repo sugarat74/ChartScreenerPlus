@@ -3,7 +3,8 @@
 ## Core Concepts
 
 - **Instrument (Ticker):** a listed security (`NVDA`), with company, sector, optional GICS sub-industry (`industry`), optional headquarters country (two-letter `country` code), exchange and a **kind**: `stock` (default) or `etf` (Market Context ETFs; chart only, never in stock features).
-- **Universe:** a named set of Instruments a Screener runs against. First real Universe: S&P 500. The `market-context` Universe holds SPY and the 11 SPDR sector ETFs and is not a Screener universe.
+- **Listing Market (planned 2026-10-26):** `US`, `XMAD` or `XETR`: calendar, close time, currency and source symbol rules of an Instrument (`instruments.market`, `instruments.currency`). See `docs/specs/multi-market-universes.md`.
+- **Universe:** a named set of Instruments a Screener runs against. First real Universe: S&P 500 (default); Nasdaq-100, IBEX 35 and DAX planned, each a Screener universe with one Listing Market and currency. The `market-context` Universe holds SPY and the 11 SPDR sector ETFs and is not a Screener universe.
 - **Daily Bar (OHLCV):** one trading day for one Instrument. Stored per Instrument and date.
 - **Indicator Snapshot:** computed indicators for an Instrument on a given Daily Bar (SMA/EMA, RSI, MACD, ADX, Bollinger, RVOL...).
 - **Signal:** deterministic condition derived from Indicators (e.g. Golden Cross, Breakout with RVOL). Belongs to an Instrument and a Daily Bar.
@@ -25,7 +26,8 @@
 
 ## Relationships
 
-- A **Universe** has many **Instruments**; an **Instrument** can belong to several Universes.
+- A **Universe** has many **Instruments**; an **Instrument** can belong to several Universes (one row, one set of bars and Screener row), but all Screener universes it belongs to share its Listing Market.
+- A **Saved Screener** stores its universe slug (planned; legacy rows mean S&P 500) and its Alert evaluates in that universe.
 - An **Instrument** has many **Daily Bars** (one per trading date) and many **Indicator Snapshots** (one per Daily Bar).
 - A **Signal** is derived per Instrument and Daily Bar.
 - A **Screener** belongs to a **Universe** and references zero or one owner (Registered User) when saved.
