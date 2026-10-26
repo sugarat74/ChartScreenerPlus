@@ -34,8 +34,8 @@ export const guideEs: GuideTexts = {
       id: 'datos',
       title: 'Qué datos usa Chartiko',
       paragraphs: [
-        'El universo por defecto es el S&P 500 (unas 500 acciones de EE. UU.). Cuando el selector de universo aparece en la parte superior del Screener, también puedes cambiar al Nasdaq-100 (unas 100 acciones de EE. UU., la mayoría también en el S&P 500). Un valor que está en ambos índices tiene un único conjunto de datos y aparece en las dos listas. Chartiko trabaja con datos diarios: una vela por valor y sesión, con apertura, máximo, mínimo, cierre y volumen.',
-        'Los datos se actualizan una vez al día, cada día hábil del mercado estadounidense, a partir de las 16:30 (hora de Nueva York), unos 30 minutos después del cierre de la sesión. Después se recalculan los indicadores, las señales, los patrones y el listado. No hay cotizaciones en tiempo real ni intradía.',
+        'El universo por defecto es el S&P 500 (unas 500 acciones de EE. UU.). Cuando el selector de universo aparece en la parte superior del Screener, también puedes cambiar al Nasdaq-100 (unas 100 acciones de EE. UU., la mayoría también en el S&P 500). Un valor que está en ambos índices tiene un único conjunto de datos y aparece en las dos listas. También puede ofrecerse el IBEX 35 (35 acciones de la Bolsa de Madrid, con precios en euros): sus datos se actualizan tras el cierre de Madrid, sigue el calendario de esa bolsa y no incluye contexto de mercado ni fichas con IA. Chartiko trabaja con datos diarios: una vela por valor y sesión, con apertura, máximo, mínimo, cierre y volumen.',
+        'Los datos se actualizan una vez al día, cada día hábil del mercado estadounidense, a partir de las 16:30 (hora de Nueva York), unos 30 minutos después del cierre de la sesión; el IBEX 35, cada día hábil de la Bolsa de Madrid, a partir de las 18:15 (hora de Madrid). Después se recalculan los indicadores, las señales, los patrones y el listado. No hay cotizaciones en tiempo real ni intradía.',
         'La fecha de la última sesión aparece en la ficha de cada valor. Si un valor tiene poco historial (por ejemplo, menos de 200 sesiones para la SMA 200), ese indicador queda vacío en lugar de mostrar un valor inventado, y los filtros que lo necesitan no lo incluyen.',
       ],
     },
@@ -340,7 +340,7 @@ export const guideEs: GuideTexts = {
   faq: [
     {
       question: '¿Qué mercado analiza Chartiko?',
-      answer: 'Las acciones del índice S&P 500 de EE. UU. y, donde el selector de universo lo ofrezca, el Nasdaq-100, con datos diarios.',
+      answer: 'Las acciones del índice S&P 500 de EE. UU. y, donde el selector de universo lo ofrezca, el Nasdaq-100 y el IBEX 35, con datos diarios.',
     },
     {
       question: '¿Con qué frecuencia se actualizan los datos?',

@@ -345,6 +345,13 @@ A stale snapshot is a known, documented risk. It is not detected automatically.
 - `config/ingestion.php` `markets.XMAD.holidays`: the official BME trading calendar for the current and next year, with source URL and a "refresh annually" note. Weekday closures only. Half days are trading days.
 - Live smoke: `GET /eod/SAN.MC?market=XMAD` on the running engine returns about 2 years of EUR bars with weekday session dates. Record a trimmed Yahoo response as a fixture.
 
+### Implementation notes (`universe-ibex35`, 2026-10-26)
+
+- Snapshot as_of 2026-10-26: 35 companies, the BME composition in force since 22 July 2024 (Puig in, Meliá out); the 11 June 2026 committee left it unchanged. BME publishes it only as dynamic pages and PDFs, so tickers, names and the `industry` text come from Wikipedia's table citing BME's 23 September 2024 notice. The September 2026 review was not found in any source and is unverified. Sector (editorial GICS) and headquarters country are manual (`ArcelorMittal` LU, `Ferrovial` NL, the rest ES; uncertain: `CLNX`, `FDR`, `IDR`, `LOG`, `IAG` country). Details and hashes in `database/data/ibex35.md`.
+- Holidays: 2026 as published by BME (1 Jan, 3 Apr Good Friday, 6 Apr Easter Monday, 1 May, 25 Dec). 24 and 31 December trade until 14:00 and stay trading days. 2027 (1 Jan, 26 Mar, 29 Mar) is derived from the pattern because BME had not published it; confirm it when it does.
+- Live read-only smoke on `SAN.MC` (engine `fetch_eod`, market XMAD): EUR, 509 sessions, `Europe/Madrid`, no weekend dates, no session on the BME closures. A trimmed real response is the engine fixture `yahoo_san_mc.json`.
+- The user guide (es/en) mentions the IBEX 35 as available where the selector offers it. The home/meta copy is unchanged until the universe is made public.
+
 ### Acceptance
 
 - The seeder test on the committed CSV checks:

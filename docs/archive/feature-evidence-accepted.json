@@ -1921,5 +1921,32 @@
       "Independent validator verdict accept (2026-10-26): re-fetched Nasdaq quote-list (101) and Wikipedia (101) lists, both identical to nasdaq100.csv; S&P overlap 86/15 recomputed; 15 manual classifications judged reasonable; .\\init.ps1 exit 0 (Laravel 923 passed / 6 skipped, 409 Vitest, engine 115), Nasdaq100UniverseSeederTest 7 passed; universe non-public by default. Production rollout (seed, first ingestion of 15 tickers, public switch) pending."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Independently accepted 2026-10-26."
+  },
+  {
+    "id": "universe-ibex35",
+    "area": "data",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "IBEX 35 Screener universe (Bolsa de Madrid, EUR)",
+    "user_visible_behavior": "Everyone, Visitors included, can screen the IBEX 35 with EUR prices, .MC tickers and data updated after the Madrid close on Bolsa de Madrid trading days.",
+    "depends_on": [
+      "universe-selector-ui"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Seeder test: 35 rows, .MC suffix, XMAD/EUR, valid GICS sectors and ISO countries, idempotent",
+      "Committed official BME holidays (weekdays only) and the 18:15 Europe/Madrid schedule event",
+      "Live engine smoke on SAN.MC recorded as fixture; local XMAD pipeline run computes indicators, signals and patterns",
+      "Public enablement (ibex35 in SCREENER_UNIVERSES_PUBLIC) after the verified production run; licensing risk owner-accepted 2026-10-26; kill-switch procedure documented in deploy/README.md",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      ".\\init.ps1 exit 0 (2026-10-26): Laravel 931 passed / 6 skipped (8305 assertions), SPA lint/typecheck, Vitest 409, build, engine pytest 116.",
+      "tests/Feature/Ibex35UniverseSeederTest (8 tests): 35 rows, .MC suffix, sorted/unique, valid GICS sectors and ISO countries, notes file carries the CSV SHA-256; XMAD/EUR/position 2 seed; idempotent; S&P untouched; non-public with Admin preview; every committed XMAD holiday is a weekday (2026 and 2027) and the Easter 2026 closures are skipped while 24/31 Dec trade; production schedule event '15 18 * * 1-5' Europe/Madrid with --market=XMAD; light XMAD pipeline run ingests the 35 members (engine fake, EUR), 70 bars, no US stages.",
+      "engine/tests/test_stooq.py::test_yahoo_san_mc_recording_has_madrid_session_dates_and_skips_bme_closures with the trimmed real fixture yahoo_san_mc.json.",
+      "Live read-only smoke 2026-10-26 (engine fetch_eod SAN.MC, XMAD): currency EUR, 509 sessions 2024-10-28..2026-10-26, no weekend dates, exchangeTimezoneName Europe/Madrid, no sessions on BME closures. Other 34 .MC symbols not fetched.",
+      "Composition: BME notice of 2024-09-23 via Wikipedia table (35 tickers), BME constituent-history PDF and Merca2 2026-06-12 (committee left it unchanged); September 2026 review unverified. Holidays: BME trading-calendar page (2026 official; 2027 derived, to confirm).",
+      "Independent validator verdict accept (2026-10-26): Wikipedia IBEX 35 table re-fetched, 35 .MC tickers identical to ibex35.csv, CSV SHA-256 matches ibex35.md; 2026 BME closures match official calendar; live Yahoo SAN.MC and ITX.MC EUR/Europe/Madrid; .\\init.ps1 exit 0 (Laravel 931 passed / 6 skipped, engine 116), Ibex35UniverseSeederTest 8 passed; universe non-public by default. 2027 holidays unofficial; September 2026 review unverified; production run must confirm the other 33 symbols."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Implemented 2026-10-26: ibex35.csv/.md, Ibex35UniverseSeeder, XMAD holidays, deploy seeding, guide es/en, deploy/README.md item 13. Not public by default; production rollout and public enablement remain separate steps. Independently accepted 2026-10-26."
   }
 ]
