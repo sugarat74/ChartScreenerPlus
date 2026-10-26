@@ -4,7 +4,10 @@ namespace App\Console\Commands;
 
 use App\Models\Universe;
 use App\Services\Market\MarketCalendar;
+use App\Support\ListingMarket;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -20,12 +23,21 @@ use Throwable;
  * stage keeps its own
  * behavior and ledger.
  *
+ * Per Listing Market (docs/specs/multi-market-universes.md, Feature 2):
+ * `--market=US|XMAD|XETR` runs the market's Screener universes in `position`
+ * order. A ticker that belongs to several universes is handled once, by the
+ * first one (`--except-universe`). The Market Context block, macro, Market
+ * Regime, alerts and forecast stages are US-only. The first universe keeps
+ * the failure policy below; a later universe's failure is isolated (logged,
+ * later stages still run) and only turns the exit code into 1.
+ *
  * Guards:
- * - A command-level cache lock prevents overlapping invocations (the scheduled
- *   event also uses `withoutOverlapping`). A held lock is a skip, not a failure.
- * - Unless `--force`, a non-trading day (weekend or committed NYSE holiday) is
- *   skipped. The schedule already skips those, so this is defense in depth and
- *   the directly testable path.
+ * - A command-level cache lock, global to every market, prevents overlapping
+ *   invocations. A pipeline that finds it held waits up to
+ *   `ingestion.lock_wait_seconds`, then skips with a warning (not a failure).
+ * - Unless `--force`, a non-trading day (weekend or committed holiday of the
+ *   market) is skipped. The schedule already skips those, so this is defense
+ *   in depth and the directly testable path.
  *
  * Failure policy: if ingestion fails (a `failed` run), later stages are skipped.
  * If a later stage fails, the remaining stages are still attempted and the command
@@ -62,7 +74,8 @@ class RunIngestionPipeline extends Command
      * @var string
      */
     protected $signature = 'ingestion:pipeline
-                            {--universe= : Universe slug to run the pipeline for (defaults to ingestion.universe)}
+                            {--market=US : Listing Market to run (US, XMAD or XETR)}
+                            {--universe= : Limit the run to one universe slug (defaults to every Screener universe of the market, in position order)}
                             {--force : Run even on a non-trading day}';
 
     /**
@@ -70,48 +83,125 @@ class RunIngestionPipeline extends Command
      *
      * @var string
      */
-    protected $description = 'Run the full EOD pipeline (ingest, compute indicators, detect signals)';
+    protected $description = 'Run the full EOD pipeline for one Listing Market (ingest, compute indicators, detect signals)';
 
     /**
      * Execute the console command.
      */
     public function handle(MarketCalendar $calendar): int
     {
-        $universe = (string) ($this->option('universe') ?: config('ingestion.universe'));
-        $timezone = (string) config('ingestion.timezone');
+        $market = strtoupper((string) ($this->option('market') ?: ListingMarket::US));
+
+        if (! ListingMarket::isValid($market)) {
+            $this->error('Unknown listing market ['.$market.']; use one of '.implode(', ', ListingMarket::codes()).'.');
+
+            return self::FAILURE;
+        }
+
+        if (! $this->option('force') && ! $calendar->isTradingDay($market, now($calendar->timezone($market)))) {
+            $this->info('Not a trading day; EOD pipeline skipped.');
+
+            return self::SUCCESS;
+        }
 
         $lock = Cache::lock('ingestion:pipeline', (int) config('ingestion.lock_ttl_seconds'));
 
-        if (! $lock->get()) {
+        if (! $this->acquire($lock)) {
             $this->warn('EOD pipeline is already running; skipping.');
+            Log::warning('EOD pipeline skipped: the pipeline lock stayed held.', ['market' => $market]);
 
             return self::SUCCESS;
         }
 
         try {
-            if (! $this->option('force') && ! $calendar->isTradingDay(now($timezone))) {
-                $this->info('Not a trading day; EOD pipeline skipped.');
+            return $this->runMarket($market);
+        } finally {
+            $lock->release();
+        }
+    }
 
-                return self::SUCCESS;
+    /**
+     * Take the global pipeline lock, waiting up to `ingestion.lock_wait_seconds`
+     * when another pipeline holds it, so per-market runs queue up instead of
+     * being dropped.
+     */
+    private function acquire(Lock $lock): bool
+    {
+        if ($lock->get()) {
+            return true;
+        }
+
+        $wait = (int) config('ingestion.lock_wait_seconds');
+
+        if ($wait <= 0) {
+            return false;
+        }
+
+        $this->info("Another pipeline is running; waiting up to {$wait} s for it.");
+
+        try {
+            $lock->block($wait);
+
+            return true;
+        } catch (LockTimeoutException) {
+            return false;
+        }
+    }
+
+    /**
+     * Run the stages of one Listing Market with the lock held.
+     */
+    private function runMarket(string $market): int
+    {
+        $slugs = $this->universeSlugs($market);
+
+        if ($slugs === []) {
+            $this->info("No Screener universe for market {$market}; EOD pipeline skipped.");
+
+            return self::SUCCESS;
+        }
+
+        $isUs = $market === ListingMarket::US;
+        $handled = [];
+        $indicators = $signals = $patterns = self::SUCCESS;
+        $secondaryFailed = false;
+
+        foreach ($slugs as $position => $universe) {
+            $except = ['--except-universe' => $handled];
+
+            if ($position === 0) {
+                // The first universe keeps today's failure policy.
+                $ingestion = $this->call('ingestion:run', ['--universe' => $universe] + $except);
+
+                if ($ingestion !== self::SUCCESS) {
+                    $this->error('EOD pipeline stopped: ingestion failed; indicators, signals and patterns were skipped.');
+
+                    return self::FAILURE;
+                }
+
+                $indicators = $this->call('indicators:compute', ['--universe' => $universe] + $except);
+                $signals = $this->call('signals:detect', ['--universe' => $universe] + $except);
+                $patterns = $this->call('patterns:detect', ['--universe' => $universe] + $except);
+            } elseif (! $this->runSecondaryUniverse($universe, $except)) {
+                $secondaryFailed = true;
             }
 
-            $ingestion = $this->call('ingestion:run', ['--universe' => $universe]);
+            $handled[] = $universe;
+        }
 
-            if ($ingestion !== self::SUCCESS) {
-                $this->error('EOD pipeline stopped: ingestion failed; indicators, signals and patterns were skipped.');
-
-                return self::FAILURE;
-            }
-
-            $indicators = $this->call('indicators:compute', ['--universe' => $universe]);
-            $signals = $this->call('signals:detect', ['--universe' => $universe]);
-            $patterns = $this->call('patterns:detect', ['--universe' => $universe]);
+        if ($isUs) {
             $this->runMarketContext();
             $this->runMacro();
             $this->runMarketRegime();
-            // The Screener and the alerts read the precomputed rows, so they are
-            // rebuilt from whatever the stages above stored.
-            $screener = $this->call('screener:refresh');
+        }
+
+        // The Screener and the alerts read the precomputed rows, so they are
+        // rebuilt from whatever the stages above stored.
+        $screener = $this->call('screener:refresh');
+        $alerts = self::SUCCESS;
+        $forecasts = self::SUCCESS;
+
+        if ($isUs) {
             $alerts = $signals === self::SUCCESS && $screener === self::SUCCESS ? $this->call('alerts:evaluate') : self::FAILURE;
             $forecasts = $this->call('forecast:resolve');
 
@@ -120,19 +210,77 @@ class RunIngestionPipeline extends Command
             } elseif ($screener !== self::SUCCESS) {
                 $this->warn('Alerts were not evaluated because the screener rows could not be refreshed.');
             }
+        }
 
-            if ($indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS || $screener !== self::SUCCESS || $alerts !== self::SUCCESS || $forecasts !== self::SUCCESS) {
-                $this->error('EOD pipeline finished with errors.');
+        if ($secondaryFailed || $indicators !== self::SUCCESS || $signals !== self::SUCCESS || $patterns !== self::SUCCESS || $screener !== self::SUCCESS || $alerts !== self::SUCCESS || $forecasts !== self::SUCCESS) {
+            $this->error('EOD pipeline finished with errors.');
 
-                return self::FAILURE;
+            return self::FAILURE;
+        }
+
+        $this->info('EOD pipeline completed.');
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * The universe slugs to process, in order: the `--universe` option alone,
+     * otherwise every Screener universe of the market by `position`. With none
+     * seeded, the US market falls back to the configured default universe so
+     * an unseeded install reports "No universe found" as it always did.
+     *
+     * @return list<string>
+     */
+    private function universeSlugs(string $market): array
+    {
+        $option = (string) $this->option('universe');
+
+        if ($option !== '') {
+            return [$option];
+        }
+
+        $slugs = Universe::query()
+            ->screener()
+            ->where('market', $market)
+            ->pluck('slug')
+            ->map(fn (mixed $slug): string => (string) $slug)
+            ->values()
+            ->all();
+
+        if ($slugs === [] && $market === ListingMarket::US) {
+            return [(string) config('ingestion.universe')];
+        }
+
+        return $slugs;
+    }
+
+    /**
+     * Run every stage of a later universe in isolation: a failing or throwing
+     * stage is logged and the remaining stages still run. Returns whether all
+     * of them succeeded; the caller turns a failure into the exit code only.
+     *
+     * @param  array<string, list<string>>  $except
+     */
+    private function runSecondaryUniverse(string $universe, array $except): bool
+    {
+        $ok = true;
+
+        foreach (['ingestion:run', 'indicators:compute', 'signals:detect', 'patterns:detect'] as $stage) {
+            try {
+                $exit = $this->call($stage, ['--universe' => $universe] + $except);
+            } catch (Throwable $exception) {
+                report($exception);
+                $exit = self::FAILURE;
             }
 
-            $this->info('EOD pipeline completed.');
-
-            return self::SUCCESS;
-        } finally {
-            $lock->release();
+            if ($exit !== self::SUCCESS) {
+                $ok = false;
+                $this->warn("Universe {$universe} stage {$stage} failed (exit {$exit}); the pipeline continues.");
+                Log::warning('Secondary universe stage failed.', ['universe' => $universe, 'stage' => $stage, 'exit' => $exit]);
+            }
         }
+
+        return $ok;
     }
 
     /**

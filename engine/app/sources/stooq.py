@@ -3,7 +3,7 @@
 The engine fetches and parses here; it never touches the database. The parsed
 bars are returned over HTTP and Laravel (the DB owner) persists them.
 
-Source: ``https://stooq.com/q/d/l/?s={symbol}.us&i=d`` (daily, unadjusted OHLCV,
+Source: ``https://stooq.com/q/d/l/?s={symbol}.us&i=d`` (US only; daily, unadjusted OHLCV,
 header ``Date,Open,High,Low,Close,Volume``). The source is fragile: its markup,
 availability and rate limits can change, and it may serve an HTML anti-bot
 challenge instead of CSV. Parsing is deliberately isolated and strict so an
@@ -13,7 +13,9 @@ unusable response becomes a controlled upstream error rather than bad data.
 import csv
 import io
 import json
-from datetime import date, datetime, timezone
+from dataclasses import dataclass
+from datetime import date, datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import httpx
 
@@ -30,6 +32,53 @@ USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 )
+
+
+# Listing Markets (docs/specs/multi-market-universes.md, D1). The suffix is the
+# ticker suffix Yahoo uses for the exchange; US tickers carry none.
+MARKET_TIMEZONES = {
+    "US": "America/New_York",
+    "XMAD": "Europe/Madrid",
+    "XETR": "Europe/Berlin",
+}
+MARKET_SUFFIXES = {"US": None, "XMAD": ".MC", "XETR": ".DE"}
+DEFAULT_MARKET = "US"
+
+
+@dataclass(frozen=True)
+class EodResult:
+    """Parsed bars plus the currency the source reported (None if unknown)."""
+
+    bars: list[Bar]
+    currency: str | None = None
+
+
+def symbol_matches_market(symbol: str, market: str) -> bool:
+    """Whether the symbol follows the suffix rule of the market.
+
+    .MC is exactly XMAD and .DE exactly XETR; a US symbol ends in neither.
+    """
+
+    if market not in MARKET_SUFFIXES:
+        return False
+
+    upper = symbol.upper()
+    for code, suffix in MARKET_SUFFIXES.items():
+        if suffix is None:
+            continue
+        if upper.endswith(suffix) != (code == market):
+            return False
+
+    return True
+
+
+def yahoo_symbol(symbol: str, market: str) -> str:
+    """Yahoo symbol: US class-share dots become hyphens, European tickers stay verbatim."""
+
+    if market == "US":
+        return symbol.replace(".", "-")
+
+    return symbol
 
 
 def parse_eod_csv(text: str) -> list[Bar]:
@@ -92,12 +141,29 @@ def parse_eod_csv(text: str) -> list[Bar]:
     return bars
 
 
-def parse_yahoo_eod_json(text: str) -> list[Bar]:
-    """Parse a Yahoo Finance chart response into ordered daily bars.
+def _resolve_timezone(name: object, market: str) -> ZoneInfo:
+    """The exchange timezone from the response, else the market's own timezone."""
 
-    Yahoo may include ``null`` OHLCV fields for an incomplete session. Those
+    if isinstance(name, str) and name:
+        try:
+            return ZoneInfo(name)
+        except (ZoneInfoNotFoundError, ValueError):
+            pass
+
+    return ZoneInfo(MARKET_TIMEZONES.get(market, MARKET_TIMEZONES[DEFAULT_MARKET]))
+
+
+def parse_yahoo_eod(text: str, market: str = DEFAULT_MARKET) -> EodResult:
+    """Parse a Yahoo Finance chart response into ordered daily bars and currency.
+
+    Yahoo may include null OHLCV fields for an incomplete session. Those
     entries are not usable EOD bars and are skipped; an invalid response shape
     remains a controlled upstream error.
+
+    Bar dates are the session date in the exchange timezone
+    (chart.meta.exchangeTimezoneName, else the market's timezone), never in
+    UTC: a daily timestamp at midnight local time is the previous day in UTC
+    for European exchanges.
     """
 
     try:
@@ -113,6 +179,16 @@ def parse_yahoo_eod_json(text: str) -> list[Bar]:
         volumes = quote["volume"]
     except (IndexError, KeyError, TypeError, json.JSONDecodeError) as exc:
         raise ValueError("unexpected Yahoo Finance chart response") from exc
+
+    meta = chart.get("meta") if isinstance(chart, dict) else None
+    meta = meta if isinstance(meta, dict) else {}
+    timezone_info = _resolve_timezone(meta.get("exchangeTimezoneName"), market)
+    raw_currency = meta.get("currency")
+    currency = (
+        raw_currency.strip().upper()
+        if isinstance(raw_currency, str) and raw_currency.strip()
+        else None
+    )
 
     series = (timestamps, opens, highs, lows, closes, volumes)
     if not all(isinstance(values, list) for values in series):
@@ -136,7 +212,7 @@ def parse_yahoo_eod_json(text: str) -> list[Bar]:
 
         bars.append(
             Bar(
-                date=datetime.fromtimestamp(timestamp, tz=timezone.utc).date(),
+                date=datetime.fromtimestamp(timestamp, tz=timezone_info).date(),
                 open=float(open_price),
                 high=float(high_price),
                 low=float(low_price),
@@ -147,7 +223,13 @@ def parse_yahoo_eod_json(text: str) -> list[Bar]:
 
     bars.sort(key=lambda bar: bar.date)
 
-    return bars
+    return EodResult(bars=bars, currency=currency)
+
+
+def parse_yahoo_eod_json(text: str, market: str = DEFAULT_MARKET) -> list[Bar]:
+    """Parse a Yahoo Finance chart response into ordered daily bars."""
+
+    return parse_yahoo_eod(text, market).bars
 
 
 def _fetch_stooq(normalized_symbol: str) -> list[Bar]:
@@ -164,32 +246,39 @@ def _fetch_stooq(normalized_symbol: str) -> list[Bar]:
         return parse_eod_csv(response.text)
 
 
-def _fetch_yahoo(normalized_symbol: str) -> list[Bar]:
-    """Fetch the fallback chart API, translating class-share dots to hyphens."""
+def _fetch_yahoo(normalized_symbol: str, market: str = DEFAULT_MARKET) -> EodResult:
+    """Fetch the Yahoo chart API with the market's symbol mapping."""
 
-    url = YAHOO_CHART_URL.format(symbol=normalized_symbol.replace(".", "-"))
+    url = YAHOO_CHART_URL.format(symbol=yahoo_symbol(normalized_symbol, market))
 
     with httpx.Client(
         timeout=REQUEST_TIMEOUT_SECONDS, follow_redirects=True, headers={"User-Agent": USER_AGENT}
     ) as client:
         response = client.get(url)
         response.raise_for_status()
-        return parse_yahoo_eod_json(response.text)
+        return parse_yahoo_eod(response.text, market)
 
 
-def fetch_eod(symbol: str) -> list[Bar]:
-    """Fetch daily EOD bars from Yahoo, falling back when it is unusable.
+def fetch_eod(symbol: str, market: str = DEFAULT_MARKET) -> EodResult:
+    """Fetch daily EOD bars from Yahoo, falling back to Stooq for US only.
 
     Stooq's current anti-bot challenge can consume the complete request timeout
     before returning unusable content. Yahoo Finance is therefore attempted
-    first, while the strict Stooq CSV parser remains the fallback.
+    first, while the strict Stooq CSV parser remains the fallback for US.
+    No Stooq mapping for XMAD/XETR has been verified (the symbol rule
+    {symbol}.us is US-only), so a failing Yahoo call for a European market
+    is a controlled upstream error with no fallback.
     """
 
     normalized_symbol = symbol.strip().upper()
     if not normalized_symbol:
         raise ValueError("symbol must not be empty")
+    if market not in MARKET_SUFFIXES:
+        raise ValueError(f"unknown listing market: {market}")
 
     try:
-        return _fetch_yahoo(normalized_symbol)
+        return _fetch_yahoo(normalized_symbol, market)
     except (httpx.HTTPError, ValueError):
-        return _fetch_stooq(normalized_symbol)
+        if market != DEFAULT_MARKET:
+            raise
+        return EodResult(bars=_fetch_stooq(normalized_symbol), currency=None)

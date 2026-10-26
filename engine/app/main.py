@@ -1,5 +1,7 @@
 """FastAPI application for the Chartiko engine."""
 
+from typing import Literal
+
 import httpx
 from fastapi import FastAPI, HTTPException
 
@@ -20,7 +22,7 @@ from app.patterns.detect import detect_patterns
 from app.patterns.near_misses import detect_near_misses
 from app.patterns.rules import DEFAULT_PARAMS
 from app.signals.detect import detect_signals
-from app.sources.stooq import fetch_eod
+from app.sources.stooq import fetch_eod, symbol_matches_market
 
 
 def create_app() -> FastAPI:
@@ -35,15 +37,25 @@ def create_app() -> FastAPI:
         }
 
     @application.get("/eod/{symbol}", response_model=EodResponse)
-    def eod(symbol: str) -> EodResponse:
-        """Return parsed EOD bars for one symbol (fetch + parse only)."""
+    def eod(symbol: str, market: Literal["US", "XMAD", "XETR"] = "US") -> EodResponse:
+        """Return parsed EOD bars for one symbol (fetch + parse only).
+
+        market is the Listing Market (default US, so existing calls are
+        unchanged). The symbol must follow the market's suffix rule (422).
+        """
 
         normalized = symbol.strip().upper()
         if not normalized:
             raise HTTPException(status_code=404, detail="No EOD data for the requested symbol.")
 
+        if not symbol_matches_market(normalized, market):
+            raise HTTPException(
+                status_code=422,
+                detail=f"Symbol {normalized} does not belong to listing market {market}.",
+            )
+
         try:
-            bars = fetch_eod(normalized)
+            result = fetch_eod(normalized, market)
         except ValueError as exc:
             raise HTTPException(
                 status_code=502,
@@ -55,10 +67,10 @@ def create_app() -> FastAPI:
                 detail=f"Upstream EOD source failed for {normalized}.",
             ) from exc
 
-        if not bars:
+        if not result.bars:
             raise HTTPException(status_code=404, detail=f"No EOD data for {normalized}.")
 
-        return EodResponse(symbol=normalized, bars=bars)
+        return EodResponse(symbol=normalized, bars=result.bars, currency=result.currency)
 
     @application.post("/indicators/compute", response_model=IndicatorsComputeResponse)
     def indicators_compute(

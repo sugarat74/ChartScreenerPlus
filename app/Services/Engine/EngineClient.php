@@ -2,6 +2,7 @@
 
 namespace App\Services\Engine;
 
+use App\Support\ListingMarket;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
@@ -22,18 +23,37 @@ class EngineClient
      * @throws RequestException when the engine responds with an error status.
      * @throws ConnectionException when the engine is unreachable.
      */
-    public function eodBars(string $ticker): array
+    public function eodBars(string $ticker, string $market = ListingMarket::US): array
+    {
+        return $this->eodSeries($ticker, $market)['bars'];
+    }
+
+    /**
+     * Fetch the parsed EOD bars and the currency the source reported (`null`
+     * when it did not report one) for a ticker of a Listing Market.
+     *
+     * @return array{bars: array<int, array<string, mixed>>, currency: ?string}
+     *
+     * @throws RequestException when the engine responds with an error status.
+     * @throws ConnectionException when the engine is unreachable.
+     */
+    public function eodSeries(string $ticker, string $market = ListingMarket::US): array
     {
         $baseUrl = rtrim((string) config('engine.url'), '/');
 
+        // The engine defaults to `US`, so a US call is the URL it always was.
         $payload = Http::acceptJson()
-            ->get($baseUrl.'/eod/'.rawurlencode($ticker))
+            ->get($baseUrl.'/eod/'.rawurlencode($ticker), $market === ListingMarket::US ? [] : ['market' => $market])
             ->throw()
             ->json();
 
         $bars = is_array($payload) ? ($payload['bars'] ?? []) : [];
+        $currency = is_array($payload) ? ($payload['currency'] ?? null) : null;
 
-        return is_array($bars) ? $bars : [];
+        return [
+            'bars' => is_array($bars) ? $bars : [],
+            'currency' => is_string($currency) && $currency !== '' ? strtoupper($currency) : null,
+        ];
     }
 
     /**

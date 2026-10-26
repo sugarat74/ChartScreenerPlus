@@ -371,7 +371,7 @@ class IngestionPipelineCommandTest extends TestCase
      */
     private function marketContextUniverse(): Universe
     {
-        $universe = Universe::factory()->create(['slug' => 'market-context', 'name' => 'Market Context']);
+        $universe = Universe::factory()->notScreener()->create(['slug' => 'market-context', 'name' => 'Market Context']);
         $universe->instruments()->attach([
             Instrument::factory()->etf()->create(['ticker' => 'SPY', 'sector' => null])->id,
             Instrument::factory()->etf()->create(['ticker' => 'XLK', 'sector' => 'Information Technology'])->id,
