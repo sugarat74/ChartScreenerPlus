@@ -16,9 +16,13 @@ Daily closing data. Chartiko works exclusively with end-of-day values, never int
 
 A listed security identified by a ticker (e.g. `NVDA`). Carries company name, sector, optional GICS sub-industry, optional headquarters country and exchange. An Instrument is a **stock** (a listed company, the default) or an **ETF** (an exchange-traded fund of the Market Context universe: SPY and the sector ETFs). ETFs have a chart but never appear in the Screener, the Watchlist, alerts, the Company Card, Fundamentals or the forecast.
 
+### Listing Market (Mercado de cotización)
+
+The exchange group whose trading calendar, session close, currency and data-source symbol rules apply to an Instrument: `US` (NYSE/Nasdaq, USD), `XMAD` (Bolsa de Madrid, EUR) or `XETR` (Xetra, EUR). European tickers carry the suffix of their market (`SAN.MC`, `SAP.DE`). Not to be confused with Market Context. Planned, `docs/specs/multi-market-universes.md`.
+
 ### Universe
 
-A named, curated set of Instruments that a Screener runs against. The first real Universe is the **S&P 500**. Other universes (NASDAQ 100, Russell 2000, IBEX 35) are future scope. The `market-context` Universe (SPY and the 11 SPDR sector ETFs) is ingested daily for Market Context; it is not a Screener universe.
+A named, curated set of Instruments that a Screener runs against. The first real Universe is the **S&P 500**, the default. Planned since 2026-10-26 (`docs/specs/multi-market-universes.md`): **Nasdaq-100**, **IBEX 35** and **DAX**. A Screener universe has one Listing Market and one currency; an Instrument in two universes (S&P 500 and Nasdaq-100) is a single Instrument with one set of bars. Russell 2000 and the full Nasdaq Composite remain future scope. The `market-context` Universe (SPY and the 11 SPDR sector ETFs) is ingested daily for Market Context; it is not a Screener universe.
 
 ### Daily Bar (OHLCV)
 

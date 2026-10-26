@@ -801,5 +801,170 @@
       "saved-screeners",
       "screener-company-classification"
     ]
+  },
+  {
+    "id": "universe-registry",
+    "area": "backend",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "Listing Market, currency and Screener universe registry with universe-aware Screener, Saved Screeners and alerts",
+    "user_visible_behavior": "The Screener API, Saved Screeners and screener alerts work on any visible Screener universe (default S&P 500 unchanged); Instruments and payloads carry Listing Market (US/XMAD/XETR) and currency; universes not in SCREENER_UNIVERSES_PUBLIC (the kill-switch) are Admin preview only; sector context filters, Company Card, fundamentals and forecast stay US-only.",
+    "depends_on": [
+      "screener-table-column-controls",
+      "saved-screeners",
+      "alerts-engine",
+      "market-context-patterns"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Additive migrations: existing rows US/USD, sp500 the only Screener universe, existing Screener/Saved Screener/alert tests unchanged",
+      "GET /api/universes and ?universe= honour is_screener and SCREENER_UNIVERSES_PUBLIC (404 for unknown, non-Screener or hidden slugs) with a fixture XMAD universe",
+      "IndexUniverseSeeder: suffix/market checks, exact membership sync without deleting history, active flag, S&P fields kept for overlapping tickers, idempotent",
+      "One screener row per Instrument in two universes; Saved Screener universe round-trip with legacy rows as sp500; screener alerts evaluate in their universe",
+      "Sector context filters 422 outside US; Company Card, fundamentals and forecast 404 for non-US Instruments with availability flags",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+  },
+  {
+    "id": "ingestion-multi-market",
+    "area": "ingestion",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "Per-market EOD ingestion: engine symbol mapping, exchange calendars, schedules and freshness",
+    "user_visible_behavior": "Each Listing Market is ingested after its own session close on its own trading days (US 16:30 New York, Madrid and Xetra 18:15 local); overlapping Nasdaq-100/S&P 500 members are fetched once; European bar dates are correct session dates; Admins see per-universe freshness.",
+    "depends_on": [
+      "universe-registry",
+      "ingestion-scheduler"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Engine fixtures: market param, .MC/.DE symbols verbatim, US dot-to-hyphen unchanged, exchange-timezone session dates for midnight-local Yahoo timestamps, currency returned, default call unchanged",
+      "currency_mismatch fails the item without storing bars",
+      "MarketCalendar per market: own holidays, latestSession around close+buffer and across US/EU DST changes",
+      "Pipeline --market with --except-universe dedupe, isolated secondary-universe failures, US-only stages only in the US run, lock wait",
+      "Schedule events per seeded market and Admin freshness endpoint (fresh/partial/stale, Admin only)",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+  },
+  {
+    "id": "universe-selector-ui",
+    "area": "frontend",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "Screener universe selector, currency labels and universe on Saved Screeners",
+    "user_visible_behavior": "The Screener shows a universe selector (S&P 500 default, URL param otherwise) with market label and data date; switching keeps compatible filters; Close shows the currency; Saved Screeners show and restore their universe; the chart hides US-only panels for European stocks; Admin sees a universe freshness table.",
+    "depends_on": [
+      "universe-registry",
+      "ingestion-multi-market"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Vitest: selector order/labels es/en, URL sync and fallback, switch rules (offset reset, close bounds cleared on currency change, sector context hidden outside US), Close (EUR), Saved Screener chip/restore, availability-driven chart panels, no hardcoded text",
+      "Playwright smoke 390/1440 px light/dark, no page overflow, visible focus",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+  },
+  {
+    "id": "universe-nasdaq100",
+    "area": "data",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "Nasdaq-100 Screener universe",
+    "user_visible_behavior": "Everyone, Visitors included, can screen the Nasdaq-100 once it is enabled after the production run; companies also in the S&P 500 share their existing data, and only the non-S&P members are fetched additionally.",
+    "depends_on": [
+      "universe-selector-ui"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Seeder test on the committed dated snapshot: row count, overlapping tickers resolve to existing S&P Instruments unchanged, no duplicates, GICS sectors and ISO countries valid",
+      "Source hand check (count, sample, non-S&P list) and an ingestion run whose total equals the non-S&P members",
+      "Production enablement (nasdaq100 added to SCREENER_UNIVERSES_PUBLIC, owner-approved 2026-10-26) after the verified run, recorded in PROGRESS.md",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+  },
+  {
+    "id": "universe-ibex35",
+    "area": "data",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "IBEX 35 Screener universe (Bolsa de Madrid, EUR)",
+    "user_visible_behavior": "Everyone, Visitors included, can screen the IBEX 35 with EUR prices, .MC tickers and data updated after the Madrid close on Bolsa de Madrid trading days.",
+    "depends_on": [
+      "universe-selector-ui"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Seeder test: 35 rows, .MC suffix, XMAD/EUR, valid GICS sectors and ISO countries, idempotent",
+      "Committed official BME holidays (weekdays only) and the 18:15 Europe/Madrid schedule event",
+      "Live engine smoke on SAN.MC recorded as fixture; local XMAD pipeline run computes indicators, signals and patterns",
+      "Public enablement (ibex35 in SCREENER_UNIVERSES_PUBLIC) after the verified production run; licensing risk owner-accepted 2026-10-26; kill-switch procedure documented in deploy/README.md",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+  },
+  {
+    "id": "universe-dax",
+    "area": "data",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "DAX Screener universe (Xetra, EUR)",
+    "user_visible_behavior": "Everyone, Visitors included, can screen the DAX (label 'DAX', 40 constituents) with EUR prices, .DE tickers and data updated after the Xetra close on Xetra trading days.",
+    "depends_on": [
+      "universe-selector-ui"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Seeder test: 40 rows, .DE suffix, slug dax, XETR/EUR, valid GICS sectors and ISO countries, idempotent; MRK.DE and MRK are distinct Instruments; public label is 'DAX'",
+      "Committed official Xetra holidays (weekdays only) and the 18:15 Europe/Berlin schedule event",
+      "Live engine smoke on SAP.DE recorded as fixture; local XETR pipeline run computes indicators, signals and patterns",
+      "Public enablement (dax in SCREENER_UNIVERSES_PUBLIC) after the verified production run; licensing risk owner-accepted 2026-10-26; kill-switch procedure documented in deploy/README.md",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+  },
+  {
+    "id": "market-hours-status",
+    "area": "frontend",
+    "planning_spec": "docs/specs/market-hours-status.md (prepared 2026-10-26)",
+    "title": "Market hours and open/closed status on the home page",
+    "user_visible_behavior": "The home page shows whether NYSE/Nasdaq, Bolsa de Madrid and Xetra are open or closed right now, with the next open or close in the viewer's timezone, and lists regular hours, holidays and early closes; computed from the static schedule and the clock only, never from market data.",
+    "depends_on": [
+      "ingestion-multi-market",
+      "universe-ibex35",
+      "universe-dax"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Frozen-clock tests: open/close boundaries, weekends, each market's own holidays, early closes, US and EU DST changes, next open across weekend plus holiday",
+      "Vitest: es/en strip with mocked timezone, status flips at a boundary, status not by color alone, no EOD wording or hardcoded text",
+      "Visual smoke 390/1440 px light/dark",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-26 ('añadir los horarios en los distintos mercados y su calendario, para ver en portada cuales están abiertos en cada momento'). Future feature, not part of the first multi-universe delivery. Reuses the per-market calendars of ingestion-multi-market plus open times and early closes; no intraday data."
+  },
+  {
+    "id": "market-events-calendar",
+    "area": "backend",
+    "planning_spec": "docs/specs/market-events-calendar.md (prepared 2026-10-26)",
+    "title": "Market events calendar: central banks, macro releases and earnings dates",
+    "user_visible_behavior": "Registered Users with Market Context access see on /mercado a dated list of upcoming and recent central bank meetings, key macro releases and earnings dates, each with its source, and an earnings date chip on the chart; no forecasts, consensus or advice.",
+    "depends_on": [
+      "market-context-ui",
+      "macro-series-fred"
+    ],
+    "status": "not_started",
+    "verification": [
+      "Central bank events come from the existing CentralBankCalendar (no duplicated dates)",
+      "Recorded FRED release-date fixtures parse to the closed release list; a changed response stores nothing and records the error",
+      "Access matches Market Context (view-market-context); no forecast, consensus, advice or EOD wording; es/en complete",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-10-26 ('añadir un calendario de eventos económicos, presentación de resultados, reuniones de la fed... cosas que afecten al mercado'). Future feature. Owner chose an external source for earnings dates (2026-10-26); blocked until the owner picks the provider and its public-display licence/budget (candidates in the spec: EODHD, Financial Modeling Prep, Finnhub; personal tiers forbid public display). US macro release dates from FRED fred/releases/dates; FOMC/ECB from the existing calendar. Coverage US-only vs also Europe still open (if Europe, also depends on universe-ibex35 and universe-dax)."
   }
 ]
