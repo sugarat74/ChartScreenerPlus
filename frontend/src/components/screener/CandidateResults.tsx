@@ -26,6 +26,8 @@ interface CandidateResultsProps {
   onClearFilters: () => void
   /** Column sort/filter controls for the table headings (screener-table-column-controls). */
   controls?: CandidateTableControls
+  /** Currency of the screened universe (ISO code). */
+  currency?: string | null
 }
 
 function LoadingPanel() {
@@ -118,6 +120,7 @@ export default function CandidateResults({
   onRetry,
   onClearFilters,
   controls,
+  currency,
 }: CandidateResultsProps) {
   const { t } = useI18n()
   const signedIn = useSignedIn()
@@ -140,7 +143,7 @@ export default function CandidateResults({
       {candidates.length === 0 ? (
         <EmptyPanel hasFilters={hasFilters} onClearFilters={onClearFilters} />
       ) : (
-        <CandidateTable candidates={candidates} showCompanyCardLink={signedIn} controls={controls} />
+        <CandidateTable candidates={candidates} showCompanyCardLink={signedIn} controls={controls} currency={currency} />
       )}
     </div>
   )

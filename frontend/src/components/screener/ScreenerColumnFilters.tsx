@@ -26,6 +26,7 @@ import {
   candidateColumn,
   clearColumnPatch,
   columnFilterSummary,
+  columnLabel,
   columnFilterToggleId,
   isColumnFiltered,
 } from '../../lib/screenerColumns.ts'
@@ -74,6 +75,8 @@ interface ScreenerColumnFiltersProps {
   onChange: (patch: Partial<ScreenerFilters>) => void
   onOpen: (column: CandidateColumnId) => void
   onClose: () => void
+  /** Currency of the screened universe, for the Close heading and bounds. */
+  currency?: string | null
 }
 
 /** Return focus to a heading's filter toggle when it is still rendered. */
@@ -81,7 +84,14 @@ function focusToggle(id: CandidateColumnId) {
   document.getElementById(columnFilterToggleId(id))?.focus()
 }
 
-export default function ScreenerColumnFilters({ filters, openColumn, onChange, onOpen, onClose }: ScreenerColumnFiltersProps) {
+export default function ScreenerColumnFilters({
+  filters,
+  openColumn,
+  onChange,
+  onOpen,
+  onClose,
+  currency,
+}: ScreenerColumnFiltersProps) {
   const { t, formatDecimal } = useI18n()
   const formatValue = (value: number) => formatDecimal(value)
   const active = CANDIDATE_COLUMNS.filter((column) => isColumnFiltered(column, filters))
@@ -101,7 +111,7 @@ export default function ScreenerColumnFilters({ filters, openColumn, onChange, o
         <div role="group" aria-label={t('screener.columns.activeTitle')} className="flex flex-wrap items-center gap-2">
           <span className={LABEL_CLASS}>{t('screener.columns.activeTitle')}</span>
           {active.map((column) => {
-            const summary = columnFilterSummary(column, filters, t, formatValue) ?? t(column.labelKey)
+            const summary = columnFilterSummary(column, filters, t, formatValue, currency) ?? columnLabel(column, t, currency)
             return (
               <span
                 key={column.id}
@@ -136,6 +146,7 @@ export default function ScreenerColumnFilters({ filters, openColumn, onChange, o
           key={`${openColumn}|${JSON.stringify(pickColumnState(candidateColumn(openColumn), filters))}`}
           column={candidateColumn(openColumn)}
           filters={filters}
+          currency={currency}
           onChange={onChange}
           onClose={() => close(openColumn)}
         />
@@ -165,13 +176,14 @@ function pickColumnState(column: CandidateColumn, filters: ScreenerFilters): unk
 interface ColumnEditorProps {
   column: CandidateColumn
   filters: ScreenerFilters
+  currency?: string | null
   onChange: (patch: Partial<ScreenerFilters>) => void
   onClose: () => void
 }
 
-function ColumnEditor({ column, filters, onChange, onClose }: ColumnEditorProps) {
+function ColumnEditor({ column, filters, currency, onChange, onClose }: ColumnEditorProps) {
   const { t } = useI18n()
-  const label = t(column.labelKey)
+  const label = columnLabel(column, t, currency)
   const headingId = `${COLUMN_FILTER_PANEL_ID}-title`
   const panelRef = useRef<HTMLElement | null>(null)
 

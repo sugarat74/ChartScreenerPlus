@@ -68,6 +68,17 @@ export const CANDIDATE_COLUMNS: readonly CandidateColumn[] = [
   { id: 'signals', labelKey: 'screener.colSignals', align: 'left', asc: 'signal_count_asc', desc: 'signal_count_desc', first: 'desc', filter: 'signals' },
 ]
 
+/**
+ * The heading of a column. Close carries its currency ("Cierre (EUR)") once
+ * the universe's currency is known, so a price bound is never ambiguous (D8).
+ */
+export function columnLabel(column: CandidateColumn, t: Translate, currency?: string | null): string {
+  if (column.id === 'close' && currency) {
+    return t('screener.colCloseCurrency', { currency })
+  }
+  return t(column.labelKey)
+}
+
 export function candidateColumn(id: CandidateColumnId): CandidateColumn {
   return CANDIDATE_COLUMNS.find((column) => column.id === id) ?? CANDIDATE_COLUMNS[0]
 }
@@ -131,6 +142,7 @@ export function columnFilterSummary(
   filters: ScreenerFilters,
   t: Translate,
   formatValue: (value: number) => string,
+  currency?: string | null,
 ): string | null {
   if (!isColumnFiltered(column, filters)) {
     return null
@@ -140,7 +152,7 @@ export function columnFilterSummary(
       return t('screener.columns.signalsSummary', { count: filters.signals.length + filters.patterns.length })
     case 'range':
       return column.range
-        ? describeRange(t(column.labelKey), filters[column.range.min], filters[column.range.max], t, formatValue)
+        ? describeRange(columnLabel(column, t, currency), filters[column.range.min], filters[column.range.max], t, formatValue)
         : null
     case 'search':
       return describeColumnCriteria({ search: filters.search }, t, formatValue)[0] ?? null

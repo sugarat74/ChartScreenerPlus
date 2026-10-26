@@ -603,6 +603,24 @@ export type ScreenerCandidate = {
   rsi14: number | null
   signals: string[]
   patterns: CandidatePattern[]
+  /** Listing Market and currency (universe-registry); absent on older deployments. */
+  market?: ListingMarketCode
+  currency?: string
+}
+
+/** The Listing Markets of the Screener universes (`docs/specs/multi-market-universes.md`, D1). */
+export type ListingMarketCode = 'US' | 'XMAD' | 'XETR'
+
+/** One Screener universe of `GET /api/universes` (the caller's visible ones, selector order). */
+export type ScreenerUniverse = {
+  slug: string
+  /** Proper noun ("S&P 500", "IBEX 35"): shown as sent, never translated. */
+  name: string
+  market: ListingMarketCode
+  currency: string
+  members: number
+  latest_date: string | null
+  is_default: boolean
 }
 
 export type ScreenerResponse = {
@@ -615,8 +633,9 @@ export type ScreenerResponse = {
 /**
  * Serialize the filter params plus `sort`, using the API's own param names so a
  * copied URL is directly usable as an API call. `sort` is always sent (each
- * request is self-describing and the ranking stays server-side); `limit` and
- * `universe` are never sent — the API defaults apply.
+ * request is self-describing and the ranking stays server-side); `limit` is
+ * never sent here and `universe` is added by `screenerApi.search` only for a
+ * non-default universe.
  */
 function screenerQueryString(filters: ScreenerFilters): string {
   const params = new URLSearchParams()
@@ -687,9 +706,12 @@ export const screenerApi = {
   async search(
     filters: ScreenerFilters,
     signal?: AbortSignal,
-    page: { limit?: number; offset?: number } = {},
+    page: { limit?: number; offset?: number; universe?: string | null } = {},
   ): Promise<ScreenerResponse> {
     const params = new URLSearchParams(screenerQueryString(filters))
+    if (page.universe) {
+      params.set('universe', page.universe)
+    }
     if (page.limit !== undefined) {
       params.set('limit', String(page.limit))
     }
@@ -707,12 +729,46 @@ export const screenerApi = {
    * `user_daily_limit`, ...) and a localized message. The text is never
    * stored by the server.
    */
-  async interpret(query: string, locale: string): Promise<ScreenerInterpretation> {
+  async interpret(query: string, locale: string, universe?: string | null): Promise<ScreenerInterpretation> {
     await ensureCsrfCookie()
     return request<ScreenerInterpretation>('/api/screener/interpret', {
       method: 'POST',
-      body: JSON.stringify({ query, locale }),
+      body: JSON.stringify(universe ? { query, locale, universe } : { query, locale }),
     })
+  },
+}
+
+/**
+ * Screener universes the caller can see (universe-registry): public for the
+ * default and any public universe, plus the not-yet-public ones for an Admin.
+ */
+export const universeApi = {
+  async list(signal?: AbortSignal): Promise<ScreenerUniverse[]> {
+    const payload = await request<{ universes?: ScreenerUniverse[] } | undefined>('/api/universes', { signal })
+    return Array.isArray(payload?.universes) ? payload.universes : []
+  },
+}
+
+export type UniverseFreshnessStatus = 'fresh' | 'partial' | 'stale'
+
+/** One row of the Admin universe freshness table. */
+export type UniverseFreshness = {
+  slug: string
+  name: string
+  market: ListingMarketCode
+  currency: string
+  members: number
+  latest_date: string | null
+  expected_date: string
+  with_bar: number
+  without_bar: number
+  status: UniverseFreshnessStatus
+}
+
+export const adminUniversesApi = {
+  async freshness(signal?: AbortSignal): Promise<UniverseFreshness[]> {
+    const payload = await request<{ universes: UniverseFreshness[] }>('/api/admin/universes/freshness', { signal })
+    return payload.universes
   },
 }
 
@@ -750,6 +806,11 @@ export type SavedScreenerFilters = {
   close_max?: number | null
   change_min?: number | null
   change_max?: number | null
+  /**
+   * Universe slug (universe-registry). The API stores it only for a
+   * non-default universe, so S&P 500 definitions keep their twenty keys.
+   */
+  universe?: string
   sort: ScreenerSort
 }
 
@@ -757,6 +818,8 @@ export type SavedScreenerFilters = {
 export type SavedScreener = {
   id: number
   name: string
+  /** The universe it screens; absent on older deployments (= the default). */
+  universe?: { slug: string; name: string }
   filters: SavedScreenerFilters
 }
 
@@ -841,6 +904,12 @@ export type InstrumentPattern = {
   points: InstrumentPatternPoint[]
 }
 
+export type InstrumentAvailability = {
+  company_card: boolean
+  fundamentals: boolean
+  forecast: boolean
+}
+
 export type InstrumentDetailResponse = {
   instrument: {
     ticker: string
@@ -854,6 +923,14 @@ export type InstrumentDetailResponse = {
      * treat as `stock`.
      */
     kind?: 'stock' | 'etf'
+    /** Listing Market and currency (universe-registry); absent on older deployments (= US/USD). */
+    market?: ListingMarketCode
+    currency?: string
+    /**
+     * Which US-only panels exist for this Instrument. Absent on older
+     * deployments: treat as available.
+     */
+    availability?: InstrumentAvailability
   }
   bars: InstrumentBar[]
   snapshot: InstrumentSnapshot | null
@@ -1076,6 +1153,8 @@ export type WatchlistEntry = {
   sector: string
   exchange: string
   active: boolean
+  market?: ListingMarketCode
+  currency?: string
 }
 
 /**

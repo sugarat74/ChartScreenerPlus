@@ -196,3 +196,57 @@ describe('Market Context strip and pattern chips (market-context-patterns)', () 
     expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
   })
 })
+
+describe('US-only panels follow market and availability (universe-selector-ui)', () => {
+  const MADRID = {
+    ticker: 'SAN.MC',
+    company: 'Banco Santander',
+    sector: 'Financials',
+    exchange: 'BME',
+    kind: 'stock' as const,
+    market: 'XMAD' as const,
+    currency: 'EUR',
+    availability: { company_card: false, fundamentals: false, forecast: false },
+  }
+
+  it('a Spanish stock shows exchange and currency and hides forecast, Company Card and Market Context, with no request or error', async () => {
+    vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload(MADRID))
+    show('SAN.MC', ALLOWED)
+
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    expect(screen.getByText('Banco Santander · Financials · BME · EUR')).toBeTruthy()
+    expect(screen.getByText('Señales activas')).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Seguir' })).toBeTruthy())
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(screen.queryByText('Pronóstico Jev')).toBeNull()
+    expect(screen.queryByText('Ficha de empresa')).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Contexto de mercado' })).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(companyCardApi.get).not.toHaveBeenCalled()
+    expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
+  })
+
+  it('a Visitor does not get the Market Context sign-in box on a Spanish stock', async () => {
+    vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload(MADRID))
+    show('SAN.MC', null)
+
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(screen.queryByText(/Inicia sesión para ver el sector/)).toBeNull()
+  })
+
+  it('each availability flag drives its own panel', async () => {
+    vi.mocked(instrumentApi.detail).mockResolvedValue(
+      payload({ ticker: 'XYZ', exchange: 'NASDAQ', currency: 'USD', market: 'US', availability: { company_card: true, fundamentals: true, forecast: false } }),
+    )
+    show('XYZ')
+
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    expect(screen.getByText('Ficha de empresa')).toBeTruthy()
+    expect(screen.queryByText('Pronóstico Jev')).toBeNull()
+    expect(screen.getByText(/Technology Select Sector SPDR Fund · Information Technology · NASDAQ · USD/)).toBeTruthy()
+  })
+})

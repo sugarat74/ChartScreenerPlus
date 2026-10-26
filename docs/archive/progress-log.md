@@ -2,6 +2,16 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Harness token diet: archived history — 2026-10-25
+
+- Moved the full records of the 64 `accepted` features to `docs/archive/feature-evidence-accepted.json` (entries in `feature_list.json` keep `id`, `area`, `title`, `status`, `depends_on`) and the 88 oldest `PROGRESS.md` sessions to `docs/archive/progress-log.md`, verbatim. Session-start reading dropped from ~580 KB to ~48 KB.
+- `AGENTS.md` startup now reads only the selected feature's entry, spec and related progress; end of session keeps at most 10 sessions and archives a feature's record on acceptance. Recommendations for future projects in `docs/eficiencia-de-tokens-con-agentes.md`.
+- Verified: a script rebuilt the original 72 feature records exactly from the slim list plus the archive, and every non-empty original `PROGRESS.md` line is present in the two new files; `scripts/harness-context.ps1` output is unchanged in substance. No application code changed; `init.ps1` not run.
+
+## Screener column filters and sorting specification — 2026-10-25
+
+- Added the future feature `screener-table-column-controls` to `feature_list.json` and wrote `docs/specs/screener-table-column-controls.md`. It covers filters and sort directions for all nine current Candidate columns, server-side behavior before pagination, URL/Saved Screener persistence, accessible controls and API safety. It depends on `screener-company-classification`, which is still `passing` pending independent validation. No application code or product behavior changed.
+
 ## Screener classification columns — 2026-10-25
 
 - Moved Sector, GICS sub-industry and headquarters country from the ticker/company cell into three adjacent Candidate table columns, before price and technical values. The public API, ranking, filters, null handling and mobile horizontal scrolling are unchanged.

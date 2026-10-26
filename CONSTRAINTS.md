@@ -326,6 +326,12 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - **MUST** keep `init.ps1` a non-blocking gate: it runs the Laravel checks (`php artisan --version`, `php artisan test`), the SPA typecheck/lint/build when `frontend/` exists, and the engine tests when `engine/requirements.txt` exists. It **MUST NOT** start long-running processes such as `php artisan serve`, the Vite dev server or uvicorn.
 - **MUST** keep the repository restartable via `.\init.ps1` after every accepted feature.
 
+## Universe selector (SPA)
+
+- The Screener universe selector **MUST** render only when `GET /api/universes` returns more than one universe, and `universe=<slug>` **MUST** be in the URL and the API request only for a non-default universe. An unknown or hidden slug **MUST** fall back to the default silently. Reason: with only `sp500` public the default experience and request must be unchanged, and the server (`Universe::visibleTo`) stays the access control.
+- Switching universe **MUST** clear `close_min`/`close_max` when the currency changes and the sector context keys when the target market is not `US`; it **MUST NOT** clear other criteria or the sort. Reason: a price bound in another currency silently filters wrongly; the sector context is US-only (D10).
+- The chart page **MUST** decide the Market Context strip, forecast and Company Card from `instrument.market` / `instrument.availability`, **MUST NOT** hardcode market rules, and **MUST NOT** show a placeholder or error for a hidden panel.
+
 ## Multi-market ingestion
 
 - Engine symbol mapping and bar dates **MUST** follow the Listing Market: `.MC`/`.DE` tickers go to Yahoo verbatim, US dots become hyphens, and daily bar dates are taken in the exchange timezone, **MUST NOT** in UTC. Stooq **MUST** stay US-only unless a European mapping is verified with a recorded fixture. Reason: midnight-local Yahoo timestamps are the previous UTC day in Europe.

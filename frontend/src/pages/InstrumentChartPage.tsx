@@ -15,7 +15,11 @@
  * Context strip and the pattern chips (market-context-patterns) come from one
  * `GET /api/instruments/{ticker}/market-context` request made only when
  * `useMarketContextAccess` says `allowed`; a Visitor gets a dashed sign-in box
- * once the owner's go-live flag is on, anyone else nothing. The Company Card
+ * once the owner's go-live flag is on, anyone else nothing. The US-only
+ * panels (Market Context strip and sector chips, forecast, Company Card with
+ * its fundamentals) follow the instrument's `market` and `availability`
+ * (universe-selector-ui): for a Spanish or German stock they render nothing,
+ * with no request and no error state. The Company Card
  * panel itself handles the `#ai-company-card` deep-link scroll (the Candidate
  * row "AI card" link). The page consumes the frozen
  * `GET /api/instruments/{ticker}?limit=252` payload and owns loading / ready /
@@ -241,13 +245,21 @@ export default function InstrumentChartPage() {
   const heading = current?.instrument.ticker ?? normalizedTicker ?? t('nav.chart')
   // A missing `kind` (older deployments) is a stock.
   const isEtf = current?.instrument.kind === 'etf'
-  const marketContext = useInstrumentMarketContext(current?.instrument.ticker ?? null, current !== null && !isEtf)
-  // Company, sector and exchange are data; a missing one is skipped, never
-  // printed as an empty "· ·".
+  // A missing `market`/`availability` (older deployments) is a US stock with every panel.
+  const outsideUs = current?.instrument.market !== undefined && current.instrument.market !== 'US'
+  const availability = current?.instrument.availability
+  const showForecast = availability?.forecast !== false
+  const showCompanyCard = availability?.company_card !== false
+  const marketContext = useInstrumentMarketContext(
+    current?.instrument.ticker ?? null,
+    current !== null && !isEtf && !outsideUs,
+  )
+  // Company, sector, exchange and currency are data; a missing one is skipped,
+  // never printed as an empty "· ·".
   const details =
     current === null
       ? ''
-      : [current.instrument.company, current.instrument.sector, current.instrument.exchange]
+      : [current.instrument.company, current.instrument.sector, current.instrument.exchange, current.instrument.currency]
           .filter((part): part is string => typeof part === 'string' && part !== '')
           .join(' · ')
 
@@ -292,7 +304,7 @@ export default function InstrumentChartPage() {
         </div>
       </header>
 
-      {current !== null && !isEtf ? (
+      {current !== null && !isEtf && !outsideUs ? (
         <MarketContextStrip access={marketContext.access} state={marketContext.state} onRetry={marketContext.retry} />
       ) : null}
 
@@ -387,8 +399,10 @@ export default function InstrumentChartPage() {
           />
           {isEtf ? null : (
             <>
-              <ForecastPanel key={current.instrument.ticker} ticker={current.instrument.ticker} />
-              <CompanyCardPanel key={`card-${current.instrument.ticker}`} ticker={current.instrument.ticker} />
+              {showForecast ? <ForecastPanel key={current.instrument.ticker} ticker={current.instrument.ticker} /> : null}
+              {showCompanyCard ? (
+                <CompanyCardPanel key={`card-${current.instrument.ticker}`} ticker={current.instrument.ticker} />
+              ) : null}
             </>
           )}
         </>

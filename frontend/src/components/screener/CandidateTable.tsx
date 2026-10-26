@@ -23,6 +23,7 @@ import { countryLabel, sectorLabel } from '../../lib/companyClassification.ts'
 import {
   CANDIDATE_COLUMNS,
   COLUMN_FILTER_PANEL_ID,
+  columnLabel,
   columnFilterToggleId,
   columnSortDirection,
   isColumnFiltered,
@@ -48,9 +49,17 @@ function FunnelIcon() {
   )
 }
 
-function ControlledHeader({ column, controls }: { column: CandidateColumn; controls: CandidateTableControls }) {
+function ControlledHeader({
+  column,
+  controls,
+  currency,
+}: {
+  column: CandidateColumn
+  controls: CandidateTableControls
+  currency?: string | null
+}) {
   const { t } = useI18n()
-  const label = t(column.labelKey)
+  const label = columnLabel(column, t, currency)
   const direction = columnSortDirection(column, controls.filters.sort)
   const filtered = isColumnFiltered(column, controls.filters)
   const open = controls.openColumn === column.id
@@ -117,9 +126,11 @@ interface CandidateTableProps {
   showCompanyCardLink?: boolean
   /** Per-heading sort and filter controls; absent = plain headings. */
   controls?: CandidateTableControls
+  /** Currency of the universe (ISO code), shown in the Close heading. */
+  currency?: string | null
 }
 
-export default function CandidateTable({ candidates, showCompanyCardLink = false, controls }: CandidateTableProps) {
+export default function CandidateTable({ candidates, showCompanyCardLink = false, controls, currency }: CandidateTableProps) {
   const { t, formatPrice, formatChangePercent, formatMultiple, formatNumber } = useI18n()
 
   return (
@@ -129,10 +140,10 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
           <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
             {CANDIDATE_COLUMNS.map((column) =>
               controls ? (
-                <ControlledHeader key={column.id} column={column} controls={controls} />
+                <ControlledHeader key={column.id} column={column} controls={controls} currency={currency} />
               ) : (
                 <th key={column.id} scope="col" className={`px-4 py-2 ${column.align === 'right' ? 'text-right' : ''}`}>
-                  {t(column.labelKey)}
+                  {columnLabel(column, t, currency)}
                 </th>
               ),
             )}

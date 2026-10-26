@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AiScreenerQuery;
 use App\Models\ChartPattern;
+use App\Models\Universe;
 use App\Models\User;
 use App\Services\Screener\Ai\ScreenerQueryInterpreter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -599,5 +600,41 @@ class ScreenerInterpretTest extends TestCase
 
         Http::assertSentCount(1);
         $this->assertSame(['ok', 'cached'], AiScreenerQuery::query()->orderBy('id')->pluck('outcome')->all());
+    }
+
+    public function test_sector_filters_are_removed_and_named_for_a_non_us_universe(): void
+    {
+        config(['market_context.public' => true, 'universes.public' => ['sp500', 'fixture-eu']]);
+        Universe::factory()->create(['slug' => 'fixture-eu', 'name' => 'Fixture EU', 'market' => 'XMAD', 'currency' => 'EUR', 'is_screener' => true, 'position' => 1]);
+        $this->fakeProvider($this->answer(['sector_trend' => 'uptrend', 'sector_rs_rank_max' => 3]));
+        $user = User::factory()->create();
+        $query = ['query' => 'sobrevendidas de los 3 sectores más fuertes', 'locale' => 'es'];
+
+        $this->actingAs($user)->postJson(self::ENDPOINT, $query + ['universe' => 'fixture-eu'])
+            ->assertOk()
+            ->assertJsonPath('filters.sector_trend', null)
+            ->assertJsonPath('filters.sector_rs_rank_max', null)
+            ->assertJsonPath('filters.rsi_max', 30)
+            ->assertJsonPath('unsupported', ['Filtros de contexto sectorial (no disponibles para este mercado)']);
+
+        // The same cached answer keeps them for the default US universe.
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($user)->postJson(self::ENDPOINT, $query)
+            ->assertOk()
+            ->assertJsonPath('filters.sector_trend', 'uptrend');
+    }
+
+    public function test_an_unknown_or_hidden_universe_is_a_404_before_any_provider_call(): void
+    {
+        Http::fake();
+        config(['universes.public' => ['sp500']]);
+        Universe::factory()->create(['slug' => 'fixture-eu', 'market' => 'XMAD', 'currency' => 'EUR', 'is_screener' => true, 'position' => 1]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson(self::ENDPOINT, ['query' => 'sobrevendidas', 'universe' => 'nope'])->assertNotFound();
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($user)->postJson(self::ENDPOINT, ['query' => 'sobrevendidas', 'universe' => 'fixture-eu'])->assertNotFound();
+
+        Http::assertNothingSent();
     }
 }

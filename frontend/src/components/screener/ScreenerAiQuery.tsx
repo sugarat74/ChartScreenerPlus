@@ -39,6 +39,8 @@ const BADGE_CLASS =
   'rounded border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-on-primary-container'
 
 interface ScreenerAiQueryProps {
+  /** The selected non-default universe slug (null = the default); sent with the request. */
+  universe?: string | null
   /** The current URL query; captured before applying so Undo can restore it. */
   searchParams: URLSearchParams
   /** Apply interpreted filters: the page patches the URL and resets the page. */
@@ -49,7 +51,7 @@ interface ScreenerAiQueryProps {
 
 type Applied = { explanation: string; unsupported: string[]; previous: URLSearchParams }
 
-export default function ScreenerAiQuery({ searchParams, onApply, onRestore }: ScreenerAiQueryProps) {
+export default function ScreenerAiQuery({ universe = null, searchParams, onApply, onRestore }: ScreenerAiQueryProps) {
   const { user, status: authStatus } = useAuth()
   const { t, locale } = useI18n()
   const navigate = useNavigate()
@@ -76,7 +78,7 @@ export default function ScreenerAiQuery({ searchParams, onApply, onRestore }: Sc
     setError(null)
     const previous = new URLSearchParams(searchParams)
     try {
-      const result = await screenerApi.interpret(text, locale)
+      const result = await (universe === null ? screenerApi.interpret(text, locale) : screenerApi.interpret(text, locale, universe))
       onApply(interpretedFiltersToPatch(result.filters))
       setApplied({ explanation: result.explanation, unsupported: result.unsupported, previous })
     } catch (caught) {
