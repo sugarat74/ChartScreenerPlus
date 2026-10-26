@@ -10,6 +10,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Deployment security regression checks
@@ -43,6 +44,7 @@ jobs:
   # the production scripts. Keep the image major version aligned with the VPS.
   test-pgsql:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:18
@@ -86,8 +88,9 @@ jobs:
           DB_DATABASE: chartiko
           DB_USERNAME: chartiko
           DB_PASSWORD: ${{ env.CHARTIKO_CI_DB_PASSWORD }}
+        # --debug prints every test as it starts, so a hung run names the culprit.
         run: |
-          php artisan test
+          vendor/bin/phpunit --debug
           php artisan db:monitor --databases=pgsql --max=100000
       - name: Pooling, exposure and least privilege
         run: |
