@@ -40,6 +40,11 @@ class IndicatorSnapshotFactory extends Factory
             'bb_middle' => $middle,
             'bb_lower' => $lower,
             'rvol' => fake()->randomFloat(4, 0.1, 5),
+            'atr14' => fake()->randomFloat(4, 0.1, 20),
+            'plus_di' => fake()->randomFloat(4, 0, 100),
+            'minus_di' => fake()->randomFloat(4, 0, 100),
+            'stoch_k' => fake()->randomFloat(4, 0, 100),
+            'stoch_d' => fake()->randomFloat(4, 0, 100),
         ];
     }
 }

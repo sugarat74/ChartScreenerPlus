@@ -2,6 +2,13 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## indicators-expansion-storage implemented (passing, awaiting validation) - 2026-10-27
+
+- Migration `2026_10_29_000001` adds nullable `atr14`, `plus_di`, `minus_di`, `stoch_k`, `stoch_d` (`decimal(12,4)`) to `indicator_snapshots` (reversible). `ComputeIndicators::SNAPSHOT_COLUMNS`, `IndicatorSnapshot` fillable/casts and the factory carry them; `show` keeps its keys and appends the five to `snapshot`; new public `GET /api/instruments/{ticker}/indicators?limit=252` (ascending, limit clamped 1..2000, warm-up `null`, 404 `instrument_not_found`). `api.ts` types and `instrumentApi.indicators()` added (no UI). `deploy/README.md` entry 14 documents the backfill; `ARCHITECTURE.md` contract updated.
+- Verified: new `IndicatorsExpansionStorageTest` (9 tests incl. forecast `input_hash` and Company Card context identical with new columns null vs filled), full phpunit 946 OK (6 skipped as before), `.init.ps1` Baseline OK (phpunit, frontend lint/test/build, engine pytest 124 passed).
+- Measured recompute (synthetic 518 instruments x 520 bars = 269,360 snapshots, SQLite, real engine, `indicators:compute --universe=sp500`): 4m40s first pass, 7m51s re-run. `updateOrCreate` kept (one-off, idempotent); chunked `upsert` (D5) not needed. PostgreSQL behind PgBouncer will be slower: run it off-hours.
+- Next: independent validation, then `signals-expansion`.
+
 ## indicators-expansion-engine implemented (passing, awaiting validation) — 2026-10-26
 
 - Engine only: `atr`, `directional_indicators` (+DI/-DI) and `stochastic` (14,3,3 slow) in `engine/app/indicators/core.py`; `adx` now reads the shared `_wilder_sums` helper with identical arithmetic. `Snapshot` and `POST /indicators/compute` gain `atr14`, `plus_di`, `minus_di`, `stoch_k`, `stoch_d` (null during warm-up). Flat stochastic window reads 50.0.

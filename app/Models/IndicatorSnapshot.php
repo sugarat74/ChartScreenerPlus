@@ -25,6 +25,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'bb_middle',
     'bb_lower',
     'rvol',
+    'atr14',
+    'plus_di',
+    'minus_di',
+    'stoch_k',
+    'stoch_d',
 ])]
 class IndicatorSnapshot extends Model
 {
@@ -54,6 +59,11 @@ class IndicatorSnapshot extends Model
             'bb_middle' => 'decimal:4',
             'bb_lower' => 'decimal:4',
             'rvol' => 'decimal:4',
+            'atr14' => 'decimal:4',
+            'plus_di' => 'decimal:4',
+            'minus_di' => 'decimal:4',
+            'stoch_k' => 'decimal:4',
+            'stoch_d' => 'decimal:4',
         ];
     }
 

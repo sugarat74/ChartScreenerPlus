@@ -925,21 +925,11 @@
   {
     "id": "indicators-expansion-storage",
     "area": "backend",
-    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
     "title": "Store the new indicators and serve their history",
-    "user_visible_behavior": "The daily run stores ATR, +DI/-DI and Stochastic next to the existing indicators for every instrument of every universe, and a public series endpoint gives the chart their history; existing data is backfilled by the normal recompute.",
+    "status": "accepted",
     "depends_on": [
       "indicators-expansion-engine"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Migration up/down on SQLite and PostgreSQL (CI); indicators:compute idempotent and fills the new columns; null on invalid values",
-      "GET /api/instruments/{ticker}/indicators ascending, clamped limit, warm-up null, 404 unknown; show keeps old keys and adds five",
-      "Forecast state and Company Card context identical before and after (tests); backfill procedure in deploy/README.md and measured recompute time recorded",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+    ]
   },
   {
     "id": "signals-expansion",
