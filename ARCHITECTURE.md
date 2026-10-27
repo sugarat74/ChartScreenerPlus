@@ -236,7 +236,7 @@ Password recovery (`auth-password-reset`) is a separate public CSRF-backed flow:
   - `signals = [{type, date, metadata}]`, the current active set ordered by `type` ascending; `[]` when none.
   - `meta = {limit, bar_count, latest_bar_date}` (`latest_bar_date` is `null` when the instrument has no bars).
 - **Numbers at the boundary, `decimal` in storage.** `decimal:4` cast values are converted with `(float)` when shaping the payload, so the client receives JSON numbers while the columns and the `decimal` storage rule are unchanged (`CONSTRAINTS.md`). A whole-number decimal (e.g. `175.0000`) serializes as the JSON number `175`, which JS consumers treat as a number.
-- **No per-bar indicator series.** Only the **latest** snapshot is returned; SMA/EMA/Bollinger series per bar are intentionally a `chart-interactive` concern (future hook), not part of this contract. `watchlist` can reuse this endpoint; no ownership is involved.
+- **No per-bar indicator series in `show`.** Only the **latest** snapshot is returned (it also carries `atr14`, `plus_di`, `minus_di`, `stoch_k`, `stoch_d`, additive, from `indicators-expansion-storage`); the history comes from `GET /api/instruments/{ticker}/indicators?limit=252` (public, `limit` clamped 1..2000, `{ticker, series: [{date, bb_upper, bb_middle, bb_lower, adx, plus_di, minus_di, atr14, stoch_k, stoch_d}], meta: {limit, point_count, latest_date}}` ascending, warm-up `null`, stored values only, never recomputed in the SPA). Originally: SMA/EMA/Bollinger series per bar are intentionally a `chart-interactive` concern (future hook), not part of this contract. `watchlist` can reuse this endpoint; no ownership is involved.
 
 ## Listing Market And Universe Registry
 

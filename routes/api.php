@@ -45,6 +45,7 @@ Route::post('/password/reset', [PasswordResetController::class, 'reset'])->middl
 // (docs/user-and-access-model.md). The payload is bounded and the 404 for an
 // unknown ticker is returned as JSON by the controller.
 Route::get('/instruments/{ticker}', [InstrumentController::class, 'show']);
+Route::get('/instruments/{ticker}/indicators', [InstrumentController::class, 'indicators']);
 
 // Public read-only screener: anonymous like the instrument endpoint and
 // throttled (`60,1`) so anonymous browsing stays bounded. `limit` is clamped;

@@ -882,6 +882,32 @@ export type InstrumentSnapshot = {
   bb_middle: number | null
   bb_lower: number | null
   rvol: number | null
+  /** Indicators expansion; absent on older deployments, `null` until the recompute ran. */
+  atr14?: number | null
+  plus_di?: number | null
+  minus_di?: number | null
+  stoch_k?: number | null
+  stoch_d?: number | null
+}
+
+/** One stored indicator point (`GET /api/instruments/{ticker}/indicators`); warm-up values are `null`. */
+export type InstrumentIndicatorPoint = {
+  date: string
+  bb_upper: number | null
+  bb_middle: number | null
+  bb_lower: number | null
+  adx: number | null
+  plus_di: number | null
+  minus_di: number | null
+  atr14: number | null
+  stoch_k: number | null
+  stoch_d: number | null
+}
+
+export type InstrumentIndicatorsResponse = {
+  ticker: string
+  series: InstrumentIndicatorPoint[]
+  meta: { limit: number; point_count: number; latest_date: string | null }
 }
 
 export type InstrumentSignal = {
@@ -954,6 +980,16 @@ export const instrumentApi = {
     const limit = options.limit ?? CHART_BAR_LIMIT
     const path = `/api/instruments/${encodeURIComponent(ticker)}?limit=${limit}`
     return request<InstrumentDetailResponse>(path, { signal: options.signal })
+  },
+
+  /** Stored indicator history for the chart (ascending, warm-up `null`). */
+  async indicators(
+    ticker: string,
+    options: { limit?: number; signal?: AbortSignal } = {},
+  ): Promise<InstrumentIndicatorsResponse> {
+    const limit = options.limit ?? CHART_BAR_LIMIT
+    const path = `/api/instruments/${encodeURIComponent(ticker)}/indicators?limit=${limit}`
+    return request<InstrumentIndicatorsResponse>(path, { signal: options.signal })
   },
 }
 

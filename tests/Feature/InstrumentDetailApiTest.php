@@ -350,6 +350,7 @@ class InstrumentDetailApiTest extends TestCase
             [
                 'date', 'sma20', 'sma50', 'sma200', 'ema21', 'ema55', 'rsi14', 'adx',
                 'macd', 'macd_signal', 'macd_hist', 'bb_upper', 'bb_middle', 'bb_lower', 'rvol',
+                'atr14', 'plus_di', 'minus_di', 'stoch_k', 'stoch_d',
             ],
             array_keys($payload['snapshot']),
         );

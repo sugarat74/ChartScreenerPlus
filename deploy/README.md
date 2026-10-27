@@ -198,6 +198,27 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
       procedimiento en `database/data/ibex35.md`; la siembra del despliegue aplica el CSV nuevo. Cada año,
       renovar `markets.XMAD.holidays`.
 
+14. Indicadores ampliados (`indicators-expansion-storage`, `docs/specs/technical-indicators-expansion.md`):
+    la migración `2026_10_29_000001` añade cinco columnas nulas a `indicator_snapshots` (`atr14`, `plus_di`,
+    `minus_di`, `stoch_k`, `stoch_d`) y el endpoint público `GET /api/instruments/{ticker}/indicators`. Hasta
+    que se recalcule, las columnas nuevas son `null` y nada falla (la API las devuelve `null`). Rellenado del
+    histórico, sin tarea especial (el recálculo normal reescribe todo el histórico de cada valor), como
+    `deploy` en `current`, tras `php artisan migrate --force`:
+
+    1. Con el motor en marcha, para cada universo (`sp500`, `nasdaq100`, `ibex35`, `dax` según estén sembrados):
+       `php artisan indicators:compute --universe=<slug>`. Medido en local con 518 valores x 520 velas
+       (269 360 snapshots, SQLite): unos 5 min la primera pasada y unos 8 min al reescribir; esperar
+       bastante más en PostgreSQL tras PgBouncer y lanzarlo fuera del horario del pipeline diario
+       (`nohup ... &`). Es idempotente: si se interrumpe, se vuelve a lanzar. Un valor con fallo del motor no
+       escribe nada y se reintenta.
+    2. Comprobar: `GET /api/instruments/AAPL/indicators?limit=5` devuelve `atr14`, `plus_di`, `minus_di`,
+       `stoch_k` y `stoch_d` no nulos en las últimas fechas, y `GET /api/instruments/AAPL` los incluye en `snapshot`.
+    3. No hace falta `signals:detect` ni `screener:refresh` por esta entrada (no cambian señales ni filtros);
+       las siguientes funcionalidades de la expansión lo indicarán. El pipeline diario ya recalcula estas
+       columnas cada día.
+    4. Retirada: `php artisan migrate:rollback --step=1` borra las cinco columnas y el código anterior ignora
+       el endpoint.
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.

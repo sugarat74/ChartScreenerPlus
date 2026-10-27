@@ -63,6 +63,11 @@ class ComputeIndicators extends Command
         'bb_middle',
         'bb_lower',
         'rvol',
+        'atr14',
+        'plus_di',
+        'minus_di',
+        'stoch_k',
+        'stoch_d',
     ];
 
     /**

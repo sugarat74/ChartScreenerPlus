@@ -99,6 +99,54 @@ class InstrumentController extends Controller
     }
 
     /**
+     * Return the stored indicator history the chart draws (never recomputed
+     * in the browser): the newest `limit` snapshot dates, ascending, with
+     * `null` for warm-up values.
+     */
+    public function indicators(Request $request, string $ticker): JsonResponse
+    {
+        $ticker = strtoupper(trim($ticker));
+
+        $instrument = Instrument::query()->where('ticker', $ticker)->first();
+
+        if ($instrument === null) {
+            return response()->json(['message' => __('messages.instrument_not_found')], 404);
+        }
+
+        $limit = $this->resolveLimit($request);
+
+        $series = $instrument->indicatorSnapshots()
+            ->orderByDesc('date')
+            ->limit($limit)
+            ->get()
+            ->reverse()
+            ->values()
+            ->map(fn (IndicatorSnapshot $snapshot): array => [
+                'date' => $snapshot->date->format('Y-m-d'),
+                'bb_upper' => $this->nullableFloat($snapshot->bb_upper),
+                'bb_middle' => $this->nullableFloat($snapshot->bb_middle),
+                'bb_lower' => $this->nullableFloat($snapshot->bb_lower),
+                'adx' => $this->nullableFloat($snapshot->adx),
+                'plus_di' => $this->nullableFloat($snapshot->plus_di),
+                'minus_di' => $this->nullableFloat($snapshot->minus_di),
+                'atr14' => $this->nullableFloat($snapshot->atr14),
+                'stoch_k' => $this->nullableFloat($snapshot->stoch_k),
+                'stoch_d' => $this->nullableFloat($snapshot->stoch_d),
+            ])
+            ->all();
+
+        return response()->json([
+            'ticker' => $instrument->ticker,
+            'series' => $series,
+            'meta' => [
+                'limit' => $limit,
+                'point_count' => count($series),
+                'latest_date' => $series === [] ? null : $series[array_key_last($series)]['date'],
+            ],
+        ]);
+    }
+
+    /**
      * Resolve `?limit` to a bounded integer.
      *
      * A non-numeric value falls back to the default and the value is clamped
@@ -181,6 +229,11 @@ class InstrumentController extends Controller
             'bb_middle' => $this->nullableFloat($snapshot->bb_middle),
             'bb_lower' => $this->nullableFloat($snapshot->bb_lower),
             'rvol' => $this->nullableFloat($snapshot->rvol),
+            'atr14' => $this->nullableFloat($snapshot->atr14),
+            'plus_di' => $this->nullableFloat($snapshot->plus_di),
+            'minus_di' => $this->nullableFloat($snapshot->minus_di),
+            'stoch_k' => $this->nullableFloat($snapshot->stoch_k),
+            'stoch_d' => $this->nullableFloat($snapshot->stoch_d),
         ];
     }
 
