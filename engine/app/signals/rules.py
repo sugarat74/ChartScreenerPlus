@@ -26,6 +26,7 @@ earlier (``None`` for the first bar).
 
 from collections.abc import Callable
 
+from app.indicators.core import bollinger
 from app.models import Bar, Snapshot
 
 RuleResult = tuple[bool, dict[str, float]] | None
@@ -35,6 +36,15 @@ PIVOT_LOOKBACK = 20
 RVOL_MINIMUM = 2.0
 RSI_OVERBOUGHT = 70.0
 RSI_OVERSOLD = 30.0
+ADX_TREND_THRESHOLD = 25.0
+STOCH_OVERSOLD = 20.0
+STOCH_OVERBOUGHT = 80.0
+BOLLINGER_PERIOD = 20
+BOLLINGER_DEVIATIONS = 2.0
+SQUEEZE_LOOKBACK = 120
+# Bandwidth first exists at bar index 19; a 120-session window of it (the as-of
+# bar plus the previous 119) therefore needs 19 + 120 = 139 bars.
+SQUEEZE_MIN_BARS = BOLLINGER_PERIOD - 1 + SQUEEZE_LOOKBACK
 
 
 def golden_cross(
@@ -209,6 +219,147 @@ def macd_bearish_cross(
     return False, {}
 
 
+def adx_trend_strength(
+    previous: Snapshot | None, current: Snapshot, bars: list[Bar], index: int
+) -> RuleResult:
+    """ADX crosses above 25 on the as-of bar (direction is read from +DI/-DI)."""
+
+    if previous is None or previous.adx is None or current.adx is None:
+        return None
+
+    if previous.adx <= ADX_TREND_THRESHOLD and current.adx > ADX_TREND_THRESHOLD:
+        metadata = {"adx": current.adx}
+        if current.plus_di is not None:
+            metadata["plus_di"] = current.plus_di
+        if current.minus_di is not None:
+            metadata["minus_di"] = current.minus_di
+        return True, metadata
+
+    return False, {}
+
+
+def bollinger_squeeze(
+    previous: Snapshot | None, current: Snapshot, bars: list[Bar], index: int
+) -> RuleResult:
+    """Bandwidth is at or below the minimum of the previous 119 sessions.
+
+    Bandwidth is ``(upper - lower) / middle * 100`` recomputed from the closes
+    through ``core.bollinger`` (the stored bands are untouched). It needs 139
+    bars; a zero or missing middle band gives no bandwidth, so no signal.
+    """
+
+    if index + 1 < SQUEEZE_MIN_BARS or index >= len(bars):
+        return None
+
+    closes = [bar.close for bar in bars[index + 1 - SQUEEZE_MIN_BARS : index + 1]]
+    upper, middle, lower = bollinger(closes, BOLLINGER_PERIOD, BOLLINGER_DEVIATIONS)
+
+    widths: list[float] = []
+    for position in range(len(closes) - SQUEEZE_LOOKBACK, len(closes)):
+        up, mid, low = upper[position], middle[position], lower[position]
+        if up is None or mid is None or low is None or mid == 0:
+            return None
+        widths.append((up - low) / mid * 100.0)
+
+    bandwidth = widths[-1]
+    lookback_min = min(widths[:-1])
+
+    if bandwidth <= lookback_min:
+        return True, {"bandwidth": bandwidth, "lookback_min": lookback_min}
+
+    return False, {}
+
+
+def bollinger_close_above_upper(
+    previous: Snapshot | None, current: Snapshot, bars: list[Bar], index: int
+) -> RuleResult:
+    """Close crosses above the upper Bollinger band on the as-of bar."""
+
+    if (
+        previous is None
+        or previous.bb_upper is None
+        or current.bb_upper is None
+        or index < 1
+        or index >= len(bars)
+    ):
+        return None
+
+    close = bars[index].close
+    if bars[index - 1].close <= previous.bb_upper and close > current.bb_upper:
+        return True, {"close": close, "bb_upper": current.bb_upper}
+
+    return False, {}
+
+
+def bollinger_close_below_lower(
+    previous: Snapshot | None, current: Snapshot, bars: list[Bar], index: int
+) -> RuleResult:
+    """Close crosses below the lower Bollinger band on the as-of bar."""
+
+    if (
+        previous is None
+        or previous.bb_lower is None
+        or current.bb_lower is None
+        or index < 1
+        or index >= len(bars)
+    ):
+        return None
+
+    close = bars[index].close
+    if bars[index - 1].close >= previous.bb_lower and close < current.bb_lower:
+        return True, {"close": close, "bb_lower": current.bb_lower}
+
+    return False, {}
+
+
+def stoch_bullish_cross(
+    previous: Snapshot | None, current: Snapshot, bars: list[Bar], index: int
+) -> RuleResult:
+    """%K crosses above %D while the previous %K was at or below 20."""
+
+    if (
+        previous is None
+        or previous.stoch_k is None
+        or previous.stoch_d is None
+        or current.stoch_k is None
+        or current.stoch_d is None
+    ):
+        return None
+
+    if (
+        previous.stoch_k <= previous.stoch_d
+        and current.stoch_k > current.stoch_d
+        and previous.stoch_k <= STOCH_OVERSOLD
+    ):
+        return True, {"stoch_k": current.stoch_k, "stoch_d": current.stoch_d}
+
+    return False, {}
+
+
+def stoch_bearish_cross(
+    previous: Snapshot | None, current: Snapshot, bars: list[Bar], index: int
+) -> RuleResult:
+    """%K crosses below %D while the previous %K was at or above 80."""
+
+    if (
+        previous is None
+        or previous.stoch_k is None
+        or previous.stoch_d is None
+        or current.stoch_k is None
+        or current.stoch_d is None
+    ):
+        return None
+
+    if (
+        previous.stoch_k >= previous.stoch_d
+        and current.stoch_k < current.stoch_d
+        and previous.stoch_k >= STOCH_OVERBOUGHT
+    ):
+        return True, {"stoch_k": current.stoch_k, "stoch_d": current.stoch_d}
+
+    return False, {}
+
+
 # The full, fixed signal vocabulary: the type string is the shared contract with
 # Laravel (`database/factories/SignalFactory.php`) and the database.
 RULES: tuple[tuple[str, Rule], ...] = (
@@ -221,4 +372,10 @@ RULES: tuple[tuple[str, Rule], ...] = (
     ("rsi_oversold", rsi_oversold),
     ("macd_bullish_cross", macd_bullish_cross),
     ("macd_bearish_cross", macd_bearish_cross),
+    ("adx_trend_strength", adx_trend_strength),
+    ("bollinger_squeeze", bollinger_squeeze),
+    ("bollinger_close_above_upper", bollinger_close_above_upper),
+    ("bollinger_close_below_lower", bollinger_close_below_lower),
+    ("stoch_bullish_cross", stoch_bullish_cross),
+    ("stoch_bearish_cross", stoch_bearish_cross),
 )

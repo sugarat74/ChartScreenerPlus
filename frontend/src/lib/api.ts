@@ -481,7 +481,7 @@ export const adminUsersApi = {
   },
 }
 
-/** The 9 fixed signal type strings the engine emits and the screener filters on. */
+/** The 15 fixed signal type strings the engine emits and the screener filters on. */
 export type ScreenerSignalType =
   | 'golden_cross'
   | 'death_cross'
@@ -492,6 +492,12 @@ export type ScreenerSignalType =
   | 'rsi_oversold'
   | 'macd_bullish_cross'
   | 'macd_bearish_cross'
+  | 'adx_trend_strength'
+  | 'bollinger_squeeze'
+  | 'bollinger_close_above_upper'
+  | 'bollinger_close_below_lower'
+  | 'stoch_bullish_cross'
+  | 'stoch_bearish_cross'
 
 export type ScreenerMaCross = 'bullish' | 'bearish'
 

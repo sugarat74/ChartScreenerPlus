@@ -163,12 +163,15 @@ describe('manual stays consistent with the interface', () => {
     }
   })
 
-  it('both manuals illustrate all nine signals with distinct accessible diagrams', () => {
+  it('both manuals illustrate the original nine signals with distinct accessible diagrams (the six expansion signals are text only)', () => {
     const expected = ['goldenCross', 'deathCross', 'bullishAlignment', 'bearishAlignment', 'pivotBreakoutRvol', 'rsiOverbought', 'rsiOversold', 'macdBullish', 'macdBearish']
     for (const locale of ['es', 'en'] as const) {
       const signals = GUIDE_TEXTS[locale].sections.find((section) => section.id === 'senales')!
-      expect(signals.entries?.map((entry) => entry.illustration?.kind)).toEqual(expected)
-      expect(signals.entries?.every((entry) => Boolean(entry.illustration?.alt))).toBe(true)
+      const original = signals.entries!.slice(0, 9)
+      expect(original.map((entry) => entry.illustration?.kind)).toEqual(expected)
+      expect(original.every((entry) => Boolean(entry.illustration?.alt))).toBe(true)
+      // technical-indicators-expansion D13: new signal illustrations are deferred.
+      expect(signals.entries!.slice(9).every((entry) => entry.illustration === undefined)).toBe(true)
       expect(signals.notes?.join(' ')).toMatch(locale === 'es' ? /datos ficticios/ : /fictional data/)
     }
   })

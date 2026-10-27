@@ -157,7 +157,7 @@ describe('ScreenerColumnFilters', () => {
     const { onChange } = showFilters({ ...EMPTY_SCREENER_FILTERS, signals: ['golden_cross'] }, 'signals')
     const signals = screen.getByRole('group', { name: 'Señales técnicas' })
     const buttons = within(signals).getAllByRole('button')
-    expect(buttons).toHaveLength(9)
+    expect(buttons).toHaveLength(15)
     fireEvent.click(buttons[0])
     expect(onChange).toHaveBeenLastCalledWith({ signals: [] })
     fireEvent.click(buttons[1])

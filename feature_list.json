@@ -934,23 +934,13 @@
   {
     "id": "signals-expansion",
     "area": "engine",
-    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
     "title": "Six new Signals: ADX, Bollinger and Stochastic",
-    "user_visible_behavior": "The Screener, Saved Screeners, Watchlist alerts and the chart's active signals include six new descriptive Signals: ADX trend strength, Bollinger squeeze, close above upper band, close below lower band, stochastic bullish cross and stochastic bearish cross.",
+    "status": "accepted",
     "depends_on": [
       "indicators-expansion-engine",
       "signals-detect",
       "alerts-engine"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Each rule fires on a hand-built series, not at the boundary (strict crosses, ADX exactly 25), returns None with missing history (squeeze needs 139 bars)",
-      "Previous nine signals emit identical types and metadata on existing fixtures",
-      "Vocabulary equal across engine, parser, controllers, factory, lang and SPA; AI Screener schema still lists the original nine and the prompt is unchanged; es/en labels",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+    ]
   },
   {
     "id": "screener-technical-filters-api",

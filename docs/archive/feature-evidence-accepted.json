@@ -1995,5 +1995,32 @@
       "Independent validator ACCEPT 2026-10-27: migration 2026_10_29_000001 portable, compute idempotent, GET /api/instruments/{ticker}/indicators contract verified, show keys appended, forecast input_hash and Company Card context unchanged; phpunit 940 passed/6 skipped, tsc ok, init.ps1 Baseline OK."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Implemented 2026-10-27, awaiting independent validation; the full-set recompute is a one-off of several minutes (see evidence). Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec. Independently accepted 2026-10-26."
+  },
+  {
+    "id": "signals-expansion",
+    "area": "engine",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Six new Signals: ADX, Bollinger and Stochastic",
+    "user_visible_behavior": "The Screener, Saved Screeners, Watchlist alerts and the chart's active signals include six new descriptive Signals: ADX trend strength, Bollinger squeeze, close above upper band, close below lower band, stochastic bullish cross and stochastic bearish cross.",
+    "depends_on": [
+      "indicators-expansion-engine",
+      "signals-detect",
+      "alerts-engine"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Each rule fires on a hand-built series, not at the boundary (strict crosses, ADX exactly 25), returns None with missing history (squeeze needs 139 bars)",
+      "Previous nine signals emit identical types and metadata on existing fixtures",
+      "Vocabulary equal across engine, parser, controllers, factory, lang and SPA; AI Screener schema still lists the original nine and the prompt is unchanged; es/en labels",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-10-27 implemented: six rules appended to engine RULES (adx_trend_strength, bollinger_squeeze, bollinger_close_above_upper, bollinger_close_below_lower, stoch_bullish_cross, stoch_bearish_cross); ScreenerFilterParser::SIGNAL_TYPES = 15 and new AI_SIGNAL_TYPES = original 9 (ScreenerQuerySchema uses it; prompt file untouched); Alert/SavedScreener controllers and SignalFactory reuse the parser constant; es/en email and SPA labels, SignalLevelsPanel metrics, guide text entries; deploy/README.md item 15, ARCHITECTURE.md and CONSTRAINTS.md updated",
+      "engine pytest 137 passed (13 new: boundary, None and 139-bar cases per rule, real-math band crosses, NVDA fixture original nine unchanged, one entry per type), ruff check clean",
+      "phpunit 948 passed / 6 skipped: new SignalVocabularyTest (engine RULES == SIGNAL_TYPES == email labels), ScreenerApiTest filters the six types and still 422s unknown ones, Saved Screeners and Watchlist alerts accept them, ScreenerQuerySchemaTest proves the AI schema still lists exactly the original 9 and neither prompt mentions the new types, signals:detect stores them",
+      "frontend Vitest 411 passed (new SignalLevelsPanel.test.tsx; counts updated 9 to 15), lint/typecheck and build OK; init.ps1 exit 0 (Baseline OK)",
+      "Independent validator ACCEPT 2026-10-27: six rules match independent recomputation on 60 random series; original nine rules identical to HEAD over 108,900 evaluations; AI screener schema/prompt unchanged (nine); vocabularies consistent; phpunit 948 passed/6 skipped, vitest 411, engine pytest 137, init.ps1 Baseline OK."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Implemented 2026-10-27 (Feature 3 of the umbrella); guide entries for the six Signals are text only (illustrations deferred, D13); thresholds uncalibrated (R1): record production counts after the rollout in deploy/README.md item 15. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec. Independently accepted 2026-10-26."
   }
 ]

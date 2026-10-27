@@ -94,6 +94,31 @@ class DetectSignalsCommandTest extends TestCase
         });
     }
 
+    public function test_it_stores_the_expansion_signal_types_with_their_metadata(): void
+    {
+        $instrument = $this->instrumentWithBars('NVDA', 2);
+
+        Http::fake([
+            '*/signals/detect' => Http::response($this->signalsResponse([
+                $this->signal('2026-09-02', 'adx_trend_strength', ['adx' => 26.5, 'plus_di' => 30.0, 'minus_di' => 12.0]),
+                $this->signal('2026-09-02', 'bollinger_squeeze', ['bandwidth' => 3.2, 'lookback_min' => 3.4]),
+                $this->signal('2026-09-02', 'stoch_bullish_cross', ['stoch_k' => 18.0, 'stoch_d' => 17.5]),
+            ])),
+        ]);
+
+        $this->artisan('signals:detect', ['--ticker' => 'NVDA'])->assertExitCode(0);
+
+        $this->assertSame(
+            ['adx_trend_strength', 'bollinger_squeeze', 'stoch_bullish_cross'],
+            Signal::query()->where('instrument_id', $instrument->id)->orderBy('type')->pluck('type')->all(),
+        );
+        $this->assertEqualsWithDelta(
+            3.4,
+            Signal::query()->where('type', 'bollinger_squeeze')->sole()->metadata['lookback_min'],
+            0.0001,
+        );
+    }
+
     public function test_re_running_is_idempotent_and_does_not_duplicate_signals(): void
     {
         $this->instrumentWithBars('NVDA', 2);

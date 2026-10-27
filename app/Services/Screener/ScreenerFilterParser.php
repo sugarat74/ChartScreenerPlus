@@ -22,7 +22,26 @@ use Illuminate\Validation\ValidationException;
 class ScreenerFilterParser
 {
     /**
-     * The fixed signal vocabulary owned by `signals-detect` / `SignalFactory`.
+     * The original nine signal types: the closed vocabulary of the
+     * natural-language Screener schema, deliberately not expanded
+     * (technical-indicators-expansion D9).
+     */
+    public const AI_SIGNAL_TYPES = [
+        'golden_cross',
+        'death_cross',
+        'ma_alignment_bullish',
+        'ma_alignment_bearish',
+        'pivot_breakout_rvol',
+        'rsi_overbought',
+        'rsi_oversold',
+        'macd_bullish_cross',
+        'macd_bearish_cross',
+    ];
+
+    /**
+     * The full fixed signal vocabulary (15) emitted by the engine `RULES`
+     * registry and shared by the Screener, Saved Screeners, alerts and the
+     * `SignalFactory`.
      */
     public const SIGNAL_TYPES = [
         'golden_cross',
@@ -34,6 +53,12 @@ class ScreenerFilterParser
         'rsi_oversold',
         'macd_bullish_cross',
         'macd_bearish_cross',
+        'adx_trend_strength',
+        'bollinger_squeeze',
+        'bollinger_close_above_upper',
+        'bollinger_close_below_lower',
+        'stoch_bullish_cross',
+        'stoch_bearish_cross',
     ];
 
     /**

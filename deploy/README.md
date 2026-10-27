@@ -219,6 +219,22 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
     4. Retirada: `php artisan migrate:rollback --step=1` borra las cinco columnas y el código anterior ignora
        el endpoint.
 
+15. Señales ampliadas (`signals-expansion`, `docs/specs/technical-indicators-expansion.md`): seis tipos nuevos
+    de Señal (`adx_trend_strength`, `bollinger_squeeze`, `bollinger_close_above_upper`,
+    `bollinger_close_below_lower`, `stoch_bullish_cross`, `stoch_bearish_cross`). No hay migración. El motor
+    las calcula desde las velas, así que basta reiniciar el motor con la release nueva. El Screener natural
+    (IA) sigue con las nueve Señales originales. Hasta que se recalculen, las Señales nuevas simplemente no
+    aparecen (ninguna alerta existente puede referenciarlas, así que no se dispara nada al desplegar):
+    1. Tras desplegar y reiniciar el motor, para cada universo sembrado (`sp500`, `nasdaq100`, `ibex35`,
+       `dax`): `php artisan signals:detect --universe=<slug>`. Es idempotente (reemplaza el conjunto de cada
+       valor) y no necesita `indicators:compute` previo si el entry 14 ya se rellenó.
+    2. Después `php artisan screener:refresh` para que el filtro de Señales vea las nuevas.
+    3. Comprobar: `GET /api/screener?signal=bollinger_squeeze` responde 200 (y `?signal=foo` responde 422).
+       Anotar el recuento por tipo (umbrales sin calibrar: ADX 25, estocástico 20/80, mínimo de 120 sesiones).
+    4. Retirada: revertir el código no borra filas `signals` de los tipos nuevos; tras revertir, ejecutar
+       `php artisan signals:detect --universe=<slug>` para cada universo (sustituye el conjunto de cada
+       valor) y `php artisan screener:refresh`.
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.

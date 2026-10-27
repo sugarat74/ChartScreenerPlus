@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Alert;
 use App\Models\ChartPattern;
 use App\Models\User;
+use App\Services\Screener\ScreenerFilterParser;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,17 +26,7 @@ class AlertController extends Controller
     /**
      * The Signal vocabulary a Watchlist alert may watch (signals-detect).
      */
-    private const SIGNAL_TYPES = [
-        'golden_cross',
-        'death_cross',
-        'ma_alignment_bullish',
-        'ma_alignment_bearish',
-        'pivot_breakout_rvol',
-        'rsi_overbought',
-        'rsi_oversold',
-        'macd_bullish_cross',
-        'macd_bearish_cross',
-    ];
+    private const SIGNAL_TYPES = ScreenerFilterParser::SIGNAL_TYPES;
 
     public function index(Request $request): JsonResponse
     {

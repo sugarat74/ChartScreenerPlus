@@ -7,12 +7,42 @@
  * target are not modeled and are never shown. Styling is DESIGN.md tokens.
  */
 
+import type { MessageKey } from '../../i18n/translate.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { InstrumentSignal } from '../../lib/api.ts'
 import { signalLabel } from '../../lib/screenerFilters.ts'
 
 function finiteOrNull(value: number | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+/** Metrics shown per new signal type: [metadata key, message key, kind]. */
+const NEW_SIGNAL_METRICS: Record<string, [string, MessageKey, 'price' | 'number'][]> = {
+  adx_trend_strength: [
+    ['adx', 'chart.metricAdx', 'number'],
+    ['plus_di', 'chart.metricPlusDi', 'number'],
+    ['minus_di', 'chart.metricMinusDi', 'number'],
+  ],
+  bollinger_squeeze: [
+    ['bandwidth', 'chart.metricBandwidth', 'number'],
+    ['lookback_min', 'chart.metricLookbackMin', 'number'],
+  ],
+  bollinger_close_above_upper: [
+    ['close', 'chart.metricClose', 'price'],
+    ['bb_upper', 'chart.metricUpperBand', 'price'],
+  ],
+  bollinger_close_below_lower: [
+    ['close', 'chart.metricClose', 'price'],
+    ['bb_lower', 'chart.metricLowerBand', 'price'],
+  ],
+  stoch_bullish_cross: [
+    ['stoch_k', 'chart.metricStochK', 'number'],
+    ['stoch_d', 'chart.metricStochD', 'number'],
+  ],
+  stoch_bearish_cross: [
+    ['stoch_k', 'chart.metricStochK', 'number'],
+    ['stoch_d', 'chart.metricStochD', 'number'],
+  ],
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -27,7 +57,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 export default function SignalLevelsPanel({ signals }: { signals: InstrumentSignal[] }) {
-  const { t, formatPrice, formatMultiple, formatMarketDate } = useI18n()
+  const { t, formatPrice, formatMultiple, formatNumber, formatMarketDate } = useI18n()
 
   return (
     <div className="rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_var(--color-shadow)]">
@@ -46,6 +76,7 @@ export default function SignalLevelsPanel({ signals }: { signals: InstrumentSign
             const close = finiteOrNull(signal.metadata?.close)
             const rvol = finiteOrNull(signal.metadata?.rvol)
             const isPivotSignal = signal.type === 'pivot_breakout_rvol'
+            const extraMetrics = NEW_SIGNAL_METRICS[signal.type] ?? []
 
             return (
               <li
@@ -66,6 +97,22 @@ export default function SignalLevelsPanel({ signals }: { signals: InstrumentSign
                     <Metric label={t('chart.metricPivot')} value={formatPrice(pivot)} />
                     <Metric label={t('chart.metricClose')} value={formatPrice(close)} />
                     <Metric label={t('chart.metricRvol')} value={formatMultiple(rvol)} />
+                  </dl>
+                ) : null}
+
+                {extraMetrics.length > 0 ? (
+                  <dl className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    {extraMetrics.map(([key, messageKey, kind]) => {
+                      const value = finiteOrNull(signal.metadata?.[key])
+
+                      return (
+                        <Metric
+                          key={key}
+                          label={t(messageKey)}
+                          value={kind === 'price' ? formatPrice(value) : formatNumber(value, 2)}
+                        />
+                      )
+                    })}
                   </dl>
                 ) : null}
               </li>

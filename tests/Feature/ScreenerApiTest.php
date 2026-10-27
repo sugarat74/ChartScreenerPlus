@@ -650,6 +650,37 @@ class ScreenerApiTest extends TestCase
         $this->refreshScreenerRows()->getJson('/api/screener?sort=bogus')->assertStatus(422);
     }
 
+    public function test_the_six_expansion_signals_filter_the_candidates_and_unknown_types_still_422(): void
+    {
+        $universe = $this->universe();
+        $types = [
+            'adx_trend_strength', 'bollinger_squeeze', 'bollinger_close_above_upper',
+            'bollinger_close_below_lower', 'stoch_bullish_cross', 'stoch_bearish_cross',
+        ];
+        $control = $this->member($universe, 'ZZZ');
+        $this->bars($control, 100, 100);
+        $this->snapshot($control);
+        $this->signal($control, 'golden_cross');
+
+        foreach ($types as $index => $type) {
+            $ticker = 'EX'.chr(65 + $index);
+            $instrument = $this->member($universe, $ticker);
+            $this->bars($instrument, 100, 100);
+            $this->snapshot($instrument);
+            $this->signal($instrument, $type);
+        }
+
+        foreach ($types as $index => $type) {
+            $this->assertSame(
+                ['EX'.chr(65 + $index)],
+                $this->tickers($this->refreshScreenerRows()->getJson('/api/screener?signal='.$type)->assertOk()->json('candidates')),
+                $type,
+            );
+        }
+
+        $this->refreshScreenerRows()->getJson('/api/screener?signal=bollinger_squeeze,bogus')->assertStatus(422);
+    }
+
     public function test_payload_decimals_are_numbers(): void
     {
         $universe = $this->universe();

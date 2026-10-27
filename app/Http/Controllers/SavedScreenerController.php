@@ -39,17 +39,7 @@ class SavedScreenerController extends Controller
     /**
      * The fixed signal vocabulary owned by `signals-detect` / `SignalFactory`.
      */
-    private const SIGNAL_TYPES = [
-        'golden_cross',
-        'death_cross',
-        'ma_alignment_bullish',
-        'ma_alignment_bearish',
-        'pivot_breakout_rvol',
-        'rsi_overbought',
-        'rsi_oversold',
-        'macd_bullish_cross',
-        'macd_bearish_cross',
-    ];
+    private const SIGNAL_TYPES = ScreenerFilterParser::SIGNAL_TYPES;
 
     /**
      * The table column criteria (screener-table-column-controls), optional on

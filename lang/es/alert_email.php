@@ -35,6 +35,12 @@ return [
         'rsi_oversold' => 'RSI sobreventa',
         'macd_bullish_cross' => 'MACD alcista',
         'macd_bearish_cross' => 'MACD bajista',
+        'adx_trend_strength' => 'Fuerza de tendencia ADX',
+        'bollinger_squeeze' => 'Bandas estrechas',
+        'bollinger_close_above_upper' => 'Cierre sobre banda superior',
+        'bollinger_close_below_lower' => 'Cierre bajo banda inferior',
+        'stoch_bullish_cross' => 'Estocástico alcista',
+        'stoch_bearish_cross' => 'Estocástico bajista',
     ],
     'patterns' => [
         'double_top' => 'Doble techo',

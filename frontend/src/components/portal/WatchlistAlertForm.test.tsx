@@ -38,7 +38,7 @@ it('disables save until a Signal type is selected, then creates one alert with t
   const save = screen.getByRole('button', { name: 'Guardar alerta' }) as HTMLButtonElement
   expect(save.disabled).toBe(true)
   expect(screen.getByText('Selecciona al menos un tipo de señal para guardar.')).toBeTruthy()
-  expect(screen.getAllByRole('checkbox')).toHaveLength(9)
+  expect(screen.getAllByRole('checkbox')).toHaveLength(15)
 
   fireEvent.click(screen.getByRole('checkbox', { name: 'Ruptura pivote + RVOL' }))
   fireEvent.click(screen.getByRole('checkbox', { name: 'Cruce dorado' }))

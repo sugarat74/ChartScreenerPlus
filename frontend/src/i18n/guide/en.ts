@@ -189,6 +189,12 @@ export const guideEn: GuideTexts = {
         { term: 'RSI oversold', summary: 'RSI 14 at or below 30.', illustration: { kind: 'rsiOversold', alt: 'The blue RSI line ends below the lower threshold of 30.' } },
         { term: 'MACD bullish', summary: 'The MACD line crosses above its signal line in the latest session.', illustration: { kind: 'macdBullish', alt: 'The blue MACD line crosses above the red signal line at the highlighted point.' } },
         { term: 'MACD bearish', summary: 'The MACD line crosses below its signal line in the latest session.', illustration: { kind: 'macdBearish', alt: 'The blue MACD line crosses below the red signal line at the highlighted point.' } },
+        { term: 'ADX trend strength', summary: 'The ADX (14) crosses above 25 in the latest session (in the previous one it was 25 or below). It describes a trend gaining strength, not its direction: read the direction from +DI and -DI in the signal details.' },
+        { term: 'Narrow bands', summary: 'The width of the Bollinger Bands (20, 2) as a percentage of the middle band is at or below its lowest value of the previous 119 sessions: the narrowest in about six months. It describes narrow bands, not what the price will do next.' },
+        { term: 'Close above upper band', summary: 'The close crosses above the upper Bollinger Band (20, 2) in the latest session (in the previous one it was at or below it).' },
+        { term: 'Close below lower band', summary: 'The close crosses below the lower Bollinger Band (20, 2) in the latest session (in the previous one it was at or above it).' },
+        { term: 'Stochastic bullish', summary: 'The Stochastic %K (14, 3, 3) crosses above %D in the latest session after being at or below 20 in the previous one: the turn out of the low zone.' },
+        { term: 'Stochastic bearish', summary: 'The Stochastic %K (14, 3, 3) crosses below %D in the latest session after being at or above 80 in the previous one: the turn out of the high zone.' },
       ],
       notes: [
         'If an indicator lacks enough history, the signal that depends on it is not triggered.',

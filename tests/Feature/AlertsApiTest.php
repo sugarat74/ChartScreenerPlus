@@ -65,6 +65,20 @@ class AlertsApiTest extends TestCase
         $this->actingAs($user)->getJson('/api/alerts')->assertOk()->assertJsonCount(2, 'alerts');
     }
 
+    public function test_watchlist_alerts_accept_the_six_expansion_signal_types_in_canonical_order(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/alerts', ['kind' => 'watchlist_signal', 'signal_types' => [
+                'stoch_bearish_cross', 'adx_trend_strength', 'bollinger_close_below_lower', 'golden_cross',
+            ]])
+            ->assertCreated()
+            ->assertJsonPath('alert.signal_types', [
+                'golden_cross', 'adx_trend_strength', 'bollinger_close_below_lower', 'stoch_bearish_cross',
+            ]);
+    }
+
     public function test_validation_ownership_duplicates_and_limit(): void
     {
         $user = User::factory()->create();
