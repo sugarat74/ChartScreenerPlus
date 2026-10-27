@@ -545,7 +545,8 @@ def test_stochastic_stays_within_0_and_100_on_real_data() -> None:
 
 def test_previous_indicator_values_are_unchanged_by_the_expansion() -> None:
     # Values captured from the engine before ATR/DI/Stochastic were added
-    # (including the ADX refactor onto the shared Wilder helper): exact equality.
+    # (including the ADX refactor onto the shared Wilder helper). Compared to 1e-9:
+    # the last float digit differs between platforms (Windows vs the Linux CI).
     expected = json.loads(REGRESSION_FIXTURE.read_text(encoding="utf-8"))
     fields = ("adx", "bb_upper", "bb_middle", "bb_lower", "sma20", "rsi14", "macd", "rvol")
 
@@ -557,7 +558,8 @@ def test_previous_indicator_values_are_unchanged_by_the_expansion() -> None:
         snapshots = compute_snapshots(load_bars(path))
         assert len(snapshots) == len(expected[name])
         for snapshot, row in zip(snapshots, expected[name], strict=True):
-            assert [getattr(snapshot, field) for field in fields] == row
+            actual = [getattr(snapshot, field) for field in fields]
+            assert actual == [None if v is None else pytest.approx(v, rel=1e-9, abs=1e-9) for v in row]
 
 
 def test_compute_endpoint_returns_the_new_indicator_keys() -> None:
