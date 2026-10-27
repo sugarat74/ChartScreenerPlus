@@ -4,7 +4,18 @@ The engine computes from the bars it is given and never touches the database;
 Laravel (the database owner) persists the returned snapshots.
 """
 
-from app.indicators.core import adx, bollinger, ema, macd, rsi, rvol, sma
+from app.indicators.core import (
+    adx,
+    atr,
+    bollinger,
+    directional_indicators,
+    ema,
+    macd,
+    rsi,
+    rvol,
+    sma,
+    stochastic,
+)
 from app.models import Bar, Snapshot
 
 SMA_PERIODS = (20, 50, 200)
@@ -12,6 +23,9 @@ EMA_PERIODS = (21, 55)
 RSI_PERIOD = 14
 MACD_PERIODS = (12, 26, 9)
 ADX_PERIOD = 14
+ATR_PERIOD = 14
+DI_PERIOD = 14
+STOCHASTIC_PERIODS = (14, 3, 3)
 BOLLINGER_PERIOD = 20
 BOLLINGER_DEVIATIONS = 2.0
 RVOL_PERIOD = 50
@@ -37,6 +51,9 @@ def compute_snapshots(bars: list[Bar]) -> list[Snapshot]:
     ema55 = ema(closes, EMA_PERIODS[1])
     rsi14 = rsi(closes, RSI_PERIOD)
     adx14 = adx(highs, lows, closes, ADX_PERIOD)
+    atr14 = atr(highs, lows, closes, ATR_PERIOD)
+    plus_di, minus_di = directional_indicators(highs, lows, closes, DI_PERIOD)
+    stoch_k, stoch_d = stochastic(highs, lows, closes, *STOCHASTIC_PERIODS)
     macd_line, macd_signal, macd_hist = macd(closes, *MACD_PERIODS)
     bb_upper, bb_middle, bb_lower = bollinger(
         closes, BOLLINGER_PERIOD, BOLLINGER_DEVIATIONS
@@ -60,6 +77,11 @@ def compute_snapshots(bars: list[Bar]) -> list[Snapshot]:
             bb_middle=bb_middle[index],
             bb_lower=bb_lower[index],
             rvol=rvol50[index],
+            atr14=atr14[index],
+            plus_di=plus_di[index],
+            minus_di=minus_di[index],
+            stoch_k=stoch_k[index],
+            stoch_d=stoch_d[index],
         )
         for index, bar in enumerate(bars)
     ]

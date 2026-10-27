@@ -2,6 +2,12 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## indicators-expansion-engine implemented (passing, awaiting validation) — 2026-10-26
+
+- Engine only: `atr`, `directional_indicators` (+DI/-DI) and `stochastic` (14,3,3 slow) in `engine/app/indicators/core.py`; `adx` now reads the shared `_wilder_sums` helper with identical arithmetic. `Snapshot` and `POST /indicators/compute` gain `atr14`, `plus_di`, `minus_di`, `stoch_k`, `stoch_d` (null during warm-up). Flat stochastic window reads 50.0.
+- Verified: engine pytest 124 passed (hand-computed fixtures plus exact-equality regression of ADX/Bollinger/SMA20/RSI/MACD/RVOL vs `engine/tests/fixtures/indicator_regression.json`, captured before the change), ruff clean, `.\init.ps1` Baseline OK.
+- Next: independent validation, then `indicators-expansion-storage`.
+
 ## Technical indicators expansion planned (7 features, not started) — 2026-10-26
 
 - Explicit user request ('si vete preparandolo'): make ADX (14) and Bollinger (20, 2), already stored but unused, visible and useful, and add ATR (14) and Stochastic (14,3,3). Umbrella spec `docs/specs/technical-indicators-expansion.md` with decisions D1-D14 (formulas, Wilder smoothing, None warm-up, six new Signals, five Screener range filters and sorts, optional table columns, chart overlay and panes, backfill, rollback). Seven features appended to `feature_list.json` (all `not_started`): `indicators-expansion-engine`, `indicators-expansion-storage`, `signals-expansion`, `screener-technical-filters-api`, `screener-technical-filters-ui`, `chart-indicator-overlays`, `chart-indicator-panels`. Scope guard added to `AGENTS.md`; `CONTEXT.md`, `docs/domain-model.md` and `docs/risks-and-open-questions.md` updated.

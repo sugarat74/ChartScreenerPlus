@@ -10,6 +10,7 @@ per assertion:
 - ``stooq_nvda.csv``: the real 252-bar NVDA fixture, used as a longer smoke.
 """
 
+import json
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -17,7 +18,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main as main_module
-from app.indicators.core import adx, bollinger, ema, macd, rsi, rvol, sma
+from app.indicators.core import (
+    adx,
+    atr,
+    bollinger,
+    directional_indicators,
+    ema,
+    macd,
+    rsi,
+    rvol,
+    sma,
+    stochastic,
+)
 from app.indicators.snapshots import compute_snapshots
 from app.models import Bar
 from app.sources.stooq import parse_eod_csv
@@ -26,6 +38,10 @@ FIXTURES = Path(__file__).parent / "fixtures"
 MONOTONIC_FIXTURE = FIXTURES / "indicator_series.csv"
 CONSTANT_FIXTURE = FIXTURES / "indicator_constant.csv"
 NVDA_FIXTURE = FIXTURES / "stooq_nvda.csv"
+REGRESSION_FIXTURE = FIXTURES / "indicator_regression.json"
+# Ramp fixture (high = close + 1, low = close - 1): the 14-bar window spans 15, so
+# raw %K = 100 * 14 / 15 on every bar and the averages stay there.
+RAMP_STOCH = 100.0 * 14.0 / 15.0
 
 INDICATOR_FIELDS = (
     "sma20",
@@ -42,6 +58,11 @@ INDICATOR_FIELDS = (
     "bb_middle",
     "bb_lower",
     "rvol",
+    "atr14",
+    "plus_di",
+    "minus_di",
+    "stoch_k",
+    "stoch_d",
 )
 
 client = TestClient(main_module.app)
@@ -265,6 +286,12 @@ def test_constant_fixture_has_zero_band_width_and_flat_macd() -> None:
     assert last.bb_lower == pytest.approx(50.0)
     assert last.bb_upper - last.bb_lower == pytest.approx(0.0)
     assert last.rvol == pytest.approx(1.0)
+    # No range at all: ATR and DI are 0, the stochastic reads the neutral 50.
+    assert last.atr14 == pytest.approx(0.0)
+    assert last.plus_di == pytest.approx(0.0)
+    assert last.minus_di == pytest.approx(0.0)
+    assert last.stoch_k == pytest.approx(50.0)
+    assert last.stoch_d == pytest.approx(50.0)
 
 
 def test_a_short_series_nulls_only_the_unavailable_indicators() -> None:
@@ -290,6 +317,19 @@ def test_a_short_series_nulls_only_the_unavailable_indicators() -> None:
     assert last.macd_signal is None
     assert last.macd_hist is None
     assert last.rvol is None
+    # 25 bars: ATR/DI (index 14) and %K/%D (indices 15/17) are available, ADX is not.
+    assert last.atr14 == pytest.approx(2.0)
+    assert last.plus_di is not None and last.minus_di is not None
+    assert last.stoch_k == pytest.approx(RAMP_STOCH)
+    assert last.stoch_d == pytest.approx(RAMP_STOCH)
+
+    # 15 bars: ATR/DI just defined; 16 bars: %K defined, %D not yet.
+    fifteen = compute_snapshots(load_bars(MONOTONIC_FIXTURE)[:15])[-1]
+    assert fifteen.stoch_k is None  # first %K is index 15
+    sixteen = compute_snapshots(load_bars(MONOTONIC_FIXTURE)[:16])[-1]
+    assert fifteen.atr14 == pytest.approx(2.0)
+    assert sixteen.stoch_k == pytest.approx(RAMP_STOCH)
+    assert sixteen.stoch_d is None
 
 
 def test_a_series_without_any_history_yields_only_nulls() -> None:
@@ -369,3 +409,175 @@ def test_nvda_fixture_fills_every_indicator_on_the_last_bar() -> None:
     assert last.bb_upper > last.bb_middle > last.bb_lower
     assert 0.0 <= last.rsi14 <= 100.0
     assert 0.0 <= last.adx <= 100.0
+
+
+def ohlc(
+    closes: list[float], spread: float = 1.0
+) -> tuple[list[float], list[float], list[float]]:
+    return (
+        [close + spread for close in closes],
+        [close - spread for close in closes],
+        closes,
+    )
+
+
+def test_atr_is_2_for_a_constant_range_series_and_0_when_flat() -> None:
+    highs, lows, closes = ohlc([10.0 + index for index in range(30)])
+
+    series = atr(highs, lows, closes, 14)
+
+    # TR = max(2, |c+1-(c-1)|=2, |c-1-(c-1)|=0) = 2 on every bar from index 1.
+    assert series[:14] == [None] * 14
+    assert all(value == pytest.approx(2.0) for value in series[14:])
+
+    flat = [50.0] * 30
+    assert atr(flat, flat, flat, 14)[14:] == [0.0] * 16
+    assert atr(highs[:14], lows[:14], closes[:14], 14) == [None] * 14
+
+
+def test_atr_and_di_follow_the_wilder_recursion_by_hand() -> None:
+    # period 2; H = 11,12,14,13  L = 9,10,12,11  C = 10,11,13,12
+    # TR1 = max(2, |12-10|, |10-10|) = 2; TR2 = max(2, |14-11|, |12-11|) = 3;
+    # TR3 = max(2, |13-13|, |11-13|) = 2.
+    # ATR[2] = (2 + 3) / 2 = 2.5; ATR[3] = (2.5 * 1 + 2) / 2 = 2.25.
+    # +DM = 1, 2, 0 and -DM = 0, 0, 1 (up 1/down -1, up 2/down -2, up -1/down 1).
+    # Sums at 2: TR 5, +DM 3, -DM 0 -> +DI 60, -DI 0.
+    # Sums at 3: TR 5 - 2.5 + 2 = 4.5, +DM 3 - 1.5 + 0 = 1.5, -DM 0 - 0 + 1 = 1
+    #   -> +DI 100 * 1.5 / 4.5 = 33.33.., -DI 100 / 4.5 = 22.22..
+    highs = [11.0, 12.0, 14.0, 13.0]
+    lows = [9.0, 10.0, 12.0, 11.0]
+    closes = [10.0, 11.0, 13.0, 12.0]
+
+    series = atr(highs, lows, closes, 2)
+    plus_di, minus_di = directional_indicators(highs, lows, closes, 2)
+
+    assert series[:2] == [None, None]
+    assert series[2] == pytest.approx(2.5)
+    assert series[3] == pytest.approx(2.25)
+    assert plus_di[:2] == [None, None]
+    assert minus_di[:2] == [None, None]
+    assert plus_di[2] == pytest.approx(60.0)
+    assert minus_di[2] == pytest.approx(0.0)
+    assert plus_di[3] == pytest.approx(100.0 / 3.0)
+    assert minus_di[3] == pytest.approx(100.0 / 4.5)
+
+
+def test_directional_indicators_for_trends_and_a_flat_series() -> None:
+    bars = load_bars(MONOTONIC_FIXTURE)
+    highs = [bar.high for bar in bars]
+    lows = [bar.low for bar in bars]
+    closes = [bar.close for bar in bars]
+
+    plus_di, minus_di = directional_indicators(highs, lows, closes, 14)
+
+    # Strict uptrend: +DM 1 and TR 2 each bar -> +DI 50, -DI 0, first at index 14.
+    assert plus_di[:14] == [None] * 14
+    assert minus_di[:14] == [None] * 14
+    assert all(value == pytest.approx(50.0) for value in plus_di[14:])
+    assert all(value == pytest.approx(0.0) for value in minus_di[14:])
+
+    falling = [200.0 - index for index in range(40)]
+    f_highs, f_lows, f_closes = ohlc(falling)
+    f_plus, f_minus = directional_indicators(f_highs, f_lows, f_closes, 14)
+    assert all(f_minus[i] > f_plus[i] for i in range(14, 40))
+
+    flat = [50.0] * 30
+    flat_plus, flat_minus = directional_indicators(flat, flat, flat, 14)
+    assert flat_plus[14:] == [0.0] * 16
+    assert flat_minus[14:] == [0.0] * 16
+
+
+def test_stochastic_edges_and_first_defined_indices() -> None:
+    rising = [float(10 + index) for index in range(30)]
+    k_line, d_line = stochastic(rising, rising, rising, 14, 3, 3)
+
+    # high = low = close: raw = 100 from index 13, %K from 15, %D from 17.
+    assert k_line[:15] == [None] * 15
+    assert d_line[:17] == [None] * 17
+    assert all(value == pytest.approx(100.0) for value in k_line[15:])
+    assert all(value == pytest.approx(100.0) for value in d_line[17:])
+
+    falling = [float(100 - index) for index in range(30)]
+    k_line, d_line = stochastic(falling, falling, falling, 14, 3, 3)
+    assert all(value == pytest.approx(0.0) for value in k_line[15:])
+    assert all(value == pytest.approx(0.0) for value in d_line[17:])
+
+    flat = [50.0] * 30
+    k_line, d_line = stochastic(flat, flat, flat, 14, 3, 3)
+    assert k_line[:15] == [None] * 15
+    assert all(value == 50.0 for value in k_line[15:])
+    assert all(value == 50.0 for value in d_line[17:])
+
+    short = rising[:13]
+    assert stochastic(short, short, short) == ([None] * 13, [None] * 13)
+
+
+def test_stochastic_matches_a_hand_computed_window() -> None:
+    # period 2, smoothing 2/2. H = 4,6,5,7  L = 2,3,3,4  C = 3,5,4,7.
+    # raw[1] = 100 * (5 - 2) / (6 - 2) = 75; raw[2] = 100 * (4 - 3) / (6 - 3) = 33.33..;
+    # raw[3] = 100 * (7 - 4) / (7 - 4) = 100.
+    # %K[2] = (75 + 33.33) / 2 = 54.1666..; %K[3] = (33.33 + 100) / 2 = 66.6666..;
+    # %D[3] = (54.1666 + 66.6666) / 2 = 60.4166..
+    highs = [4.0, 6.0, 5.0, 7.0]
+    lows = [2.0, 3.0, 3.0, 4.0]
+    closes = [3.0, 5.0, 4.0, 7.0]
+
+    k_line, d_line = stochastic(highs, lows, closes, 2, 2, 2)
+
+    assert k_line[:2] == [None, None]
+    assert k_line[2] == pytest.approx((75.0 + 100.0 / 3.0) / 2.0)
+    assert k_line[3] == pytest.approx((100.0 / 3.0 + 100.0) / 2.0)
+    assert d_line[:3] == [None, None, None]
+    assert d_line[3] == pytest.approx((k_line[2] + k_line[3]) / 2.0)
+
+
+def test_stochastic_stays_within_0_and_100_on_real_data() -> None:
+    snapshots = compute_snapshots(load_bars(NVDA_FIXTURE))
+
+    k_values = [s.stoch_k for s in snapshots]
+    d_values = [s.stoch_d for s in snapshots]
+    assert k_values[:15] == [None] * 15
+    assert d_values[:17] == [None] * 17
+    assert k_values[15] is not None and d_values[17] is not None
+    assert all(0.0 <= v <= 100.0 for v in k_values[15:])
+    assert all(0.0 <= v <= 100.0 for v in d_values[17:])
+
+
+def test_previous_indicator_values_are_unchanged_by_the_expansion() -> None:
+    # Values captured from the engine before ATR/DI/Stochastic were added
+    # (including the ADX refactor onto the shared Wilder helper). Compared to 1e-9:
+    # the last float digit differs between platforms (Windows vs the Linux CI).
+    expected = json.loads(REGRESSION_FIXTURE.read_text(encoding="utf-8"))
+    fields = ("adx", "bb_upper", "bb_middle", "bb_lower", "sma20", "rsi14", "macd", "rvol")
+
+    for name, path in (
+        ("stooq_nvda", NVDA_FIXTURE),
+        ("indicator_series", MONOTONIC_FIXTURE),
+        ("indicator_constant", CONSTANT_FIXTURE),
+    ):
+        snapshots = compute_snapshots(load_bars(path))
+        assert len(snapshots) == len(expected[name])
+        for snapshot, row in zip(snapshots, expected[name], strict=True):
+            actual = [getattr(snapshot, field) for field in fields]
+            assert actual == [None if v is None else pytest.approx(v, rel=1e-9, abs=1e-9) for v in row]
+
+
+def test_compute_endpoint_returns_the_new_indicator_keys() -> None:
+    bars = load_bars(MONOTONIC_FIXTURE)[:20]
+
+    response = client.post(
+        "/indicators/compute",
+        json={"bars": [snapshot_payload(bar) for bar in bars]},
+    )
+
+    assert response.status_code == 200
+    snapshots = response.json()["snapshots"]
+    assert snapshots[13]["atr14"] is None
+    assert snapshots[13]["stoch_k"] is None
+    assert snapshots[13]["stoch_d"] is None
+    assert snapshots[14]["atr14"] == pytest.approx(2.0)
+    assert snapshots[14]["plus_di"] == pytest.approx(50.0)
+    assert snapshots[14]["minus_di"] == pytest.approx(0.0)
+    assert snapshots[15]["stoch_k"] == pytest.approx(RAMP_STOCH)
+    assert snapshots[16]["stoch_d"] is None
+    assert snapshots[17]["stoch_d"] == pytest.approx(RAMP_STOCH)

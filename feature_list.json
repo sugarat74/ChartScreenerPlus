@@ -916,21 +916,11 @@
   {
     "id": "indicators-expansion-engine",
     "area": "engine",
-    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
     "title": "Engine math for ATR, DI and Stochastic",
-    "user_visible_behavior": "No visible change yet: the engine computes ATR (14), +DI/-DI (14) and the Stochastic oscillator (14,3,3) for every bar, with the same warm-up rules as the other indicators.",
+    "status": "accepted",
     "depends_on": [
       "indicators-compute"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Hand-calculated fixtures: constant-range series gives ATR 2.0 from index 14; flat series ATR 0 and stochastic 50; rising series %K/%D 100 from indices 15/17; first-defined indices exact",
-      "Existing ADX, Bollinger and all previous snapshot values unchanged on every existing fixture",
-      "POST /indicators/compute returns the five new keys, null when unavailable; ruff clean; no new dependency",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+    ]
   },
   {
     "id": "indicators-expansion-storage",

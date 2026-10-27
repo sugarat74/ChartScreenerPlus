@@ -6,7 +6,8 @@ value is ever produced, so a caller can always distinguish "not enough history"
 from a real number.
 
 Periods are fixed by the feature spec: SMA 20/50/200, EMA 21/55, RSI 14,
-MACD 12/26/9, ADX 14, Bollinger 20/2, RVOL against the previous 50 sessions.
+MACD 12/26/9, ADX 14 (+DI/-DI 14), ATR 14, Stochastic 14/3/3,
+Bollinger 20/2, RVOL against the previous 50 sessions.
 """
 
 
@@ -142,6 +143,56 @@ def _dx(true_range_sum: float, plus_sum: float, minus_sum: float) -> float:
     return 100.0 * abs(plus_di - minus_di) / total
 
 
+def _wilder_sums(
+    highs: list[float], lows: list[float], closes: list[float], period: int
+) -> list[tuple[float, float, float] | None]:
+    """Wilder-smoothed (true range, +DM, -DM) sums, ``None`` before ``period``.
+
+    The first sum sits at index ``period`` (bars ``1..period``); every later one
+    is ``previous - previous / period + current``. Shared by ``adx`` and the DI
+    lines so both read the very same smoothing.
+    """
+
+    length = len(highs)
+    sums: list[tuple[float, float, float] | None] = [None] * length
+    if period <= 0 or length < period + 1:
+        return sums
+
+    true_ranges = [0.0] * length
+    plus_dm = [0.0] * length
+    minus_dm = [0.0] * length
+    for index in range(1, length):
+        up_move = highs[index] - highs[index - 1]
+        down_move = lows[index - 1] - lows[index]
+        if up_move > down_move and up_move > 0.0:
+            plus_dm[index] = up_move
+        if down_move > up_move and down_move > 0.0:
+            minus_dm[index] = down_move
+        true_ranges[index] = _true_range(highs, lows, closes, index)
+
+    smoothed_range = sum(true_ranges[1 : period + 1])
+    smoothed_plus = sum(plus_dm[1 : period + 1])
+    smoothed_minus = sum(minus_dm[1 : period + 1])
+    sums[period] = (smoothed_range, smoothed_plus, smoothed_minus)
+    for index in range(period + 1, length):
+        smoothed_range = smoothed_range - smoothed_range / period + true_ranges[index]
+        smoothed_plus = smoothed_plus - smoothed_plus / period + plus_dm[index]
+        smoothed_minus = smoothed_minus - smoothed_minus / period + minus_dm[index]
+        sums[index] = (smoothed_range, smoothed_plus, smoothed_minus)
+
+    return sums
+
+
+def _true_range(
+    highs: list[float], lows: list[float], closes: list[float], index: int
+) -> float:
+    return max(
+        highs[index] - lows[index],
+        abs(highs[index] - closes[index - 1]),
+        abs(lows[index] - closes[index - 1]),
+    )
+
+
 def adx(
     highs: list[float], lows: list[float], closes: list[float], period: int = 14
 ) -> list[float | None]:
@@ -157,33 +208,10 @@ def adx(
     if period <= 0 or length < 2 * period:
         return result
 
-    true_ranges = [0.0] * length
-    plus_dm = [0.0] * length
-    minus_dm = [0.0] * length
-    for index in range(1, length):
-        up_move = highs[index] - highs[index - 1]
-        down_move = lows[index - 1] - lows[index]
-        if up_move > down_move and up_move > 0.0:
-            plus_dm[index] = up_move
-        if down_move > up_move and down_move > 0.0:
-            minus_dm[index] = down_move
-        true_ranges[index] = max(
-            highs[index] - lows[index],
-            abs(highs[index] - closes[index - 1]),
-            abs(lows[index] - closes[index - 1]),
-        )
-
-    smoothed_range = sum(true_ranges[1 : period + 1])
-    smoothed_plus = sum(plus_dm[1 : period + 1])
-    smoothed_minus = sum(minus_dm[1 : period + 1])
-
     dx_values = [0.0] * length
-    dx_values[period] = _dx(smoothed_range, smoothed_plus, smoothed_minus)
-    for index in range(period + 1, length):
-        smoothed_range = smoothed_range - smoothed_range / period + true_ranges[index]
-        smoothed_plus = smoothed_plus - smoothed_plus / period + plus_dm[index]
-        smoothed_minus = smoothed_minus - smoothed_minus / period + minus_dm[index]
-        dx_values[index] = _dx(smoothed_range, smoothed_plus, smoothed_minus)
+    for index, current in enumerate(_wilder_sums(highs, lows, closes, period)):
+        if current is not None:
+            dx_values[index] = _dx(*current)
 
     first = 2 * period - 1
     previous = sum(dx_values[period : first + 1]) / period
@@ -193,6 +221,107 @@ def adx(
         result[index] = previous
 
     return result
+
+
+def directional_indicators(
+    highs: list[float], lows: list[float], closes: list[float], period: int = 14
+) -> tuple[list[float | None], list[float | None]]:
+    """Wilder's ``(+DI, -DI)``; first value at index ``period``.
+
+    ``DI = 100 * smoothed(DM) / smoothed(TR)``; a zero smoothed true range (a
+    flat series) gives 0 instead of a division error.
+    """
+
+    plus_di: list[float | None] = [None] * len(highs)
+    minus_di: list[float | None] = [None] * len(highs)
+    for index, current in enumerate(_wilder_sums(highs, lows, closes, period)):
+        if current is None:
+            continue
+        true_range_sum, plus_sum, minus_sum = current
+        if true_range_sum == 0.0:
+            plus_di[index] = 0.0
+            minus_di[index] = 0.0
+        else:
+            plus_di[index] = 100.0 * plus_sum / true_range_sum
+            minus_di[index] = 100.0 * minus_sum / true_range_sum
+
+    return plus_di, minus_di
+
+
+def atr(
+    highs: list[float], lows: list[float], closes: list[float], period: int = 14
+) -> list[float | None]:
+    """Wilder's Average True Range; first value at index ``period``.
+
+    The seed is the mean of ``TR[1..period]`` (bar 0 has no true range), then
+    ``ATR = (previous * (period - 1) + TR) / period``. A flat series gives 0.
+    """
+
+    length = len(highs)
+    result: list[float | None] = [None] * length
+    if period <= 0 or length < period + 1:
+        return result
+
+    true_ranges = [0.0] * length
+    for index in range(1, length):
+        true_ranges[index] = _true_range(highs, lows, closes, index)
+
+    previous = sum(true_ranges[1 : period + 1]) / period
+    result[period] = previous
+    for index in range(period + 1, length):
+        previous = (previous * (period - 1) + true_ranges[index]) / period
+        result[index] = previous
+
+    return result
+
+
+def _clamp_percent(value: float | None) -> float | None:
+    return None if value is None else min(100.0, max(0.0, value))
+
+
+def stochastic(
+    highs: list[float],
+    lows: list[float],
+    closes: list[float],
+    period: int = 14,
+    smooth_k: int = 3,
+    smooth_d: int = 3,
+) -> tuple[list[float | None], list[float | None]]:
+    """Slow Stochastic ``(%K, %D)``.
+
+    ``raw = 100 * (close - lowest low) / (highest high - lowest low)`` over the
+    ``period`` sessions ending at the bar (first at ``period - 1``). A window
+    with no range reads the neutral 50.0 so the next average gets contiguous
+    input. ``%K = SMA(raw, smooth_k)`` and ``%D = SMA(%K, smooth_d)``.
+    """
+
+    length = len(highs)
+    k_line: list[float | None] = [None] * length
+    d_line: list[float | None] = [None] * length
+    if period <= 0 or smooth_k <= 0 or smooth_d <= 0 or length < period:
+        return k_line, d_line
+
+    raw: list[float] = []
+    for index in range(period - 1, length):
+        highest = max(highs[index - period + 1 : index + 1])
+        lowest = min(lows[index - period + 1 : index + 1])
+        if highest == lowest:
+            raw.append(50.0)
+        else:
+            raw.append(100.0 * (closes[index] - lowest) / (highest - lowest))
+
+    k_offset = period - 1
+    k_values = sma(raw, smooth_k)
+    for position, value in enumerate(k_values):
+        k_line[k_offset + position] = _clamp_percent(value)
+
+    # %K is defined without gaps from ``k_offset + smooth_k - 1`` onwards.
+    d_offset = k_offset + smooth_k - 1
+    defined_k = [value for value in k_values if value is not None]
+    for position, value in enumerate(sma(defined_k, smooth_d)):
+        d_line[d_offset + position] = _clamp_percent(value)
+
+    return k_line, d_line
 
 
 def bollinger(

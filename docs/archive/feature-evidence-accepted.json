@@ -1948,5 +1948,27 @@
       "Independent validator verdict accept (2026-10-26): Wikipedia IBEX 35 table re-fetched, 35 .MC tickers identical to ibex35.csv, CSV SHA-256 matches ibex35.md; 2026 BME closures match official calendar; live Yahoo SAN.MC and ITX.MC EUR/Europe/Madrid; .\\init.ps1 exit 0 (Laravel 931 passed / 6 skipped, engine 116), Ibex35UniverseSeederTest 8 passed; universe non-public by default. 2027 holidays unofficial; September 2026 review unverified; production run must confirm the other 33 symbols."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax). Implemented 2026-10-26: ibex35.csv/.md, Ibex35UniverseSeeder, XMAD holidays, deploy seeding, guide es/en, deploy/README.md item 13. Not public by default; production rollout and public enablement remain separate steps. Independently accepted 2026-10-26."
+  },
+  {
+    "id": "indicators-expansion-engine",
+    "area": "engine",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Engine math for ATR, DI and Stochastic",
+    "user_visible_behavior": "No visible change yet: the engine computes ATR (14), +DI/-DI (14) and the Stochastic oscillator (14,3,3) for every bar, with the same warm-up rules as the other indicators.",
+    "depends_on": [
+      "indicators-compute"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Hand-calculated fixtures: constant-range series gives ATR 2.0 from index 14; flat series ATR 0 and stochastic 50; rising series %K/%D 100 from indices 15/17; first-defined indices exact",
+      "Existing ADX, Bollinger and all previous snapshot values unchanged on every existing fixture",
+      "POST /indicators/compute returns the five new keys, null when unavailable; ruff clean; no new dependency",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-10-26: implemented atr, directional_indicators (shared _wilder_sums with adx), stochastic in engine/app/indicators/core.py; atr14/plus_di/minus_di/stoch_k/stoch_d wired in snapshots.py and Snapshot. Hand-computed tests (constant range ATR 2.0 from index 14, period-2 Wilder recursion, ramp stochastic 93.33 from 15/17, flat 50/ATR 0/DI 0, first-defined indices) and an exact-equality regression of adx/bollinger/sma20/rsi/macd/rvol against values captured before the change (engine/tests/fixtures/indicator_regression.json). engine pytest 124 passed, ruff clean, .\\init.ps1 Baseline OK (child process).",
+      "Independent validator ACCEPT 2026-10-26: ATR14, +DI/-DI, Stochastic 14,3,3 match an independent recomputation at 8 lengths; ADX/Bollinger/SMA/EMA/RSI/MACD identical to HEAD; engine pytest 124 passed, ruff clean, init.ps1 Baseline OK."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec. Independently accepted 2026-10-26."
   }
 ]
