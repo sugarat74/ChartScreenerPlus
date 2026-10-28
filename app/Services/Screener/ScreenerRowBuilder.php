@@ -3,6 +3,7 @@
 namespace App\Services\Screener;
 
 use App\Models\ChartPattern;
+use App\Models\IndicatorSnapshot;
 use App\Models\Instrument;
 use App\Models\ScreenerRow;
 use App\Services\MarketRegime\MarketRegimeRules;
@@ -144,6 +145,13 @@ class ScreenerRowBuilder
                     'end_date' => $pattern->end_date->format('Y-m-d'),
                 ])
                 ->all(), JSON_PRESERVE_ZERO_FRACTION),
+            // screener-technical-filters-api: ADX and %K copied, the rest
+            // derived (technical-indicators-expansion D2), bound exactly.
+            'adx' => $snapshot->adx,
+            'bb_pctb' => $this->exact($this->percentB($close, $snapshot)),
+            'bb_width' => $this->exact($this->bandwidth($snapshot)),
+            'atr_pct' => $this->exact($this->atrPercent($close, $snapshot)),
+            'stoch_k' => $snapshot->stoch_k,
             'sector_trend' => $sector['trend'] ?? null,
             'sector_rs_rank' => $sector['rs_rank'] ?? null,
             'created_at' => $now,
@@ -255,6 +263,49 @@ class ScreenerRowBuilder
         }
 
         return (($close - $previousClose) / $previousClose) * 100;
+    }
+
+    /**
+     * `(close - lower) / (upper - lower)`, or `null` for a missing or
+     * zero-width band.
+     */
+    private function percentB(float $close, IndicatorSnapshot $snapshot): ?float
+    {
+        $upper = $this->nullableFloat($snapshot->bb_upper);
+        $lower = $this->nullableFloat($snapshot->bb_lower);
+
+        if ($upper === null || $lower === null || $upper - $lower === 0.0) {
+            return null;
+        }
+
+        return ($close - $lower) / ($upper - $lower);
+    }
+
+    /**
+     * `(upper - lower) / middle * 100`, or `null` when an input is missing or
+     * the middle band is 0.
+     */
+    private function bandwidth(IndicatorSnapshot $snapshot): ?float
+    {
+        $upper = $this->nullableFloat($snapshot->bb_upper);
+        $lower = $this->nullableFloat($snapshot->bb_lower);
+        $middle = $this->nullableFloat($snapshot->bb_middle);
+
+        if ($upper === null || $lower === null || $middle === null || $middle === 0.0) {
+            return null;
+        }
+
+        return ($upper - $lower) / $middle * 100;
+    }
+
+    /**
+     * `atr14 / close * 100`, or `null` without ATR or with a zero close.
+     */
+    private function atrPercent(float $close, IndicatorSnapshot $snapshot): ?float
+    {
+        $atr = $this->nullableFloat($snapshot->atr14);
+
+        return $atr === null || $close === 0.0 ? null : $atr / $close * 100;
     }
 
     /**

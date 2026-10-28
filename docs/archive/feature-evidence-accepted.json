@@ -2022,5 +2022,30 @@
       "Independent validator ACCEPT 2026-10-27: six rules match independent recomputation on 60 random series; original nine rules identical to HEAD over 108,900 evaluations; AI screener schema/prompt unchanged (nine); vocabularies consistent; phpunit 948 passed/6 skipped, vitest 411, engine pytest 137, init.ps1 Baseline OK."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Implemented 2026-10-27 (Feature 3 of the umbrella); guide entries for the six Signals are text only (illustrations deferred, D13); thresholds uncalibrated (R1): record production counts after the rollout in deploy/README.md item 15. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec. Independently accepted 2026-10-26."
+  },
+  {
+    "id": "screener-technical-filters-api",
+    "area": "screener",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Screener API: ADX, Bollinger, ATR and Stochastic filters and sorts",
+    "user_visible_behavior": "Anyone can filter and sort the Candidate list by ADX, Bollinger %B, Bollinger bandwidth, ATR as percent of price and Stochastic %K, in every universe; Saved Screeners keep these criteria.",
+    "depends_on": [
+      "indicators-expansion-storage",
+      "signals-expansion"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Five inclusive min/max ranges, null never matches, inverted or out-of-range values 422; five sort pairs null-last with ticker tie-break; original sorts and default unchanged",
+      "screener:refresh fills adx, bb_pctb, bb_width, atr_pct, stoch_k per the spec formulas with null propagation; row count unchanged",
+      "Candidate payload additive; Saved Screeners round-trip the ten keys and load old definitions; AI sort enum unchanged",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-10-28: migration 2026_10_29_000002 adds screener_rows adx, bb_pctb, bb_width, atr_pct, stoch_k (nullable, single-column indexes, reversible); ScreenerRowBuilder fills them (%B null for zero-width band, atr_pct null for zero close); parser NUMERIC_BOUNDS/RANGE_PAIRS/COLUMN_SORTS, CandidateQuery filters/sorts/payload/fromSaved and SavedScreenerController (thirty-key definition) extended; AI schema, prompt and SORTS untouched",
+      "New ScreenerTechnicalFiltersTest (12 tests): formulas with delta, null propagation, row count unchanged, inclusive ranges, ten sorts nulls-last + ticker tie-break, 422 cases, universe + pagination, Saved Screener round trip and legacy load, AI schema unchanged; existing tests only changed where exact key lists/counts grew (payload keys, 20 to 30 stored keys, sort-table loop restricted to original sorts)",
+      "phpunit 960 passed / 6 skipped; frontend vitest 411, lint, build; engine pytest 137; init.ps1 Baseline OK (exit 0). Not verified: PostgreSQL migration and tests (CI), production screener:refresh",
+      "Independent validator ACCEPT 2026-10-28 after a one-line CONSTRAINTS.md fix (twenty-key to thirty-key): formulas, 10 filters/sorts, Candidate payload, 30-key Saved Screener with legacy rows, AI schema/prompt/SORTS unchanged, migration portable; phpunit 966 passed/6 skipped, init.ps1 Baseline OK."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec. Independently accepted 2026-10-26."
   }
 ]

@@ -107,6 +107,17 @@ class ScreenerFilterParser
         'close_desc',
         'rvol_asc',
         'signal_count_asc',
+        // screener-technical-filters-api: the technical indicator columns.
+        'adx_asc',
+        'adx_desc',
+        'bb_pctb_asc',
+        'bb_pctb_desc',
+        'bb_width_asc',
+        'bb_width_desc',
+        'atr_pct_asc',
+        'atr_pct_desc',
+        'stoch_k_asc',
+        'stoch_k_desc',
     ];
 
     /**
@@ -160,6 +171,19 @@ class ScreenerFilterParser
         'close_max' => [0.0, 1000000.0],
         'change_min' => [-100.0, 1000.0],
         'change_max' => [-100.0, 1000.0],
+        // screener-technical-filters-api (technical-indicators-expansion D7):
+        // %B is 0 on the lower band and 1 on the upper, so it can leave 0..1;
+        // bandwidth is a percent of the middle band, ATR a percent of the close.
+        'adx_min' => [0.0, 100.0],
+        'adx_max' => [0.0, 100.0],
+        'bb_pctb_min' => [-1.0, 2.0],
+        'bb_pctb_max' => [-1.0, 2.0],
+        'bb_width_min' => [0.0, 1000.0],
+        'bb_width_max' => [0.0, 1000.0],
+        'atr_pct_min' => [0.0, 100.0],
+        'atr_pct_max' => [0.0, 100.0],
+        'stoch_k_min' => [0.0, 100.0],
+        'stoch_k_max' => [0.0, 100.0],
     ];
 
     /**
@@ -172,6 +196,11 @@ class ScreenerFilterParser
         ['min_rvol', 'rvol_max'],
         ['close_min', 'close_max'],
         ['change_min', 'change_max'],
+        ['adx_min', 'adx_max'],
+        ['bb_pctb_min', 'bb_pctb_max'],
+        ['bb_width_min', 'bb_width_max'],
+        ['atr_pct_min', 'atr_pct_max'],
+        ['stoch_k_min', 'stoch_k_max'],
     ];
 
     /**
@@ -205,7 +234,7 @@ class ScreenerFilterParser
      * and the RVOL minimum keep `rsi_min`/`rsi_max`/`min_rvol`.
      *
      * @param  array<mixed>  $input
-     * @return array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int, search: ?string, sector: ?string, industry: ?string, country: ?string, rvol_max: ?float, close_min: ?float, close_max: ?float, change_min: ?float, change_max: ?float}
+     * @return array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int, search: ?string, sector: ?string, industry: ?string, country: ?string, rvol_max: ?float, close_min: ?float, close_max: ?float, change_min: ?float, change_max: ?float, adx_min: ?float, adx_max: ?float, bb_pctb_min: ?float, bb_pctb_max: ?float, bb_width_min: ?float, bb_width_max: ?float, atr_pct_min: ?float, atr_pct_max: ?float, stoch_k_min: ?float, stoch_k_max: ?float}
      *
      * @throws ValidationException
      */
@@ -232,6 +261,16 @@ class ScreenerFilterParser
             'close_max' => self::numeric($input, 'close_max'),
             'change_min' => self::numeric($input, 'change_min'),
             'change_max' => self::numeric($input, 'change_max'),
+            'adx_min' => self::numeric($input, 'adx_min'),
+            'adx_max' => self::numeric($input, 'adx_max'),
+            'bb_pctb_min' => self::numeric($input, 'bb_pctb_min'),
+            'bb_pctb_max' => self::numeric($input, 'bb_pctb_max'),
+            'bb_width_min' => self::numeric($input, 'bb_width_min'),
+            'bb_width_max' => self::numeric($input, 'bb_width_max'),
+            'atr_pct_min' => self::numeric($input, 'atr_pct_min'),
+            'atr_pct_max' => self::numeric($input, 'atr_pct_max'),
+            'stoch_k_min' => self::numeric($input, 'stoch_k_min'),
+            'stoch_k_max' => self::numeric($input, 'stoch_k_max'),
         ];
 
         foreach (self::RANGE_PAIRS as [$minKey, $maxKey]) {

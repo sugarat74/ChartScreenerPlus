@@ -2,6 +2,13 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## screener-technical-filters-api implemented (passing, awaiting validation) - 2026-10-28
+
+- Migration `2026_10_29_000002` adds nullable, indexed `screener_rows.adx`, `bb_pctb`, `bb_width`, `atr_pct`, `stoch_k` (reversible). `ScreenerRowBuilder` copies ADX and %K and derives %B, bandwidth (percent) and ATR % of close with the 17-digit `exact()` binding (%B null for a zero-width band, ATR % null for a zero close). `ScreenerFilterParser` gets five inclusive min/max ranges (bounds 0-100, -1-2, 0-1000, 0-100, 0-100; inverted pair 422 on the min key) and ten sorts in `COLUMN_SORTS`; `CandidateQuery` filters, sorts, `fromSaved` and the Candidate payload (five additive floats between `rsi14` and `signals`); `SavedScreenerController` stores/reads the thirty-key definition (ten new keys optional on create, null on read).
+- Unchanged by design: the AI schema (`FILTER_KEYS` projection), prompt and `SORTS`; original sorts and the `rvol_desc` default. Existing tests changed only where exact lists/counts grew (payload key lists, stored keys 20 to 30, the all-sorts loop restricted to the original sorts). Docs: `CONSTRAINTS.md`, `ARCHITECTURE.md`, `docs/specs/saved-screeners.md`, `deploy/README.md` item 16 (migrate, `screener:refresh`, checks, rollback).
+- Verified: new `ScreenerTechnicalFiltersTest` (12 tests), phpunit 960 passed / 6 skipped, Vitest 411, lint, build, engine pytest 137, `.\init.ps1` Baseline OK. Not verified: PostgreSQL by CI only; production `screener:refresh`. No frontend change (feature 5 consumes this API).
+- Next: independent validation, then `screener-technical-filters-ui`.
+
 ## signals-expansion implemented (passing, awaiting validation) - 2026-10-27
 
 - Engine: six rules appended to `RULES` in `engine/app/signals/rules.py` (ADX crosses above 25; Bollinger bandwidth at a 120-session low, recomputed from closes through `core.bollinger`, needs 139 bars; close crosses the upper/lower band; stochastic %K crosses %D from the 20/80 zones; strict crosses, null never fires). The original nine rules and `detect.py` are untouched.

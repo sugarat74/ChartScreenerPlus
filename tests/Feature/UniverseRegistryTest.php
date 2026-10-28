@@ -12,6 +12,7 @@ use App\Models\ScreenerRow;
 use App\Models\Universe;
 use App\Models\User;
 use App\Services\Alerts\AlertEvaluator;
+use App\Services\Fundamentals\FundamentalsRefresher;
 use App\Support\ListingMarket;
 use Database\Seeders\IndexUniverseSeeder;
 use Database\Seeders\Sp500UniverseSeeder;
@@ -396,7 +397,7 @@ class UniverseRegistryTest extends TestCase
         $this->assertSame(['slug' => 'fixture-eu', 'name' => 'Fixture EU'], $byName['EU']['universe']);
         $this->assertSame(['slug' => 'sp500', 'name' => 'S&P 500'], $byName['Legacy']['universe']);
         $this->assertArrayNotHasKey('universe', $byName['Legacy']['filters']);
-        $this->assertCount(20, $byName['Legacy']['filters']);
+        $this->assertCount(30, $byName['Legacy']['filters']);
         $this->assertSame('sp500', $byName['US']['universe']['slug']);
     }
 
@@ -540,7 +541,7 @@ class UniverseRegistryTest extends TestCase
         $eu = $this->seedEu();
         $sp500->instruments()->attach(Instrument::query()->where('ticker', 'SAN.MC')->value('id'));
 
-        $refresher = app(\App\Services\Fundamentals\FundamentalsRefresher::class);
+        $refresher = app(FundamentalsRefresher::class);
 
         $this->assertSame(['AAA'], $refresher->instruments([])->pluck('ticker')->all());
         $this->assertSame(['AAA'], $refresher->instruments(['AAA', 'SAN.MC'])->pluck('ticker')->all());

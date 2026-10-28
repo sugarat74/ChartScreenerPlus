@@ -945,22 +945,12 @@
   {
     "id": "screener-technical-filters-api",
     "area": "screener",
-    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
     "title": "Screener API: ADX, Bollinger, ATR and Stochastic filters and sorts",
-    "user_visible_behavior": "Anyone can filter and sort the Candidate list by ADX, Bollinger %B, Bollinger bandwidth, ATR as percent of price and Stochastic %K, in every universe; Saved Screeners keep these criteria.",
+    "status": "accepted",
     "depends_on": [
       "indicators-expansion-storage",
       "signals-expansion"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Five inclusive min/max ranges, null never matches, inverted or out-of-range values 422; five sort pairs null-last with ticker tie-break; original sorts and default unchanged",
-      "screener:refresh fills adx, bb_pctb, bb_width, atr_pct, stoch_k per the spec formulas with null propagation; row count unchanged",
-      "Candidate payload additive; Saved Screeners round-trip the ten keys and load old definitions; AI sort enum unchanged",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+    ]
   },
   {
     "id": "screener-technical-filters-ui",

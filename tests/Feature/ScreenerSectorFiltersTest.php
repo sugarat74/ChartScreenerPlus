@@ -22,7 +22,7 @@ class ScreenerSectorFiltersTest extends TestCase
     use RefreshDatabase;
 
     private const CANDIDATE_KEYS = [
-        'ticker', 'company', 'sector', 'industry', 'country', 'exchange', 'market', 'currency', 'active', 'date', 'close', 'change_percent', 'rvol', 'rsi14', 'signals', 'patterns',
+        'ticker', 'company', 'sector', 'industry', 'country', 'exchange', 'market', 'currency', 'active', 'date', 'close', 'change_percent', 'rvol', 'rsi14', 'adx', 'bb_pctb', 'bb_width', 'atr_pct', 'stoch_k', 'signals', 'patterns',
     ];
 
     private User $user;

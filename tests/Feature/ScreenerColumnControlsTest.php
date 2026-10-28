@@ -219,8 +219,13 @@ class ScreenerColumnControlsTest extends TestCase
             'signal_count_desc' => ['XYZ', 'AAPL', 'ACN', 'JNJ', 'MSFT'],
         ];
 
-        $this->assertSame(ScreenerFilterParser::ALL_SORTS, array_values(array_intersect(ScreenerFilterParser::ALL_SORTS, array_keys($expected))));
-        $this->assertCount(count(ScreenerFilterParser::ALL_SORTS), $expected);
+        // The technical indicator sorts are covered by ScreenerTechnicalFiltersTest.
+        $original = array_values(array_filter(
+            ScreenerFilterParser::ALL_SORTS,
+            fn (string $sort): bool => preg_match('/^(adx|bb_pctb|bb_width|atr_pct|stoch_k)_/', $sort) !== 1,
+        ));
+        $this->assertSame($original, array_values(array_intersect($original, array_keys($expected))));
+        $this->assertCount(count($original), $expected);
 
         foreach ($expected as $sort => $order) {
             $response = $this->getJson('/api/screener?sort='.$sort)->assertOk()->assertJsonPath('sort', $sort);
@@ -294,7 +299,7 @@ class ScreenerColumnControlsTest extends TestCase
             ->assertJsonPath('screener.filters.close_max', 450.5);
 
         $stored = SavedScreener::query()->sole()->filters;
-        $this->assertCount(20, $stored);
+        $this->assertCount(30, $stored);
         $this->assertSame($created->json('screener.filters'), $this->actingAs($user)->getJson('/api/screeners')->json('screeners.0.filters'));
 
         // The saved definition resolves to exactly what the URL requests.
