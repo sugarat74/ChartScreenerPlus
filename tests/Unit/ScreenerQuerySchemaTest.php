@@ -51,7 +51,7 @@ class ScreenerQuerySchemaTest extends TestCase
         $this->assertSame(['uptrend', 'mixed', 'downtrend', null], $schema['properties']['sector_trend']['enum']);
         $this->assertSame(['string', 'null'], $schema['properties']['sector_trend']['type']);
         $this->assertSame(['integer', 'null'], $schema['properties']['sector_rs_rank_max']['type']);
-        $this->assertSame(ScreenerFilterParser::SIGNAL_TYPES, $schema['properties']['signal']['items']['enum']);
+        $this->assertSame(ScreenerFilterParser::AI_SIGNAL_TYPES, $schema['properties']['signal']['items']['enum']);
         $this->assertSame(ChartPattern::TYPES, $schema['properties']['pattern']['items']['enum']);
         // chart-patterns-extended: the AI may pick any number of the vocabulary.
         $this->assertSame(count(ChartPattern::TYPES), ScreenerQuerySchema::MAX_PATTERNS);
@@ -82,6 +82,30 @@ class ScreenerQuerySchemaTest extends TestCase
             'sector_rs_rank_max' => null,
         ], $result['filters']);
         $this->assertSame([], $result['unsupported']);
+    }
+
+    public function test_the_ai_schema_keeps_exactly_the_original_nine_signals(): void
+    {
+        $this->assertCount(9, ScreenerFilterParser::AI_SIGNAL_TYPES);
+        $this->assertCount(15, ScreenerFilterParser::SIGNAL_TYPES);
+        $this->assertSame(
+            ScreenerFilterParser::AI_SIGNAL_TYPES,
+            array_slice(ScreenerFilterParser::SIGNAL_TYPES, 0, 9),
+        );
+        $this->assertSame(ScreenerFilterParser::AI_SIGNAL_TYPES, ScreenerQuerySchema::schema()['properties']['signal']['items']['enum']);
+
+        foreach (array_slice(ScreenerFilterParser::SIGNAL_TYPES, 9) as $type) {
+            foreach (['es', 'en'] as $locale) {
+                $this->assertStringNotContainsString($type, ScreenerQueryPrompt::messages('x', $locale)[0]['content']);
+            }
+
+            try {
+                ScreenerQuerySchema::validate(array_merge($this->valid(), ['signal' => [$type]]));
+                $this->fail("The AI answer must not accept {$type}");
+            } catch (InvalidScreenerQuery) {
+                $this->addToAssertionCount(1);
+            }
+        }
     }
 
     public function test_bounds_are_inclusive(): void
@@ -122,7 +146,7 @@ class ScreenerQuerySchemaTest extends TestCase
             $this->assertSame('system', $messages[0]['role']);
             $this->assertStringNotContainsString($query, $messages[0]['content']);
             $this->assertSame(['role' => 'user', 'content' => $query], $messages[1]);
-            foreach ([...ScreenerFilterParser::SIGNAL_TYPES, ...ChartPattern::TYPES, ...ScreenerFilterParser::SORTS] as $value) {
+            foreach ([...ScreenerFilterParser::AI_SIGNAL_TYPES, ...ChartPattern::TYPES, ...ScreenerFilterParser::SORTS] as $value) {
                 $this->assertStringContainsString($value, $messages[0]['content'], "{$locale} prompt lists {$value}");
             }
         }

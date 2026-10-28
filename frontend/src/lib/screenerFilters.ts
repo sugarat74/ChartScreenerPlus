@@ -41,6 +41,12 @@ export const SCREENER_SIGNAL_TYPES: readonly ScreenerSignalType[] = [
   'rsi_oversold',
   'macd_bullish_cross',
   'macd_bearish_cross',
+  'adx_trend_strength',
+  'bollinger_squeeze',
+  'bollinger_close_above_upper',
+  'bollinger_close_below_lower',
+  'stoch_bullish_cross',
+  'stoch_bearish_cross',
 ]
 
 /**
@@ -183,7 +189,7 @@ function isKnownSignalType(value: string): value is ScreenerSignalType {
   return (SCREENER_SIGNAL_TYPES as readonly string[]).includes(value)
 }
 
-/** Dedupe and order arbitrary type strings into the canonical 9-type order. */
+/** Dedupe and order arbitrary type strings into the canonical 15-type order. */
 export function normalizeSignals(values: readonly string[]): ScreenerSignalType[] {
   const known = new Set(values.filter(isKnownSignalType))
   return SCREENER_SIGNAL_TYPES.filter((type) => known.has(type))

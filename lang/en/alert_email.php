@@ -35,6 +35,12 @@ return [
         'rsi_oversold' => 'RSI oversold',
         'macd_bullish_cross' => 'MACD bullish',
         'macd_bearish_cross' => 'MACD bearish',
+        'adx_trend_strength' => 'ADX trend strength',
+        'bollinger_squeeze' => 'Narrow bands',
+        'bollinger_close_above_upper' => 'Close above upper band',
+        'bollinger_close_below_lower' => 'Close below lower band',
+        'stoch_bullish_cross' => 'Stochastic bullish',
+        'stoch_bearish_cross' => 'Stochastic bearish',
     ],
     'patterns' => [
         'double_top' => 'Double top',

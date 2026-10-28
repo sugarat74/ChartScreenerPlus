@@ -63,7 +63,7 @@ class ScreenerQuerySchema
             'properties' => [
                 'signal' => [
                     'type' => 'array',
-                    'items' => ['type' => 'string', 'enum' => ScreenerFilterParser::SIGNAL_TYPES],
+                    'items' => ['type' => 'string', 'enum' => ScreenerFilterParser::AI_SIGNAL_TYPES],
                     'description' => 'Signals on the latest bar, OR-combined. At most 9, no duplicates. Empty when not requested.',
                 ],
                 'rsi_min' => $nullableNumber('Minimum RSI(14), 0 to 100, or null.'),
@@ -135,7 +135,7 @@ class ScreenerQuerySchema
         }
 
         $raw = [
-            'signal' => self::enumList($data['signal'], ScreenerFilterParser::SIGNAL_TYPES, self::MAX_SIGNALS),
+            'signal' => self::enumList($data['signal'], ScreenerFilterParser::AI_SIGNAL_TYPES, self::MAX_SIGNALS),
             'rsi_min' => self::number($data['rsi_min'], self::MAX_RSI),
             'rsi_max' => self::number($data['rsi_max'], self::MAX_RSI),
             'min_rvol' => self::number($data['min_rvol'], self::MAX_RVOL),

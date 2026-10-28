@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Instrument;
 use App\Models\Signal;
+use App\Services\Screener\ScreenerFilterParser;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,17 +22,7 @@ class SignalFactory extends Factory
         return [
             'instrument_id' => Instrument::factory(),
             'date' => fake()->dateTimeBetween('-2 years', 'now')->format('Y-m-d'),
-            'type' => fake()->randomElement([
-                'golden_cross',
-                'death_cross',
-                'ma_alignment_bullish',
-                'ma_alignment_bearish',
-                'pivot_breakout_rvol',
-                'rsi_overbought',
-                'rsi_oversold',
-                'macd_bullish_cross',
-                'macd_bearish_cross',
-            ]),
+            'type' => fake()->randomElement(ScreenerFilterParser::SIGNAL_TYPES),
             'metadata' => [
                 'note' => fake()->sentence(4),
             ],

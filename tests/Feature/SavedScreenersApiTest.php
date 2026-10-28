@@ -58,6 +58,23 @@ class SavedScreenersApiTest extends TestCase
         return array_merge(['name' => 'Momentum', 'filters' => self::FILTERS], $overrides);
     }
 
+    public function test_saved_screeners_accept_the_six_expansion_signal_types(): void
+    {
+        $user = User::factory()->create();
+        $filters = self::FILTERS;
+        $filters['signal'] = ['stoch_bullish_cross', 'bollinger_squeeze', 'golden_cross'];
+
+        $this->actingAs($user)
+            ->postJson('/api/screeners', ['name' => 'Expansion', 'filters' => $filters])
+            ->assertCreated()
+            ->assertJsonPath('screener.filters.signal', ['golden_cross', 'bollinger_squeeze', 'stoch_bullish_cross']);
+
+        $filters['signal'] = ['bogus'];
+        $this->actingAs($user)
+            ->postJson('/api/screeners', ['name' => 'Bad', 'filters' => $filters])
+            ->assertUnprocessable();
+    }
+
     public function test_a_guest_is_rejected_from_every_saved_screener_route(): void
     {
         $this->getJson('/api/screeners')->assertUnauthorized();

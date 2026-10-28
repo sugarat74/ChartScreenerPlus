@@ -189,6 +189,12 @@ export const guideEs: GuideTexts = {
         { term: 'RSI sobreventa', summary: 'RSI 14 igual o inferior a 30.', illustration: { kind: 'rsiOversold', alt: 'La línea RSI azul termina por debajo del umbral inferior de 30.' } },
         { term: 'MACD alcista', summary: 'La línea MACD cruza por encima de su línea de señal en la última sesión.', illustration: { kind: 'macdBullish', alt: 'La línea MACD azul cruza de abajo arriba la línea de señal roja en el punto destacado.' } },
         { term: 'MACD bajista', summary: 'La línea MACD cruza por debajo de su línea de señal en la última sesión.', illustration: { kind: 'macdBearish', alt: 'La línea MACD azul cruza de arriba abajo la línea de señal roja en el punto destacado.' } },
+        { term: 'Fuerza de tendencia ADX', summary: 'El ADX (14) cruza por encima de 25 en la última sesión (en la anterior estaba en 25 o menos). Describe una tendencia que gana fuerza, no su dirección: la dirección se lee en +DI y -DI del detalle de la señal.' },
+        { term: 'Bandas estrechas', summary: 'El ancho de las Bandas de Bollinger (20, 2) como porcentaje de la banda central está en su valor más bajo o igual al mínimo de las 119 sesiones anteriores: el más estrecho en unos seis meses. Describe bandas estrechas, no lo que hará el precio después.' },
+        { term: 'Cierre sobre banda superior', summary: 'El cierre cruza por encima de la banda superior de Bollinger (20, 2) en la última sesión (en la anterior estaba en ella o por debajo).' },
+        { term: 'Cierre bajo banda inferior', summary: 'El cierre cruza por debajo de la banda inferior de Bollinger (20, 2) en la última sesión (en la anterior estaba en ella o por encima).' },
+        { term: 'Estocástico alcista', summary: 'El %K del Estocástico (14, 3, 3) cruza por encima del %D en la última sesión tras estar en 20 o menos en la anterior: el giro al salir de la zona baja.' },
+        { term: 'Estocástico bajista', summary: 'El %K del Estocástico (14, 3, 3) cruza por debajo del %D en la última sesión tras estar en 80 o más en la anterior: el giro al salir de la zona alta.' },
       ],
       notes: [
         'Si un indicador no tiene historial suficiente, la señal que depende de él no se activa.',
