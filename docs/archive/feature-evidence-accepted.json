@@ -2071,5 +2071,30 @@
       "Independent validator ACCEPT 2026-10-29: spec conformance reviewed; manual browser pass by the validator at 1440 and 390 px light and dark (no page overflow, validation, chips, forced columns, Clear filters keeps sort); Vitest 427, lint/tsc/build clean, init.ps1 Baseline OK; PROGRESS rotation verified lossless."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec. Implemented 2026-10-29: optional Indicators columns (ADX, %B, ATR %, Stoch %K; band width is filter and sort only, edited from the %B control), remembered toggle (localStorage chartiko.screener.indicators), an indicator sort also forces the columns visible, 10 sort options in the selector, guide and DESIGN.md updated. Awaiting independent validation. Independently accepted 2026-10-26."
+  },
+  {
+    "id": "chart-indicator-overlays",
+    "area": "chart",
+    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
+    "title": "Chart: indicator picker and Bollinger Bands",
+    "user_visible_behavior": "On the chart, an Indicators control lets you switch the Bollinger Bands on and off (remembered in your browser), and the band Signals draw a line at the crossed band.",
+    "depends_on": [
+      "indicators-expansion-storage",
+      "signals-expansion"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Default chart unchanged and no indicators request until a toggle is on; bands align with candles, warm-up null omitted, theme/language/ticker changes leak no canvas",
+      "Failed series request shows a localized inline error and the chart keeps working; keyboard operable",
+      "Vitest for chartData helpers and picker with throwing localStorage; manual light/dark at 390 and 1440 px",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-10-29 implementer: Vitest 56 files / 439 passed (13 new: picker, no request when off, one request when on, restore, error+retry, insufficient note, throwing localStorage, chartData band helpers); lint, tsc, build; init.ps1 Baseline OK",
+      "Manual browser pass with seeded temp SQLite: 1440 and 390 px light and dark, bands aligned, band-signal dashed line, no overflow at 390, canvas count stable across toggles and theme switch; servers stopped",
+      "Awaiting independent validation",
+      "Independent validator ACCEPT 2026-10-29: Bollinger overlay and picker verified against spec; lazy request, null warm-up omitted, default chart unchanged; own browser pass at 1440 and 390 px light and dark, es and en, incl. HTTP failure and language switch; Vitest 439, lint/tsc/build clean, init.ps1 Baseline OK; PROGRESS rotation lossless."
+    ],
+    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec. Independently accepted 2026-10-26."
   }
 ]
