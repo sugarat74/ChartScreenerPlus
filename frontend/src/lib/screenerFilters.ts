@@ -2,13 +2,15 @@
  * Screener filter helpers. Pure functions with no React dependency so the URL
  * round-trip (parse -> patch -> canonical key) is auditable and deterministic.
  *
- * The SPA owns exactly twenty query keys, all named after the screener API
+ * The SPA owns exactly thirty query keys, all named after the screener API
  * params: the criteria (`signal`, `rsi_min`, `rsi_max`, `min_rvol`,
  * `price_above_sma200`, `ma_cross`, `pattern`, `pattern_status`, the sector
  * context keys `sector_trend` and `sector_rs_rank_max` of
  * market-context-patterns, and the table column keys `search`, `sector`,
  * `industry`, `country`, `rvol_max`, `close_min`, `close_max`, `change_min`,
- * `change_max` of screener-table-column-controls) plus the ranking key
+ * `change_max` of screener-table-column-controls, and the ten indicator range
+ * keys `adx_min`/`adx_max`, `bb_pctb_*`, `bb_width_*`, `atr_pct_*` and
+ * `stoch_k_*` of screener-technical-filters-ui) plus the ranking key
  * `sort`; any other query param (a campaign tag, `page`) is preserved
  * untouched.
  */
@@ -114,6 +116,16 @@ export const SCREENER_SORT_OPTIONS: readonly { value: ScreenerSort; labelKey: Me
   { value: 'industry_desc', labelKey: 'sorts.industry_desc' },
   { value: 'country_asc', labelKey: 'sorts.country_asc' },
   { value: 'country_desc', labelKey: 'sorts.country_desc' },
+  { value: 'adx_desc', labelKey: 'sorts.adx_desc' },
+  { value: 'adx_asc', labelKey: 'sorts.adx_asc' },
+  { value: 'bb_pctb_desc', labelKey: 'sorts.bb_pctb_desc' },
+  { value: 'bb_pctb_asc', labelKey: 'sorts.bb_pctb_asc' },
+  { value: 'bb_width_desc', labelKey: 'sorts.bb_width_desc' },
+  { value: 'bb_width_asc', labelKey: 'sorts.bb_width_asc' },
+  { value: 'atr_pct_desc', labelKey: 'sorts.atr_pct_desc' },
+  { value: 'atr_pct_asc', labelKey: 'sorts.atr_pct_asc' },
+  { value: 'stoch_k_desc', labelKey: 'sorts.stoch_k_desc' },
+  { value: 'stoch_k_asc', labelKey: 'sorts.stoch_k_asc' },
 ]
 
 /** Max length of the `search` (ticker/company) fragment; mirrors the API. */
@@ -128,9 +140,47 @@ export const NUMERIC_BOUNDS = {
   rvol: [0, 1000],
   close: [0, 1_000_000],
   change: [-100, 1000],
+  adx: [0, 100],
+  bbPctb: [-1, 2],
+  bbWidth: [0, 1000],
+  atrPct: [0, 100],
+  stochK: [0, 100],
 } as const satisfies Record<string, readonly [number, number]>
 
 export type NumericColumn = keyof typeof NUMERIC_BOUNDS
+
+/** The five indicator ranges: filter fields and API keys (all inclusive). */
+export const INDICATOR_RANGES = [
+  { column: 'adx', min: 'adxMin', max: 'adxMax', minKey: 'adx_min', maxKey: 'adx_max' },
+  { column: 'bbPctb', min: 'bbPctbMin', max: 'bbPctbMax', minKey: 'bb_pctb_min', maxKey: 'bb_pctb_max' },
+  { column: 'bbWidth', min: 'bbWidthMin', max: 'bbWidthMax', minKey: 'bb_width_min', maxKey: 'bb_width_max' },
+  { column: 'atrPct', min: 'atrPctMin', max: 'atrPctMax', minKey: 'atr_pct_min', maxKey: 'atr_pct_max' },
+  { column: 'stochK', min: 'stochKMin', max: 'stochKMax', minKey: 'stoch_k_min', maxKey: 'stoch_k_max' },
+] as const satisfies readonly {
+  column: NumericColumn
+  min: keyof ScreenerFilters
+  max: keyof ScreenerFilters
+  minKey: keyof SavedScreenerFilters
+  maxKey: keyof SavedScreenerFilters
+}[]
+
+type IndicatorField = (typeof INDICATOR_RANGES)[number]['min' | 'max']
+
+/** The sorts that rank by an indicator column (they also reveal the columns). */
+export const INDICATOR_SORTS: readonly ScreenerSort[] = [
+  'adx_asc', 'adx_desc', 'bb_pctb_asc', 'bb_pctb_desc', 'bb_width_asc', 'bb_width_desc',
+  'atr_pct_asc', 'atr_pct_desc', 'stoch_k_asc', 'stoch_k_desc',
+]
+
+/** Whether any indicator range criterion is active. */
+export function usesIndicatorCriteria(filters: ScreenerFilters): boolean {
+  return INDICATOR_RANGES.some((range) => filters[range.min] !== null || filters[range.max] !== null)
+}
+
+/** The Indicators columns must show: a criterion or an indicator sort is active. */
+export function forcesIndicatorColumns(filters: ScreenerFilters): boolean {
+  return usesIndicatorCriteria(filters) || INDICATOR_SORTS.includes(filters.sort)
+}
 
 /** The GICS sector names accepted by `sector` (canonical API values). */
 export const SCREENER_SECTORS: readonly string[] = CLASSIFICATION_SECTORS
@@ -155,6 +205,16 @@ export const EMPTY_SCREENER_FILTERS: ScreenerFilters = {
   closeMax: null,
   changeMin: null,
   changeMax: null,
+  adxMin: null,
+  adxMax: null,
+  bbPctbMin: null,
+  bbPctbMax: null,
+  bbWidthMin: null,
+  bbWidthMax: null,
+  atrPctMin: null,
+  atrPctMax: null,
+  stochKMin: null,
+  stochKMax: null,
   sort: DEFAULT_SCREENER_SORT,
 }
 
@@ -183,6 +243,16 @@ export const EMPTY_SCREENER_CRITERIA: Partial<ScreenerFilters> = {
   closeMax: null,
   changeMin: null,
   changeMax: null,
+  adxMin: null,
+  adxMax: null,
+  bbPctbMin: null,
+  bbPctbMax: null,
+  bbWidthMin: null,
+  bbWidthMax: null,
+  atrPctMin: null,
+  atrPctMax: null,
+  stochKMin: null,
+  stochKMax: null,
 }
 
 function isKnownSignalType(value: string): value is ScreenerSignalType {
@@ -332,6 +402,15 @@ export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
     parseBoundInput(params.get('change_min'), 'change'),
     parseBoundInput(params.get('change_max'), 'change'),
   )
+  const indicators = Object.fromEntries(
+    INDICATOR_RANGES.flatMap((range) => {
+      const [min, max] = orderedRange(
+        parseBoundInput(params.get(range.minKey), range.column),
+        parseBoundInput(params.get(range.maxKey), range.column),
+      )
+      return [[range.min, min], [range.max, max]]
+    }),
+  ) as Pick<ScreenerFilters, IndicatorField>
 
   return {
     signals: normalizeSignals(rawSignals),
@@ -354,6 +433,7 @@ export function parseScreenerFilters(params: URLSearchParams): ScreenerFilters {
     closeMax,
     changeMin,
     changeMax,
+    ...indicators,
     sort: parseScreenerSort(params.get('sort')),
   }
 }
@@ -437,6 +517,15 @@ export function patchScreenerFilters(
       setOrDelete(next, key, bound === null ? null : String(bound))
     }
   }
+  for (const range of INDICATOR_RANGES) {
+    for (const [field, key] of [[range.min, range.minKey], [range.max, range.maxKey]] as const) {
+      const value = patch[field]
+      if (value !== undefined) {
+        const bound = boundNumber(value, range.column)
+        setOrDelete(next, key, bound === null ? null : String(bound))
+      }
+    }
+  }
   if (patch.sort !== undefined) {
     setOrDelete(next, 'sort', patch.sort === DEFAULT_SCREENER_SORT ? null : patch.sort)
   }
@@ -456,6 +545,7 @@ function columnCriteria(filters: ScreenerFilters): unknown[] {
     filters.closeMax,
     filters.changeMin,
     filters.changeMax,
+    ...INDICATOR_RANGES.flatMap((range) => [filters[range.min], filters[range.max]]),
   ]
 }
 
@@ -513,14 +603,15 @@ export function screenerFiltersKey(filters: ScreenerFilters): string {
     filters.closeMax ?? '',
     filters.changeMin ?? '',
     filters.changeMax ?? '',
+    ...INDICATOR_RANGES.flatMap((range) => [filters[range.min] ?? '', filters[range.max] ?? '']),
     filters.sort,
   ].join('|')
 }
 
 /**
- * Serialize the live filter state into the canonical twenty-key definition
+ * Serialize the live filter state into the canonical thirty-key definition
  * that is stored with a Saved Screener (API param names, `sort` included). The
- * SPA always emits all twenty keys, so a stored definition is always complete
+ * SPA always emits all thirty keys, so a stored definition is always complete
  * and re-appliable without defaults.
  */
 export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreenerFilters {
@@ -544,6 +635,16 @@ export function serializeScreenerFilters(filters: ScreenerFilters): SavedScreene
     close_max: filters.closeMax,
     change_min: filters.changeMin,
     change_max: filters.changeMax,
+    adx_min: filters.adxMin,
+    adx_max: filters.adxMax,
+    bb_pctb_min: filters.bbPctbMin,
+    bb_pctb_max: filters.bbPctbMax,
+    bb_width_min: filters.bbWidthMin,
+    bb_width_max: filters.bbWidthMax,
+    atr_pct_min: filters.atrPctMin,
+    atr_pct_max: filters.atrPctMax,
+    stoch_k_min: filters.stochKMin,
+    stoch_k_max: filters.stochKMax,
     sort: filters.sort,
   }
 }
@@ -577,6 +678,13 @@ export function deserializeScreenerFilters(
   )
   const [closeMin, closeMax] = orderedRange(boundNumber(payload.close_min, 'close'), boundNumber(payload.close_max, 'close'))
   const [changeMin, changeMax] = orderedRange(boundNumber(payload.change_min, 'change'), boundNumber(payload.change_max, 'change'))
+  // Absent on the 20-key definitions saved before the indicator filters: off.
+  const indicators = Object.fromEntries(
+    INDICATOR_RANGES.flatMap((range) => {
+      const [min, max] = orderedRange(boundNumber(payload[range.minKey], range.column), boundNumber(payload[range.maxKey], range.column))
+      return [[range.min, min], [range.max, max]]
+    }),
+  ) as Pick<ScreenerFilters, IndicatorField>
 
   return {
     signals: normalizeSignals(Array.isArray(payload.signal) ? payload.signal : []),
@@ -602,6 +710,7 @@ export function deserializeScreenerFilters(
     closeMax,
     changeMin,
     changeMax,
+    ...indicators,
     sort: parseScreenerSort(typeof payload.sort === 'string' ? payload.sort : null),
   }
 }
@@ -696,6 +805,15 @@ export function describeRange(
   return null
 }
 
+/** Label of each indicator range (bandwidth has a chip but no column of its own). */
+export const INDICATOR_LABEL_KEYS: Record<(typeof INDICATOR_RANGES)[number]['column'], MessageKey> = {
+  adx: 'screener.colAdx',
+  bbPctb: 'screener.colBbPctb',
+  bbWidth: 'screener.colBbWidth',
+  atrPct: 'screener.colAtrPct',
+  stochK: 'screener.colStochK',
+}
+
 /**
  * Localized summaries of the table column criteria that the technical
  * summary does not already describe (RSI and the RVOL minimum are described
@@ -723,6 +841,9 @@ export function describeColumnCriteria(
     describeRange(t('screener.colClose'), filters.closeMin ?? null, filters.closeMax ?? null, t, formatValue),
     describeRange(t('screener.colChange'), filters.changeMin ?? null, filters.changeMax ?? null, t, formatValue),
     describeRange(t('screener.colRvol'), null, filters.rvolMax ?? null, t, formatValue),
+    ...INDICATOR_RANGES.map((range) =>
+      describeRange(t(INDICATOR_LABEL_KEYS[range.column]), filters[range.min] ?? null, filters[range.max] ?? null, t, formatValue),
+    ),
   ]
   for (const range of ranges) {
     if (range !== null) {

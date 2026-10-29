@@ -6,6 +6,7 @@ import type { MessageKey, MessageParams } from '../i18n/translate.ts'
 import type { SavedScreenerFilters } from './api.ts'
 import {
   EMPTY_SCREENER_CRITERIA,
+  forcesIndicatorColumns,
   EMPTY_SCREENER_FILTERS,
   SECTOR_RS_RANK_OPTIONS,
   countActiveFilters,
@@ -64,12 +65,14 @@ describe('sector context filters (market-context-patterns)', () => {
     expect(withoutMarketContext(EMPTY_SCREENER_FILTERS)).toBe(EMPTY_SCREENER_FILTERS)
   })
 
-  it('serializes the twenty-key definition', () => {
+  it('serializes the thirty-key definition', () => {
     const saved = serializeScreenerFilters({ ...EMPTY_SCREENER_FILTERS, sectorTrend: 'uptrend', sectorRsRankMax: 3 })
     expect(Object.keys(saved).sort()).toEqual([
+      'adx_max', 'adx_min', 'atr_pct_max', 'atr_pct_min', 'bb_pctb_max', 'bb_pctb_min', 'bb_width_max', 'bb_width_min',
       'change_max', 'change_min', 'close_max', 'close_min', 'country', 'industry',
       'ma_cross', 'min_rvol', 'pattern', 'pattern_status', 'price_above_sma200', 'rsi_max', 'rsi_min', 'rvol_max',
       'search', 'sector', 'sector_rs_rank_max', 'sector_trend', 'signal', 'sort',
+      'stoch_k_max', 'stoch_k_min',
     ])
     expect(saved.sector_trend).toBe('uptrend')
     expect(saved.sector_rs_rank_max).toBe(3)
@@ -101,5 +104,62 @@ describe('sector context filters (market-context-patterns)', () => {
       'RSI ≥ 30 · Sector Alcista · Top 3 sectores · Orden: Volumen relativo (RVOL mayor)',
     )
     expect(describeSavedFilters(definition, en, (value) => formatDecimal('en', value))).toContain('Sector Uptrend · Top 3 sectors')
+  })
+})
+
+describe('indicator range filters (screener-technical-filters-ui)', () => {
+  it('parses, clamps, orders and patches the ten indicator keys canonically', () => {
+    const filters = parseScreenerFilters(
+      new URLSearchParams('adx_min=25&adx_max=500&bb_pctb_min=-5&bb_pctb_max=1.5&bb_width_min=20&bb_width_max=5&atr_pct_min=abc&stoch_k_max=20&utm=x'),
+    )
+    expect(filters).toMatchObject({
+      adxMin: 25, adxMax: 100, bbPctbMin: -1, bbPctbMax: 1.5, bbWidthMin: 5, bbWidthMax: 20, atrPctMin: null, atrPctMax: null,
+      stochKMin: null, stochKMax: 20,
+    })
+    expect(countActiveFilters(filters)).toBe(7)
+    expect(forcesIndicatorColumns(filters)).toBe(true)
+
+    const rebuilt = patchScreenerFilters(new URLSearchParams('utm=x'), filters)
+    expect(rebuilt.get('adx_max')).toBe('100')
+    expect(rebuilt.get('utm')).toBe('x')
+    expect(parseScreenerFilters(rebuilt)).toEqual(filters)
+    expect(screenerFiltersKey(filters)).not.toBe(screenerFiltersKey(EMPTY_SCREENER_FILTERS))
+  })
+
+  it('an indicator sort forces the columns; the default does not', () => {
+    expect(forcesIndicatorColumns(EMPTY_SCREENER_FILTERS)).toBe(false)
+    expect(forcesIndicatorColumns({ ...EMPTY_SCREENER_FILTERS, sort: 'atr_pct_asc' })).toBe(true)
+    expect(parseScreenerFilters(new URLSearchParams('sort=bb_width_desc')).sort).toBe('bb_width_desc')
+  })
+
+  it('Clear filters removes the ten keys and keeps the sort', () => {
+    const before = new URLSearchParams('adx_min=25&stoch_k_max=20&bb_width_min=3&sort=adx_desc')
+    const cleared = patchScreenerFilters(before, EMPTY_SCREENER_CRITERIA)
+    expect(cleared.toString()).toBe('sort=adx_desc')
+  })
+
+  it('round-trips the thirty-key definition and loads a legacy twenty-key row', () => {
+    const filters = { ...EMPTY_SCREENER_FILTERS, adxMin: 20, bbPctbMax: 0.2, bbWidthMin: 4, atrPctMax: 3.5, stochKMin: 10, sort: 'stoch_k_asc' as const }
+    const saved = serializeScreenerFilters(filters)
+    expect(saved).toMatchObject({ adx_min: 20, bb_pctb_max: 0.2, bb_width_min: 4, atr_pct_max: 3.5, stoch_k_min: 10, adx_max: null })
+    expect(deserializeScreenerFilters(saved)).toEqual(filters)
+
+    const legacy: SavedScreenerFilters = {
+      signal: [], rsi_min: 30, rsi_max: null, min_rvol: null, price_above_sma200: false, ma_cross: null, sort: 'rvol_desc',
+    }
+    const restored = deserializeScreenerFilters(legacy)
+    expect(restored).toMatchObject({ rsiMin: 30, adxMin: null, adxMax: null, stochKMax: null, bbWidthMin: null })
+    expect(patchScreenerFilters(new URLSearchParams('adx_min=40'), restored).toString()).toBe('rsi_min=30')
+  })
+
+  it('describes the indicator ranges in both languages and ignores malformed stored values', () => {
+    const definition: SavedScreenerFilters = {
+      signal: [], rsi_min: null, rsi_max: null, min_rvol: null, price_above_sma200: false, ma_cross: null,
+      adx_min: 25, bb_width_max: 10, stoch_k_min: 'x' as never, atr_pct_max: 999, sort: 'adx_desc',
+    }
+    expect(describeSavedFilters(definition, es, (value) => formatDecimal('es', value))).toBe(
+      'ADX (14) ≥ 25 · Ancho de bandas % ≤ 10 · ATR % ≤ 100 · Orden: ADX (mayor)',
+    )
+    expect(describeSavedFilters(definition, en, (value) => formatDecimal('en', value))).toContain('Band width % ≤ 10')
   })
 })

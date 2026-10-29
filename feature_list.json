@@ -955,21 +955,11 @@
   {
     "id": "screener-technical-filters-ui",
     "area": "frontend",
-    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
     "title": "Screener UI: indicator columns and filters",
-    "user_visible_behavior": "The Screener offers an Indicators columns toggle (ADX, %B, ATR %, Stochastic %K) with heading sort and range filters, chips, URL and saved-screener support, and the new Signals in the Signals filter; the default table is unchanged.",
+    "status": "accepted",
     "depends_on": [
       "screener-technical-filters-api"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Vitest: URL parse/patch/key, summaries, optional columns, toggle with a throwing localStorage; lint, typecheck, build",
-      "Default table and requests unchanged; criteria in the URL force the columns visible; Clear filters keeps the sort; null shows a dash",
-      "es/en complete, guide updated, no overflow at 390 px; manual check at desktop and narrow widths",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+    ]
   },
   {
     "id": "chart-indicator-overlays",

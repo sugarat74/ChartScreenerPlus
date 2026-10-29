@@ -543,6 +543,16 @@ export type ScreenerSort =
   | 'country_desc'
   | 'close_asc'
   | 'close_desc'
+  | 'adx_asc'
+  | 'adx_desc'
+  | 'bb_pctb_asc'
+  | 'bb_pctb_desc'
+  | 'bb_width_asc'
+  | 'bb_width_desc'
+  | 'atr_pct_asc'
+  | 'atr_pct_desc'
+  | 'stoch_k_asc'
+  | 'stoch_k_desc'
 
 /**
  * The subset of the prototype `FilterState` that the frozen screener API can
@@ -583,6 +593,21 @@ export type ScreenerFilters = {
   closeMax: number | null
   changeMin: number | null
   changeMax: number | null
+  /**
+   * Technical indicator ranges (screener-technical-filters-ui), inclusive and
+   * public: ADX (14), Bollinger %B and bandwidth (%), ATR (14) as a percent of
+   * the close, and Stochastic %K (14, 3, 3).
+   */
+  adxMin: number | null
+  adxMax: number | null
+  bbPctbMin: number | null
+  bbPctbMax: number | null
+  bbWidthMin: number | null
+  bbWidthMax: number | null
+  atrPctMin: number | null
+  atrPctMax: number | null
+  stochKMin: number | null
+  stochKMax: number | null
   sort: ScreenerSort
 }
 
@@ -607,6 +632,12 @@ export type ScreenerCandidate = {
   change_percent: number | null
   rvol: number | null
   rsi14: number | null
+  /** Indicator readings (screener-technical-filters-api); absent on older deployments. */
+  adx?: number | null
+  bb_pctb?: number | null
+  bb_width?: number | null
+  atr_pct?: number | null
+  stoch_k?: number | null
   signals: string[]
   patterns: CandidatePattern[]
   /** Listing Market and currency (universe-registry); absent on older deployments. */
@@ -692,6 +723,16 @@ function screenerQueryString(filters: ScreenerFilters): string {
     ['close_max', filters.closeMax],
     ['change_min', filters.changeMin],
     ['change_max', filters.changeMax],
+    ['adx_min', filters.adxMin],
+    ['adx_max', filters.adxMax],
+    ['bb_pctb_min', filters.bbPctbMin],
+    ['bb_pctb_max', filters.bbPctbMax],
+    ['bb_width_min', filters.bbWidthMin],
+    ['bb_width_max', filters.bbWidthMax],
+    ['atr_pct_min', filters.atrPctMin],
+    ['atr_pct_max', filters.atrPctMax],
+    ['stoch_k_min', filters.stochKMin],
+    ['stoch_k_max', filters.stochKMax],
   ]
   for (const [key, value] of numbers) {
     if (value !== null) {
@@ -786,7 +827,7 @@ export type ScreenerInterpretation = {
 }
 
 /**
- * The twenty-key canonical definition stored with a Saved Screener. It uses the
+ * The thirty-key canonical definition stored with a Saved Screener. It uses the
  * API's own param names (snake_case) and includes `sort`, so applying a Screener
  * restores the exact filters and ranking the user saved. The pattern, sector
  * context and table column keys are optional on read: older deployments (and
@@ -812,9 +853,20 @@ export type SavedScreenerFilters = {
   close_max?: number | null
   change_min?: number | null
   change_max?: number | null
+  /** Indicator ranges (screener-technical-filters-ui); absent on the 20-key rows saved before. */
+  adx_min?: number | null
+  adx_max?: number | null
+  bb_pctb_min?: number | null
+  bb_pctb_max?: number | null
+  bb_width_min?: number | null
+  bb_width_max?: number | null
+  atr_pct_min?: number | null
+  atr_pct_max?: number | null
+  stoch_k_min?: number | null
+  stoch_k_max?: number | null
   /**
    * Universe slug (universe-registry). The API stores it only for a
-   * non-default universe, so S&P 500 definitions keep their twenty keys.
+   * non-default universe, so S&P 500 definitions keep their thirty keys.
    */
   universe?: string
   sort: ScreenerSort

@@ -6,6 +6,7 @@ import { es } from '../i18n/messages/es.ts'
 import type { SavedScreenerFilters } from './api.ts'
 import {
   CANDIDATE_COLUMNS,
+  INDICATOR_COLUMNS,
   candidateColumn,
   clearColumnPatch,
   columnFilterSummary,
@@ -131,7 +132,7 @@ describe('screener table column URL state (screener-table-column-controls)', () 
   })
 
   it('offers a localized label for every sort', () => {
-    expect(SCREENER_SORT_OPTIONS).toHaveLength(18)
+    expect(SCREENER_SORT_OPTIONS).toHaveLength(28)
     for (const option of SCREENER_SORT_OPTIONS) {
       expect(tEs(option.labelKey)).not.toBe(option.labelKey)
       expect(tEn(option.labelKey)).not.toBe(option.labelKey)
@@ -146,7 +147,9 @@ describe('candidate columns', () => {
     ])
     const sorts = CANDIDATE_COLUMNS.flatMap((column) => [column.asc, column.desc])
     expect(new Set(sorts).size).toBe(18)
-    expect([...sorts].sort()).toEqual(SCREENER_SORT_OPTIONS.map((option) => option.value).sort())
+    const indicatorSorts = INDICATOR_COLUMNS.flatMap((column) => [column.asc, column.desc])
+    // Band width ranks from the selector only: it has no column of its own.
+    expect([...sorts, ...indicatorSorts, 'bb_width_asc', 'bb_width_desc'].sort()).toEqual(SCREENER_SORT_OPTIONS.map((option) => option.value).sort())
   })
 
   it('starts text columns A-Z and figures highest first, then flips', () => {
@@ -177,5 +180,28 @@ describe('candidate columns', () => {
     expect(columnFilterSummary(candidateColumn('close'), filters, tEs, plain)).toBeNull()
     expect(clearColumnPatch(candidateColumn('rvol'))).toEqual({ minRvol: null, rvolMax: null })
     expect(clearColumnPatch(candidateColumn('signals'))).toEqual({ signals: [], patterns: [], patternStatus: 'any' })
+  })
+})
+
+describe('optional Indicators columns (screener-technical-filters-ui)', () => {
+  it('defines four columns, off by default, each with a descending-first sort and a range', () => {
+    expect(CANDIDATE_COLUMNS).toHaveLength(9)
+    expect(INDICATOR_COLUMNS.map((column) => column.id)).toEqual(['adx', 'bbPctb', 'atrPct', 'stochK'])
+    expect(INDICATOR_COLUMNS.every((column) => column.first === 'desc' && column.range !== undefined)).toBe(true)
+    expect(nextColumnSort(candidateColumn('adx'), 'rvol_desc')).toBe('adx_desc')
+    expect(nextColumnSort(candidateColumn('adx'), 'adx_desc')).toBe('adx_asc')
+    expect(columnSortDirection(candidateColumn('stochK'), 'stoch_k_asc')).toBe('asc')
+  })
+
+  it('the %B control covers the bandwidth too: reports, summarizes and clears both', () => {
+    const column = candidateColumn('bbPctb')
+    const onlyWidth = { ...EMPTY_SCREENER_FILTERS, bbWidthMax: 8 }
+    expect(isColumnFiltered(column, onlyWidth)).toBe(true)
+    expect(columnFilterSummary(column, onlyWidth, tEn, plain)).toBe('Band width % ≤ 8')
+    const both = { ...onlyWidth, bbPctbMin: 0.1, bbPctbMax: 0.9 }
+    expect(columnFilterSummary(column, both, tEn, plain)).toBe('%B (20, 2) 0.1–0.9 · Band width % ≤ 8')
+    expect(clearColumnPatch(column)).toEqual({ bbPctbMin: null, bbPctbMax: null, bbWidthMin: null, bbWidthMax: null })
+    expect(isColumnFiltered(candidateColumn('adx'), both)).toBe(false)
+    expect(columnFilterSummary(candidateColumn('adx'), both, tEn, plain)).toBeNull()
   })
 })

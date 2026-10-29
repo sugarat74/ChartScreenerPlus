@@ -23,6 +23,7 @@ import { countryLabel, sectorLabel } from '../../lib/companyClassification.ts'
 import {
   CANDIDATE_COLUMNS,
   COLUMN_FILTER_PANEL_ID,
+  INDICATOR_COLUMNS,
   columnLabel,
   columnFilterToggleId,
   columnSortDirection,
@@ -128,17 +129,43 @@ interface CandidateTableProps {
   controls?: CandidateTableControls
   /** Currency of the universe (ISO code), shown in the Close heading. */
   currency?: string | null
+  /** Append the optional Indicators columns (ADX, %B, ATR %, Stoch %K); default off. */
+  showIndicators?: boolean
 }
 
-export default function CandidateTable({ candidates, showCompanyCardLink = false, controls, currency }: CandidateTableProps) {
+/** Decimals shown for each Indicators column. */
+const INDICATOR_DIGITS: Record<string, number> = { adx: 1, bbPctb: 2, atrPct: 2, stochK: 1 }
+
+function indicatorValue(candidate: ScreenerCandidate, id: string): number | null {
+  switch (id) {
+    case 'adx':
+      return candidate.adx ?? null
+    case 'bbPctb':
+      return candidate.bb_pctb ?? null
+    case 'atrPct':
+      return candidate.atr_pct ?? null
+    default:
+      return candidate.stoch_k ?? null
+  }
+}
+
+export default function CandidateTable({
+  candidates,
+  showCompanyCardLink = false,
+  controls,
+  currency,
+  showIndicators = false,
+}: CandidateTableProps) {
   const { t, formatPrice, formatChangePercent, formatMultiple, formatNumber } = useI18n()
+
+  const columns = showIndicators ? [...CANDIDATE_COLUMNS, ...INDICATOR_COLUMNS] : CANDIDATE_COLUMNS
 
   return (
     <div className="overflow-x-auto rounded-md border-2 border-outline bg-surface-bright shadow-[2px_2px_0px_var(--color-shadow)]">
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="border-b-2 border-outline bg-surface-container font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-            {CANDIDATE_COLUMNS.map((column) =>
+            {columns.map((column) =>
               controls ? (
                 <ControlledHeader key={column.id} column={column} controls={controls} currency={currency} />
               ) : (
@@ -246,6 +273,18 @@ export default function CandidateTable({ candidates, showCompanyCardLink = false
                     </div>
                   )}
                 </td>
+
+                {showIndicators
+                  ? INDICATOR_COLUMNS.map((column) => (
+                      <td
+                        key={column.id}
+                        data-testid={`candidate-${column.id}`}
+                        className="px-4 py-2 text-right font-mono text-xs text-on-surface"
+                      >
+                        {formatNumber(indicatorValue(candidate, column.id), INDICATOR_DIGITS[column.id])}
+                      </td>
+                    ))
+                  : null}
               </tr>
             )
           })}

@@ -21,10 +21,11 @@ import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerFilters, ScreenerPatternStatus, ScreenerPatternType, ScreenerSignalType } from '../../lib/api.ts'
 import { CLASSIFICATION_COUNTRIES, countryLabel, sectorLabel } from '../../lib/companyClassification.ts'
 import {
-  CANDIDATE_COLUMNS,
+  ALL_CANDIDATE_COLUMNS,
   COLUMN_FILTER_PANEL_ID,
   candidateColumn,
   clearColumnPatch,
+  columnRanges,
   columnFilterSummary,
   columnLabel,
   columnFilterToggleId,
@@ -94,7 +95,7 @@ export default function ScreenerColumnFilters({
 }: ScreenerColumnFiltersProps) {
   const { t, formatDecimal } = useI18n()
   const formatValue = (value: number) => formatDecimal(value)
-  const active = CANDIDATE_COLUMNS.filter((column) => isColumnFiltered(column, filters))
+  const active = ALL_CANDIDATE_COLUMNS.filter((column) => isColumnFiltered(column, filters))
 
   if (active.length === 0 && openColumn === null) {
     return null
@@ -169,7 +170,7 @@ function pickColumnState(column: CandidateColumn, filters: ScreenerFilters): unk
     case 'signals':
       return null
     case 'range':
-      return column.range ? [filters[column.range.min], filters[column.range.max]] : null
+      return columnRanges(column).map((range) => [filters[range.min], filters[range.max]])
   }
 }
 
@@ -339,22 +340,20 @@ function toDraft(value: number | null): string {
 
 function RangeEditor({ column, filters, onChange, onClose, onClear }: FieldEditorProps) {
   const { t, formatNumber } = useI18n()
-  const range = column.range
-  const [minDraft, setMinDraft] = useState(range ? toDraft(filters[range.min]) : '')
-  const [maxDraft, setMaxDraft] = useState(range ? toDraft(filters[range.max]) : '')
-  const [error, setError] = useState<'invalid' | 'inverted' | null>(null)
+  const ranges = columnRanges(column)
+  const [drafts, setDrafts] = useState(() =>
+    ranges.map((range) => ({ min: toDraft(filters[range.min]), max: toDraft(filters[range.max]) })),
+  )
+  const [error, setError] = useState<{ kind: 'invalid' | 'inverted'; index: number } | null>(null)
 
-  if (!range) {
+  if (ranges.length === 0) {
     return null
   }
-  const [lower, upper] = NUMERIC_BOUNDS[range.bounds]
-  const minId = `${COLUMN_FILTER_PANEL_ID}-min`
-  const maxId = `${COLUMN_FILTER_PANEL_ID}-max`
   const errorId = `${COLUMN_FILTER_PANEL_ID}-error`
   const hintId = `${COLUMN_FILTER_PANEL_ID}-hint`
-  const committed = filters[range.min] !== null || filters[range.max] !== null
+  const committed = ranges.some((range) => filters[range.min] !== null || filters[range.max] !== null)
 
-  function read(raw: string): number | null | undefined {
+  function read(raw: string, lower: number, upper: number): number | null | undefined {
     if (raw.trim() === '') {
       return null
     }
@@ -364,65 +363,85 @@ function RangeEditor({ column, filters, onChange, onClose, onClear }: FieldEdito
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!range) {
-      return
-    }
-    const min = read(minDraft)
-    const max = read(maxDraft)
-    if (min === undefined || max === undefined) {
-      setError('invalid')
-      return
-    }
-    if (min !== null && max !== null && min > max) {
-      setError('inverted')
-      return
+    const patch: Partial<ScreenerFilters> = {}
+    for (const [index, range] of ranges.entries()) {
+      const [lower, upper] = NUMERIC_BOUNDS[range.bounds]
+      const min = read(drafts[index].min, lower, upper)
+      const max = read(drafts[index].max, lower, upper)
+      if (min === undefined || max === undefined) {
+        setError({ kind: 'invalid', index })
+        return
+      }
+      if (min !== null && max !== null && min > max) {
+        setError({ kind: 'inverted', index })
+        return
+      }
+      Object.assign(patch, { [range.min]: min, [range.max]: max })
     }
     setError(null)
-    onChange({ [range.min]: min, [range.max]: max })
+    onChange(patch)
     onClose()
   }
 
+  function setDraft(index: number, side: 'min' | 'max', value: string) {
+    setDrafts((current) => current.map((draft, i) => (i === index ? { ...draft, [side]: value } : draft)))
+  }
+
   const describedBy = error === null ? hintId : `${hintId} ${errorId}`
+  const errorRange = error === null ? null : NUMERIC_BOUNDS[ranges[error.index].bounds]
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-2">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor={minId} className={LABEL_CLASS}>
-            {t('screener.columns.min')}
-          </label>
-          <input
-            id={minId}
-            type="number"
-            inputMode="decimal"
-            min={lower}
-            max={upper}
-            step="any"
-            value={minDraft}
-            onChange={(event) => setMinDraft(event.target.value)}
-            aria-invalid={error !== null}
-            aria-describedby={describedBy}
-            className={`w-28 ${INPUT_CLASS}`}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor={maxId} className={LABEL_CLASS}>
-            {t('screener.columns.max')}
-          </label>
-          <input
-            id={maxId}
-            type="number"
-            inputMode="decimal"
-            min={lower}
-            max={upper}
-            step="any"
-            value={maxDraft}
-            onChange={(event) => setMaxDraft(event.target.value)}
-            aria-invalid={error !== null}
-            aria-describedby={describedBy}
-            className={`w-28 ${INPUT_CLASS}`}
-          />
-        </div>
+        {ranges.map((range, index) => {
+          const [lower, upper] = NUMERIC_BOUNDS[range.bounds]
+          const suffix = index === 0 ? '' : `-${index}`
+          const minId = `${COLUMN_FILTER_PANEL_ID}-min${suffix}`
+          const maxId = `${COLUMN_FILTER_PANEL_ID}-max${suffix}`
+          const prefix = range.labelKey ? `${t(range.labelKey)}: ` : ''
+          return (
+            <div key={range.min} className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-1">
+                <label htmlFor={minId} className={LABEL_CLASS}>
+                  {prefix}
+                  {t('screener.columns.min')}
+                </label>
+                <input
+                  id={minId}
+                  type="number"
+                  inputMode="decimal"
+                  min={lower}
+                  max={upper}
+                  step="any"
+                  value={drafts[index].min}
+                  onChange={(event) => setDraft(index, 'min', event.target.value)}
+                  aria-invalid={error !== null && error.index === index}
+                  aria-describedby={describedBy}
+                  className={`w-28 ${INPUT_CLASS}`}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor={maxId} className={LABEL_CLASS}>
+                  {prefix}
+                  {t('screener.columns.max')}
+                </label>
+                <input
+                  id={maxId}
+                  type="number"
+                  inputMode="decimal"
+                  min={lower}
+                  max={upper}
+                  step="any"
+                  value={drafts[index].max}
+                  onChange={(event) => setDraft(index, 'max', event.target.value)}
+                  aria-invalid={error !== null && error.index === index}
+                  aria-describedby={describedBy}
+                  className={`w-28 ${INPUT_CLASS}`}
+                />
+              </div>
+            </div>
+          )
+        })}
         <div className="flex flex-wrap gap-2">
           <button type="submit" className={PRIMARY_BUTTON}>
             {t('screener.columns.apply')}
@@ -435,11 +454,11 @@ function RangeEditor({ column, filters, onChange, onClose, onClear }: FieldEdito
       <p id={hintId} className="font-mono text-[10px] text-on-surface-variant">
         {t('screener.columns.rangeHint')}
       </p>
-      {error !== null ? (
+      {error !== null && errorRange !== null ? (
         <p id={errorId} role="alert" className="font-mono text-xs font-bold text-secondary">
-          {error === 'inverted'
+          {error.kind === 'inverted'
             ? t('screener.columns.rangeInverted')
-            : t('screener.columns.rangeInvalid', { min: formatNumber(lower, 0), max: formatNumber(upper, 0) })}
+            : t('screener.columns.rangeInvalid', { min: formatNumber(errorRange[0], 0), max: formatNumber(errorRange[1], 0) })}
         </p>
       ) : null}
     </form>

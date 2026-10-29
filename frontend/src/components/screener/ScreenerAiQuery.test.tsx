@@ -72,6 +72,16 @@ describe('interpretedFiltersToPatch', () => {
       closeMax: null,
       changeMin: null,
       changeMax: null,
+      adxMin: null,
+      adxMax: null,
+      bbPctbMin: null,
+      bbPctbMax: null,
+      bbWidthMin: null,
+      bbWidthMax: null,
+      atrPctMin: null,
+      atrPctMax: null,
+      stochKMin: null,
+      stochKMax: null,
       sort: 'rsi_asc',
     })
   })

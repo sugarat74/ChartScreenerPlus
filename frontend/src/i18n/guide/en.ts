@@ -55,10 +55,20 @@ export const guideEn: GuideTexts = {
           term: 'Signals',
           summary: 'Badges for the active technical signals and, with a dashed border, for the active chart patterns with their status ("Forming" or "Confirmed").',
         },
+        {
+          term: 'Indicators (optional columns)',
+          summary: 'The "Indicators" button above the table adds four columns after Signals; it is off by default and your choice is remembered in this browser. They also appear on their own while a filter or order by one of them is active. A dash means the value is not available yet.',
+          details: [
+            'ADX (14): trend strength from 0 to 100, without direction. Values above 25 are usually read as a trend with strength.',
+            '%B (20, 2): where the close sits within the Bollinger Bands: 0 is the lower band, 1 the upper band and the middle band is about 0.5. It can go below 0 or above 1 when the close is outside the bands. The band width, as a percentage of the middle band, can be filtered and sorted but has no column of its own: use the %B filter.',
+            'ATR %: the 14-session Average True Range as a percentage of the close, a measure of how much the stock usually moves in a session.',
+            'Stoch %K: the Stochastic %K (14, 3, 3), from 0 to 100. Below 20 is usually read as a low zone and above 80 as a high zone.',
+          ],
+        },
       ],
       notes: [
-        'Sort by: pick an order in the selector or click a column heading (click again to reverse it; the ▲/▼ arrow shows the active order). Available orders: "Relative volume (highest RVOL)" (default), "Relative volume (lowest RVOL)", "Confidence (most signals)" and "Confidence (fewest signals)" —the number of active signals, not a probability—, "Daily change" highest or lowest, "RSI" highest or lowest, "Close" highest or lowest, "Company (A–Z)", "Company (Z–A)", "Sector (GICS name, A–Z)", "Sector (GICS name, Z–A)", "Industry (A–Z)", "Industry (Z–A)", "HQ country (code, A–Z)" and "HQ country (code, Z–A)". Stocks without a value always go last and ties are ordered by ticker.',
-        'Column filters: the funnel button next to each heading opens its filter: text for Symbol / Company (ticker or name) and Industry, a list for Sector and HQ country, a minimum and maximum (both included) for Close, Chg %, RVOL and RSI, and the same signals and patterns as the technical criteria for Signals. They apply to every candidate, not only the visible page; they show as chips above the table and "Clear filters" removes them too.',
+        'Sort by: pick an order in the selector or click a column heading (click again to reverse it; the ▲/▼ arrow shows the active order). Available orders: "Relative volume (highest RVOL)" (default), "Relative volume (lowest RVOL)", "Confidence (most signals)" and "Confidence (fewest signals)" —the number of active signals, not a probability—, "Daily change" highest or lowest, "RSI" highest or lowest, "Close" highest or lowest, "Company (A–Z)", "Company (Z–A)", "Sector (GICS name, A–Z)", "Sector (GICS name, Z–A)", "Industry (A–Z)", "Industry (Z–A)", "HQ country (code, A–Z)", "HQ country (code, Z–A)", "ADX" highest or lowest, "Bollinger %B" highest or lowest, "Band width" widest or narrowest, "ATR %" highest or lowest and "Stochastic %K" highest or lowest. Stocks without a value always go last and ties are ordered by ticker.',
+        'Column filters: the funnel button next to each heading opens its filter: text for Symbol / Company (ticker or name) and Industry, a list for Sector and HQ country, a minimum and maximum (both included) for Close, Chg %, RVOL, RSI, ADX, %B (and band width), ATR % and Stoch %K, and the same signals and patterns as the technical criteria for Signals. They apply to every candidate, not only the visible page; they show as chips above the table and "Clear filters" removes them too.',
         'Pagination: "Previous" and "Next" move through the pages and "Per page" chooses 25, 50, 100 or 200 candidates. Changing filters, order or page size goes back to page 1.',
         'Filters, order and page are kept in the page address: bookmark or share it and it opens the same way.',
       ],
@@ -73,7 +83,7 @@ export const guideEn: GuideTexts = {
         {
           term: 'Technical signals',
           summary: 'Shows only stocks with at least one of the selected signals active in the latest session.',
-          details: ['The nine signals are explained in "Technical signals".'],
+          details: ['The fifteen signals are explained in "Technical signals".'],
         },
         {
           term: 'RSI (14): Min and Max',
@@ -170,7 +180,7 @@ export const guideEn: GuideTexts = {
       ],
       notes: [
         'The illustrations are diagrams with fictional data. They explain the shape of each indicator; they do not show live quotes or current signals.',
-        'Chartiko also computes the 21- and 55-session EMAs, the 14-session ADX and Bollinger Bands (20 sessions, 2 deviations) for future features; they are not shown or used in filters today.',
+        'Chartiko also computes the 21- and 55-session EMAs, the 14-session ADX and ATR, the Bollinger Bands (20 sessions, 2 deviations) and the Stochastic (14, 3, 3). ADX, %B, band width, ATR % and Stochastic %K can be filtered, sorted and shown as optional columns of the candidate list (see "The candidate list"); they are not drawn on the chart yet.',
       ],
     },
     {

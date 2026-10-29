@@ -31,6 +31,7 @@ import { useMarketContextAccess } from '../auth/useMarketContextAccess.ts'
 import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
 import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
+import IndicatorsToggle from '../components/screener/IndicatorsToggle.tsx'
 import ScreenerAiQuery from '../components/screener/ScreenerAiQuery.tsx'
 import ScreenerColumnFilters from '../components/screener/ScreenerColumnFilters.tsx'
 import ScreenerFilterPanel from '../components/screener/ScreenerFilterPanel.tsx'
@@ -45,6 +46,7 @@ import type { ScreenerCandidate, ScreenerFilters, ScreenerUniverse } from '../li
 import {
   EMPTY_SCREENER_CRITERIA,
   countActiveFilters,
+  forcesIndicatorColumns,
   hasActiveFilters,
   parseScreenerFilters,
   patchScreenerFilters,
@@ -52,6 +54,7 @@ import {
   usesMarketContext,
   withoutMarketContext,
 } from '../lib/screenerFilters.ts'
+import { INDICATOR_COLUMNS } from '../lib/screenerColumns.ts'
 import type { CandidateColumnId } from '../lib/screenerColumns.ts'
 import {
   UNIVERSE_PARAM,
@@ -62,6 +65,7 @@ import {
   switchUniverse,
   withUniverseParam,
 } from '../lib/screenerUniverse.ts'
+import { readIndicatorsToggle, writeIndicatorsToggle } from '../lib/screenerIndicators.ts'
 import { LOGIN_ROUTE } from '../nav.ts'
 import {
   parseScreenerPagination,
@@ -71,6 +75,8 @@ import {
   screenerPageCount,
   screenerPageRange,
 } from '../lib/screenerPagination.ts'
+
+const INDICATOR_COLUMN_IDS: readonly CandidateColumnId[] = INDICATOR_COLUMNS.map((column) => column.id)
 
 interface ScreenerData {
   candidates: ScreenerCandidate[]
@@ -166,6 +172,11 @@ export default function ScreenerPage() {
   // The column whose filter editor is open (screener-table-column-controls);
   // UI state only, the criteria themselves live in the URL.
   const [openColumn, setOpenColumn] = useState<CandidateColumnId | null>(null)
+  // The optional Indicators columns (screener-technical-filters-ui): a remembered
+  // per-browser choice, forced on while an indicator criterion or sort is active.
+  const [indicatorsOn, setIndicatorsOn] = useState(readIndicatorsToggle)
+  const indicatorsForced = forcesIndicatorColumns(effective)
+  const showIndicators = indicatorsOn || indicatorsForced
 
   const dataRef = useRef<ScreenerData | null>(null)
   const lastKeyRef = useRef<string | null>(null)
@@ -312,6 +323,16 @@ export default function ScreenerPage() {
     setRetryToken((token) => token + 1)
   }
 
+  function toggleIndicators() {
+    const next = !indicatorsOn
+    setIndicatorsOn(next)
+    writeIndicatorsToggle(next)
+    if (!next) {
+      // A hidden column cannot keep its filter editor open.
+      setOpenColumn((current) => (current !== null && INDICATOR_COLUMN_IDS.includes(current) ? null : current))
+    }
+  }
+
   const activeCount = countActiveFilters(effective)
   const filtersActive = hasActiveFilters(effective)
 
@@ -396,6 +417,7 @@ export default function ScreenerPage() {
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
           <ScreenerSortControl value={effective.sort} onChange={(sort) => update({ sort })} />
+          <IndicatorsToggle visible={showIndicators} forced={indicatorsForced} onToggle={toggleIndicators} />
           {data !== null ? (
             <span
               title={t('screener.universeTitle')}
@@ -424,6 +446,7 @@ export default function ScreenerPage() {
         onRetry={retry}
         onClearFilters={clearFilters}
         currency={currency}
+        showIndicators={showIndicators}
         controls={{
           filters: effective,
           openColumn,
