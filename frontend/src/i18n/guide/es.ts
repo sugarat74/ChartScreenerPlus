@@ -55,10 +55,20 @@ export const guideEs: GuideTexts = {
           term: 'Señales',
           summary: 'Etiquetas de las señales técnicas activas y, con borde discontinuo, de los patrones chartistas activos con su estado («En formación» o «Confirmado»).',
         },
+        {
+          term: 'Indicadores (columnas opcionales)',
+          summary: 'El botón «Indicadores» sobre la tabla añade cuatro columnas tras Señales; viene desactivado y tu elección se recuerda en este navegador. También aparecen solas mientras haya un filtro u orden por alguna de ellas. Un guion indica que el valor aún no está disponible.',
+          details: [
+            'ADX (14): fuerza de la tendencia de 0 a 100, sin dirección. Por encima de 25 suele leerse como una tendencia con fuerza.',
+            '%B (20, 2): dónde queda el cierre dentro de las Bandas de Bollinger: 0 es la banda inferior, 1 la superior y la banda central ronda 0,5. Puede ser menor que 0 o mayor que 1 si el cierre queda fuera de las bandas. El ancho de bandas, como porcentaje de la banda central, se puede filtrar y ordenar pero no tiene columna propia: usa el filtro de %B.',
+            'ATR %: el rango verdadero medio de 14 sesiones como porcentaje del cierre; mide cuánto suele moverse el valor en una sesión.',
+            'Estocástico %K: el %K del Estocástico (14, 3, 3), de 0 a 100. Por debajo de 20 suele leerse como zona baja y por encima de 80 como zona alta.',
+          ],
+        },
       ],
       notes: [
-        'Ordenar por: elige un orden en el selector o pulsa el encabezado de una columna (otra pulsación invierte el sentido; la flecha ▲/▼ indica el orden activo). Órdenes disponibles: «Volumen relativo (RVOL mayor)» (por defecto), «Volumen relativo (RVOL menor)», «Confianza (más señales)» y «Confianza (menos señales)» —número de señales activas, no una probabilidad—, «Variación diaria» mayor o menor, «RSI» mayor o menor, «Cierre» mayor o menor, «Empresa (A–Z)», «Empresa (Z–A)», «Sector (nombre GICS, A–Z)», «Sector (nombre GICS, Z–A)», «Industria (A–Z)», «Industria (Z–A)», «País de sede (código, A–Z)» y «País de sede (código, Z–A)». Los valores sin dato van siempre al final y los empates se ordenan por ticker.',
-        'Filtros por columna: el botón con forma de embudo junto a cada encabezado abre su filtro: texto en Símbolo / Empresa (ticker o nombre) e Industria, una lista en Sector y País de sede, mínimo y máximo (ambos incluidos) en Cierre, Var %, RVOL y RSI, y las mismas señales y patrones de los criterios técnicos en Señales. Se aplican a todos los candidatos, no solo a la página visible; aparecen como etiquetas sobre la tabla y «Limpiar filtros» también los quita.',
+        'Ordenar por: elige un orden en el selector o pulsa el encabezado de una columna (otra pulsación invierte el sentido; la flecha ▲/▼ indica el orden activo). Órdenes disponibles: «Volumen relativo (RVOL mayor)» (por defecto), «Volumen relativo (RVOL menor)», «Confianza (más señales)» y «Confianza (menos señales)» —número de señales activas, no una probabilidad—, «Variación diaria» mayor o menor, «RSI» mayor o menor, «Cierre» mayor o menor, «Empresa (A–Z)», «Empresa (Z–A)», «Sector (nombre GICS, A–Z)», «Sector (nombre GICS, Z–A)», «Industria (A–Z)», «Industria (Z–A)», «País de sede (código, A–Z)», «País de sede (código, Z–A)», «ADX» mayor o menor, «%B de Bollinger» mayor o menor, «Ancho de bandas» mayor o menor, «ATR %» mayor o menor y «Estocástico %K» mayor o menor. Los valores sin dato van siempre al final y los empates se ordenan por ticker.',
+        'Filtros por columna: el botón con forma de embudo junto a cada encabezado abre su filtro: texto en Símbolo / Empresa (ticker o nombre) e Industria, una lista en Sector y País de sede, mínimo y máximo (ambos incluidos) en Cierre, Var %, RVOL, RSI, ADX, %B (y ancho de bandas), ATR % y Estocástico %K, y las mismas señales y patrones de los criterios técnicos en Señales. Se aplican a todos los candidatos, no solo a la página visible; aparecen como etiquetas sobre la tabla y «Limpiar filtros» también los quita.',
         'Paginación: «Anterior» y «Siguiente» recorren las páginas y «Por página» elige 25, 50, 100 o 200 candidatos. Cambiar filtros, orden o tamaño vuelve a la página 1.',
         'Los filtros, el orden y la página quedan en la dirección de la página: puedes guardarla en favoritos o compartirla y se abrirá igual.',
       ],
@@ -73,7 +83,7 @@ export const guideEs: GuideTexts = {
         {
           term: 'Señales técnicas',
           summary: 'Muestra solo valores con al menos una de las señales seleccionadas activa en la última sesión.',
-          details: ['Las nueve señales se explican en «Señales técnicas».'],
+          details: ['Las quince señales se explican en «Señales técnicas».'],
         },
         {
           term: 'RSI (14): Mín y Máx',
@@ -170,7 +180,7 @@ export const guideEs: GuideTexts = {
       ],
       notes: [
         'Las imágenes son esquemas con datos ficticios: explican la forma de cada indicador, no muestran cotizaciones ni señales actuales.',
-        'Chartiko también calcula las EMA de 21 y 55 sesiones, el ADX de 14 y las Bandas de Bollinger (20 sesiones, 2 desviaciones) para futuras funciones; hoy no se muestran ni se usan en los filtros.',
+        'Chartiko también calcula las EMA de 21 y 55 sesiones, el ADX y el ATR de 14 sesiones, las Bandas de Bollinger (20 sesiones, 2 desviaciones) y el Estocástico (14, 3, 3). El ADX, el %B, el ancho de bandas, el ATR % y el %K se pueden filtrar, ordenar y mostrar como columnas opcionales del listado (ver «El listado de candidatos»); aún no se dibujan en el gráfico.',
       ],
     },
     {

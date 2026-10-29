@@ -20,15 +20,39 @@ export type CandidateColumnId =
   | 'rvol'
   | 'rsi'
   | 'signals'
+  | 'adx'
+  | 'bbPctb'
+  | 'atrPct'
+  | 'stochK'
 
 export type ColumnFilterKind = 'search' | 'sector' | 'industry' | 'country' | 'range' | 'signals'
 
-type RangeField = 'rsiMin' | 'rsiMax' | 'minRvol' | 'rvolMax' | 'closeMin' | 'closeMax' | 'changeMin' | 'changeMax'
+type RangeField =
+  | 'rsiMin'
+  | 'rsiMax'
+  | 'minRvol'
+  | 'rvolMax'
+  | 'closeMin'
+  | 'closeMax'
+  | 'changeMin'
+  | 'changeMax'
+  | 'adxMin'
+  | 'adxMax'
+  | 'bbPctbMin'
+  | 'bbPctbMax'
+  | 'bbWidthMin'
+  | 'bbWidthMax'
+  | 'atrPctMin'
+  | 'atrPctMax'
+  | 'stochKMin'
+  | 'stochKMax'
 
 export interface ColumnRange {
   bounds: NumericColumn
   min: RangeField
   max: RangeField
+  /** Label of this range when it is not the column's own (bandwidth). */
+  labelKey?: MessageKey
 }
 
 export interface CandidateColumn {
@@ -41,6 +65,8 @@ export interface CandidateColumn {
   first: 'asc' | 'desc'
   filter: ColumnFilterKind
   range?: ColumnRange
+  /** A second range edited from the same control (%B also filters bandwidth). */
+  extraRange?: ColumnRange
 }
 
 /** The nine displayed columns, in table order. */
@@ -69,6 +95,39 @@ export const CANDIDATE_COLUMNS: readonly CandidateColumn[] = [
 ]
 
 /**
+ * The four optional "Indicators" columns (screener-technical-filters-ui), off
+ * by default and appended after Signals. Bandwidth has no column: it is edited
+ * from the %B control.
+ */
+export const INDICATOR_COLUMNS: readonly CandidateColumn[] = [
+  {
+    id: 'adx', labelKey: 'screener.colAdx', align: 'right', asc: 'adx_asc', desc: 'adx_desc', first: 'desc', filter: 'range',
+    range: { bounds: 'adx', min: 'adxMin', max: 'adxMax' },
+  },
+  {
+    id: 'bbPctb', labelKey: 'screener.colBbPctb', align: 'right', asc: 'bb_pctb_asc', desc: 'bb_pctb_desc', first: 'desc', filter: 'range',
+    range: { bounds: 'bbPctb', min: 'bbPctbMin', max: 'bbPctbMax' },
+    extraRange: { bounds: 'bbWidth', min: 'bbWidthMin', max: 'bbWidthMax', labelKey: 'screener.colBbWidth' },
+  },
+  {
+    id: 'atrPct', labelKey: 'screener.colAtrPct', align: 'right', asc: 'atr_pct_asc', desc: 'atr_pct_desc', first: 'desc', filter: 'range',
+    range: { bounds: 'atrPct', min: 'atrPctMin', max: 'atrPctMax' },
+  },
+  {
+    id: 'stochK', labelKey: 'screener.colStochK', align: 'right', asc: 'stoch_k_asc', desc: 'stoch_k_desc', first: 'desc', filter: 'range',
+    range: { bounds: 'stochK', min: 'stochKMin', max: 'stochKMax' },
+  },
+]
+
+/** Every column a filter control can belong to. */
+export const ALL_CANDIDATE_COLUMNS: readonly CandidateColumn[] = [...CANDIDATE_COLUMNS, ...INDICATOR_COLUMNS]
+
+/** The column's ranges, own first. */
+export function columnRanges(column: CandidateColumn): ColumnRange[] {
+  return [column.range, column.extraRange].filter((range): range is ColumnRange => range !== undefined)
+}
+
+/**
  * The heading of a column. Close carries its currency ("Cierre (EUR)") once
  * the universe's currency is known, so a price bound is never ambiguous (D8).
  */
@@ -80,7 +139,7 @@ export function columnLabel(column: CandidateColumn, t: Translate, currency?: st
 }
 
 export function candidateColumn(id: CandidateColumnId): CandidateColumn {
-  return CANDIDATE_COLUMNS.find((column) => column.id === id) ?? CANDIDATE_COLUMNS[0]
+  return ALL_CANDIDATE_COLUMNS.find((column) => column.id === id) ?? CANDIDATE_COLUMNS[0]
 }
 
 /** The direction this column is currently sorted in, or `null`. */
@@ -114,7 +173,7 @@ export function clearColumnPatch(column: CandidateColumn): Partial<ScreenerFilte
     case 'signals':
       return { signals: [], patterns: [], patternStatus: 'any' }
     case 'range':
-      return column.range ? { [column.range.min]: null, [column.range.max]: null } : {}
+      return Object.fromEntries(columnRanges(column).flatMap((range) => [[range.min, null], [range.max, null]]))
   }
 }
 
@@ -132,7 +191,7 @@ export function isColumnFiltered(column: CandidateColumn, filters: ScreenerFilte
     case 'signals':
       return filters.signals.length > 0 || filters.patterns.length > 0
     case 'range':
-      return column.range !== undefined && (filters[column.range.min] !== null || filters[column.range.max] !== null)
+      return columnRanges(column).some((range) => filters[range.min] !== null || filters[range.max] !== null)
   }
 }
 
@@ -151,9 +210,20 @@ export function columnFilterSummary(
     case 'signals':
       return t('screener.columns.signalsSummary', { count: filters.signals.length + filters.patterns.length })
     case 'range':
-      return column.range
-        ? describeRange(columnLabel(column, t, currency), filters[column.range.min], filters[column.range.max], t, formatValue)
-        : null
+      return (
+        columnRanges(column)
+          .map((range) =>
+            describeRange(
+              range.labelKey ? t(range.labelKey) : columnLabel(column, t, currency),
+              filters[range.min],
+              filters[range.max],
+              t,
+              formatValue,
+            ),
+          )
+          .filter((part): part is string => part !== null)
+          .join(' · ') || null
+      )
     case 'search':
       return describeColumnCriteria({ search: filters.search }, t, formatValue)[0] ?? null
     case 'sector':

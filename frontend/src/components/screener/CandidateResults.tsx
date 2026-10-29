@@ -28,6 +28,8 @@ interface CandidateResultsProps {
   controls?: CandidateTableControls
   /** Currency of the screened universe (ISO code). */
   currency?: string | null
+  /** Show the optional Indicators columns. */
+  showIndicators?: boolean
 }
 
 function LoadingPanel() {
@@ -121,6 +123,7 @@ export default function CandidateResults({
   onClearFilters,
   controls,
   currency,
+  showIndicators = false,
 }: CandidateResultsProps) {
   const { t } = useI18n()
   const signedIn = useSignedIn()
@@ -143,7 +146,7 @@ export default function CandidateResults({
       {candidates.length === 0 ? (
         <EmptyPanel hasFilters={hasFilters} onClearFilters={onClearFilters} />
       ) : (
-        <CandidateTable candidates={candidates} showCompanyCardLink={signedIn} controls={controls} currency={currency} />
+        <CandidateTable candidates={candidates} showCompanyCardLink={signedIn} controls={controls} currency={currency} showIndicators={showIndicators} />
       )}
     </div>
   )
