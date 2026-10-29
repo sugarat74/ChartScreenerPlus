@@ -47,6 +47,12 @@ class SavedScreenersApiTest extends TestCase
         'close_max' => null,
         'change_min' => null,
         'change_max' => null,
+        // screener-technical-filters-api: the ten indicator range keys when off.
+        'adx_min' => null, 'adx_max' => null,
+        'bb_pctb_min' => null, 'bb_pctb_max' => null,
+        'bb_width_min' => null, 'bb_width_max' => null,
+        'atr_pct_min' => null, 'atr_pct_max' => null,
+        'stoch_k_min' => null, 'stoch_k_max' => null,
     ];
 
     /**
@@ -408,7 +414,7 @@ class SavedScreenersApiTest extends TestCase
 
         $filters = $this->actingAs($user)->getJson('/api/screeners')->assertOk()->json('screeners.0.filters');
 
-        $this->assertCount(20, $filters);
+        $this->assertCount(30, $filters);
         $this->assertNull($filters['sector_trend']);
         $this->assertNull($filters['sector_rs_rank_max']);
         // screener-table-column-controls: rows saved before it read as off.

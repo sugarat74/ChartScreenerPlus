@@ -235,6 +235,19 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
        `php artisan signals:detect --universe=<slug>` para cada universo (sustituye el conjunto de cada
        valor) y `php artisan screener:refresh`.
 
+16. Filtros técnicos del Screener (`screener-technical-filters-api`, `docs/specs/technical-indicators-expansion.md`):
+    la migración `2026_10_29_000002` añade a `screener_rows` las columnas anulables `adx`, `bb_pctb`,
+    `bb_width`, `atr_pct` y `stoch_k` (con índice) para filtrar y ordenar por ADX, %B, ancho de Bollinger, ATR %
+    del precio y estocástico %K; las rellena `screener:refresh`. Hasta entonces valen `null` (los filtros no
+    devuelven nada sobre ellas y la lista por defecto no cambia):
+    1. Desplegar, `php artisan migrate`, y tener hecho el entry 14 (`indicators:compute` por universo) para que
+       los snapshots tengan ADX, Bandas, ATR y estocástico.
+    2. `php artisan screener:refresh` (cuenta de filas idéntica a la anterior; no aparece ni desaparece nadie).
+    3. Comprobar: `GET /api/screener?adx_min=25&sort=adx_desc` responde 200 con `adx`, `bb_pctb`, `bb_width`,
+       `atr_pct`, `stoch_k` en cada candidato, y `?adx_min=101` o `?stoch_k_min=60&stoch_k_max=40` responden 422.
+    4. Retirada: `php artisan migrate:rollback --step=1` elimina las columnas (aditivo y reversible). Los Screeners
+       guardados que ya incluyan las claves nuevas las conservan en su JSON y `fromSaved` ignora las desconocidas.
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.

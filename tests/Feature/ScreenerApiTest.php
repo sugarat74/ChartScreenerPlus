@@ -730,7 +730,7 @@ class ScreenerApiTest extends TestCase
         $this->assertSame(['slug', 'name'], array_keys($payload['universe']));
 
         $this->assertSame(
-            ['ticker', 'company', 'sector', 'industry', 'country', 'exchange', 'market', 'currency', 'active', 'date', 'close', 'change_percent', 'rvol', 'rsi14', 'signals', 'patterns'],
+            ['ticker', 'company', 'sector', 'industry', 'country', 'exchange', 'market', 'currency', 'active', 'date', 'close', 'change_percent', 'rvol', 'rsi14', 'adx', 'bb_pctb', 'bb_width', 'atr_pct', 'stoch_k', 'signals', 'patterns'],
             array_keys($payload['candidates'][0]),
         );
 

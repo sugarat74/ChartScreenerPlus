@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\Builder;
  * `change_min`/`change_max`) are optional keys: absent means off, so older
  * callers keep working. Every sort maps to a fixed expression in `SORTS`.
  *
- * @phpstan-type Filters array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int, search?: ?string, sector?: ?string, industry?: ?string, country?: ?string, rvol_max?: ?float, close_min?: ?float, close_max?: ?float, change_min?: ?float, change_max?: ?float}
+ * @phpstan-type Filters array{signal: list<string>, rsi_min: ?float, rsi_max: ?float, min_rvol: ?float, price_above_sma200: bool, ma_cross: ?string, pattern: list<string>, pattern_status: string, sort: string, sector_trend: ?string, sector_rs_rank_max: ?int, search?: ?string, sector?: ?string, industry?: ?string, country?: ?string, rvol_max?: ?float, close_min?: ?float, close_max?: ?float, change_min?: ?float, change_max?: ?float, adx_min?: ?float, adx_max?: ?float, bb_pctb_min?: ?float, bb_pctb_max?: ?float, bb_width_min?: ?float, bb_width_max?: ?float, atr_pct_min?: ?float, atr_pct_max?: ?float, stoch_k_min?: ?float, stoch_k_max?: ?float}
  */
 class CandidateQuery
 {
@@ -60,6 +60,34 @@ class CandidateQuery
         'industry_desc' => ['lower(industry)', 'desc', true],
         'country_asc' => ['country', 'asc', true],
         'country_desc' => ['country', 'desc', true],
+        'adx_asc' => ['adx', 'asc', false],
+        'adx_desc' => ['adx', 'desc', false],
+        'bb_pctb_asc' => ['bb_pctb', 'asc', false],
+        'bb_pctb_desc' => ['bb_pctb', 'desc', false],
+        'bb_width_asc' => ['bb_width', 'asc', false],
+        'bb_width_desc' => ['bb_width', 'desc', false],
+        'atr_pct_asc' => ['atr_pct', 'asc', false],
+        'atr_pct_desc' => ['atr_pct', 'desc', false],
+        'stoch_k_asc' => ['stoch_k', 'asc', false],
+        'stoch_k_desc' => ['stoch_k', 'desc', false],
+    ];
+
+    /**
+     * The technical indicator range filters (screener-technical-filters-api):
+     * request key => [column, operator]. Inclusive; a null column never
+     * matches.
+     */
+    private const INDICATOR_RANGES = [
+        'adx_min' => ['adx', '>='],
+        'adx_max' => ['adx', '<='],
+        'bb_pctb_min' => ['bb_pctb', '>='],
+        'bb_pctb_max' => ['bb_pctb', '<='],
+        'bb_width_min' => ['bb_width', '>='],
+        'bb_width_max' => ['bb_width', '<='],
+        'atr_pct_min' => ['atr_pct', '>='],
+        'atr_pct_max' => ['atr_pct', '<='],
+        'stoch_k_min' => ['stoch_k', '>='],
+        'stoch_k_max' => ['stoch_k', '<='],
     ];
 
     /**
@@ -157,6 +185,17 @@ class CandidateQuery
             'close_max' => $number($stored['close_max'] ?? null),
             'change_min' => $number($stored['change_min'] ?? null),
             'change_max' => $number($stored['change_max'] ?? null),
+            // screener-technical-filters-api: absent on rows saved before it.
+            'adx_min' => $number($stored['adx_min'] ?? null),
+            'adx_max' => $number($stored['adx_max'] ?? null),
+            'bb_pctb_min' => $number($stored['bb_pctb_min'] ?? null),
+            'bb_pctb_max' => $number($stored['bb_pctb_max'] ?? null),
+            'bb_width_min' => $number($stored['bb_width_min'] ?? null),
+            'bb_width_max' => $number($stored['bb_width_max'] ?? null),
+            'atr_pct_min' => $number($stored['atr_pct_min'] ?? null),
+            'atr_pct_max' => $number($stored['atr_pct_max'] ?? null),
+            'stoch_k_min' => $number($stored['stoch_k_min'] ?? null),
+            'stoch_k_max' => $number($stored['stoch_k_max'] ?? null),
         ];
     }
 
@@ -227,7 +266,14 @@ class CandidateQuery
             ->when(($filters['close_min'] ?? null) !== null, fn (Builder $query) => $query->where('close', '>=', $filters['close_min']))
             ->when(($filters['close_max'] ?? null) !== null, fn (Builder $query) => $query->where('close', '<=', $filters['close_max']))
             ->when(($filters['change_min'] ?? null) !== null, fn (Builder $query) => $query->where('change_percent', '>=', $filters['change_min']))
-            ->when(($filters['change_max'] ?? null) !== null, fn (Builder $query) => $query->where('change_percent', '<=', $filters['change_max']));
+            ->when(($filters['change_max'] ?? null) !== null, fn (Builder $query) => $query->where('change_percent', '<=', $filters['change_max']))
+            ->tap(function (Builder $query) use ($filters): void {
+                foreach (self::INDICATOR_RANGES as $key => [$column, $operator]) {
+                    if (($filters[$key] ?? null) !== null) {
+                        $query->where($column, $operator, $filters[$key]);
+                    }
+                }
+            });
     }
 
     /**
@@ -304,6 +350,11 @@ class CandidateQuery
             'change_percent' => $this->changePercent((float) $row->close, $row->previous_close === null ? null : (float) $row->previous_close),
             'rvol' => $row->rvol === null ? null : (float) $row->rvol,
             'rsi14' => $row->rsi14 === null ? null : (float) $row->rsi14,
+            'adx' => $row->adx === null ? null : (float) $row->adx,
+            'bb_pctb' => $row->bb_pctb === null ? null : (float) $row->bb_pctb,
+            'bb_width' => $row->bb_width === null ? null : (float) $row->bb_width,
+            'atr_pct' => $row->atr_pct === null ? null : (float) $row->atr_pct,
+            'stoch_k' => $row->stoch_k === null ? null : (float) $row->stoch_k,
             'signals' => $row->signals,
             'patterns' => $row->patterns,
         ];

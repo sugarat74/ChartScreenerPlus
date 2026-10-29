@@ -24,10 +24,10 @@ use Illuminate\Validation\ValidationException;
  * delete is a `404` (no existence leak). All three routes live inside the
  * `auth:sanctum` group, so a guest gets `401`.
  *
- * The stored `filters` JSON is the canonical twenty-key definition in API param
+ * The stored `filters` JSON is the canonical thirty-key definition in API param
  * names (the same vocabulary as `GET /api/screener`), including `sort`, so
  * applying a Screener restores the exact filters and ranking. Create validation
- * whitelists the twenty keys (`array:`), requires the original seven (`present`;
+ * whitelists the thirty keys (`array:`), requires the original seven (`present`;
  * the pattern, sector context and table column keys of
  * screener-table-column-controls are `sometimes` so older clients keep
  * working), mirrors the screener API's value rules and then runs the
@@ -48,6 +48,15 @@ class SavedScreenerController extends Controller
     private const COLUMN_KEYS = [
         'search', 'sector', 'industry', 'country', 'rvol_max',
         'close_min', 'close_max', 'change_min', 'change_max',
+    ];
+
+    /**
+     * The technical indicator ranges (screener-technical-filters-api), optional
+     * on create, always present on read; bounds come from the parser.
+     */
+    private const INDICATOR_KEYS = [
+        'adx_min', 'adx_max', 'bb_pctb_min', 'bb_pctb_max', 'bb_width_min', 'bb_width_max',
+        'atr_pct_min', 'atr_pct_max', 'stoch_k_min', 'stoch_k_max',
     ];
 
     /**
@@ -91,7 +100,7 @@ class SavedScreenerController extends Controller
             ],
             'filters' => [
                 'required',
-                'array:signal,rsi_min,rsi_max,min_rvol,price_above_sma200,ma_cross,pattern,pattern_status,sort,sector_trend,sector_rs_rank_max,universe,'.implode(',', self::COLUMN_KEYS),
+                'array:signal,rsi_min,rsi_max,min_rvol,price_above_sma200,ma_cross,pattern,pattern_status,sort,sector_trend,sector_rs_rank_max,universe,'.implode(',', [...self::COLUMN_KEYS, ...self::INDICATOR_KEYS]),
             ],
             'filters.universe' => ['sometimes', 'nullable', 'string', Rule::in($visibleUniverses)],
             'filters.signal' => ['present', 'array'],
@@ -116,6 +125,7 @@ class SavedScreenerController extends Controller
             'filters.close_max' => ['sometimes', 'nullable', 'numeric', 'between:0,1000000'],
             'filters.change_min' => ['sometimes', 'nullable', 'numeric', 'between:-100,1000'],
             'filters.change_max' => ['sometimes', 'nullable', 'numeric', 'between:-100,1000'],
+            ...$this->indicatorRules(),
         ]);
 
         // The same parser as `GET /api/screener` re-checks the definition
@@ -193,7 +203,7 @@ class SavedScreenerController extends Controller
     }
 
     /**
-     * The canonical twenty-key filter object: signals deduped and ordered, and
+     * The canonical thirty-key filter object: signals deduped and ordered, and
      * the pattern keys (chart-patterns-ui), the sector context keys
      * (market-context-patterns) and the table column keys
      * (screener-table-column-controls) defaulted when absent so
@@ -208,7 +218,7 @@ class SavedScreenerController extends Controller
 
         // universe-registry: a Saved Screener of another universe stores its
         // slug; the default universe is the absence of the key (legacy rows),
-        // so the twenty-key definition of S&P 500 screeners is unchanged.
+        // so the thirty-key definition of S&P 500 screeners is unchanged.
         $universe = is_string($filters['universe'] ?? null) && $filters['universe'] !== Universe::defaultSlug()
             ? ['universe' => $filters['universe']]
             : [];
@@ -245,7 +255,41 @@ class SavedScreenerController extends Controller
             'close_max' => is_numeric($filters['close_max'] ?? null) ? $filters['close_max'] + 0 : null,
             'change_min' => is_numeric($filters['change_min'] ?? null) ? $filters['change_min'] + 0 : null,
             'change_max' => is_numeric($filters['change_max'] ?? null) ? $filters['change_max'] + 0 : null,
-        ] + $universe;
+        ] + $this->canonicalIndicators($filters) + $universe;
+    }
+
+    /**
+     * Request rules of the technical indicator ranges, from the parser bounds.
+     *
+     * @return array<string, list<string>>
+     */
+    private function indicatorRules(): array
+    {
+        $rules = [];
+
+        foreach (self::INDICATOR_KEYS as $key) {
+            $rules['filters.'.$key] = ['sometimes', 'nullable', 'numeric', 'between:'.implode(',', ScreenerFilterParser::NUMERIC_BOUNDS[$key])];
+        }
+
+        return $rules;
+    }
+
+    /**
+     * The ten indicator range keys, `null` when absent (rows saved before
+     * screener-technical-filters-api).
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, int|float|null>
+     */
+    private function canonicalIndicators(array $filters): array
+    {
+        $indicators = [];
+
+        foreach (self::INDICATOR_KEYS as $key) {
+            $indicators[$key] = is_numeric($filters[$key] ?? null) ? $filters[$key] + 0 : null;
+        }
+
+        return $indicators;
     }
 
     /**

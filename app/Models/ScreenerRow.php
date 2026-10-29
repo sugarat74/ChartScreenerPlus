@@ -29,6 +29,9 @@ class ScreenerRow extends Model
             'signals' => 'array',
             'patterns' => 'array',
             'sector_rs_rank' => 'integer',
+            'bb_pctb' => 'float',
+            'bb_width' => 'float',
+            'atr_pct' => 'float',
         ];
     }
 
