@@ -377,6 +377,13 @@ The same as Feature 5, with these differences:
 - `markets.XETR.holidays` from the official Xetra trading calendar;
 - live smoke on `SAP.DE`. `MRK.DE` must stay distinct from the S&P 500 `MRK` (D2).
 
+### Implementation notes (`universe-dax`, 2026-10-31)
+
+- Snapshot as_of 2026-10-31: 40 companies. Base list is Wikipedia's DAX table (22 Sep 2025) updated with the official STOXX announcements: no DAX change on 3 Dec 2025, 4 Mar 2026 and 3 Sep 2026; 3 Jun 2026 (effective 22 Jun) Hochtief in, Porsche SE out. Wikipedia's Paris line `AIR.PA` is `AIR.DE`. All 40 `.DE` symbols answered on Yahoo (EUR, 507 sessions). Not verified: the March/June/September 2025 reviews (Wikipedia only), off-cycle DAX changes and Deutsche Börse's own factsheet; sector, country (`AIR`, `QIA` uncertain) and industry are editorial. Sources, hashes and the per-ticker classification are in `database/data/dax.md`.
+- Holidays: Deutsche Börse's page lists 2026 (1 Jan, 3 Apr, 6 Apr, 1 May, 24, 25 and 31 Dec) and 2027 (1 Jan, 26 Mar, 29 Mar, 24 and 31 Dec) but warns that future years may change: 2027 stays flagged to confirm. Unlike BME, 24 and 31 December are full non-trading days and are listed.
+- Live smoke on `SAP.DE`: EUR, 507 sessions 2024-10-30..2026-10-30, `Europe/Berlin`, no weekend dates, no session on the Xetra closures. A trimmed real response around Easter 2026 is the engine fixture `yahoo_sap_de_easter.json` (`yahoo_sap_de.json` from `ingestion-multi-market` is unchanged).
+- The user guide (es/en) mentions the DAX as available where the selector offers it. The home/meta copy is unchanged until the universe is made public. Rollout: `deploy/README.md` item 17.
+
 ### Acceptance
 
 The same as Feature 5, with 40 rows, `.DE` and slug `dax` in the public list. Also: a test that `MRK.DE` and `MRK` are separate Instruments with separate bars, and that public labels say "DAX" (never "DAX 40").

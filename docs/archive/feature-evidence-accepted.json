@@ -2071,5 +2071,32 @@
       "Independent validator ACCEPT 2026-10-29: spec conformance reviewed; manual browser pass by the validator at 1440 and 390 px light and dark (no page overflow, validation, chips, forced columns, Clear filters keeps sort); Vitest 427, lint/tsc/build clean, init.ps1 Baseline OK; PROGRESS rotation verified lossless."
     ],
     "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec. Implemented 2026-10-29: optional Indicators columns (ADX, %B, ATR %, Stoch %K; band width is filter and sort only, edited from the %B control), remembered toggle (localStorage chartiko.screener.indicators), an indicator sort also forces the columns visible, 10 sort options in the selector, guide and DESIGN.md updated. Awaiting independent validation. Independently accepted 2026-10-26."
+  },
+  {
+    "id": "universe-dax",
+    "area": "data",
+    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
+    "title": "DAX Screener universe (Xetra, EUR)",
+    "user_visible_behavior": "Everyone, Visitors included, can screen the DAX (label 'DAX', 40 constituents) with EUR prices, .DE tickers and data updated after the Xetra close on Xetra trading days.",
+    "depends_on": [
+      "universe-selector-ui"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Seeder test: 40 rows, .DE suffix, slug dax, XETR/EUR, valid GICS sectors and ISO countries, idempotent; MRK.DE and MRK are distinct Instruments; public label is 'DAX'",
+      "Committed official Xetra holidays (weekdays only) and the 18:15 Europe/Berlin schedule event",
+      "Live engine smoke on SAP.DE recorded as fixture; local XETR pipeline run computes indicators, signals and patterns",
+      "Public enablement (dax in SCREENER_UNIVERSES_PUBLIC) after the verified production run; licensing risk owner-accepted 2026-10-26; kill-switch procedure documented in deploy/README.md",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-10-31: dax.csv (40 .DE rows, as_of 2026-10-31: Wikipedia Sept 2025 table + STOXX announcements Dec 2025 to Sep 2026, Hochtief in / Porsche SE out on 2026-06-22) with dax.md (sources, SHA-256, rebalance procedure); DaxUniverseSeeder (dax, DAX, XETR, EUR, position 3) run by DatabaseSeeder and deploy.sh; deploy/README item 17.",
+      "All 40 .DE symbols fetched live on Yahoo: EUR, GER, Europe/Berlin, 507 sessions. SAP.DE: no weekend dates, no session on the Xetra closures; engine fixture yahoo_sap_de_easter.json plus engine test.",
+      "config/ingestion.php markets.XETR.holidays from Deutsche Boerse's calendar page: 2026 (1 Jan, 3 Apr, 6 Apr, 1 May, 24/25/31 Dec) and 2027 (same overview, subject to change, flagged to confirm).",
+      "New DaxUniverseSeederTest (10 tests, 445 assertions): shape/hash/sorted/sectors/countries, XETR/EUR position 3, idempotent, S&P untouched, non-public default with Admin preview, holidays weekdays and closures, 18:15 Europe/Berlin event, MRK.DE vs MRK distinct bars, label DAX never DAX 40, light 8-member XETR pipeline.",
+      ".\\init.ps1 Baseline OK: phpunit 970 passed / 6 skipped, Vitest 427, engine pytest 138, ruff clean, lint/typecheck/build. Not verified: PostgreSQL (CI only), a real production ingestion run and Admin preview, off-cycle DAX changes and the 2025 reviews (Wikipedia only), 2027 holidays.",
+      "Independent validator ACCEPT 2026-10-31: 40 .DE members confirmed incl. Hochtief for Porsche SE (eff. 22 Jun 2026), no Sept 2026 change, 9 Mar 2026 circular is a Xetra product-group reshuffle; Xetra 2026 holidays match Deutsche Boerse, 2027 flagged unofficial; seeder idempotent, non-public default, other universes untouched; phpunit 970 passed/6 skipped, engine 138, init.ps1 Baseline OK. Unverified: 2025 reviews (Wikipedia only), PostgreSQL (CI), production run."
+    ],
+    "notes": "Implemented 2026-10-31 on branch feat/universe-dax; ready for independent validation. Universe stays non-public (SCREENER_UNIVERSES_PUBLIC) until the owner flips it after the verified production run (deploy/README.md item 17). Owner decisions 2026-10-26: label 'DAX', slug dax, XETR, EUR, .DE; Yahoo licensing risk accepted with the env flag as kill-switch. Independently accepted 2026-10-26."
   }
 ]

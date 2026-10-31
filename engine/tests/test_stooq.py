@@ -370,3 +370,25 @@ def test_yahoo_san_mc_recording_has_madrid_session_dates_and_skips_bme_closures(
     ]
     assert all(bar.date.weekday() < 5 for bar in result.bars)
     assert result.currency == "EUR"
+
+
+# --- DAX (docs/specs/multi-market-universes.md, Feature 6) -------------------------
+
+SAP_EASTER_FIXTURE = Path(__file__).parent / "fixtures" / "yahoo_sap_de_easter.json"
+
+
+def test_yahoo_sap_de_recording_has_berlin_session_dates_and_skips_xetra_closures() -> None:
+    # Trimmed real Yahoo response for SAP.DE (recorded 2026-10-31) around Easter 2026:
+    # Good Friday (2026-04-03) and Easter Monday (2026-04-06) are Xetra non-trading days.
+    result = parse_yahoo_eod(SAP_EASTER_FIXTURE.read_text(encoding="utf-8"), "XETR")
+
+    assert [bar.date for bar in result.bars] == [
+        date(2026, 3, 30),
+        date(2026, 3, 31),
+        date(2026, 4, 1),
+        date(2026, 4, 2),
+        date(2026, 4, 7),
+        date(2026, 4, 8),
+    ]
+    assert all(bar.date.weekday() < 5 for bar in result.bars)
+    assert result.currency == "EUR"
