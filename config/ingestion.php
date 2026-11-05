@@ -77,6 +77,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | NYSE regular session open and early closes (market-hours-status)
+    |--------------------------------------------------------------------------
+    |
+    | `market_open` is the regular continuous session open (America/New_York
+    | wall clock; the close is `market_close`). `early_closes` maps a trading
+    | day (Y-m-d) to its early close (HH:MM, same timezone): the NYSE closes at
+    | 13:00 on the day after Thanksgiving and on 24 December when that is a
+    | trading day (it is a holiday in 2027, listed above). Used only by the
+    | open/closed status of the home page; the ingestion schedule ignores both.
+    | REFRESH ANNUALLY together with the holidays above.
+    |
+    */
+
+    'market_open' => env('INGESTION_MARKET_OPEN', '09:30'),
+
+    'early_closes' => [
+        '2026-11-27' => '13:00',
+        '2026-12-24' => '13:00',
+        '2027-11-26' => '13:00',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Listing Market calendars and schedules (non-US)
     |--------------------------------------------------------------------------
     |
@@ -96,6 +119,10 @@ return [
     | listed) because BME had not published it yet: CONFIRM it against BME's 2027
     | calendar when published. REFRESH ANNUALLY, like the NYSE list above.
     |
+    | `open` and `early_closes` (`Y-m-d => HH:MM`, local) feed only the home page
+    | open/closed status (market-hours-status): the regular continuous session.
+    | Auctions and pre/post-market are not modelled.
+    |
     | XETR (Xetra / Frankfurt): Deutsche Boerse's trading calendar
     | (https://www.cashmarket.deutsche-boerse.com/cash-en/trading/trading-calendar-and-trading-hours).
     | 2026 non-trading days: 1 Jan, 3 Apr, 6 Apr, 1 May, 24 Dec, 25 Dec, 31 Dec
@@ -111,6 +138,7 @@ return [
     'markets' => [
         'XMAD' => [
             'timezone' => env('INGESTION_XMAD_TIMEZONE', 'Europe/Madrid'),
+            'open' => env('INGESTION_XMAD_MARKET_OPEN', '09:00'),
             'close' => env('INGESTION_XMAD_MARKET_CLOSE', '17:30'),
             'buffer_minutes' => (int) env('INGESTION_XMAD_BUFFER_MINUTES', 45),
             'holidays' => [
@@ -125,9 +153,18 @@ return [
                 '2027-03-26',
                 '2027-03-29',
             ],
+            // Half days (market-hours-status): 24 and 31 December close at 14:00
+            // CET. 2027 derived like its holidays: confirm with BME's calendar.
+            'early_closes' => [
+                '2026-12-24' => '14:00',
+                '2026-12-31' => '14:00',
+                '2027-12-24' => '14:00',
+                '2027-12-31' => '14:00',
+            ],
         ],
         'XETR' => [
             'timezone' => env('INGESTION_XETR_TIMEZONE', 'Europe/Berlin'),
+            'open' => env('INGESTION_XETR_MARKET_OPEN', '09:00'),
             'close' => env('INGESTION_XETR_MARKET_CLOSE', '17:30'),
             'buffer_minutes' => (int) env('INGESTION_XETR_BUFFER_MINUTES', 45),
             'holidays' => [
@@ -146,6 +183,8 @@ return [
                 '2027-12-24',
                 '2027-12-31',
             ],
+            // Xetra has no half days: 24 and 31 December are full closures.
+            'early_closes' => [],
         ],
     ],
 

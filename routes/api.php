@@ -20,6 +20,7 @@ use App\Http\Controllers\InstrumentController;
 use App\Http\Controllers\InstrumentMarketContextController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MarketContextController;
+use App\Http\Controllers\MarketStatusController;
 use App\Http\Controllers\Admin\MarketContextAdminController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SavedScreenerController;
@@ -56,6 +57,10 @@ Route::get('/screener', [ScreenerController::class, 'index'])->middleware('throt
 // Public list of the Screener universes the caller can see (universe-registry):
 // the non-public ones only for an Admin; Market Context is never listed.
 Route::get('/universes', [UniverseController::class, 'index'])->middleware('throttle:60,1,universes');
+
+// Public open/closed status of the Listing Markets of the visible universes,
+// from the committed schedule and the clock only (market-hours-status).
+Route::get('/markets/status', [MarketStatusController::class, 'index'])->middleware('throttle:60,1,markets-status');
 
 // Public facts for the legal pages (owner identity once configured, retention
 // figures). Anonymous and throttled; see docs/specs/legal-compliance-eu.md.

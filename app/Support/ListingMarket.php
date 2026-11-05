@@ -21,12 +21,12 @@ final class ListingMarket
      * `suffix` is the ticker suffix that identifies the market (`null` for the
      * US, whose tickers carry none and never end in another market's suffix).
      *
-     * @var array<string, array{timezone: string, close: string, currency: string, suffix: ?string}>
+     * @var array<string, array{timezone: string, open: string, close: string, currency: string, suffix: ?string}>
      */
     private const DEFINITIONS = [
-        self::US => ['timezone' => 'America/New_York', 'close' => '16:00', 'currency' => 'USD', 'suffix' => null],
-        self::XMAD => ['timezone' => 'Europe/Madrid', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.MC'],
-        self::XETR => ['timezone' => 'Europe/Berlin', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.DE'],
+        self::US => ['timezone' => 'America/New_York', 'open' => '09:30', 'close' => '16:00', 'currency' => 'USD', 'suffix' => null],
+        self::XMAD => ['timezone' => 'Europe/Madrid', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.MC'],
+        self::XETR => ['timezone' => 'Europe/Berlin', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.DE'],
     ];
 
     /** @return list<string> */
@@ -43,6 +43,11 @@ final class ListingMarket
     public static function timezone(string $code): string
     {
         return self::DEFINITIONS[$code]['timezone'];
+    }
+
+    public static function open(string $code): string
+    {
+        return self::DEFINITIONS[$code]['open'];
     }
 
     public static function close(string $code): string

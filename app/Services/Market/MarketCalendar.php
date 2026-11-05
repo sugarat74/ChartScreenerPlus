@@ -83,16 +83,102 @@ class MarketCalendar
     }
 
     /**
-     * @return array{timezone: string, close: string, buffer_minutes: int, holidays: list<string>}
+     * The regular continuous session of a trading day (market-hours-status):
+     * `opens_at` / `closes_at` as instants (the early close when the day has
+     * one), or `null` on a weekend or a committed holiday. `$day` is read as a
+     * calendar date in the market's own timezone, so DST changes are absorbed
+     * by building the wall-clock time in that zone.
+     *
+     * @return array{opens_at: Carbon, closes_at: Carbon, early_close: bool}|null
+     */
+    public function session(string $market, DateTimeInterface $day): ?array
+    {
+        if (! $this->isTradingDay($market, $day)) {
+            return null;
+        }
+
+        $settings = $this->settings($market);
+        $date = $day->format('Y-m-d');
+        $early = $settings['early_closes'][$date] ?? null;
+        $close = $early ?? $settings['close'];
+
+        return [
+            'opens_at' => Carbon::createFromFormat('Y-m-d H:i', "{$date} {$settings['open']}", $settings['timezone'])->utc(),
+            'closes_at' => Carbon::createFromFormat('Y-m-d H:i', "{$date} {$close}", $settings['timezone'])->utc(),
+            'early_close' => $early !== null,
+        ];
+    }
+
+    /**
+     * The regular session times (`HH:MM`, market timezone).
+     *
+     * @return array{open: string, close: string}
+     */
+    public function regularHours(string $market): array
+    {
+        $settings = $this->settings($market);
+
+        return ['open' => $settings['open'], 'close' => $settings['close']];
+    }
+
+    /**
+     * Whether the committed holiday list covers `$year`: at least one entry
+     * dated in that year. A year with none is unknown, not holiday-free.
+     */
+    public function coversYear(string $market, int $year): bool
+    {
+        foreach ($this->holidays($market) as $holiday) {
+            if (str_starts_with($holiday, $year.'-')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Committed holidays on weekdays and early closes from `$from` (a market
+     * local date, inclusive) on, soonest first, at most `$limit`.
+     *
+     * @return list<array{date: string, type: string, close: ?string}>
+     */
+    public function upcomingEvents(string $market, string $from, int $limit): array
+    {
+        $settings = $this->settings($market);
+        $events = [];
+
+        foreach ($settings['holidays'] as $date) {
+            $weekday = (int) Carbon::parse($date)->format('N') < 6;
+            if ($date >= $from && $weekday) {
+                $events[$date] = ['date' => $date, 'type' => 'holiday', 'close' => null];
+            }
+        }
+
+        foreach ($settings['early_closes'] as $date => $close) {
+            $date = (string) $date;
+            if ($date >= $from && ! isset($events[$date]) && $this->isTradingDay($market, Carbon::parse($date))) {
+                $events[$date] = ['date' => $date, 'type' => 'early_close', 'close' => (string) $close];
+            }
+        }
+
+        ksort($events);
+
+        return array_slice(array_values($events), 0, $limit);
+    }
+
+    /**
+     * @return array{timezone: string, open: string, close: string, buffer_minutes: int, holidays: list<string>, early_closes: array<string, string>}
      */
     private function settings(string $market): array
     {
         if ($market === ListingMarket::US) {
             return [
                 'timezone' => (string) config('ingestion.timezone'),
+                'open' => (string) config('ingestion.market_open', '09:30'),
                 'close' => (string) config('ingestion.market_close'),
                 'buffer_minutes' => (int) config('ingestion.schedule_buffer_minutes'),
                 'holidays' => array_values((array) config('ingestion.holidays', [])),
+                'early_closes' => (array) config('ingestion.early_closes', []),
             ];
         }
 
@@ -104,9 +190,11 @@ class MarketCalendar
 
         return [
             'timezone' => (string) ($config['timezone'] ?? ListingMarket::timezone($market)),
+            'open' => (string) ($config['open'] ?? ListingMarket::open($market)),
             'close' => (string) ($config['close'] ?? ListingMarket::close($market)),
             'buffer_minutes' => (int) ($config['buffer_minutes'] ?? 45),
             'holidays' => array_values((array) ($config['holidays'] ?? [])),
+            'early_closes' => (array) ($config['early_closes'] ?? []),
         ];
     }
 

@@ -31,6 +31,7 @@ import { useMarketContextAccess } from '../auth/useMarketContextAccess.ts'
 import CandidateResults from '../components/screener/CandidateResults.tsx'
 import type { ScreenerStatus } from '../components/screener/CandidateResults.tsx'
 import SavedScreenersPanel from '../components/screener/SavedScreenersPanel.tsx'
+import MarketHoursStrip from '../components/screener/MarketHoursStrip.tsx'
 import IndicatorsToggle from '../components/screener/IndicatorsToggle.tsx'
 import ScreenerAiQuery from '../components/screener/ScreenerAiQuery.tsx'
 import ScreenerColumnFilters from '../components/screener/ScreenerColumnFilters.tsx'
@@ -360,6 +361,8 @@ export default function ScreenerPage() {
           {t('screener.howItWorksLink')}
         </Link>
       </header>
+
+      <MarketHoursStrip />
 
       {selectorVisible && currentUniverse !== null ? (
         <UniverseSelector universes={universes} selected={currentUniverse.slug} onSelect={selectUniverse} />

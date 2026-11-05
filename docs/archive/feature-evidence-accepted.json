@@ -2098,5 +2098,32 @@
       "Independent validator ACCEPT 2026-10-31: 40 .DE members confirmed incl. Hochtief for Porsche SE (eff. 22 Jun 2026), no Sept 2026 change, 9 Mar 2026 circular is a Xetra product-group reshuffle; Xetra 2026 holidays match Deutsche Boerse, 2027 flagged unofficial; seeder idempotent, non-public default, other universes untouched; phpunit 970 passed/6 skipped, engine 138, init.ps1 Baseline OK. Unverified: 2025 reviews (Wikipedia only), PostgreSQL (CI), production run."
     ],
     "notes": "Implemented 2026-10-31 on branch feat/universe-dax; ready for independent validation. Universe stays non-public (SCREENER_UNIVERSES_PUBLIC) until the owner flips it after the verified production run (deploy/README.md item 17). Owner decisions 2026-10-26: label 'DAX', slug dax, XETR, EUR, .DE; Yahoo licensing risk accepted with the env flag as kill-switch. Independently accepted 2026-10-26."
+  },
+  {
+    "id": "market-hours-status",
+    "area": "frontend",
+    "planning_spec": "docs/specs/market-hours-status.md (prepared 2026-10-26)",
+    "title": "Market hours and open/closed status on the home page",
+    "user_visible_behavior": "The home page shows whether NYSE/Nasdaq, Bolsa de Madrid and Xetra are open or closed right now, with the next open or close in the viewer's timezone, and lists regular hours, holidays and early closes; computed from the static schedule and the clock only, never from market data.",
+    "depends_on": [
+      "ingestion-multi-market",
+      "universe-ibex35",
+      "universe-dax"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Frozen-clock tests: open/close boundaries, weekends, each market's own holidays, early closes, US and EU DST changes, next open across weekend plus holiday",
+      "Vitest: es/en strip with mocked timezone, status flips at a boundary, status not by color alone, no EOD wording or hardcoded text",
+      "Visual smoke 390/1440 px light/dark",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      ".\\init.ps1 exit 0 on 2026-11-05: phpunit 998 passed / 6 skipped, Vitest 443, lint/tsc/build, engine 138",
+      "MarketHoursStatusTest + MarketStatusApiTest: open/close boundaries, weekends, own holidays, early closes, US/EU DST in different weeks, next open across weekend plus holidays, uncovered year, kill-switch visibility",
+      "Vitest: MarketHoursStrip (es/en, mocked viewer timezone, flip at boundary, refetch when stale, not colour-only, no EOD, StrictMode), marketHours lib, ScreenerMarketHours (home page unchanged when request fails or no market)",
+      "Browser pass 390/1440 px light/dark es/en on scratch SQLite: no horizontal overflow; servers and scratch removed",
+      "Independent validator ACCEPT 2026-11-05: 36,498 UTC-instant comparisons against an independent zoneinfo model, 0 mismatches (weekends, holidays, early closes, both DST transitions); NYSE/BME hours and early closes match official sources, 2027 XMAD early closes flagged derived; own browser pass 390/1440 px light/dark es/en, kill-switch, admin preview, mocked clock, failing endpoint; phpunit 998 passed/6 skipped, Vitest 443, engine 138, init.ps1 Baseline OK."
+    ],
+    "notes": "Requested 2026-10-26 ('añadir los horarios en los distintos mercados y su calendario, para ver en portada cuales están abiertos en cada momento'). Future feature, not part of the first multi-universe delivery. Reuses the per-market calendars of ingestion-multi-market plus open times and early closes; no intraday data. Independently accepted 2026-10-26."
   }
 ]

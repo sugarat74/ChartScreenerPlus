@@ -5,7 +5,7 @@
 - `id`: `market-hours-status`
 - `area`: `frontend`
 - `depends_on`: `ingestion-multi-market`, `universe-ibex35`, `universe-dax`
-- `status`: `not_started` (future feature; not part of the first multi-universe delivery)
+- `status`: `passing` (implemented 2026-11-05; endpoint `GET /api/markets/status`, strip `MarketHoursStrip`; see PROGRESS.md for assumptions)
 - `source`: `feature_list.json`. Requested 2026-10-26: "añadir los horarios en los distintos mercados y su calendario, para ver en portada cuales están abiertos en cada momento". Related umbrella: `docs/specs/multi-market-universes.md`. This is a short spec; refine it into a full contract before implementation.
 
 ## Goal
