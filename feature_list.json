@@ -992,22 +992,12 @@
   {
     "id": "screener-filter-panel-compact",
     "area": "screener",
-    "planning_spec": "docs/specs/screener-filter-panel-compact.md (prepared 2026-11-05)",
     "title": "Compact Finviz-style Screener filter panel",
-    "user_visible_behavior": "The «Criterios técnicos» block becomes a one-row toolbar: Signals, RSI and Patterns (and Sector context when available) are compact triggers showing their current value and opening one inline editor card, Min RVOL and MA cross are compact selects and Price above SMA200 is a toggle; same options, URL, requests and Saved Screeners as before, with the active count and Clear filters kept in the header.",
+    "status": "accepted",
     "depends_on": [
       "screener-technical-filters-ui",
       "market-context-patterns",
       "screener-table-column-controls"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Vitest: every control calls onChange with the same patch as before (signals, RSI blur/Enter, RVOL, SMA200, MA cross, patterns incl. last-removal status reset, sector); summaries, aria-expanded, single open card, Esc returns focus, RSI draft committed on close, sector access states, es/en",
-      "Same request URL for a fixed multi-filter deep link before and after; column funnels, Saved Screeners and AI query untouched",
-      "Manual smoke 390/1440 px light/dark es/en with keyboard pass: panel at rest <= ~120 px at 1440 and <= ~220 px at 390, no horizontal scroll",
-      "npm --prefix frontend run test, lint, build and .\\init.ps1 pass; DESIGN.md updated"
-    ],
-    "evidence": [],
-    "notes": "Requested 2026-11-05 (explicit user request, pattern choice delegated to planner). Decision: toolbar of value-showing triggers + one inline editor card + native selects for single-choice groups; tabs, whole-panel collapse and floating popovers rejected. Frontend only, no new dependency. The Excel/Access-style header sort/filter menu is a separate pending idea, not in scope. Open questions in the spec."
+    ]
   }
 ]

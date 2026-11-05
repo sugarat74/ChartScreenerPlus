@@ -2,6 +2,11 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Independent validation: IBEX 35 universe (`universe-ibex35`, accepted) — 2026-10-26
+
+- Verdict **accept**. Validator re-fetched Wikipedia's IBEX 35 table: the 35 `.MC` tickers match `database/data/ibex35.csv` exactly (SAN, BBVA, ITX, … ROVI), the CSV SHA-256 matches `ibex35.md`, and the 2026 Bolsa de Madrid closures (1 Jan, 3 Apr, 6 Apr, 1 May, 25 Dec; 24/31 Dec are half days) match BME's calendar. A live read-only Yahoo request for `SAN.MC` and `ITX.MC` returned EUR, `Europe/Madrid`, exchange MCE. `.\init.ps1` exit 0 (Laravel 931 passed / 6 skipped, engine 116) and `Ibex35UniverseSeederTest` 8 passed. The XMAD event runs 18:15 Madrid weekdays only once an XMAD Screener universe is seeded; the US pipeline and the other universes are unaffected; the universe stays non-public (`SCREENER_UNIVERSES_PUBLIC` and `.env.example` untouched).
+- Non-blocking: the derived 2027 holidays (1 Jan, 26 Mar, 29 Mar) are unofficial and must be confirmed and renewed yearly; the September 2026 index review could not be verified, so re-check the composition before making the universe public; only `SAN.MC` and `ITX.MC` were fetched live, so the first production run must confirm the other 33 symbols; manual GICS sectors for CLNX, FDR, IDR and LOG are judgement calls. Full record archived.
+
 ## IBEX 35 universe implementation (`universe-ibex35`, passing) — 2026-10-26
 
 - Feature 5 of `docs/specs/multi-market-universes.md`. New `database/data/ibex35.csv` (35 `.MC` companies, exchange `BME`, as_of 2026-10-26) with `ibex35.md` (sources, SHA-256, transform, per-ticker classification, Madrid calendar, review cadence, rebalance procedure) and `Ibex35UniverseSeeder extends IndexUniverseSeeder` (slug `ibex35`, "IBEX 35", XMAD/EUR, position 2), run by `DatabaseSeeder` and `deploy/deploy.sh`. `config/ingestion.php` `markets.XMAD.holidays`: 2026 official BME (1 Jan, 3 Apr, 6 Apr, 1 May, 25 Dec; 24/31 Dec are 14:00 half days, trading days) and 2027 derived (1 Jan, 26 Mar, 29 Mar; BME had not published it: confirm). User guide es/en, `deploy/README.md` item 13 (rollout), ARCHITECTURE and spec notes updated. The universe stays non-public (`SCREENER_UNIVERSES_PUBLIC` default unchanged).

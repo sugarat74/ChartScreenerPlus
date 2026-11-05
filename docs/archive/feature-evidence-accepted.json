@@ -2098,5 +2098,31 @@
       "Independent validator ACCEPT 2026-10-31: 40 .DE members confirmed incl. Hochtief for Porsche SE (eff. 22 Jun 2026), no Sept 2026 change, 9 Mar 2026 circular is a Xetra product-group reshuffle; Xetra 2026 holidays match Deutsche Boerse, 2027 flagged unofficial; seeder idempotent, non-public default, other universes untouched; phpunit 970 passed/6 skipped, engine 138, init.ps1 Baseline OK. Unverified: 2025 reviews (Wikipedia only), PostgreSQL (CI), production run."
     ],
     "notes": "Implemented 2026-10-31 on branch feat/universe-dax; ready for independent validation. Universe stays non-public (SCREENER_UNIVERSES_PUBLIC) until the owner flips it after the verified production run (deploy/README.md item 17). Owner decisions 2026-10-26: label 'DAX', slug dax, XETR, EUR, .DE; Yahoo licensing risk accepted with the env flag as kill-switch. Independently accepted 2026-10-26."
+  },
+  {
+    "id": "screener-filter-panel-compact",
+    "area": "screener",
+    "planning_spec": "docs/specs/screener-filter-panel-compact.md (prepared 2026-11-05)",
+    "title": "Compact Finviz-style Screener filter panel",
+    "user_visible_behavior": "The «Criterios técnicos» block becomes a one-row toolbar: Signals, RSI and Patterns (and Sector context when available) are compact triggers showing their current value and opening one inline editor card, Min RVOL and MA cross are compact selects and Price above SMA200 is a toggle; same options, URL, requests and Saved Screeners as before, with the active count and Clear filters kept in the header.",
+    "depends_on": [
+      "screener-technical-filters-ui",
+      "market-context-patterns",
+      "screener-table-column-controls"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Vitest: every control calls onChange with the same patch as before (signals, RSI blur/Enter, RVOL, SMA200, MA cross, patterns incl. last-removal status reset, sector); summaries, aria-expanded, single open card, Esc returns focus, RSI draft committed on close, sector access states, es/en",
+      "Same request URL for a fixed multi-filter deep link before and after; column funnels, Saved Screeners and AI query untouched",
+      "Manual smoke 390/1440 px light/dark es/en with keyboard pass: panel at rest <= ~120 px at 1440 and <= ~220 px at 390, no horizontal scroll",
+      "npm --prefix frontend run test, lint, build and .\\init.ps1 pass; DESIGN.md updated"
+    ],
+    "evidence": [
+      "Vitest 443 passed (new: ScreenerFilterPanel toolbar tests, screenerToolbar.test.ts, ScreenerPage deep-link test asserting the identical request URL); lint, tsc, build and .\\init.ps1 Baseline OK (phpunit 970/6 skipped, engine 138) on 2026-11-05",
+      "Existing tests changed only where the control type changed (sector and pattern editors now open from their trigger: ScreenerFilterPanel, PatternPanel, ScreenerPage, ScreenerUniverse); countActiveFilters, serialization, api.ts, ScreenerColumnFilters and CandidateTable untouched",
+      "Browser pass (Playwright, scratch SQLite): panel at rest 587 -> 110 px at 1440 and 1303/1215 -> 225 px at 390 (Visitor); Visitor with all values 110 px / 234 px, Admin with the sector trigger ~270-280 px at 390 (independent validator); no horizontal scroll at 390 or 1440 in light/dark, es/en; deep link request identical, no request per RSI keystroke, Esc commits once and returns focus, Clear resets every control",
+      "Independent validator ACCEPT 2026-11-05: all old controls reachable with identical patches, URL and API requests pinned by a page test, existing test edits only open the card first; own browser pass 390/1440 light/dark es/en: panel at rest 587->110 px (1440) and ~1300->225 px (390) for a Visitor, Admin with Sector ~270-280 px at 390; Esc/RSI commit rules and a11y verified; Vitest 443, lint/tsc/build clean, init.ps1 Baseline OK."
+    ],
+    "notes": "Requested 2026-11-05 (explicit user request, pattern choice delegated to planner). Decision: toolbar of value-showing triggers + one inline editor card + native selects for single-choice groups; tabs, whole-panel collapse and floating popovers rejected. Frontend only, no new dependency. The Excel/Access-style header sort/filter menu is a separate pending idea, not in scope. Open questions in the spec. Implemented 2026-11-05 with the spec defaults (column funnels keep their controls, open card not persisted, header count unchanged). Tab from a trigger reaches the remaining toolbar controls before the card (card follows the row, no focus trap). Independently accepted 2026-10-26."
   }
 ]

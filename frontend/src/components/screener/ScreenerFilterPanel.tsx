@@ -1,54 +1,45 @@
 /**
- * Screener filter controls. Toggles/selects commit to the URL immediately;
- * the numeric RSI inputs keep a local draft and commit on blur/Enter so typing
- * never fires a request per keystroke. Token-only styling (DESIGN.md).
+ * Compact Screener criteria toolbar (screener-filter-panel-compact).
  *
- * The "Contexto sectorial" fieldset (market-context-patterns) follows the
- * Market Context access: the controls for an allowed session (with a
- * "Vista previa" chip for an Admin preview), a dashed sign-in box for a
- * Visitor once the go-live flag is on, and nothing otherwise.
+ * One row of small controls that show their current value: Signals, RSI,
+ * Patterns and Sector context open one inline editor card (one at a time,
+ * aria-expanded/aria-controls, Esc closes and returns focus, no focus trap);
+ * Min RVOL and MA cross are native selects and Price > SMA 200 a toggle.
+ * Filters keep their options, URL keys and requests: every control calls
+ * `onChange` with the same patch as before. Toggles/selects commit
+ * immediately; the RSI inputs commit on blur/Enter and when the card closes.
+ *
+ * Sector context (market-context-patterns) follows the Market Context
+ * access: controls for an allowed session (with a "Vista previa" chip for an
+ * Admin preview), a dashed sign-in box for a Visitor once public, nothing
+ * otherwise. Token-only styling (DESIGN.md).
  */
 
+import { useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import type { MarketContextAccess } from '../../auth/useMarketContextAccess.ts'
 import type { MessageKey } from '../../i18n/translate.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
-import type {
-  MarketTrend,
-  ScreenerFilters,
-  ScreenerMaCross,
-  ScreenerPatternStatus,
-  ScreenerPatternType,
-  ScreenerSignalType,
-} from '../../lib/api.ts'
-import {
-  MIN_RVOL_PRESETS,
-  SECTOR_RS_RANK_OPTIONS,
-  SECTOR_TRENDS,
-  SCREENER_PATTERN_STATUSES,
-  SCREENER_PATTERN_GROUPS,
-  SCREENER_SIGNAL_TYPES,
-  parseRsiInput,
-  patternLabel,
-  signalLabel,
-} from '../../lib/screenerFilters.ts'
-import MarketSignInBox from '../market/MarketSignInBox.tsx'
+import type { ScreenerFilters, ScreenerMaCross } from '../../lib/api.ts'
+import { rsiSummary, rvolSelectValues, triggerText } from '../../lib/screenerToolbar.ts'
 import { TREND_ICON } from '../market/marketText.ts'
+import {
+  PatternsEditor,
+  RsiEditor,
+  SectorEditor,
+  SignalsEditor,
+} from './ScreenerCriteriaEditors.tsx'
 
-const CHIP_BASE =
-  'rounded-[4px] border-2 px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
+type CriteriaGroup = 'signals' | 'rsi' | 'patterns' | 'sector'
 
-function chipClass(selected: boolean): string {
-  return selected
-    ? `${CHIP_BASE} border-outline bg-primary text-on-primary shadow-[1px_1px_0px_#ffcc00]`
-    : `${CHIP_BASE} border-outline-variant bg-surface-container text-on-surface-variant`
+const CARD_ID = 'screener-criteria-card'
+
+const CONTROL_BASE =
+  'min-h-9 w-full rounded-md border-2 border-outline px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-normal sm:px-3 sm:text-[11px] sm:tracking-wider shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none sm:w-auto'
+
+function controlClass(active: boolean): string {
+  return `${CONTROL_BASE} ${active ? 'bg-primary text-on-primary' : 'bg-surface-bright text-on-surface'}`
 }
-
-const LEGEND_CLASS =
-  'font-mono text-[11px] font-bold uppercase tracking-wider text-on-surface-variant'
-
-const NUMBER_INPUT_CLASS =
-  'w-24 rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-sm text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:border-outline focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
 
 const MA_CROSS_OPTIONS: ReadonlyArray<{ value: ScreenerMaCross | null; labelKey: MessageKey }> = [
   { value: null, labelKey: 'screener.maCrossAny' },
@@ -56,33 +47,10 @@ const MA_CROSS_OPTIONS: ReadonlyArray<{ value: ScreenerMaCross | null; labelKey:
   { value: 'bearish', labelKey: 'screener.maCrossBearish' },
 ]
 
-const PATTERN_STATUS_LABELS: Record<ScreenerPatternStatus, MessageKey> = {
-  any: 'patterns.status.any',
-  forming: 'patterns.status.forming',
-  confirmed: 'patterns.status.confirmed',
-}
-
-function segmentClass(selected: boolean, index: number): string {
-  return [
-    'px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
-    index > 0 ? 'border-l-2 border-outline' : '',
-    selected ? 'bg-primary text-on-primary' : 'bg-surface-bright text-on-surface-variant hover:bg-surface-container',
-  ].join(' ')
-}
-
-function toDraft(value: number | null): string {
-  return value === null ? '' : String(value)
-}
-
-const SELECT_CLASS =
-  'w-fit rounded-md border-2 border-outline bg-surface-bright px-3 py-2 font-mono text-xs text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none'
-
-const SECTOR_TREND_OPTIONS: ReadonlyArray<MarketTrend | null> = [null, ...SECTOR_TRENDS]
-
 interface ScreenerFilterPanelProps {
   filters: ScreenerFilters
   activeCount: number
-  /** Market Context access (useMarketContextAccess); absent = no sector fieldset. */
+  /** Market Context access (useMarketContextAccess); absent = no sector control. */
   access?: MarketContextAccess
   onChange: (patch: Partial<ScreenerFilters>) => void
   onClear: () => void
@@ -96,324 +64,186 @@ export default function ScreenerFilterPanel({
   onClear,
 }: ScreenerFilterPanelProps) {
   const { t, formatMultiple } = useI18n()
+  const [openGroup, setOpenGroup] = useState<CriteriaGroup | null>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const triggerRefs = useRef<Partial<Record<CriteriaGroup, HTMLButtonElement | null>>>({})
 
-  // The RSI inputs are uncontrolled drafts: the DOM holds the keystrokes and
-  // only blur/Enter commits them, so typing never writes the URL. The `key`
-  // re-mounts an input when the committed value changes from outside (clear,
-  // back/forward, deep link) so the draft always reflects the URL.
-  function toggleSignal(type: ScreenerSignalType) {
-    const signals = filters.signals.includes(type)
-      ? filters.signals.filter((value) => value !== type)
-      : [...filters.signals, type]
-    onChange({ signals })
-  }
+  const showSector = access?.status === 'allowed' || access?.status === 'signIn'
+  // A group that is no longer drawn (e.g. the universe changed) cannot stay open.
+  const openNow = openGroup === 'sector' && !showSector ? null : openGroup
 
-  function togglePattern(type: ScreenerPatternType) {
-    const patterns = filters.patterns.includes(type)
-      ? filters.patterns.filter((value) => value !== type)
-      : [...filters.patterns, type]
-    onChange(patterns.length > 0 ? { patterns } : { patterns, patternStatus: 'any' })
-  }
-
-  function handleNumberKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === 'Enter') {
-      event.currentTarget.blur()
+  // Blur whatever has focus inside the card before it unmounts so a typed RSI
+  // draft is committed (blur handler) and never lost.
+  function commitCardDraft() {
+    const active = document.activeElement
+    if (active instanceof HTMLElement && cardRef.current?.contains(active)) {
+      active.blur()
     }
   }
 
+  function toggleGroup(group: CriteriaGroup) {
+    commitCardDraft()
+    setOpenGroup(openNow === group ? null : group)
+  }
+
+  function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Escape' || openNow === null) {
+      return
+    }
+    event.stopPropagation()
+    const group = openNow
+    commitCardDraft()
+    setOpenGroup(null)
+    triggerRefs.current[group]?.focus()
+  }
+
+  const rsiValue = rsiSummary(filters.rsiMin, filters.rsiMax)
+  const sectorParts: string[] = []
+  if (filters.sectorTrend !== null) {
+    sectorParts.push(`${TREND_ICON[filters.sectorTrend]} ${t(`marketContext.trend.${filters.sectorTrend}`)}`)
+  }
+  if (filters.sectorRsRankMax !== null) {
+    sectorParts.push(t('screener.sectorContext.rankTop', { n: filters.sectorRsRankMax }))
+  }
+  const patternsValue =
+    filters.patterns.length === 0
+      ? null
+      : filters.patternStatus === 'any'
+        ? filters.patterns.length
+        : `${filters.patterns.length} · ${t(`patterns.status.${filters.patternStatus}`)}`
+
+  const triggers: ReadonlyArray<{
+    group: CriteriaGroup
+    text: string
+    active: boolean
+  }> = [
+    {
+      group: 'signals',
+      text: triggerText(t('screener.toolbar.signals'), filters.signals.length > 0 ? filters.signals.length : null),
+      active: filters.signals.length > 0,
+    },
+    { group: 'rsi', text: triggerText('RSI', rsiValue), active: rsiValue !== null },
+    { group: 'patterns', text: triggerText(t('screener.toolbar.patterns'), patternsValue), active: filters.patterns.length > 0 },
+    ...(showSector
+      ? [
+          {
+            group: 'sector' as const,
+            text: triggerText(t('screener.toolbar.sector'), sectorParts.length > 0 ? sectorParts.join(' · ') : null),
+            active: sectorParts.length > 0,
+          },
+        ]
+      : []),
+  ]
+
+  function renderTrigger(group: CriteriaGroup) {
+    const item = triggers.find((entry) => entry.group === group)
+    if (!item) {
+      return null
+    }
+    const open = openNow === group
+    return (
+      <button
+        key={group}
+        ref={(node) => {
+          triggerRefs.current[group] = node
+        }}
+        id={`screener-criteria-trigger-${group}`}
+        type="button"
+        aria-expanded={open}
+        aria-controls={CARD_ID}
+        onClick={() => toggleGroup(group)}
+        className={`${controlClass(item.active)} flex items-center justify-between gap-2 text-left`}
+      >
+        <span>{item.text}</span>
+        <span aria-hidden="true" className={`text-[9px] transition-transform ${open ? 'rotate-180' : ''}`}>
+          ▼
+        </span>
+      </button>
+    )
+  }
+
+  const rvolValues = rvolSelectValues(filters.minRvol)
+
   return (
-    <section className="rounded-md border-2 border-outline bg-surface-bright p-5 shadow-[2px_2px_0px_var(--color-shadow)]">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="font-headline text-lg font-black uppercase tracking-wide text-on-surface">
-            {t('screener.filtersTitle')}
-          </h2>
-          <p className="font-mono text-[11px] text-on-surface-variant">
-            {t('screener.filtersHint')}
-          </p>
-        </div>
-        <p className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant">
-          {activeCount > 0
-            ? t('screener.activeFilters', { count: activeCount })
-            : t('screener.noActiveFilters')}
-        </p>
-      </header>
-
-      <div className="mt-4 flex flex-wrap gap-x-8 gap-y-5">
-        <fieldset className="flex min-w-60 flex-col gap-2">
-          <legend className={LEGEND_CLASS}>
-            {filters.signals.length > 0
-              ? t('screener.signalsLegendCount', { count: filters.signals.length })
-              : t('screener.signalsLegend')}
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {SCREENER_SIGNAL_TYPES.map((type) => {
-              const selected = filters.signals.includes(type)
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => toggleSignal(type)}
-                  className={chipClass(selected)}
-                >
-                  {signalLabel(type, t)}
-                </button>
-              )
-            })}
-          </div>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className={LEGEND_CLASS}>RSI (14)</legend>
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="screener-rsi-min" className={LEGEND_CLASS}>
-                {t('screener.rsiMin')}
-              </label>
-              <input
-                id="screener-rsi-min"
-                key={`rsi-min-${filters.rsiMin ?? 'off'}`}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={100}
-                step={1}
-                defaultValue={toDraft(filters.rsiMin)}
-                onBlur={(event) => onChange({ rsiMin: parseRsiInput(event.target.value) })}
-                onKeyDown={handleNumberKeyDown}
-                className={NUMBER_INPUT_CLASS}
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label htmlFor="screener-rsi-max" className={LEGEND_CLASS}>
-                {t('screener.rsiMax')}
-              </label>
-              <input
-                id="screener-rsi-max"
-                key={`rsi-max-${filters.rsiMax ?? 'off'}`}
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={100}
-                step={1}
-                defaultValue={toDraft(filters.rsiMax)}
-                onBlur={(event) => onChange({ rsiMax: parseRsiInput(event.target.value) })}
-                onKeyDown={handleNumberKeyDown}
-                className={NUMBER_INPUT_CLASS}
-              />
-            </div>
-          </div>
-          <p className="font-mono text-[10px] text-on-surface-variant">{t('screener.rsiEmptyHint')}</p>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className={LEGEND_CLASS}>{t('screener.minRvolLegend')}</legend>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              aria-pressed={filters.minRvol === null}
-              onClick={() => onChange({ minRvol: null })}
-              className={chipClass(filters.minRvol === null)}
-            >
-              {t('screener.minRvolAll')}
-            </button>
-            {MIN_RVOL_PRESETS.map((preset) => {
-              const selected = filters.minRvol === preset
-              return (
-                <button
-                  key={preset}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => onChange({ minRvol: selected ? null : preset })}
-                  className={chipClass(selected)}
-                >
-                  {formatMultiple(preset)}
-                </button>
-              )
-            })}
-          </div>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className={LEGEND_CLASS}>{t('screener.priceLegend')}</legend>
-          <button
-            type="button"
-            aria-pressed={filters.priceAboveSma200}
-            onClick={() => onChange({ priceAboveSma200: !filters.priceAboveSma200 })}
-            className={`w-fit ${chipClass(filters.priceAboveSma200)}`}
-          >
-            {t('screener.priceAboveSma200')}
-          </button>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className={LEGEND_CLASS}>{t('screener.maCrossLegend')}</legend>
-          <div
-            role="group"
-            aria-label={t('screener.maCrossAria')}
-            className="inline-flex w-fit overflow-hidden rounded-[4px] border-2 border-outline"
-          >
-            {MA_CROSS_OPTIONS.map((option, index) => {
-              const selected = filters.maCross === option.value
-              return (
-                <button
-                  key={option.labelKey}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => onChange({ maCross: option.value })}
-                  className={segmentClass(selected, index)}
-                >
-                  {t(option.labelKey)}
-                </button>
-              )
-            })}
-          </div>
-        </fieldset>
-
-        <fieldset className="flex min-w-60 flex-col gap-2">
-          <legend className={LEGEND_CLASS}>
-            {filters.patterns.length > 0
-              ? t('patterns.legendCount', { count: filters.patterns.length })
-              : t('patterns.legend')}
-          </legend>
-          {SCREENER_PATTERN_GROUPS.map((group) => (
-            <div
-              key={group.direction}
-              role="group"
-              aria-labelledby={`pattern-group-${group.direction}`}
-              className="flex flex-col gap-1"
-            >
-              <span id={`pattern-group-${group.direction}`} className="font-mono text-[10px] uppercase text-on-surface-variant">
-                {t(`patterns.groups.${group.direction}`)}
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {group.types.map((type) => {
-                  const selected = filters.patterns.includes(type)
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => togglePattern(type)}
-                      className={chipClass(selected)}
-                    >
-                      {patternLabel(type, t)}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-          <div
-            role="group"
-            aria-label={t('patterns.statusAria')}
-            className="inline-flex w-fit overflow-hidden rounded-[4px] border-2 border-outline"
-          >
-            {SCREENER_PATTERN_STATUSES.map((status, index) => {
-              const selected = filters.patternStatus === status
-              return (
-                <button
-                  key={status}
-                  type="button"
-                  aria-pressed={selected}
-                  disabled={filters.patterns.length === 0}
-                  onClick={() => onChange({ patternStatus: status })}
-                  className={segmentClass(selected, index)}
-                >
-                  {t(PATTERN_STATUS_LABELS[status])}
-                </button>
-              )
-            })}
-          </div>
-          <p className="max-w-xs font-mono text-[10px] text-on-surface-variant">{t('patterns.hint')}</p>
-        </fieldset>
-
-        {access?.status === 'allowed' ? (
-          <fieldset className="flex min-w-0 flex-col gap-2">
-            <legend className={LEGEND_CLASS}>
-              {t('screener.sectorContext.legend')}
-              {access.preview ? (
-                <span className="ml-2 rounded-[4px] border border-dashed border-outline bg-primary-container px-1.5 py-0.5 text-[10px] text-on-primary-container">
-                  {t('screener.sectorContext.preview')}
-                </span>
-              ) : null}
-            </legend>
-            <span className="font-mono text-[10px] uppercase text-on-surface-variant">{t('screener.sectorContext.trendLabel')}</span>
-            <div
-              role="group"
-              aria-label={t('screener.sectorContext.trendAria')}
-              className="inline-flex w-fit flex-wrap overflow-hidden rounded-[4px] border-2 border-outline"
-            >
-              {SECTOR_TREND_OPTIONS.map((trend, index) => {
-                const selected = filters.sectorTrend === trend
-                return (
-                  <button
-                    key={trend ?? 'any'}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => onChange({ sectorTrend: trend })}
-                    className={segmentClass(selected, index)}
-                  >
-                    {trend === null ? (
-                      t('screener.sectorContext.trendAny')
-                    ) : (
-                      <>
-                        <span aria-hidden="true">{TREND_ICON[trend]} </span>
-                        {t(`marketContext.trend.${trend}`)}
-                      </>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-            <label htmlFor="screener-sector-rank" className="font-mono text-[10px] uppercase text-on-surface-variant">
-              {t('screener.sectorContext.rankLabel')}
-            </label>
-            <select
-              id="screener-sector-rank"
-              value={filters.sectorRsRankMax === null ? '' : String(filters.sectorRsRankMax)}
-              onChange={(event) => onChange({ sectorRsRankMax: event.target.value === '' ? null : Number(event.target.value) })}
-              className={SELECT_CLASS}
-            >
-              <option value="">{t('screener.sectorContext.rankAll')}</option>
-              {SECTOR_RS_RANK_OPTIONS.map((n) => (
-                <option key={n} value={String(n)}>
-                  {t('screener.sectorContext.rankTop', { n })}
-                </option>
-              ))}
-            </select>
-            <p className="max-w-xs font-mono text-[10px] text-on-surface-variant">{t('screener.sectorContext.hint')}</p>
-          </fieldset>
-        ) : null}
-
-        {access?.status === 'signIn' ? (
-          <fieldset className="flex min-w-0 max-w-sm flex-col gap-2">
-            <legend className={LEGEND_CLASS}>{t('screener.sectorContext.legend')}</legend>
-            <MarketSignInBox
-              title={t('screener.sectorContext.signInTitle')}
-              body={t('screener.sectorContext.signInBody')}
-              link={t('screener.sectorContext.signIn')}
-            />
-          </fieldset>
-        ) : null}
-      </div>
-
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t-2 border-outline-variant pt-4">
-        <p className="font-mono text-[11px] text-on-surface-variant">
-          {activeCount > 0
-            ? t('screener.filtersInUrl')
-            : t('screener.noFiltersHint')}
-        </p>
+    <section className="rounded-md border-2 border-outline bg-surface-bright p-3 shadow-[2px_2px_0px_var(--color-shadow)] sm:p-4">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h2 className="order-1 font-headline text-sm font-black uppercase tracking-wide text-on-surface sm:text-base">
+          {t('screener.filtersTitle')}
+        </h2>
         <button
           type="button"
           onClick={onClear}
           disabled={activeCount === 0}
-          className="rounded-md border-2 border-outline bg-surface-bright px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          title={t('screener.filtersInUrl')}
+          className="order-2 ml-auto rounded-md border-2 border-outline bg-surface-bright px-2 py-1 font-headline text-[11px] font-bold sm:px-3 sm:text-xs uppercase tracking-wider text-on-surface shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 sm:order-3 sm:ml-0"
         >
           {t('screener.clearFilters')}
         </button>
+        <p className="order-3 basis-full font-mono text-[10px] text-on-surface-variant sm:order-2 sm:flex-1 sm:basis-auto sm:text-[11px]">
+          <span>{t('screener.filtersHint')}</span>{' '}
+          <span className="font-bold uppercase tracking-wider sm:ml-3">
+            {activeCount > 0
+              ? t('screener.activeFilters', { count: activeCount })
+              : t('screener.noActiveFilters')}
+          </span>
+        </p>
+      </header>
+
+      <div className="mt-3 grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
+        {renderTrigger('signals')}
+        {renderTrigger('rsi')}
+        <select
+          aria-label={t('screener.minRvolLegend')}
+          value={filters.minRvol === null ? '' : String(filters.minRvol)}
+          onChange={(event) => onChange({ minRvol: event.target.value === '' ? null : Number(event.target.value) })}
+          className={controlClass(filters.minRvol !== null)}
+        >
+          <option value="">{t('screener.toolbar.rvolAll')}</option>
+          {rvolValues.map((value) => (
+            <option key={value} value={String(value)}>
+              {t('screener.toolbar.rvolMin', { value: formatMultiple(value) })}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          aria-pressed={filters.priceAboveSma200}
+          onClick={() => onChange({ priceAboveSma200: !filters.priceAboveSma200 })}
+          className={controlClass(filters.priceAboveSma200)}
+        >
+          {t('screener.priceAboveSma200')}
+        </button>
+        <select
+          aria-label={t('screener.maCrossAria')}
+          value={filters.maCross ?? ''}
+          onChange={(event) => onChange({ maCross: event.target.value === '' ? null : (event.target.value as ScreenerMaCross) })}
+          className={controlClass(filters.maCross !== null)}
+        >
+          {MA_CROSS_OPTIONS.map((option) => (
+            <option key={option.labelKey} value={option.value ?? ''}>
+              {t('screener.toolbar.maCross', { value: t(option.labelKey) })}
+            </option>
+          ))}
+        </select>
+        {renderTrigger('patterns')}
+        {showSector ? renderTrigger('sector') : null}
       </div>
+
+      {openNow !== null ? (
+        <div
+          ref={cardRef}
+          id={CARD_ID}
+          role="group"
+          aria-labelledby={`screener-criteria-trigger-${openNow}`}
+          onKeyDown={handleCardKeyDown}
+          className="mt-3 rounded-md border-2 border-outline bg-surface-container p-3 shadow-[2px_2px_0px_var(--color-shadow)]"
+        >
+          {openNow === 'signals' ? <SignalsEditor filters={filters} onChange={onChange} /> : null}
+          {openNow === 'rsi' ? <RsiEditor filters={filters} onChange={onChange} /> : null}
+          {openNow === 'patterns' ? <PatternsEditor filters={filters} onChange={onChange} /> : null}
+          {openNow === 'sector' && access ? <SectorEditor filters={filters} access={access} onChange={onChange} /> : null}
+        </div>
+      ) : null}
     </section>
   )
 }

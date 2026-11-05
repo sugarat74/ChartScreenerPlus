@@ -2,6 +2,15 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## screener-filter-panel-compact implemented (passing, awaiting validation) - 2026-11-05
+
+- SPA only. The «Criterios técnicos» block is now a compact toolbar: triggers Señales / RSI / Patrones / Sector (value shown, `aria-expanded`/`aria-controls`) opening ONE inline editor card (Esc closes and returns focus, no focus trap), native selects for min RVOL and MA cross, a Price > SMA 200 toggle, header with title, hint, active count and Limpiar filtros. New `ScreenerCriteriaEditors.tsx` (editors extracted unchanged) and `lib/screenerToolbar.ts` (summaries); `ScreenerFilterPanel.tsx` rewritten; es/en `screener.toolbar.*`, `noFiltersHint` removed, `filtersInUrl` is now the Clear button title. DESIGN.md updated. Defaults applied: column funnels untouched, open card not persisted, header count unchanged.
+- Unchanged by design: the 30 criteria keys, `lib/screenerFilters.ts`, `api.ts`, URL, requests, Saved Screeners, AI query, `ScreenerColumnFilters`, `CandidateTable`. Existing tests changed only where the control type changed (sector and pattern controls now live in the card, so those tests open it first: ScreenerFilterPanel, PatternPanel, ScreenerPage, ScreenerUniverse). A page test proves the same request URL for a multi-filter deep link.
+- Measured panel height at rest (scratch DB, Visitor, no sector): 1440 px 587 -> 110 px; 390 px 1303 (es) / 1215 (en) -> 225 px; Visitor with all values: 110 px at 1440, 234 px at 390; Admin with the sector trigger (4 rows, independent validator): ~270-280 px at 390. Open card adds 120-235 px at 1440, up to ~480 px at 390 (Signals). No horizontal scroll at 390 or 1440, light/dark, es/en.
+- Verified: Vitest 443 passed (new: toolbar summaries, a11y, single open card, Esc/focus, RSI commit on Enter/Esc/trigger/other group, every patch, sector states, es/en, page deep link), lint (1 pre-existing warning), tsc, build, `.\init.ps1` Baseline OK (phpunit 970 / 6 skipped, engine 138). Browser pass with Playwright at 390/1440 light/dark es/en: no request per RSI keystroke, one request on Esc, clear resets all controls.
+- Not verified: a real screen reader; Tab order note: the card sits after the toolbar row in the DOM, so a keyboard user Tabs through the remaining toolbar controls to reach it (no focus trap by design).
+- Next: independent validation.
+
 ## Compact Screener filter panel planned (1 feature, not started) - 2026-11-05
 
 - Explicit user request: rethink the «Criterios técnicos» block as a cleaner, Finviz-style panel with the same options in less space. Planning only, no application code. New `screener-filter-panel-compact` and `docs/specs/screener-filter-panel-compact.md`.
@@ -60,9 +69,3 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 
 - The `main` runs for `universe-nasdaq100` (three attempts) and `universe-ibex35` hung in `test-pgsql` at `Nasdaq100UniverseSeederTest::test_the_us_pipeline_fetches_only_the_non_sp500_members_of_the_nasdaq100` (the full 518-Instrument pipeline inside one PostgreSQL test transaction), while PR runs and a full `phpunit --debug` run on a PR passed; PostgreSQL logged no lock or error. Root cause not identified. CI now has `timeout-minutes: 20` on both test jobs and runs the pgsql suite with `phpunit --debug` (PR #82), which named the test.
 - Mitigation: the test now keeps the 15 new members plus ten overlapping S&P 500 members (25 Instruments) before running `ingestion:pipeline`; it still proves each ticker is fetched once, the `nasdaq100` run total is 15 and AAPL has 3 bars. Local run 4.0 s → 0.7 s. If `test-pgsql` hangs again, read the last `Test Prepared` line of the job log.
-
-## Independent validation: IBEX 35 universe (`universe-ibex35`, accepted) — 2026-10-26
-
-- Verdict **accept**. Validator re-fetched Wikipedia's IBEX 35 table: the 35 `.MC` tickers match `database/data/ibex35.csv` exactly (SAN, BBVA, ITX, … ROVI), the CSV SHA-256 matches `ibex35.md`, and the 2026 Bolsa de Madrid closures (1 Jan, 3 Apr, 6 Apr, 1 May, 25 Dec; 24/31 Dec are half days) match BME's calendar. A live read-only Yahoo request for `SAN.MC` and `ITX.MC` returned EUR, `Europe/Madrid`, exchange MCE. `.\init.ps1` exit 0 (Laravel 931 passed / 6 skipped, engine 116) and `Ibex35UniverseSeederTest` 8 passed. The XMAD event runs 18:15 Madrid weekdays only once an XMAD Screener universe is seeded; the US pipeline and the other universes are unaffected; the universe stays non-public (`SCREENER_UNIVERSES_PUBLIC` and `.env.example` untouched).
-- Non-blocking: the derived 2027 holidays (1 Jan, 26 Mar, 29 Mar) are unofficial and must be confirmed and renewed yearly; the September 2026 index review could not be verified, so re-check the composition before making the universe public; only `SAN.MC` and `ITX.MC` were fetched live, so the first production run must confirm the other 33 symbols; manual GICS sectors for CLNX, FDR, IDR and LOG are judgement calls. Full record archived.
-

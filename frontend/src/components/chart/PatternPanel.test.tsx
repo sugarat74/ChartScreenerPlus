@@ -88,7 +88,10 @@ describe('Screener pattern controls', () => {
     const view = (filters: ScreenerFilters) =>
       withI18n(<ScreenerFilterPanel filters={filters} activeCount={0} onChange={onChange} onClear={() => {}} />)
 
+    // The pattern chips live in the toolbar's inline card (screener-filter-panel-compact): open it first.
+    const openPatterns = () => fireEvent.click(screen.getByRole('button', { name: /^Patrones/ }))
     view(EMPTY_SCREENER_FILTERS)
+    openPatterns()
     const group = screen.getByRole('group', { name: 'Estado del patrón' })
     expect(within(group).getByRole('button', { name: 'Confirmado' }).hasAttribute('disabled')).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Taza con asa' }))
@@ -96,6 +99,7 @@ describe('Screener pattern controls', () => {
     cleanup()
 
     view({ ...EMPTY_SCREENER_FILTERS, patterns: ['cup_with_handle'], patternStatus: 'forming' })
+    openPatterns()
     const enabled = screen.getByRole('group', { name: 'Estado del patrón' })
     fireEvent.click(within(enabled).getByRole('button', { name: 'Confirmado' }))
     expect(onChange).toHaveBeenLastCalledWith({ patternStatus: 'confirmed' })
