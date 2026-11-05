@@ -180,7 +180,7 @@ export const guideEn: GuideTexts = {
       ],
       notes: [
         'The illustrations are diagrams with fictional data. They explain the shape of each indicator; they do not show live quotes or current signals.',
-        'Chartiko also computes the 21- and 55-session EMAs, the 14-session ADX and ATR, the Bollinger Bands (20 sessions, 2 deviations) and the Stochastic (14, 3, 3). ADX, %B, band width, ATR % and Stochastic %K can be filtered, sorted and shown as optional columns of the candidate list (see "The candidate list"); they are not drawn on the chart yet.',
+        'Chartiko also computes the 21- and 55-session EMAs, the 14-session ADX and ATR, the Bollinger Bands (20 sessions, 2 deviations) and the Stochastic (14, 3, 3). ADX, %B, band width, ATR % and Stochastic %K can be filtered, sorted and shown as optional columns of the candidate list (see "The candidate list"); the Bollinger Bands can also be drawn on the chart: use the "Indicators" buttons above it (all off by default; your choice is remembered in this browser). The other three are not drawn on the chart yet. When a close crosses a band, the chart also marks that band level with a dashed line.',
       ],
     },
     {
