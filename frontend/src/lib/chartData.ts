@@ -45,6 +45,7 @@ export const CHART_THEME_COLORS = {
     candleUp: CHART_COLORS.ink,
     candleDown: CHART_COLORS.ink,
     tertiary: CHART_COLORS.tertiary,
+    band: CHART_COLORS.muted,
   },
   dark: {
     background: '#22201d', // --color-surface-bright
@@ -55,6 +56,7 @@ export const CHART_THEME_COLORS = {
     candleDown: CHART_COLORS.loss,
     // Thin SMA/breakout lines need the lighter blue to reach 3:1 on dark.
     tertiary: '#7aa2ff', // --color-tertiary
+    band: '#b5afa6', // --color-on-surface-variant
   },
 } as const
 
@@ -274,4 +276,67 @@ export function insufficientHistory(
     return true
   }
   return snapshot.sma20 === null && snapshot.sma50 === null && snapshot.sma200 === null
+}
+
+/** Structural input of one stored indicator point (the API point is assignable). */
+export interface ChartBandPoint {
+  date: string
+  bb_upper: number | null
+  bb_middle: number | null
+  bb_lower: number | null
+}
+
+/** One line point; `time` is a `YYYY-MM-DD` business-day string. */
+export interface LinePoint {
+  time: string
+  value: number
+}
+
+export type BandKey = 'bb_upper' | 'bb_middle' | 'bb_lower'
+
+/**
+ * One Bollinger line from the stored series. Warm-up `null` (or non-finite)
+ * points are omitted, never drawn as zeros; order is the API's ascending one.
+ */
+export function toBandData(series: readonly ChartBandPoint[], key: BandKey): LinePoint[] {
+  const points: LinePoint[] = []
+  for (const point of series) {
+    const value = point[key]
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      points.push({ time: point.date, value })
+    }
+  }
+  return points
+}
+
+/** `true` when no point has a complete band, so nothing can be drawn. */
+export function noBandData(series: readonly ChartBandPoint[]): boolean {
+  return !series.some(
+    (point) => point.bb_upper !== null && point.bb_middle !== null && point.bb_lower !== null,
+  )
+}
+
+/**
+ * One price line per active band Signal, at the crossed band value carried by
+ * its metadata (`bb_upper` / `bb_lower`). Other signal types and non-numeric
+ * metadata yield nothing.
+ */
+export function bandSignalLevels(
+  signals: readonly ChartSignal[],
+  titles: { upper: string; lower: string },
+): ChartLevel[] {
+  const levels: ChartLevel[] = []
+
+  for (const signal of signals) {
+    const above = signal.type === 'bollinger_close_above_upper'
+    if (!above && signal.type !== 'bollinger_close_below_lower') {
+      continue
+    }
+    const price = signal.metadata?.[above ? 'bb_upper' : 'bb_lower']
+    if (typeof price === 'number' && Number.isFinite(price)) {
+      levels.push({ price, title: above ? titles.upper : titles.lower, color: CHART_COLORS.muted })
+    }
+  }
+
+  return levels
 }

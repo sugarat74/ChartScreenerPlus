@@ -2,6 +2,13 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## chart-indicator-overlays implemented (passing, awaiting validation) - 2026-10-29
+
+- SPA only, backend untouched (feature 6 of `docs/specs/technical-indicators-expansion.md`): `lib/chartIndicators.ts` (closed list, guarded `localStorage` key `chartiko.chart.indicators`, default none), `ChartIndicatorPicker` (aria-pressed toggle row; Bollinger only, panels are feature 7), `useInstrumentIndicators` (one `GET /api/instruments/{ticker}/indicators` only while a toggle is on), `chartData.ts` (`toBandData` omits warm-up nulls, `noBandData`, `bandSignalLevels`, theme `band` color), three Bollinger line series and a dashed price line per band Signal in `InteractiveChart` (`chart.remove()` cleanup unchanged), inline loading/error+retry/not-enough-history states, es/en messages, guide text, `DESIGN.md`.
+- Unchanged by design: default chart and requests (test asserts no `indicators` call with everything off), SMA/EMA/RSI/MACD not drawn, forecast, Company Card, AI schema.
+- Verified: Vitest 56 files / 439 passed (13 new), lint (1 pre-existing oxlint warning), tsc, build, `.\init.ps1` Baseline OK. Manual browser pass (temp SQLite with a seeded DEMO instrument, vite + artisan serve, both stopped afterwards): 1440 and 390 px, light and dark; default shows no indicators request, toggle draws bands aligned to candles plus the band-signal line, canvas count stable over repeated toggles and theme switch, no horizontal overflow at 390 px. Not verified: real production data, language switch visually (covered by es/en message keys), a real failing endpoint in the browser (Vitest covers error/retry).
+- Next: independent validation, then `chart-indicator-panels`.
+
 ## Compact Screener filter panel planned (1 feature, not started) - 2026-11-05
 
 - Explicit user request: rethink the «Criterios técnicos» block as a cleaner, Finviz-style panel with the same options in less space. Planning only, no application code. New `screener-filter-panel-compact` and `docs/specs/screener-filter-panel-compact.md`.
@@ -60,9 +67,4 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 
 - The `main` runs for `universe-nasdaq100` (three attempts) and `universe-ibex35` hung in `test-pgsql` at `Nasdaq100UniverseSeederTest::test_the_us_pipeline_fetches_only_the_non_sp500_members_of_the_nasdaq100` (the full 518-Instrument pipeline inside one PostgreSQL test transaction), while PR runs and a full `phpunit --debug` run on a PR passed; PostgreSQL logged no lock or error. Root cause not identified. CI now has `timeout-minutes: 20` on both test jobs and runs the pgsql suite with `phpunit --debug` (PR #82), which named the test.
 - Mitigation: the test now keeps the 15 new members plus ten overlapping S&P 500 members (25 Instruments) before running `ingestion:pipeline`; it still proves each ticker is fetched once, the `nasdaq100` run total is 15 and AAPL has 3 bars. Local run 4.0 s → 0.7 s. If `test-pgsql` hangs again, read the last `Test Prepared` line of the job log.
-
-## Independent validation: IBEX 35 universe (`universe-ibex35`, accepted) — 2026-10-26
-
-- Verdict **accept**. Validator re-fetched Wikipedia's IBEX 35 table: the 35 `.MC` tickers match `database/data/ibex35.csv` exactly (SAN, BBVA, ITX, … ROVI), the CSV SHA-256 matches `ibex35.md`, and the 2026 Bolsa de Madrid closures (1 Jan, 3 Apr, 6 Apr, 1 May, 25 Dec; 24/31 Dec are half days) match BME's calendar. A live read-only Yahoo request for `SAN.MC` and `ITX.MC` returned EUR, `Europe/Madrid`, exchange MCE. `.\init.ps1` exit 0 (Laravel 931 passed / 6 skipped, engine 116) and `Ibex35UniverseSeederTest` 8 passed. The XMAD event runs 18:15 Madrid weekdays only once an XMAD Screener universe is seeded; the US pipeline and the other universes are unaffected; the universe stays non-public (`SCREENER_UNIVERSES_PUBLIC` and `.env.example` untouched).
-- Non-blocking: the derived 2027 holidays (1 Jan, 26 Mar, 29 Mar) are unofficial and must be confirmed and renewed yearly; the September 2026 index review could not be verified, so re-check the composition before making the universe public; only `SAN.MC` and `ITX.MC` were fetched live, so the first production run must confirm the other 33 symbols; manual GICS sectors for CLNX, FDR, IDR and LOG are judgement calls. Full record archived.
 
