@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext } from '../auth/context.ts'
@@ -13,14 +13,16 @@ import InstrumentChartPage from './InstrumentChartPage.tsx'
 
 // The canvas chart is not under test (and needs a real canvas).
 vi.mock('../components/chart/InteractiveChart.tsx', () => ({
-  default: () => <div data-testid="interactive-chart" />,
+  default: ({ bands }: { bands?: unknown[] | null }) => (
+    <div data-testid="interactive-chart" data-bands={bands == null ? 'off' : String(bands.length)} />
+  ),
 }))
 
 vi.mock('../lib/api.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../lib/api.ts')>()
   return {
     ...actual,
-    instrumentApi: { detail: vi.fn() },
+    instrumentApi: { detail: vi.fn(), indicators: vi.fn() },
     watchlistApi: { list: vi.fn(), add: vi.fn(), remove: vi.fn() },
     companyCardApi: { get: vi.fn(), generate: vi.fn() },
     forecastApi: { predict: vi.fn(), report: vi.fn() },
@@ -248,5 +250,101 @@ describe('US-only panels follow market and availability (universe-selector-ui)',
     expect(screen.getByText('Ficha de empresa')).toBeTruthy()
     expect(screen.queryByText('Pronóstico Jev')).toBeNull()
     expect(screen.getByText(/Technology Select Sector SPDR Fund · Information Technology · NASDAQ · USD/)).toBeTruthy()
+  })
+})
+
+describe('Indicator picker and Bollinger overlay (chart-indicator-overlays)', () => {
+  const NULLS = { adx: null, plus_di: null, minus_di: null, atr14: null, stoch_k: null, stoch_d: null }
+  const SERIES = {
+    ticker: 'NVDA',
+    series: [
+      { date: '2026-09-30', bb_upper: null, bb_middle: null, bb_lower: null, ...NULLS },
+      { date: '2026-10-01', bb_upper: 105, bb_middle: 100, bb_lower: 95, ...NULLS },
+    ],
+    meta: { limit: 252, point_count: 2, latest_date: '2026-10-01' },
+  }
+  const toggle = () => screen.getByRole('button', { name: 'Bandas de Bollinger' })
+  const bands = () => screen.getByTestId('interactive-chart').getAttribute('data-bands')
+
+  beforeEach(() => {
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'NVDA', company: 'NVIDIA', exchange: 'NASDAQ' }))
+  })
+
+  it('makes no indicators request and draws no band while everything is off', async () => {
+    show('NVDA')
+
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    expect(toggle().getAttribute('aria-pressed')).toBe('false')
+    expect(bands()).toBe('off')
+    expect(instrumentApi.indicators).not.toHaveBeenCalled()
+  })
+
+  it('requests the series once when switched on, remembers the choice and hides it when off', async () => {
+    vi.mocked(instrumentApi.indicators).mockResolvedValue(SERIES)
+    show('NVDA')
+    await screen.findByTestId('interactive-chart')
+
+    fireEvent.click(toggle())
+    await waitFor(() => expect(bands()).toBe('2'))
+    expect(toggle().getAttribute('aria-pressed')).toBe('true')
+    expect(instrumentApi.indicators).toHaveBeenCalledTimes(1)
+    expect(window.localStorage.getItem('chartiko.chart.indicators')).toBe('["bollinger"]')
+
+    fireEvent.click(toggle())
+    expect(bands()).toBe('off')
+    expect(window.localStorage.getItem('chartiko.chart.indicators')).toBe('[]')
+    expect(instrumentApi.indicators).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores a stored choice and fetches on load', async () => {
+    window.localStorage.setItem('chartiko.chart.indicators', '["bollinger"]')
+    vi.mocked(instrumentApi.indicators).mockResolvedValue(SERIES)
+    show('NVDA')
+
+    await waitFor(() => expect(bands()).toBe('2'))
+    expect(toggle().getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('shows a localized error with retry and keeps the chart', async () => {
+    vi.mocked(instrumentApi.indicators).mockRejectedValueOnce(new Error('boom')).mockResolvedValue(SERIES)
+    show('NVDA')
+    await screen.findByTestId('interactive-chart')
+
+    fireEvent.click(toggle())
+    const message = await screen.findByText(/No se pudo cargar la serie de indicadores/)
+    expect(bands()).toBe('off')
+
+    fireEvent.click(within(message.closest('[role="alert"]') as HTMLElement).getByRole('button', { name: 'Reintentar' }))
+    await waitFor(() => expect(bands()).toBe('2'))
+    expect(instrumentApi.indicators).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows the not-enough-history note when no band point is complete', async () => {
+    vi.mocked(instrumentApi.indicators).mockResolvedValue({ ...SERIES, series: [SERIES.series[0]] })
+    show('NVDA')
+    await screen.findByTestId('interactive-chart')
+
+    fireEvent.click(toggle())
+    expect(await screen.findByText(/No hay historial suficiente para las Bandas de Bollinger/)).toBeTruthy()
+  })
+
+  it('works with a throwing localStorage for the choice', async () => {
+    vi.mocked(instrumentApi.indicators).mockResolvedValue(SERIES)
+    const getItem = Storage.prototype.getItem
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (this: Storage, key: string) {
+      if (key === 'chartiko.chart.indicators') throw new Error('blocked')
+      return getItem.call(this, key)
+    })
+    const setItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key: string, value: string) {
+      if (key === 'chartiko.chart.indicators') throw new Error('blocked')
+      setItem.call(this, key, value)
+    })
+    show('NVDA')
+    await screen.findByTestId('interactive-chart')
+
+    fireEvent.click(toggle())
+    await waitFor(() => expect(bands()).toBe('2'))
+    vi.restoreAllMocks()
   })
 })

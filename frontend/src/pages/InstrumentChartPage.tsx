@@ -29,11 +29,13 @@
 
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import ChartIndicatorPicker from '../components/chart/ChartIndicatorPicker.tsx'
 import CompanyCardPanel from '../components/chart/CompanyCardPanel.tsx'
 import MarketContextStrip from '../components/chart/MarketContextStrip.tsx'
 import PatternPanel from '../components/chart/PatternPanel.tsx'
 import ForecastPanel from '../components/chart/ForecastPanel.tsx'
 import SignalLevelsPanel from '../components/chart/SignalLevelsPanel.tsx'
+import { useInstrumentIndicators } from '../components/chart/useInstrumentIndicators.ts'
 import { useInstrumentMarketContext } from '../components/chart/useInstrumentMarketContext.ts'
 // `lightweight-charts` is a large dependency: load the canvas chunk only when
 // the chart is actually rendered so the Screener bundle stays lean.
@@ -42,7 +44,9 @@ import WatchlistButton from '../components/watchlist/WatchlistButton.tsx'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, instrumentApi } from '../lib/api.ts'
 import type { InstrumentDetailResponse } from '../lib/api.ts'
-import { CHART_BAR_LIMIT, insufficientHistory, signalLevels, smaLevels } from '../lib/chartData.ts'
+import { CHART_BAR_LIMIT, insufficientHistory, noBandData, signalLevels, smaLevels } from '../lib/chartData.ts'
+import { readStoredIndicators, toggleIndicator, writeStoredIndicators } from '../lib/chartIndicators.ts'
+import type { ChartIndicatorId } from '../lib/chartIndicators.ts'
 
 type ChartStatus = 'loading' | 'ready' | 'not_found' | 'error'
 
@@ -188,6 +192,7 @@ export default function InstrumentChartPage() {
 
   const [result, setResult] = useState<LoadedResult | null>(null)
   const [retryToken, setRetryToken] = useState(0)
+  const [indicators, setIndicators] = useState<ChartIndicatorId[]>(readStoredIndicators)
 
   useEffect(() => {
     // `/chart` has no ticker: guidance only, never a request.
@@ -250,6 +255,14 @@ export default function InstrumentChartPage() {
   const availability = current?.instrument.availability
   const showForecast = availability?.forecast !== false
   const showCompanyCard = availability?.company_card !== false
+  // The stored series is requested only while an indicator is switched on.
+  const bollingerOn = indicators.includes('bollinger')
+  const indicatorSeries = useInstrumentIndicators(
+    current !== null && current.bars.length > 0 ? current.instrument.ticker : null,
+    bollingerOn,
+  )
+  const bands =
+    bollingerOn && indicatorSeries.state.status === 'ready' ? indicatorSeries.state.series : null
   const marketContext = useInstrumentMarketContext(
     current?.instrument.ticker ?? null,
     current !== null && !isEtf && !outsideUs,
@@ -368,6 +381,42 @@ export default function InstrumentChartPage() {
             ) : null}
 
             <div className="mt-3">
+              <ChartIndicatorPicker
+                selection={indicators}
+                onToggle={(id) => {
+                  const next = toggleIndicator(indicators, id)
+                  setIndicators(next)
+                  writeStoredIndicators(next)
+                }}
+              />
+              {bollingerOn && indicatorSeries.state.status === 'loading' ? (
+                <p role="status" className="mt-2 font-mono text-[11px] text-on-surface-variant">
+                  {t('chart.indicatorsLoading')}
+                </p>
+              ) : null}
+              {bollingerOn && indicatorSeries.state.status === 'error' ? (
+                <div
+                  role="alert"
+                  className="mt-2 flex flex-wrap items-center gap-2 rounded-[4px] border border-secondary bg-secondary-container px-2 py-1.5 text-xs text-on-secondary-container"
+                >
+                  <span>{t('chart.indicatorsError')}</span>
+                  <button
+                    type="button"
+                    onClick={indicatorSeries.retry}
+                    className="rounded-[4px] border-2 border-outline bg-primary-container px-2 py-0.5 font-mono text-[11px] font-bold uppercase text-on-primary-container"
+                  >
+                    {t('common.retry')}
+                  </button>
+                </div>
+              ) : null}
+              {bands !== null && noBandData(bands) ? (
+                <p className="mt-2 rounded-[4px] border border-outline-variant bg-surface-container px-2 py-1.5 text-xs text-on-surface-variant">
+                  {t('chart.indicatorsInsufficient')}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mt-3">
               <Suspense
                 fallback={
                   <div
@@ -387,6 +436,7 @@ export default function InstrumentChartPage() {
                   snapshot={current.snapshot}
                   signals={current.signals}
                   patterns={current.patterns ?? []}
+                  bands={bands}
                 />
               </Suspense>
             </div>

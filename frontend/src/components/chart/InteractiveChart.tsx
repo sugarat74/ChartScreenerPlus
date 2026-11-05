@@ -17,6 +17,7 @@ import {
   ColorType,
   CrosshairMode,
   HistogramSeries,
+  LineSeries,
   LineStyle,
   createChart,
   createSeriesMarkers,
@@ -25,14 +26,16 @@ import { LOCALE_DEFINITIONS } from '../../i18n/locales.ts'
 import type { MessageKey } from '../../i18n/translate.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { patternLabel } from '../../lib/screenerFilters.ts'
-import type { InstrumentBar, InstrumentPattern, InstrumentSignal, InstrumentSnapshot } from '../../lib/api.ts'
+import type { InstrumentBar, InstrumentIndicatorPoint, InstrumentPattern, InstrumentSignal, InstrumentSnapshot } from '../../lib/api.ts'
 import {
   CHART_COLORS,
   CHART_THEME_COLORS,
+  bandSignalLevels,
   patternLevels,
   patternMarkers,
   signalLevels,
   smaLevels,
+  toBandData,
   toCandlestickData,
   toVolumeData,
 } from '../../lib/chartData.ts'
@@ -50,6 +53,8 @@ interface InteractiveChartProps {
   snapshot: InstrumentSnapshot | null
   signals: InstrumentSignal[]
   patterns?: InstrumentPattern[]
+  /** Stored Bollinger series; `null` (default) draws no band and no band line. */
+  bands?: InstrumentIndicatorPoint[] | null
 }
 
 export default function InteractiveChart({
@@ -58,11 +63,14 @@ export default function InteractiveChart({
   snapshot,
   signals,
   patterns = NO_PATTERNS,
+  bands = null,
 }: InteractiveChartProps) {
   const { locale, t } = useI18n()
   const { theme } = useTheme()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const pivotTitle = t('chart.pivot')
+  const upperBandTitle = t('chart.bandUpper')
+  const lowerBandTitle = t('chart.bandLower')
 
   useEffect(() => {
     const container = containerRef.current
@@ -111,6 +119,28 @@ export default function InteractiveChart({
     )
     volumeSeries.setData(toVolumeData(bars))
 
+    // Bollinger Bands (only when the overlay is on): stored series, warm-up
+    // points omitted; the two band Signals add a dashed line at the crossed band.
+    if (bands !== null) {
+      const edge = { color: chrome.band, lineWidth: 1, lastValueVisible: false, priceLineVisible: false } as const
+      chart.addSeries(LineSeries, edge).setData(toBandData(bands, 'bb_upper'))
+      chart.addSeries(LineSeries, edge).setData(toBandData(bands, 'bb_lower'))
+      chart
+        .addSeries(LineSeries, { ...edge, lineStyle: LineStyle.Dashed })
+        .setData(toBandData(bands, 'bb_middle'))
+
+      for (const level of bandSignalLevels(signals, { upper: upperBandTitle, lower: lowerBandTitle })) {
+        candleSeries.createPriceLine({
+          price: level.price,
+          color: chrome.band,
+          lineWidth: 1,
+          lineStyle: LineStyle.Dashed,
+          axisLabelVisible: true,
+          title: level.title,
+        })
+      }
+    }
+
     // Latest-snapshot SMA values as horizontal reference lines (nulls omitted).
     for (const level of smaLevels(snapshot)) {
       candleSeries.createPriceLine({
@@ -157,7 +187,7 @@ export default function InteractiveChart({
       // Removes the series, price lines and observers from the container.
       chart.remove()
     }
-  }, [ticker, bars, snapshot, signals, patterns, locale, pivotTitle, t, theme])
+  }, [ticker, bars, snapshot, signals, patterns, bands, locale, pivotTitle, upperBandTitle, lowerBandTitle, t, theme])
 
   return (
     <div
