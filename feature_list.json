@@ -864,23 +864,13 @@
   {
     "id": "market-hours-status",
     "area": "frontend",
-    "planning_spec": "docs/specs/market-hours-status.md (prepared 2026-10-26)",
     "title": "Market hours and open/closed status on the home page",
-    "user_visible_behavior": "The home page shows whether NYSE/Nasdaq, Bolsa de Madrid and Xetra are open or closed right now, with the next open or close in the viewer's timezone, and lists regular hours, holidays and early closes; computed from the static schedule and the clock only, never from market data.",
+    "status": "accepted",
     "depends_on": [
       "ingestion-multi-market",
       "universe-ibex35",
       "universe-dax"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Frozen-clock tests: open/close boundaries, weekends, each market's own holidays, early closes, US and EU DST changes, next open across weekend plus holiday",
-      "Vitest: es/en strip with mocked timezone, status flips at a boundary, status not by color alone, no EOD wording or hardcoded text",
-      "Visual smoke 390/1440 px light/dark",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Requested 2026-10-26 ('añadir los horarios en los distintos mercados y su calendario, para ver en portada cuales están abiertos en cada momento'). Future feature, not part of the first multi-universe delivery. Reuses the per-market calendars of ingestion-multi-market plus open times and early closes; no intraday data."
+    ]
   },
   {
     "id": "market-events-calendar",

@@ -796,6 +796,45 @@ export const universeApi = {
   },
 }
 
+/** One upcoming holiday or early close of a market's committed calendar. */
+export type MarketCalendarEvent = {
+  /** Market-local calendar date (`Y-m-d`). */
+  date: string
+  type: 'holiday' | 'early_close'
+  /** Early close time (`HH:MM`, market-local), `null` for a holiday. */
+  close: string | null
+}
+
+/**
+ * Static schedule status of one Listing Market (market-hours-status). Instants
+ * are UTC ISO-8601; the SPA formats them in the viewer's timezone and flips
+ * the status from the clock. Never intraday or exchange data.
+ */
+export type MarketStatus = {
+  code: ListingMarketCode
+  timezone: string
+  regular_hours: { open: string; close: string }
+  is_open: boolean
+  /** Today's regular session (market-local day), `null` on a closed day. */
+  opens_at: string | null
+  closes_at: string | null
+  early_close: boolean
+  next_open_at: string | null
+  next_close_at: string | null
+  calendar_year: number
+  /** Whether the committed holiday list has entries for `calendar_year`. */
+  calendar_covered: boolean
+  upcoming: MarketCalendarEvent[]
+}
+
+/** Open/closed status of the Listing Markets of the visible Screener universes. */
+export const marketStatusApi = {
+  async list(signal?: AbortSignal): Promise<MarketStatus[]> {
+    const payload = await request<{ markets?: MarketStatus[] } | undefined>('/api/markets/status', { signal })
+    return Array.isArray(payload?.markets) ? payload.markets : []
+  },
+}
+
 export type UniverseFreshnessStatus = 'fresh' | 'partial' | 'stale'
 
 /** One row of the Admin universe freshness table. */

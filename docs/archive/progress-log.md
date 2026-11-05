@@ -2,6 +2,11 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## CI hang in the Nasdaq-100 pipeline test (test-pgsql) — 2026-10-26
+
+- The `main` runs for `universe-nasdaq100` (three attempts) and `universe-ibex35` hung in `test-pgsql` at `Nasdaq100UniverseSeederTest::test_the_us_pipeline_fetches_only_the_non_sp500_members_of_the_nasdaq100` (the full 518-Instrument pipeline inside one PostgreSQL test transaction), while PR runs and a full `phpunit --debug` run on a PR passed; PostgreSQL logged no lock or error. Root cause not identified. CI now has `timeout-minutes: 20` on both test jobs and runs the pgsql suite with `phpunit --debug` (PR #82), which named the test.
+- Mitigation: the test now keeps the 15 new members plus ten overlapping S&P 500 members (25 Instruments) before running `ingestion:pipeline`; it still proves each ticker is fetched once, the `nasdaq100` run total is 15 and AAPL has 3 bars. Local run 4.0 s → 0.7 s. If `test-pgsql` hangs again, read the last `Test Prepared` line of the job log.
+
 ## Independent validation: IBEX 35 universe (`universe-ibex35`, accepted) — 2026-10-26
 
 - Verdict **accept**. Validator re-fetched Wikipedia's IBEX 35 table: the 35 `.MC` tickers match `database/data/ibex35.csv` exactly (SAN, BBVA, ITX, … ROVI), the CSV SHA-256 matches `ibex35.md`, and the 2026 Bolsa de Madrid closures (1 Jan, 3 Apr, 6 Apr, 1 May, 25 Dec; 24/31 Dec are half days) match BME's calendar. A live read-only Yahoo request for `SAN.MC` and `ITX.MC` returned EUR, `Europe/Madrid`, exchange MCE. `.\init.ps1` exit 0 (Laravel 931 passed / 6 skipped, engine 116) and `Ibex35UniverseSeederTest` 8 passed. The XMAD event runs 18:15 Madrid weekdays only once an XMAD Screener universe is seeded; the US pipeline and the other universes are unaffected; the universe stays non-public (`SCREENER_UNIVERSES_PUBLIC` and `.env.example` untouched).
