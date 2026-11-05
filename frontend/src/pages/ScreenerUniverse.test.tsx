@@ -205,12 +205,14 @@ describe('ScreenerPage universe selector (universe-selector-ui)', () => {
     const group = await screen.findByRole('group', { name: 'Universo' })
     await waitFor(() => expect(screenerCalls()).toHaveLength(1))
     expect(screenerCalls()[0]).toBe('/api/screener?sector_trend=uptrend&sector_rs_rank_max=3&sort=rvol_desc&limit=50')
+    fireEvent.click(document.getElementById('screener-criteria-trigger-sector')!)
     expect(screen.getByLabelText('Fuerza relativa del sector')).toBeTruthy()
 
     fireEvent.click(within(group).getByRole('button', { name: /IBEX 35/ }))
 
     await screen.findByText('SAN.MC')
     expect(screen.getByTestId('url').textContent).toBe('?universe=ibex35')
+    expect(document.getElementById('screener-criteria-trigger-sector')).toBeNull()
     expect(screen.queryByLabelText('Fuerza relativa del sector')).toBeNull()
     expect(screen.queryByText('Contexto sectorial')).toBeNull()
     expect(screenerCalls().at(-1)).not.toContain('sector_')

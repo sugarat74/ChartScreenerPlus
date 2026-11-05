@@ -2,6 +2,12 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Technical indicators expansion planned (7 features, not started) — 2026-10-26
+
+- Explicit user request ('si vete preparandolo'): make ADX (14) and Bollinger (20, 2), already stored but unused, visible and useful, and add ATR (14) and Stochastic (14,3,3). Umbrella spec `docs/specs/technical-indicators-expansion.md` with decisions D1-D14 (formulas, Wilder smoothing, None warm-up, six new Signals, five Screener range filters and sorts, optional table columns, chart overlay and panes, backfill, rollback). Seven features appended to `feature_list.json` (all `not_started`): `indicators-expansion-engine`, `indicators-expansion-storage`, `signals-expansion`, `screener-technical-filters-api`, `screener-technical-filters-ui`, `chart-indicator-overlays`, `chart-indicator-panels`. Scope guard added to `AGENTS.md`; `CONTEXT.md`, `docs/domain-model.md` and `docs/risks-and-open-questions.md` updated.
+- Findings that shaped the plan: the chart draws no SMA/EMA/RSI/MACD series (only candles, volume and latest-value price lines) and its payload carries only the latest snapshot, so a history series endpoint is part of Feature 2; `ScreenerQuerySchema` derives its signal enum from `ScreenerFilterParser::SIGNAL_TYPES`, so the AI schema gets a separate `AI_SIGNAL_TYPES` (original nine) to stay unchanged; forecast and Company Card use explicit field lists, so new columns do not change them; `indicators:compute` already rewrites the whole history each run, so the backfill is the normal recompute after migrating (runtime to be measured). `specs/screener-filter-expansion/` (untracked, not touched) lists ATR in its R3; flagged as an overlap.
+- Not verified: planning only, no application code and no tests run. Open owner questions are in the spec and in the risks file. Next: owner answers, then implement `indicators-expansion-engine`.
+
 ## CI hang in the Nasdaq-100 pipeline test (test-pgsql) — 2026-10-26
 
 - The `main` runs for `universe-nasdaq100` (three attempts) and `universe-ibex35` hung in `test-pgsql` at `Nasdaq100UniverseSeederTest::test_the_us_pipeline_fetches_only_the_non_sp500_members_of_the_nasdaq100` (the full 518-Instrument pipeline inside one PostgreSQL test transaction), while PR runs and a full `phpunit --debug` run on a PR passed; PostgreSQL logged no lock or error. Root cause not identified. CI now has `timeout-minutes: 20` on both test jobs and runs the pgsql suite with `phpunit --debug` (PR #82), which named the test.

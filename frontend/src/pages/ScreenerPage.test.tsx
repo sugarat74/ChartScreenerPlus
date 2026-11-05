@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthContext } from '../auth/context.ts'
@@ -81,7 +81,8 @@ describe('ScreenerPage sector context filters (market-context-patterns)', () => 
     await waitFor(() => expect(screenerCalls()).toHaveLength(1))
     expect(screenerCalls()[0]).toBe('/api/screener?rsi_min=40&sort=rvol_desc&limit=50')
     expect(screen.getByTestId('url').textContent).toBe('?sector_trend=uptrend&sector_rs_rank_max=3&rsi_min=40')
-    // The filter panel offers a sign-in box instead of the controls.
+    // The filter panel offers a sign-in box instead of the controls (inside the sector card).
+    fireEvent.click(document.getElementById('screener-criteria-trigger-sector')!)
     expect(screen.getByText('Inicia sesión para filtrar por la tendencia y la fuerza relativa del sector de cada acción.')).toBeTruthy()
     expect(screen.queryByLabelText('Fuerza relativa del sector')).toBeNull()
   })
@@ -101,6 +102,7 @@ describe('ScreenerPage sector context filters (market-context-patterns)', () => 
     await waitFor(() => expect(screenerCalls()).toHaveLength(1))
     expect(screenerCalls()[0]).toBe('/api/screener?sector_trend=uptrend&sector_rs_rank_max=3&sort=rvol_desc&limit=50')
     expect(screen.queryByText(/El enlace incluye filtros de contexto sectorial/)).toBeNull()
+    fireEvent.click(document.getElementById('screener-criteria-trigger-sector')!)
     expect((screen.getByLabelText('Fuerza relativa del sector') as HTMLSelectElement).value).toBe('3')
     const trend = screen.getByRole('group', { name: 'Tendencia del ETF sectorial de la acción' })
     expect(within(trend).getByRole('button', { name: 'Alcista' }).getAttribute('aria-pressed')).toBe('true')
@@ -122,5 +124,23 @@ describe('ScreenerPage sector context filters (market-context-patterns)', () => 
     render(tree(auth(null, 'loading'), '/?rsi_min=40'))
 
     await waitFor(() => expect(screenerCalls()).toEqual(['/api/screener?rsi_min=40&sort=rvol_desc&limit=50']))
+  })
+})
+
+describe('ScreenerPage compact criteria toolbar (screener-filter-panel-compact)', () => {
+  it('a multi-filter deep link shows every value without opening a card and requests the same URL', async () => {
+    const url = '/?signal=golden_cross,rsi_oversold&rsi_min=30&rsi_max=70&min_rvol=1.5&price_above_sma200=1&ma_cross=bullish&pattern=double_bottom&pattern_status=confirmed'
+    render(tree(auth(null), url))
+
+    await waitFor(() => expect(screenerCalls()).toHaveLength(1))
+    expect(screenerCalls()[0]).toBe('/api/screener?signal=golden_cross%2Crsi_oversold&rsi_min=30&rsi_max=70&min_rvol=1.5&price_above_sma200=1&ma_cross=bullish&pattern=double_bottom&pattern_status=confirmed&sort=rvol_desc&limit=50')
+    expect(screen.getByRole('button', { name: /^Señales · 2/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^RSI · 30-70/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Patrones · 1 · Confirmado/ })).toBeTruthy()
+    expect((screen.getByLabelText('RVOL mínimo') as HTMLSelectElement).value).toBe('1.5')
+    expect((screen.getByLabelText(/Cruce de medias/) as HTMLSelectElement).value).toBe('bullish')
+    expect(screen.getByRole('button', { name: 'Precio > SMA 200' }).getAttribute('aria-pressed')).toBe('true')
+    expect(document.getElementById('screener-criteria-card')).toBeNull()
+    expect(screenerCalls()).toHaveLength(1)
   })
 })
