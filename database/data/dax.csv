@@ -1,0 +1,41 @@
+ticker,company,sector,industry,country,exchange
+ADS.DE,adidas,Consumer Discretionary,Apparel,DE,XETRA
+AIR.DE,Airbus,Industrials,Aerospace & Defence,NL,XETRA
+ALV.DE,Allianz,Financials,Financial Services,DE,XETRA
+BAS.DE,BASF,Materials,Chemicals,DE,XETRA
+BAYN.DE,Bayer,Health Care,Pharmaceuticals,DE,XETRA
+BEI.DE,Beiersdorf,Consumer Staples,Consumer goods,DE,XETRA
+BMW.DE,BMW,Consumer Discretionary,Automotive,DE,XETRA
+BNR.DE,Brenntag,Industrials,Distribution,DE,XETRA
+CBK.DE,Commerzbank,Financials,Financial Services,DE,XETRA
+CON.DE,Continental,Consumer Discretionary,Automotive,DE,XETRA
+DB1.DE,Deutsche Börse,Financials,Financial Services,DE,XETRA
+DBK.DE,Deutsche Bank,Financials,Financial Services,DE,XETRA
+DHL.DE,Deutsche Post (DHL Group),Industrials,Logistics,DE,XETRA
+DTE.DE,Deutsche Telekom,Communication Services,Telecommunication,DE,XETRA
+DTG.DE,Daimler Truck,Industrials,Automotive,DE,XETRA
+ENR.DE,Siemens Energy,Industrials,Energy technology,DE,XETRA
+EOAN.DE,E.ON,Utilities,Utilities,DE,XETRA
+FME.DE,Fresenius Medical Care,Health Care,Healthcare,DE,XETRA
+FRE.DE,Fresenius,Health Care,Healthcare,DE,XETRA
+G1A.DE,GEA Group,Industrials,Mechanical Engineering,DE,XETRA
+G24.DE,Scout24,Communication Services,E-Commerce,DE,XETRA
+HEI.DE,Heidelberg Materials,Materials,Construction Materials,DE,XETRA
+HEN3.DE,Henkel,Consumer Staples,Consumer Goods,DE,XETRA
+HNR1.DE,Hannover Re,Financials,Insurance,DE,XETRA
+HOT.DE,Hochtief,Industrials,Construction,DE,XETRA
+IFX.DE,Infineon Technologies,Information Technology,Technology,DE,XETRA
+MBG.DE,Mercedes-Benz Group,Consumer Discretionary,Automotive,DE,XETRA
+MRK.DE,Merck KGaA,Health Care,Pharmaceuticals,DE,XETRA
+MTX.DE,MTU Aero Engines,Industrials,Aerospace & Defence,DE,XETRA
+MUV2.DE,Munich Re,Financials,Financial Services,DE,XETRA
+QIA.DE,Qiagen,Health Care,Biotech,NL,XETRA
+RHM.DE,Rheinmetall,Industrials,Aerospace & Defence,DE,XETRA
+RWE.DE,RWE,Utilities,Utilities,DE,XETRA
+SAP.DE,SAP,Information Technology,Technology,DE,XETRA
+SHL.DE,Siemens Healthineers,Health Care,Medical Equipment,DE,XETRA
+SIE.DE,Siemens,Industrials,Industrials,DE,XETRA
+SY1.DE,Symrise,Materials,Chemicals,DE,XETRA
+VNA.DE,Vonovia,Real Estate,Real Estate,DE,XETRA
+VOW3.DE,Volkswagen Group,Consumer Discretionary,Automotive,DE,XETRA
+ZAL.DE,Zalando,Consumer Discretionary,E-Commerce,DE,XETRA

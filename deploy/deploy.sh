@@ -41,6 +41,9 @@ php artisan db:seed --class=Nasdaq100UniverseSeeder --force
 # IBEX 35 Screener universe (XMAD, EUR; offline snapshot, idempotent, exact membership sync).
 # Not public until `ibex35` is added to SCREENER_UNIVERSES_PUBLIC (deploy/README.md).
 php artisan db:seed --class=Ibex35UniverseSeeder --force
+# DAX Screener universe (XETR, EUR; offline snapshot, idempotent, exact membership sync).
+# Not public until `dax` is added to SCREENER_UNIVERSES_PUBLIC (deploy/README.md).
+php artisan db:seed --class=DaxUniverseSeeder --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

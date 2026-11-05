@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
         $this->call(Sp500UniverseSeeder::class);
         $this->call(Nasdaq100UniverseSeeder::class);
         $this->call(Ibex35UniverseSeeder::class);
+        $this->call(DaxUniverseSeeder::class);
         $this->call(MarketContextUniverseSeeder::class);
     }
 }

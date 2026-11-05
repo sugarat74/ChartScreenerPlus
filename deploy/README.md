@@ -248,6 +248,39 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
     4. Retirada: `php artisan migrate:rollback --step=1` elimina las columnas (aditivo y reversible). Los Screeners
        guardados que ya incluyan las claves nuevas las conservan en su JSON y `fromSaved` ignora las desconocidas.
 
+17. DAX (`universe-dax`, `database/data/dax.md`): cada despliegue ejecuta
+    `php artisan db:seed --class=DaxUniverseSeeder --force` tras el del IBEX 35 (sin red e idempotente). Crea el
+    universo `dax` (XETR, EUR, posición 3; etiqueta «DAX», nunca «DAX 40») con 40 Instrumentos `.DE` nuevos
+    (mercado `XETR`, divisa EUR; `MRK.DE` es distinto de `MRK` del S&P 500). Sigue **sin ser público**: lo ve
+    solo un Admin hasta que se añada a `SCREENER_UNIVERSES_PUBLIC`. Al sembrarse, el planificador crea el evento
+    `ingestion:pipeline --market=XETR` (18:15 Europe/Berlin, días hábiles de Xetra). Calendario:
+    `config/ingestion.php` `markets.XETR.holidays` (2026 oficial de Deutsche Börse; **2027 de su misma tabla pero
+    sujeto a cambios, confirmarlo durante 2027** y renovar la lista cada año). Pasos de salida a producción, en
+    orden:
+
+    1. Desplegar (migra y siembra). Comprobar con `php artisan schedule:list` como `deploy` que aparece
+       `ingestion:pipeline --market=XETR` a las 18:15 Europe/Berlin, y con sesión de Admin que
+       `GET /api/universes` lista `dax` (sin sesión solo `sp500`).
+    2. Primera ingesta (unos 2 años de velas por valor): la lanza el evento programado, o a mano como `deploy`,
+       en `current`: `php artisan ingestion:pipeline --market=XETR --force`.
+    3. Verificar los datos de Yahoo para `.DE`: la última Ingestion Run de `dax` tiene `total` = 40 y sin fallos
+       (un `currency_mismatch` o un símbolo vacío indica un `.DE` mal mapeado: revisar ese valor en
+       `database/data/dax.csv`; los 40 respondieron en Yahoo el 2026-10-31); en Admin la tabla de frescura de
+       universos muestra `dax` como `fresh`; las velas tienen fechas de sesión de Berlín (sin fines de semana ni
+       festivos de Xetra), divisa EUR y sin huecos (por ejemplo, `SAP.DE` en `/instruments/SAP.DE`); con sesión
+       de Admin, `/screener?universe=dax` lista Candidatos con precios en EUR. No hay respaldo Stooq para `.DE`:
+       si Yahoo falla, el valor falla.
+    4. Hacer público: en `shared/.env` poner `SCREENER_UNIVERSES_PUBLIC=sp500,nasdaq100,ibex35,dax` (con los
+       slugs que ya fueran públicos) y ejecutar `php artisan config:cache` como `deploy`. Anotarlo en
+       `PROGRESS.md`. Para retirarlo, quitar el slug y volver a ejecutar `config:cache` (interruptor de la
+       entrada 11). No cambies el valor por defecto de `.env.example` ni de `config/universes.php`. El riesgo de
+       licencia de los datos de Deutsche Börse lo aceptó el responsable el 2026-10-26.
+    5. Rebalanceo (STOXX revisa el DAX en marzo, junio, septiembre y diciembre; próxima revisión anunciada el
+       3-dic-2026; además hay cambios extraordinarios): procedimiento en `database/data/dax.md`; la siembra del
+       despliegue aplica el CSV nuevo. Cada año, renovar `markets.XETR.holidays`.
+    6. Si ya se había rellenado el histórico de indicadores (entradas 14 a 16), el universo nuevo no lo necesita:
+       el pipeline de la primera ingesta calcula indicadores, Señales y patrones de los 40 valores.
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.
