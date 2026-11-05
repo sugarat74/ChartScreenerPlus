@@ -855,22 +855,11 @@
   {
     "id": "universe-dax",
     "area": "data",
-    "planning_spec": "docs/specs/multi-market-universes.md (prepared 2026-10-26)",
     "title": "DAX Screener universe (Xetra, EUR)",
-    "user_visible_behavior": "Everyone, Visitors included, can screen the DAX (label 'DAX', 40 constituents) with EUR prices, .DE tickers and data updated after the Xetra close on Xetra trading days.",
+    "status": "accepted",
     "depends_on": [
       "universe-selector-ui"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Seeder test: 40 rows, .DE suffix, slug dax, XETR/EUR, valid GICS sectors and ISO countries, idempotent; MRK.DE and MRK are distinct Instruments; public label is 'DAX'",
-      "Committed official Xetra holidays (weekdays only) and the 18:15 Europe/Berlin schedule event",
-      "Live engine smoke on SAP.DE recorded as fixture; local XETR pipeline run computes indicators, signals and patterns",
-      "Public enablement (dax in SCREENER_UNIVERSES_PUBLIC) after the verified production run; licensing risk owner-accepted 2026-10-26; kill-switch procedure documented in deploy/README.md",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('prepara la feature para nasdaq, ibex 35 y dax 40'); 'nasdaq' read as Nasdaq-100 (Composite deferred). Planning only, no application code yet. Owner answers 2026-10-26: Nasdaq-100 confirmed (Composite deferred); new universes public to everyone; IBEX 35/DAX published via Yahoo as an owner-accepted licensing risk with SCREENER_UNIVERSES_PUBLIC as kill-switch; label 'DAX' (id universe-dax, slug dax)."
+    ]
   },
   {
     "id": "market-hours-status",

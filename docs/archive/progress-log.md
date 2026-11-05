@@ -2,6 +2,11 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Independent validation: Nasdaq-100 universe (`universe-nasdaq100`, accepted) — 2026-10-26
+
+- Verdict **accept**. Validator re-fetched Nasdaq's quote-list (101 records, Oct 23 2026) and Wikipedia (101 tickers, as of Oct 22 2026): both match `database/data/nasdaq100.csv` exactly; overlap with `sp500.csv` recomputed as 86 / 15 new (ALAB, ALNY, ARM, ASML, CCEP, CRWV, FER, MELI, MSTR, NBIS, PDD, RKLB, SHOP, SPCX, TRI) and the 86 overlap rows are field-identical. The 15 manual GICS sector / HQ country values were judged reasonable (SPCX, TRI, CRWV, MSTR, PDD, MELI flagged in the notes file). `.\init.ps1` exit 0 (Laravel 923 passed / 6 skipped, 409 Vitest, engine 115) and `Nasdaq100UniverseSeederTest` 7 passed. The seeder is idempotent, leaves S&P-owned Instruments byte-identical, and the universe stays non-public (`SCREENER_UNIVERSES_PUBLIC` and `.env.example` untouched).
+- Rollout still pending (not part of acceptance): deploy seeds the universe; first ingestion fetches only the 15 new members; verify Ingestion Run total 15 and `fresh`; then add `nasdaq100` to `SCREENER_UNIVERSES_PUBLIC` and update the home/meta copy that still says S&P 500. Full record archived.
+
 ## Nasdaq-100 universe implementation (`universe-nasdaq100`, passing) — 2026-10-26
 
 - Feature 4 of `docs/specs/multi-market-universes.md`. New `database/data/nasdaq100.csv` (101 securities, as_of 2026-10-26) with `nasdaq100.md` (sources, SHA-256, transform, per-ticker classification, review cadence, rebalance procedure) and `Nasdaq100UniverseSeeder extends IndexUniverseSeeder` (slug `nasdaq100`, "Nasdaq-100", US/USD, position 1), run by `DatabaseSeeder` and `deploy/deploy.sh` after the S&P 500. 86 members are S&P 500 Instruments (membership only, S&P fields untouched, one set of bars and one Screener row); 15 are new (`ALAB ALNY ARM ASML CCEP CRWV FER MELI MSTR NBIS PDD RKLB SHOP SPCX TRI`). The US pipeline already fetches only those 15 (`--except-universe=sp500`). Universe stays non-public: `SCREENER_UNIVERSES_PUBLIC` and `.env.example` untouched. User guide es/en updated (default S&P 500, Nasdaq-100 where the selector appears). `deploy/README.md` item 12 holds the rollout.

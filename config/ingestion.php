@@ -94,8 +94,17 @@ return [
     | are half days and are NOT listed. 2027 is DERIVED from BME's pattern
     | (1 Jan, Good Friday, Easter Monday, 1 May, 25 and 26 Dec; weekends are not
     | listed) because BME had not published it yet: CONFIRM it against BME's 2027
-    | calendar when published. The XETR (Xetra) list arrives with universe-dax
-    | and is empty until then. REFRESH ANNUALLY, like the NYSE list above.
+    | calendar when published. REFRESH ANNUALLY, like the NYSE list above.
+    |
+    | XETR (Xetra / Frankfurt): Deutsche Boerse's trading calendar
+    | (https://www.cashmarket.deutsche-boerse.com/cash-en/trading/trading-calendar-and-trading-hours).
+    | 2026 non-trading days: 1 Jan, 3 Apr, 6 Apr, 1 May, 24 Dec, 25 Dec, 31 Dec
+    | (24 and 31 December have no trading but are settlement days: unlike BME they
+    | are full closures and ARE listed). 2027 is in the same overview (1 Jan,
+    | 26 Mar, 29 Mar, 24 Dec, 31 Dec; 1 May and 25 Dec fall on a Saturday), but
+    | Deutsche Boerse states that changes for future years are not excluded:
+    | CONFIRM 2027 on the page during 2027. German public holidays such as
+    | Ascension, Whit Monday and Corpus Christi are trading days.
     |
     */
 
@@ -121,7 +130,22 @@ return [
             'timezone' => env('INGESTION_XETR_TIMEZONE', 'Europe/Berlin'),
             'close' => env('INGESTION_XETR_MARKET_CLOSE', '17:30'),
             'buffer_minutes' => (int) env('INGESTION_XETR_BUFFER_MINUTES', 45),
-            'holidays' => [],
+            'holidays' => [
+                // 2026 (Deutsche Boerse official)
+                '2026-01-01',
+                '2026-04-03',
+                '2026-04-06',
+                '2026-05-01',
+                '2026-12-24',
+                '2026-12-25',
+                '2026-12-31',
+                // 2027 (Deutsche Boerse overview, subject to change: confirm in 2027)
+                '2027-01-01',
+                '2027-03-26',
+                '2027-03-29',
+                '2027-12-24',
+                '2027-12-31',
+            ],
         ],
     ],
 
