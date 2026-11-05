@@ -71,6 +71,8 @@ Also in scope since 2026-10-26 (explicit user request, planned, not started): th
 
 Also in scope since 2026-10-26 (explicit user request, planned, not started): the technical indicators expansion, as specified in `docs/specs/technical-indicators-expansion.md` (`indicators-expansion-engine`, `indicators-expansion-storage`, `signals-expansion`, `screener-technical-filters-api`, `screener-technical-filters-ui`, `chart-indicator-overlays`, `chart-indicator-panels`): make the already stored ADX (14) and Bollinger Bands (20, 2) visible and useful (new Signals, Screener filters/sorts/optional columns, chart overlay) and add ATR (14) and the Stochastic oscillator (14,3,3), all deterministic, daily and for every Screener universe. The natural-language Screener schema, the forecast and the Company Card stay unchanged. Other indicators (OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci) are deferred, not in scope.
 
+Also in scope since 2026-11-05 (explicit user request, planned, not started): `screener-filter-panel-compact` (`docs/specs/screener-filter-panel-compact.md`), a layout-only refactor of the Screener «Criterios técnicos» panel into a compact Finviz-style toolbar with the same filters, URL and requests; no new or removed filter.
+
 Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, other fundamentals data feeds and news, real-time or push/SMS notifications, other non-US markets and indices (only the IBEX 35 and DAX above; no full Nasdaq Composite), currency conversion, native apps, AI Copilot (chat or free-text AI), paid plans.
 
 ## Startup Workflow
