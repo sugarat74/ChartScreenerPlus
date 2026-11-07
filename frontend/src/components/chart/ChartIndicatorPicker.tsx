@@ -11,6 +11,9 @@ import type { ChartIndicatorId } from '../../lib/chartIndicators.ts'
 
 const LABEL_KEYS: Record<ChartIndicatorId, MessageKey> = {
   bollinger: 'chart.indicatorBollinger',
+  adx: 'chart.indicatorAdx',
+  atr: 'chart.indicatorAtr',
+  stochastic: 'chart.indicatorStochastic',
 }
 
 interface ChartIndicatorPickerProps {

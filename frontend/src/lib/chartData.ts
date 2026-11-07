@@ -46,6 +46,11 @@ export const CHART_THEME_COLORS = {
     candleDown: CHART_COLORS.ink,
     tertiary: CHART_COLORS.tertiary,
     band: CHART_COLORS.muted,
+    adx: CHART_COLORS.ink,
+    atr: CHART_COLORS.tertiary,
+    stochK: CHART_COLORS.tertiary,
+    stochD: CHART_COLORS.muted,
+    reference: CHART_COLORS.muted,
   },
   dark: {
     background: '#22201d', // --color-surface-bright
@@ -57,6 +62,11 @@ export const CHART_THEME_COLORS = {
     // Thin SMA/breakout lines need the lighter blue to reach 3:1 on dark.
     tertiary: '#7aa2ff', // --color-tertiary
     band: '#b5afa6', // --color-on-surface-variant
+    adx: '#f2ede5', // --color-on-surface
+    atr: '#7aa2ff', // --color-tertiary
+    stochK: '#7aa2ff', // --color-tertiary
+    stochD: '#b5afa6', // --color-on-surface-variant
+    reference: '#b5afa6', // --color-on-surface-variant
   },
 } as const
 
@@ -299,6 +309,26 @@ export type BandKey = 'bb_upper' | 'bb_middle' | 'bb_lower'
  * points are omitted, never drawn as zeros; order is the API's ascending one.
  */
 export function toBandData(series: readonly ChartBandPoint[], key: BandKey): LinePoint[] {
+  return toIndicatorData(series, key)
+}
+
+/** Keys of the stored series the sub-panes draw (chart-indicator-panels). */
+export type PaneKey = 'adx' | 'plus_di' | 'minus_di' | 'atr14' | 'stoch_k' | 'stoch_d'
+
+export type IndicatorKey = BandKey | PaneKey
+
+/** Structural stored point with every indicator optional (the API point is assignable). */
+export type ChartIndicatorPoint = { date: string } & { [K in IndicatorKey]?: number | null }
+
+/** Fixed reference levels: ADX trend threshold and the stochastic zones. */
+export const ADX_REFERENCE = 25
+export const STOCH_ZONES = [20, 80] as const
+
+/**
+ * One stored line (band, ADX, +DI/-DI, ATR, %K/%D). Warm-up `null` (or
+ * non-finite) points are omitted, never drawn as zeros; ascending order.
+ */
+export function toIndicatorData(series: readonly ChartIndicatorPoint[], key: IndicatorKey): LinePoint[] {
   const points: LinePoint[] = []
   for (const point of series) {
     const value = point[key]
@@ -339,4 +369,16 @@ export function bandSignalLevels(
   }
 
   return levels
+}
+
+/** `true` when a pane's primary line has no value at all (ADX, ATR or %K), so the pane would be empty. */
+export function noPaneData(series: readonly ChartIndicatorPoint[], pane: 'adx' | 'atr' | 'stochastic'): boolean {
+  const key: PaneKey = pane === 'adx' ? 'adx' : pane === 'atr' ? 'atr14' : 'stoch_k'
+  return toIndicatorData(series, key).length === 0
+}
+
+/** Last drawn value of a stored line, `null` when none (matches the latest snapshot). */
+export function lastIndicatorValue(series: readonly ChartIndicatorPoint[], key: IndicatorKey): number | null {
+  const points = toIndicatorData(series, key)
+  return points.length === 0 ? null : points[points.length - 1].value
 }
