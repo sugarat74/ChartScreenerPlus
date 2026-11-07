@@ -2,11 +2,21 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import {
   CHART_INDICATORS_STORAGE_KEY,
+  activePanes,
+  chartHeight,
   readStoredIndicators,
   toggleIndicator,
   writeStoredIndicators,
 } from './chartIndicators.ts'
-import { CHART_THEME_COLORS, bandSignalLevels, noBandData, toBandData } from './chartData.ts'
+import {
+  CHART_THEME_COLORS,
+  bandSignalLevels,
+  lastIndicatorValue,
+  noBandData,
+  noPaneData,
+  toBandData,
+  toIndicatorData,
+} from './chartData.ts'
 
 afterEach(() => {
   window.localStorage.clear()
@@ -81,4 +91,41 @@ it('draws one line only for the two band signals, at the crossed band', () => {
 it('has a band color for both themes', () => {
   expect(CHART_THEME_COLORS.light.band).toMatch(/^#/)
   expect(CHART_THEME_COLORS.dark.band).toMatch(/^#/)
+})
+
+const FULL = [
+  { date: '2026-10-01', adx: null, plus_di: null, minus_di: null, atr14: null, stoch_k: null, stoch_d: null },
+  { date: '2026-10-02', adx: 31.5, plus_di: 27, minus_di: 12, atr14: 2.4, stoch_k: 88, stoch_d: 81 },
+  { date: '2026-10-03', adx: 32.5, plus_di: 26, minus_di: 13, atr14: 2.5, stoch_k: 90, stoch_d: 85 },
+]
+
+it('keeps the pane selection in the closed order and sizes the chart per pane', () => {
+  expect(toggleIndicator(['bollinger'], 'stochastic')).toEqual(['bollinger', 'stochastic'])
+  expect(activePanes(['stochastic', 'bollinger', 'adx'])).toEqual(['adx', 'stochastic'])
+  expect(activePanes(['bollinger'])).toEqual([])
+  expect([0, 1, 2, 3].map(chartHeight)).toEqual([420, 540, 660, 780])
+  window.localStorage.setItem(CHART_INDICATORS_STORAGE_KEY, '["stochastic","adx","bogus"]')
+  expect(readStoredIndicators()).toEqual(['adx', 'stochastic'])
+})
+
+it('draws pane lines without warm-up nulls and ends on the snapshot values', () => {
+  expect(toIndicatorData(FULL, 'adx')).toEqual([
+    { time: '2026-10-02', value: 31.5 },
+    { time: '2026-10-03', value: 32.5 },
+  ])
+  const snapshot = { adx: 32.5, plus_di: 26, minus_di: 13, atr14: 2.5, stoch_k: 90, stoch_d: 85 }
+  for (const key of ['adx', 'plus_di', 'minus_di', 'atr14', 'stoch_k', 'stoch_d'] as const) {
+    expect(lastIndicatorValue(FULL, key)).toBe(snapshot[key])
+  }
+  expect(noPaneData(FULL, 'atr')).toBe(false)
+  expect(noPaneData([FULL[0]], 'stochastic')).toBe(true)
+  expect(noPaneData([], 'adx')).toBe(true)
+})
+
+it('has pane colors for both themes', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    for (const key of ['adx', 'atr', 'stochK', 'stochD', 'reference'] as const) {
+      expect(CHART_THEME_COLORS[theme][key]).toMatch(/^#/)
+    }
+  }
 })

@@ -7,10 +7,28 @@
 
 export const CHART_INDICATORS_STORAGE_KEY = 'chartiko.chart.indicators'
 
-/** Closed list of indicator toggles. Feature 7 appends the sub-pane ones. */
-export const CHART_INDICATOR_IDS = ['bollinger'] as const
+/** Closed list of indicator toggles: one price overlay, then the sub-panes (chart-indicator-panels). */
+export const CHART_INDICATOR_IDS = ['bollinger', 'adx', 'atr', 'stochastic'] as const
 
 export type ChartIndicatorId = (typeof CHART_INDICATOR_IDS)[number]
+
+/** The toggles that get their own pane under the volume pane, in pane order. */
+export const CHART_PANE_IDS = ['adx', 'atr', 'stochastic'] as const
+
+export type ChartPaneId = (typeof CHART_PANE_IDS)[number]
+
+/** Active panes of a selection, in the fixed pane order (ADX, ATR, Stochastic). */
+export function activePanes(selection: readonly ChartIndicatorId[]): ChartPaneId[] {
+  return CHART_PANE_IDS.filter((id) => selection.includes(id))
+}
+
+/** Price + volume height, and what each extra pane adds, in CSS pixels. */
+export const CHART_BASE_HEIGHT = 420
+export const CHART_PANE_HEIGHT = 120
+
+export function chartHeight(paneCount: number): number {
+  return CHART_BASE_HEIGHT + CHART_PANE_HEIGHT * Math.max(0, paneCount)
+}
 
 function isIndicatorId(value: unknown): value is ChartIndicatorId {
   return typeof value === 'string' && (CHART_INDICATOR_IDS as readonly string[]).includes(value)

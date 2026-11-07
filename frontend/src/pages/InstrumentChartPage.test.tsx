@@ -13,8 +13,12 @@ import InstrumentChartPage from './InstrumentChartPage.tsx'
 
 // The canvas chart is not under test (and needs a real canvas).
 vi.mock('../components/chart/InteractiveChart.tsx', () => ({
-  default: ({ bands }: { bands?: unknown[] | null }) => (
-    <div data-testid="interactive-chart" data-bands={bands == null ? 'off' : String(bands.length)} />
+  default: ({ series, indicators }: { series?: unknown[] | null; indicators?: string[] }) => (
+    <div
+      data-testid="interactive-chart"
+      data-bands={series == null || !indicators?.includes('bollinger') ? 'off' : String(series.length)}
+      data-panes={series == null ? '' : (indicators ?? []).filter((id) => id !== 'bollinger').join(',')}
+    />
   ),
 }))
 
@@ -346,5 +350,71 @@ describe('Indicator picker and Bollinger overlay (chart-indicator-overlays)', ()
     fireEvent.click(toggle())
     await waitFor(() => expect(bands()).toBe('2'))
     vi.restoreAllMocks()
+  })
+})
+
+describe('Indicator panes (chart-indicator-panels)', () => {
+  const NULLS = { bb_upper: null, bb_middle: null, bb_lower: null }
+  const SERIES = {
+    ticker: 'NVDA',
+    series: [
+      { date: '2026-10-01', ...NULLS, adx: 30, plus_di: 25, minus_di: 15, atr14: 2.5, stoch_k: 80, stoch_d: 70 },
+    ],
+    meta: { limit: 252, point_count: 1, latest_date: '2026-10-01' },
+  }
+  const panes = () => screen.getByTestId('interactive-chart').getAttribute('data-panes')
+
+  beforeEach(() => {
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'NVDA', company: 'NVIDIA', exchange: 'NASDAQ' }))
+    vi.mocked(instrumentApi.indicators).mockReset()
+  })
+
+  it('offers the three pane toggles, all off, with no request', async () => {
+    show('NVDA')
+    await screen.findByTestId('interactive-chart')
+    for (const name of ['ADX (+DI / -DI)', 'ATR', 'Estocástico']) {
+      expect(screen.getByRole('button', { name }).getAttribute('aria-pressed')).toBe('false')
+    }
+    expect(panes()).toBe('')
+    expect(instrumentApi.indicators).not.toHaveBeenCalled()
+  })
+
+  it('shares one request between Bollinger and the panes and remembers them', async () => {
+    vi.mocked(instrumentApi.indicators).mockResolvedValue(SERIES)
+    show('NVDA')
+    await screen.findByTestId('interactive-chart')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bandas de Bollinger' }))
+    fireEvent.click(screen.getByRole('button', { name: 'ATR' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Estocástico' }))
+    await waitFor(() => expect(panes()).toBe('atr,stochastic'))
+    expect(instrumentApi.indicators).toHaveBeenCalledTimes(1)
+    expect(window.localStorage.getItem('chartiko.chart.indicators')).toBe('["bollinger","atr","stochastic"]')
+
+    fireEvent.click(screen.getByRole('button', { name: 'ATR' }))
+    expect(panes()).toBe('stochastic')
+    expect(instrumentApi.indicators).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores a stored pane and shows error and retry like the overlay', async () => {
+    window.localStorage.setItem('chartiko.chart.indicators', '["adx"]')
+    vi.mocked(instrumentApi.indicators).mockRejectedValueOnce(new Error('boom')).mockResolvedValue(SERIES)
+    show('NVDA')
+
+    const message = await screen.findByText(/No se pudo cargar la serie de indicadores/)
+    expect(panes()).toBe('')
+    fireEvent.click(within(message.closest('[role="alert"]') as HTMLElement).getByRole('button', { name: 'Reintentar' }))
+    await waitFor(() => expect(panes()).toBe('adx'))
+  })
+
+  it('notes an empty pane when the history is too short', async () => {
+    window.localStorage.setItem('chartiko.chart.indicators', '["stochastic"]')
+    vi.mocked(instrumentApi.indicators).mockResolvedValue({
+      ...SERIES,
+      series: [{ date: '2026-10-01', ...NULLS, adx: null, plus_di: null, minus_di: null, atr14: null, stoch_k: null, stoch_d: null }],
+    })
+    show('NVDA')
+
+    expect(await screen.findByText('No hay historial suficiente para Estocástico.')).toBeTruthy()
   })
 })

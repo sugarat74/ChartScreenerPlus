@@ -2,6 +2,13 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## chart-indicator-panels implemented (passing, awaiting validation) - 2026-11-07
+
+- SPA only, backend untouched (feature 7 of `docs/specs/technical-indicators-expansion.md`): the picker gains ADX (+DI/-DI), ATR and Stochastic toggles (closed list `bollinger, adx, atr, stochastic`, same guarded `localStorage` key, all off by default). `InteractiveChart` now takes `series` + `indicators` (replacing `bands`) and draws each pane in the same chart (v5 pane index 2.., so time scale and crosshair are shared): ADX 2px + +DI green / -DI red with a dashed 25 line; ATR; %K/%D on a fixed 0-100 axis with 20/80 lines. Chart height `420 + 120 * panes`, price and volume keep 210 px (stretch factors). `chartData.ts`: `toIndicatorData` (nulls omitted), `noPaneData`, `lastIndicatorValue`, theme colors; `useInstrumentIndicators` unchanged: one request when any indicator is on, shared with Bollinger. Per-pane insufficient-history note, error/retry/loading reuse the overlay's. es/en messages and guide, DESIGN.md updated.
+- Unchanged by design: default chart and requests (tests: no `indicators` call, no panes with everything off), volume, markers, price lines, backend, Screener.
+- Verified: `.\init.ps1` Baseline OK (phpunit 998, Vitest 60 files / 478 passed with new helper and page tests, lint with the 1 pre-existing warning, tsc, build, engine 138). Browser pass (scratch SQLite, DEMO with 150 bars and seeded ADX/DI/ATR/stoch values, vite + artisan serve) at 390 and 1440 px, light and dark, es and en: all panes on gives a 780 px chart, no horizontal page overflow, exactly one `/indicators` request, none while off, canvas count unchanged after toggling every pane off/on, forced HTTP 500 shows the localized alert with retry then draws, language switch keeps the selection. Screenshots outside the repo; servers, scratch DB and `.playwright-mcp` removed.
+- Not verified: last-bar values against a real Candidate row (checked only with a fixed payload in Vitest), real screen reader, production. Next: independent validation.
+
 ## screener-filter-panel-compact implemented (passing, awaiting validation) - 2026-11-05
 
 - SPA only. The «Criterios técnicos» block is now a compact toolbar: triggers Señales / RSI / Patrones / Sector (value shown, `aria-expanded`/`aria-controls`) opening ONE inline editor card (Esc closes and returns focus, no focus trap), native selects for min RVOL and MA cross, a Price > SMA 200 toggle, header with title, hint, active count and Limpiar filtros. New `ScreenerCriteriaEditors.tsx` (editors extracted unchanged) and `lib/screenerToolbar.ts` (summaries); `ScreenerFilterPanel.tsx` rewritten; es/en `screener.toolbar.*`, `noFiltersHint` removed, `filtersInUrl` is now the Clear button title. DESIGN.md updated. Defaults applied: column funnels untouched, open card not persisted, header count unchanged.
@@ -67,10 +74,3 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 - Verified: new `IndicatorsExpansionStorageTest` (9 tests incl. forecast `input_hash` and Company Card context identical with new columns null vs filled), full phpunit 946 OK (6 skipped as before), `.init.ps1` Baseline OK (phpunit, frontend lint/test/build, engine pytest 124 passed).
 - Measured recompute (synthetic 518 instruments x 520 bars = 269,360 snapshots, SQLite, real engine, `indicators:compute --universe=sp500`): 4m40s first pass, 7m51s re-run. `updateOrCreate` kept (one-off, idempotent); chunked `upsert` (D5) not needed. PostgreSQL behind PgBouncer will be slower: run it off-hours.
 - Next: independent validation, then `signals-expansion`.
-
-## indicators-expansion-engine implemented (passing, awaiting validation) — 2026-10-26
-
-- Engine only: `atr`, `directional_indicators` (+DI/-DI) and `stochastic` (14,3,3 slow) in `engine/app/indicators/core.py`; `adx` now reads the shared `_wilder_sums` helper with identical arithmetic. `Snapshot` and `POST /indicators/compute` gain `atr14`, `plus_di`, `minus_di`, `stoch_k`, `stoch_d` (null during warm-up). Flat stochastic window reads 50.0.
-- Verified: engine pytest 124 passed (hand-computed fixtures plus exact-equality regression of ADX/Bollinger/SMA20/RSI/MACD/RVOL vs `engine/tests/fixtures/indicator_regression.json`, captured before the change), ruff clean, `.\init.ps1` Baseline OK.
-- Next: independent validation, then `indicators-expansion-storage`.
-
