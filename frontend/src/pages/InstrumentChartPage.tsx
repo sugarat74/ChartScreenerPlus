@@ -44,8 +44,8 @@ import WatchlistButton from '../components/watchlist/WatchlistButton.tsx'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, instrumentApi } from '../lib/api.ts'
 import type { InstrumentDetailResponse } from '../lib/api.ts'
-import { CHART_BAR_LIMIT, insufficientHistory, noBandData, signalLevels, smaLevels } from '../lib/chartData.ts'
-import { readStoredIndicators, toggleIndicator, writeStoredIndicators } from '../lib/chartIndicators.ts'
+import { CHART_BAR_LIMIT, insufficientHistory, noBandData, noPaneData, signalLevels, smaLevels } from '../lib/chartData.ts'
+import { activePanes, chartHeight, readStoredIndicators, toggleIndicator, writeStoredIndicators } from '../lib/chartIndicators.ts'
 import type { ChartIndicatorId } from '../lib/chartIndicators.ts'
 
 type ChartStatus = 'loading' | 'ready' | 'not_found' | 'error'
@@ -182,6 +182,12 @@ function ErrorPanel({ message, onRetry }: { message: string; onRetry: () => void
   )
 }
 
+const PANE_LABEL_KEYS = {
+  adx: 'chart.indicatorAdx',
+  atr: 'chart.indicatorAtr',
+  stochastic: 'chart.indicatorStochastic',
+} as const
+
 export default function InstrumentChartPage() {
   const { t, formatPrice, formatCompact, formatMarketDate } = useI18n()
   const tRef = useTranslateRef()
@@ -256,13 +262,15 @@ export default function InstrumentChartPage() {
   const showForecast = availability?.forecast !== false
   const showCompanyCard = availability?.company_card !== false
   // The stored series is requested only while an indicator is switched on.
+  // One request serves the Bollinger overlay and every sub-pane.
+  const anyIndicatorOn = indicators.length > 0
   const bollingerOn = indicators.includes('bollinger')
   const indicatorSeries = useInstrumentIndicators(
     current !== null && current.bars.length > 0 ? current.instrument.ticker : null,
-    bollingerOn,
+    anyIndicatorOn,
   )
-  const bands =
-    bollingerOn && indicatorSeries.state.status === 'ready' ? indicatorSeries.state.series : null
+  const storedSeries =
+    anyIndicatorOn && indicatorSeries.state.status === 'ready' ? indicatorSeries.state.series : null
   const marketContext = useInstrumentMarketContext(
     current?.instrument.ticker ?? null,
     current !== null && !isEtf && !outsideUs,
@@ -389,12 +397,12 @@ export default function InstrumentChartPage() {
                   writeStoredIndicators(next)
                 }}
               />
-              {bollingerOn && indicatorSeries.state.status === 'loading' ? (
+              {anyIndicatorOn && indicatorSeries.state.status === 'loading' ? (
                 <p role="status" className="mt-2 font-mono text-[11px] text-on-surface-variant">
                   {t('chart.indicatorsLoading')}
                 </p>
               ) : null}
-              {bollingerOn && indicatorSeries.state.status === 'error' ? (
+              {anyIndicatorOn && indicatorSeries.state.status === 'error' ? (
                 <div
                   role="alert"
                   className="mt-2 flex flex-wrap items-center gap-2 rounded-[4px] border border-secondary bg-secondary-container px-2 py-1.5 text-xs text-on-secondary-container"
@@ -409,11 +417,23 @@ export default function InstrumentChartPage() {
                   </button>
                 </div>
               ) : null}
-              {bands !== null && noBandData(bands) ? (
+              {storedSeries !== null && bollingerOn && noBandData(storedSeries) ? (
                 <p className="mt-2 rounded-[4px] border border-outline-variant bg-surface-container px-2 py-1.5 text-xs text-on-surface-variant">
                   {t('chart.indicatorsInsufficient')}
                 </p>
               ) : null}
+              {storedSeries !== null
+                ? activePanes(indicators)
+                    .filter((pane) => noPaneData(storedSeries, pane))
+                    .map((pane) => (
+                      <p
+                        key={pane}
+                        className="mt-2 rounded-[4px] border border-outline-variant bg-surface-container px-2 py-1.5 text-xs text-on-surface-variant"
+                      >
+                        {t('chart.indicatorsInsufficientPane', { name: t(PANE_LABEL_KEYS[pane]) })}
+                      </p>
+                    ))
+                : null}
             </div>
 
             <div className="mt-3">
@@ -422,7 +442,8 @@ export default function InstrumentChartPage() {
                   <div
                     role="status"
                     aria-busy="true"
-                    className="flex h-[420px] items-center justify-center bg-surface-bright"
+                    style={{ height: chartHeight(storedSeries === null ? 0 : activePanes(indicators).length) }}
+                    className="flex items-center justify-center bg-surface-bright"
                   >
                     <span className="font-mono text-xs uppercase tracking-wider text-on-surface-variant">
                       {t('chart.loadingChart')}
@@ -436,7 +457,8 @@ export default function InstrumentChartPage() {
                   snapshot={current.snapshot}
                   signals={current.signals}
                   patterns={current.patterns ?? []}
-                  bands={bands}
+                  series={storedSeries}
+                  indicators={indicators}
                 />
               </Suspense>
             </div>

@@ -180,7 +180,7 @@ export const guideEs: GuideTexts = {
       ],
       notes: [
         'Las imágenes son esquemas con datos ficticios: explican la forma de cada indicador, no muestran cotizaciones ni señales actuales.',
-        'Chartiko también calcula las EMA de 21 y 55 sesiones, el ADX y el ATR de 14 sesiones, las Bandas de Bollinger (20 sesiones, 2 desviaciones) y el Estocástico (14, 3, 3). El ADX, el %B, el ancho de bandas, el ATR % y el %K se pueden filtrar, ordenar y mostrar como columnas opcionales del listado (ver «El listado de candidatos»); las Bandas de Bollinger también se pueden dibujar en el gráfico con los botones «Indicadores» que hay sobre él (todos apagados por defecto; tu elección se recuerda en este navegador). Los otros tres aún no se dibujan en el gráfico. Cuando un cierre cruza una banda, el gráfico marca además ese nivel con una línea discontinua.',
+        'Chartiko también calcula las EMA de 21 y 55 sesiones, el ADX y el ATR de 14 sesiones, las Bandas de Bollinger (20 sesiones, 2 desviaciones) y el Estocástico (14, 3, 3). El ADX, el %B, el ancho de bandas, el ATR % y el %K se pueden filtrar, ordenar y mostrar como columnas opcionales del listado (ver «El listado de candidatos»); las Bandas de Bollinger también se pueden dibujar en el gráfico, y el ADX (con +DI y -DI), el ATR y el Estocástico (%K y %D, con líneas en 20 y 80) tienen cada uno su propio panel bajo el precio: usa los botones «Indicadores» que hay sobre el gráfico (todos apagados por defecto; tu elección se recuerda en este navegador). El panel del ADX marca el nivel 25. Cuando un cierre cruza una banda, el gráfico marca además ese nivel con una línea discontinua.',
       ],
     },
     {
