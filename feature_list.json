@@ -980,14 +980,20 @@
       "universe-selector-ui",
       "market-hours-status"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Seeder test: 40 rows (39 .PA + MT.AS exception), slug cac40, XPAR/EUR, position 4, valid GICS sectors and ISO countries, hash matches cac40.md, idempotent, other universes untouched, non-public by default; AIR.PA and AIR.DE are separate Instruments",
       "Suffix rules in PHP and engine (.PA exactly XPAR, .AS only for XPAR, 422 for a wrong market); committed Euronext Paris holidays (weekdays) and 24/31 Dec half days; 18:15 Europe/Paris schedule event; lock-wait budget covers the European pipelines",
       "Live engine smoke on SAN.PA and MT.AS recorded as fixture; local XPAR pipeline run computes indicators, signals and patterns; holiday-week check (no bar on Paris closures, bars on UK-only closures); browser pass for the five-market strip at 390 and 1440 px",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
+    "evidence": [
+          ".\\init.ps1 run as a child process with output redirected, exit code 0, 'Baseline OK' (2026-11-08): phpunit 1015 passed / 6 skipped (10343 assertions), Vitest 60 files / 479 passed, lint (1 pre-existing warning), tsc, build, engine pytest 153 passed.",
+          "New/changed tests: CacUniverseSeederTest 15 (shape, hash, 39 .PA + MT.AS, XPAR/EUR, position 4, idempotent, S&P untouched, non-public + Admin preview, Euronext holidays weekdays, 24/31 Dec half days 14:05, Christmas-week frozen clock, 18:15 CET/CEST flip, Paris schedule event only when seeded, suffix rules incl. .AS only for XPAR, no S&P/Nasdaq ticker ending .L/.PA/.AS, AIR.PA vs AIR.DE separate, lock default 3600, XPAR pipeline waits on a held lock and ingests EUR); engine test_stooq.py XPAR cases (real SAN.PA Easter fixture, suffix 422s, MT.AS accepted for XPAR only); UniverseRegistryTest, MarketStatusApiTest, MarketHoursStatusTest (Paris hours/holidays/half day), Vitest UniverseSelector and MarketHoursStrip with XPAR (es/en labels).",
+          "Live engine smoke 2026-11-08 (GET /eod/{symbol}?market=XPAR, real Yahoo): all 40 symbols EUR, 511 sessions (2024-11-06..2026-11-06), no weekend dates, no bar on 2026-01-01, 04-03, 04-06, 05-01, 12-25, bars on UK-only 2026-05-04, 05-25, 08-31; MT.AS ok (exchange AMS); SAN.PA with market XMAD/XETR/US, MT.AS with XMAD/XETR/US/none, SAN.MC with XPAR all 422. Wikipedia wikitext SHA-256 equals the spec's b422996c...",
+          "Euronext holidays page fetched 2026-11-08 (sha256 720c5f68...): 2026/2027 closures match the spec; 14:05 CET half-day close stated for the Paris cash market in the page's 2019/2020 notices; 2026/2027 rows say Half Trading Day.",
+          "Not verified: browser pass of the market strip (390/1440 px), a local DB-backed ingestion:pipeline --market=XPAR --force run, production European pipeline duration."
+    ],
     "notes": "Planned 2026-11-08 at explicit user request ('cac 70', read as a typo for CAC 40). Planning only, no application code yet. Constituents verified 2026-11-08 against Wikipedia (Dec 2025 table) and Euronext releases (no CAC 40 change in March, June and September 2026). Owner decisions open with recommended defaults: ArcelorMittal via MT.AS exception, non-public until the owner decides. Half-day close 14:05 unverified."
   },
   {

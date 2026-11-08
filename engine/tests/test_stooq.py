@@ -332,6 +332,17 @@ def test_eod_endpoint_defaults_to_the_us_market(monkeypatch: pytest.MonkeyPatch)
     "path",
     [
         "/eod/SAN.MC?market=XETR",
+        "/eod/SAN.PA?market=XMAD",
+        "/eod/SAN.PA?market=XETR",
+        "/eod/SAN.PA?market=US",
+        "/eod/SAN.PA",
+        "/eod/SAN.MC?market=XPAR",
+        "/eod/SAP.DE?market=XPAR",
+        "/eod/SAN?market=XPAR",
+        "/eod/MT.AS?market=XMAD",
+        "/eod/MT.AS?market=XETR",
+        "/eod/MT.AS?market=US",
+        "/eod/MT.AS",
         "/eod/SAP.DE?market=XMAD",
         "/eod/SAN.MC",
         "/eod/SAP.DE?market=US",
@@ -392,3 +403,69 @@ def test_yahoo_sap_de_recording_has_berlin_session_dates_and_skips_xetra_closure
     ]
     assert all(bar.date.weekday() < 5 for bar in result.bars)
     assert result.currency == "EUR"
+
+
+# --- CAC 40 (docs/specs/universes-cac40-ftse100.md, Feature 1) ---------------------
+
+SAN_PA_FIXTURE = Path(__file__).parent / "fixtures" / "yahoo_san_pa_easter.json"
+
+
+def test_yahoo_san_pa_recording_has_paris_session_dates_and_skips_euronext_closures() -> None:
+    # Trimmed real Yahoo response for SAN.PA (recorded 2026-11-08) around Easter 2026:
+    # Good Friday (2026-04-03) and Easter Monday (2026-04-06) are Euronext closures.
+    result = parse_yahoo_eod(SAN_PA_FIXTURE.read_text(encoding="utf-8"), "XPAR")
+
+    assert [bar.date for bar in result.bars] == [
+        date(2026, 3, 30),
+        date(2026, 3, 31),
+        date(2026, 4, 1),
+        date(2026, 4, 2),
+        date(2026, 4, 7),
+        date(2026, 4, 8),
+    ]
+    assert all(bar.date.weekday() < 5 for bar in result.bars)
+    assert result.currency == "EUR"
+
+
+def test_xpar_suffix_rules_including_the_arcelormittal_exception() -> None:
+    from app.sources.stooq import symbol_matches_market
+
+    assert symbol_matches_market("SAN.PA", "XPAR")
+    assert symbol_matches_market("STLAP.PA", "XPAR")
+    assert symbol_matches_market("MT.AS", "XPAR")
+    assert not symbol_matches_market("SAN.PA", "XMAD")
+    assert not symbol_matches_market("SAN.PA", "XETR")
+    assert not symbol_matches_market("SAN.PA", "US")
+    assert not symbol_matches_market("SAN.MC", "XPAR")
+    assert not symbol_matches_market("SAP.DE", "XPAR")
+    assert not symbol_matches_market("SAN", "XPAR")
+    # .AS is accepted for XPAR only.
+    assert not symbol_matches_market("MT.AS", "XMAD")
+    assert not symbol_matches_market("MT.AS", "XETR")
+    assert not symbol_matches_market("MT.AS", "US")
+
+
+def test_xpar_symbols_are_sent_to_yahoo_verbatim() -> None:
+    from app.sources.stooq import yahoo_symbol
+
+    assert yahoo_symbol("SAN.PA", "XPAR") == "SAN.PA"
+    assert yahoo_symbol("MT.AS", "XPAR") == "MT.AS"
+
+
+def test_eod_endpoint_accepts_xpar_symbols(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, str] = {}
+
+    def fake(symbol: str, market: str = "US") -> EodResult:
+        seen.update(symbol=symbol, market=market)
+        return EodResult(
+            bars=[Bar(date=date(2026, 9, 25), open=1, high=2, low=0.5, close=1.5, volume=1)],
+            currency="EUR",
+        )
+
+    monkeypatch.setattr(main_module, "fetch_eod", fake)
+
+    for path, symbol in (("/eod/san.pa?market=XPAR", "SAN.PA"), ("/eod/MT.AS?market=XPAR", "MT.AS")):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert response.json()["symbol"] == symbol
+        assert seen == {"symbol": symbol, "market": "XPAR"}

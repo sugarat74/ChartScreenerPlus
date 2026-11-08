@@ -84,6 +84,31 @@ class MarketHoursStatusTest extends TestCase
         $this->assertTrue($this->at('XMAD', '2026-12-24 10:00:00')['is_open']);
     }
 
+    public function test_paris_has_its_own_hours_holidays_and_half_days(): void
+    {
+        // Summer (CEST): 09:00 to 17:30 Paris = 07:00Z to 15:30Z.
+        $this->assertFalse($this->at('XPAR', '2026-07-06 06:59:59')['is_open']);
+        $this->assertTrue($this->at('XPAR', '2026-07-06 07:00:00')['is_open']);
+        $this->assertTrue($this->at('XPAR', '2026-07-06 15:29:59')['is_open']);
+        $this->assertFalse($this->at('XPAR', '2026-07-06 15:30:00')['is_open']);
+        // Winter (CET): 08:00Z to 16:30Z.
+        $this->assertTrue($this->at('XPAR', '2026-01-12 08:00:00')['is_open']);
+        $this->assertFalse($this->at('XPAR', '2026-01-12 16:30:00')['is_open']);
+
+        // Easter Monday and 1 May are closed in Paris; 25 May (UK bank holiday) is open.
+        $this->assertFalse($this->at('XPAR', '2026-04-06 10:00:00')['is_open']);
+        $this->assertFalse($this->at('XPAR', '2026-05-01 10:00:00')['is_open']);
+        $this->assertTrue($this->at('XPAR', '2026-05-25 10:00:00')['is_open']);
+
+        // 24 December 2026: half day closing at 14:05 CET = 13:05Z.
+        $half = $this->at('XPAR', '2026-12-24 13:04:59');
+        $this->assertTrue($half['is_open']);
+        $this->assertTrue($half['early_close']);
+        $this->assertSame('2026-12-24T13:05:00Z', $half['closes_at']);
+        $this->assertFalse($this->at('XPAR', '2026-12-24 13:05:00')['is_open']);
+        $this->assertFalse($this->at('XPAR', '2026-12-25 10:00:00')['is_open']);
+    }
+
     public function test_early_closes_shorten_the_session(): void
     {
         // US, day after Thanksgiving 2026: 09:30 EST to 13:00 EST = 14:30Z to 18:00Z.

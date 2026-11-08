@@ -652,7 +652,7 @@ export type ScreenerCandidate = {
 }
 
 /** The Listing Markets of the Screener universes (`docs/specs/multi-market-universes.md`, D1). */
-export type ListingMarketCode = 'US' | 'XMAD' | 'XETR'
+export type ListingMarketCode = 'US' | 'XMAD' | 'XETR' | 'XPAR'
 
 /** One Screener universe of `GET /api/universes` (the caller's visible ones, selector order). */
 export type ScreenerUniverse = {

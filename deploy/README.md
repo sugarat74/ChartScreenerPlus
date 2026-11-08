@@ -281,6 +281,46 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
     6. Si ya se había rellenado el histórico de indicadores (entradas 14 a 16), el universo nuevo no lo necesita:
        el pipeline de la primera ingesta calcula indicadores, Señales y patrones de los 40 valores.
 
+18. CAC 40 (`universe-cac40`, `database/data/cac40.md`): cada despliegue ejecuta
+    `php artisan db:seed --class=CacUniverseSeeder --force` tras el del DAX (sin red e idempotente). Crea el
+    universo `cac40` (XPAR, EUR, posición 4; etiqueta «CAC 40») con 40 Instrumentos nuevos: 39 `.PA` y
+    ArcelorMittal como `MT.AS` (única excepción documentada: Yahoo no tiene línea de París; `.AS` solo vale para
+    `XPAR`). Sigue **sin ser público**: lo ve solo un Admin hasta que se añada a `SCREENER_UNIVERSES_PUBLIC`.
+    Al sembrarse, el planificador crea el evento `ingestion:pipeline --market=XPAR` (18:15 Europe/Paris, días
+    hábiles de Euronext París). Calendario: `config/ingestion.php` `markets.XPAR` (cierres 2026 oficiales de
+    Euronext; **2027 de la misma página pero sujeto a cambios, confirmarlo durante 2027**; el 24 y el 31 de
+    diciembre son medias sesiones con cierre 14:05, no cierres). Cambio de configuración común: la espera por el
+    cierre global del pipeline (`INGESTION_LOCK_WAIT_SECONDS`) sube de 900 a 3600 s porque los pipelines
+    europeos (XMAD, XETR, XPAR) arrancan en el mismo instante UTC y se ejecutan uno tras otro; si en producción
+    no caben, escalonarlos con `INGESTION_<CODIGO>_BUFFER_MINUTES` (por ejemplo París 55). Pasos de salida a
+    producción, en orden:
+
+    1. Desplegar (migra y siembra). Si `shared/.env` fija `INGESTION_LOCK_WAIT_SECONDS=900`, cambiarlo a 3600 y
+       ejecutar `php artisan config:cache`. Comprobar con `php artisan schedule:list` como `deploy` que aparece
+       `ingestion:pipeline --market=XPAR` a las 18:15 Europe/Paris, y con sesión de Admin que `GET /api/universes`
+       lista `cac40` (sin sesión solo `sp500`).
+    2. Primera ingesta (unos 2 años de velas por valor): la lanza el evento programado, o a mano como `deploy`,
+       en `current`: `php artisan ingestion:pipeline --market=XPAR --force`. Anotar su duración (sirve para decidir
+       si hace falta escalonar).
+    3. Verificar los datos de Yahoo: la última Ingestion Run de `cac40` tiene `total` = 40 y sin fallos (un
+       `currency_mismatch` o un símbolo vacío indica un símbolo mal mapeado en `database/data/cac40.csv`; los 40
+       respondieron en Yahoo el 2026-11-08); en Admin la tabla de frescura muestra `cac40` como `fresh`; las
+       velas tienen fechas de sesión de París (sin fines de semana ni festivos de Euronext; sí en los festivos
+       solo británicos), divisa EUR y sin huecos (por ejemplo `SAN.PA` y `MT.AS` en `/instruments/SAN.PA`); con
+       sesión de Admin, `/screener?universe=cac40` lista Candidatos con precios en EUR. No hay respaldo Stooq: si
+       Yahoo falla, el valor falla.
+    4. Hacer público: en `shared/.env` poner `SCREENER_UNIVERSES_PUBLIC=sp500,nasdaq100,ibex35,dax,cac40` (con los
+       slugs que ya fueran públicos) y ejecutar `php artisan config:cache` como `deploy`. Anotarlo en
+       `PROGRESS.md`. Para retirarlo, quitar el slug y volver a ejecutar `config:cache` (interruptor de la
+       entrada 11). No cambies el valor por defecto de `.env.example` ni de `config/universes.php`. La decisión de
+       hacerlo público y el riesgo de licencia (Euronext, Yahoo no oficial) son del responsable.
+    5. Rebalanceo (Euronext revisa el CAC 40 en marzo, junio, septiembre y diciembre; próxima revisión tras el
+       2026-11-08: diciembre de 2026; además hay cambios extraordinarios): procedimiento en
+       `database/data/cac40.md`; la siembra del despliegue aplica el CSV nuevo. Cada año, renovar
+       `markets.XPAR.holidays` y `early_closes`.
+    6. Si ya se había rellenado el histórico de indicadores (entradas 14 a 16), el universo nuevo no lo necesita:
+       el pipeline de la primera ingesta calcula indicadores, Señales y patrones de los 40 valores.
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.

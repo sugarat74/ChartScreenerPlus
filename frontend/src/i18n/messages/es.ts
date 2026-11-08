@@ -455,7 +455,7 @@ export const es = {
   marketHours: {
     title: 'Mercados',
     groupAria: 'Horario de los mercados',
-    markets: { US: 'NYSE/Nasdaq', XMAD: 'Bolsa de Madrid', XETR: 'Xetra' },
+    markets: { US: 'NYSE/Nasdaq', XMAD: 'Bolsa de Madrid', XETR: 'Xetra', XPAR: 'Bolsa de París (Euronext)' },
     open: 'Abierto',
     closed: 'Cerrado',
     opens: 'Abre {time}',
@@ -542,6 +542,7 @@ export const es = {
         US: 'EE. UU.',
         XMAD: 'Bolsa de Madrid',
         XETR: 'Xetra',
+        XPAR: 'Bolsa de París (Euronext)',
       },
     },
     colChange: 'Var %',
