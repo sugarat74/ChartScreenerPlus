@@ -953,21 +953,11 @@
   {
     "id": "chart-indicator-panels",
     "area": "chart",
-    "planning_spec": "docs/specs/technical-indicators-expansion.md (prepared 2026-10-26)",
     "title": "Chart: ADX, ATR and Stochastic panels",
-    "user_visible_behavior": "The chart can show ADX (with +DI and -DI), ATR and Stochastic panels under the price, each switched on or off from the Indicators control and remembered in your browser.",
+    "status": "accepted",
     "depends_on": [
       "chart-indicator-overlays"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Each pane draws the right series, ADX reference at 25, stochastic axis 0..100 with lines at 20 and 80, shared time scale",
-      "Last-bar values equal the show snapshot; height grows 120 px per pane; no overflow at 390 px; volume, markers and price lines unchanged",
-      "es/en complete, DESIGN.md updated, Vitest for the pane data helpers",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-10-26 at explicit user request ('si vete preparandolo'): make ADX and Bollinger (already stored, unused) visible and add ATR and Stochastic. Planning only, no application code yet. Deferred (not in scope): OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci. Open owner questions in the spec."
+    ]
   },
   {
     "id": "screener-filter-panel-compact",

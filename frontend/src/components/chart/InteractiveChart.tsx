@@ -25,10 +25,14 @@ import {
 import { LOCALE_DEFINITIONS } from '../../i18n/locales.ts'
 import type { MessageKey } from '../../i18n/translate.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
+import { activePanes, chartHeight } from '../../lib/chartIndicators.ts'
+import type { ChartIndicatorId, ChartPaneId } from '../../lib/chartIndicators.ts'
 import { patternLabel } from '../../lib/screenerFilters.ts'
 import type { InstrumentBar, InstrumentIndicatorPoint, InstrumentPattern, InstrumentSignal, InstrumentSnapshot } from '../../lib/api.ts'
 import {
+  ADX_REFERENCE,
   CHART_COLORS,
+  STOCH_ZONES,
   CHART_THEME_COLORS,
   bandSignalLevels,
   patternLevels,
@@ -36,12 +40,14 @@ import {
   signalLevels,
   smaLevels,
   toBandData,
+  toIndicatorData,
   toCandlestickData,
   toVolumeData,
 } from '../../lib/chartData.ts'
 import { useTheme } from '../../theme/useTheme.ts'
 
 const NO_PATTERNS: InstrumentPattern[] = []
+const NO_INDICATORS: readonly ChartIndicatorId[] = []
 
 /** Mirrors the `--font-mono` token stack. */
 const MONO_FONT_FAMILY =
@@ -53,8 +59,10 @@ interface InteractiveChartProps {
   snapshot: InstrumentSnapshot | null
   signals: InstrumentSignal[]
   patterns?: InstrumentPattern[]
-  /** Stored Bollinger series; `null` (default) draws no band and no band line. */
-  bands?: InstrumentIndicatorPoint[] | null
+  /** Stored indicator series; `null` (default) draws no band, no pane and no band line. */
+  series?: InstrumentIndicatorPoint[] | null
+  /** Switched-on indicators: Bollinger on the price pane, ADX/ATR/Stochastic as panes. */
+  indicators?: readonly ChartIndicatorId[]
 }
 
 export default function InteractiveChart({
@@ -63,7 +71,8 @@ export default function InteractiveChart({
   snapshot,
   signals,
   patterns = NO_PATTERNS,
-  bands = null,
+  series = null,
+  indicators = NO_INDICATORS,
 }: InteractiveChartProps) {
   const { locale, t } = useI18n()
   const { theme } = useTheme()
@@ -71,6 +80,11 @@ export default function InteractiveChart({
   const pivotTitle = t('chart.pivot')
   const upperBandTitle = t('chart.bandUpper')
   const lowerBandTitle = t('chart.bandLower')
+  const bands = series !== null && indicators.includes('bollinger') ? series : null
+  // Panes only exist once the stored series arrived; their height follows the count.
+  const activeIds = series === null ? [] : activePanes(indicators)
+  const paneKey = activeIds.join(',')
+  const height = chartHeight(activeIds.length)
 
   useEffect(() => {
     const container = containerRef.current
@@ -118,6 +132,72 @@ export default function InteractiveChart({
       1,
     )
     volumeSeries.setData(toVolumeData(bars))
+
+    const panes = (paneKey === '' ? [] : paneKey.split(',')) as ChartPaneId[]
+    // Indicator sub-panes after the volume pane (index 1): 2, 3, 4 in the fixed order.
+    // A pane's stretch factor is its pixel share (price and volume 210 each as
+    // before, 120 per indicator pane), so the price pane keeps its size.
+    if (series !== null && panes.length > 0) {
+      const line = { priceLineVisible: false, lastValueVisible: true, lineWidth: 1 } as const
+      panes.forEach((pane, offset) => {
+        const index = 2 + offset
+        if (pane === 'adx') {
+          const adx = chart.addSeries(LineSeries, { ...line, color: chrome.adx, lineWidth: 2, title: 'ADX' }, index)
+          adx.setData(toIndicatorData(series, 'adx'))
+          adx.createPriceLine({
+            price: ADX_REFERENCE,
+            color: chrome.reference,
+            lineWidth: 1,
+            lineStyle: LineStyle.Dashed,
+            axisLabelVisible: true,
+            title: '',
+          })
+          chart
+            .addSeries(LineSeries, { ...line, color: CHART_COLORS.gain, title: '+DI' }, index)
+            .setData(toIndicatorData(series, 'plus_di'))
+          chart
+            .addSeries(LineSeries, { ...line, color: CHART_COLORS.loss, title: '-DI' }, index)
+            .setData(toIndicatorData(series, 'minus_di'))
+        } else if (pane === 'atr') {
+          chart
+            .addSeries(LineSeries, { ...line, color: chrome.atr, lineWidth: 2, title: 'ATR' }, index)
+            .setData(toIndicatorData(series, 'atr14'))
+        } else {
+          // Fixed 0..100 axis with the 20 / 80 zone lines.
+          const fixedRange = () => ({ priceRange: { minValue: 0, maxValue: 100 } })
+          const stochK = chart.addSeries(
+            LineSeries,
+            { ...line, color: chrome.stochK, lineWidth: 2, title: '%K', autoscaleInfoProvider: fixedRange },
+            index,
+          )
+          stochK.setData(toIndicatorData(series, 'stoch_k'))
+          stochK.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.05 } })
+          for (const zone of STOCH_ZONES) {
+            stochK.createPriceLine({
+              price: zone,
+              color: chrome.reference,
+              lineWidth: 1,
+              lineStyle: LineStyle.Dashed,
+              axisLabelVisible: true,
+              title: '',
+            })
+          }
+          chart
+            .addSeries(
+              LineSeries,
+              { ...line, color: chrome.stochD, title: '%D', autoscaleInfoProvider: fixedRange },
+              index,
+            )
+            .setData(toIndicatorData(series, 'stoch_d'))
+        }
+      })
+      const layout = chart.panes()
+      layout[0]?.setStretchFactor(210)
+      layout[1]?.setStretchFactor(210)
+      for (let offset = 0; offset < panes.length; offset += 1) {
+        layout[2 + offset]?.setStretchFactor(120)
+      }
+    }
 
     // Bollinger Bands (only when the overlay is on): stored series, warm-up
     // points omitted; the two band Signals add a dashed line at the crossed band.
@@ -187,7 +267,7 @@ export default function InteractiveChart({
       // Removes the series, price lines and observers from the container.
       chart.remove()
     }
-  }, [ticker, bars, snapshot, signals, patterns, bands, locale, pivotTitle, upperBandTitle, lowerBandTitle, t, theme])
+  }, [ticker, bars, snapshot, signals, patterns, series, bands, paneKey, locale, pivotTitle, upperBandTitle, lowerBandTitle, t, theme])
 
   return (
     <div
@@ -197,7 +277,8 @@ export default function InteractiveChart({
         ticker,
         count: bars.length,
       })}
-      className="h-[420px] w-full"
+      style={{ height }}
+      className="w-full"
     />
   )
 }
