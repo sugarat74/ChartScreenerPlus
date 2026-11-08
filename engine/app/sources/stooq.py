@@ -40,8 +40,13 @@ MARKET_TIMEZONES = {
     "US": "America/New_York",
     "XMAD": "Europe/Madrid",
     "XETR": "Europe/Berlin",
+    "XPAR": "Europe/Paris",
 }
-MARKET_SUFFIXES = {"US": None, "XMAD": ".MC", "XETR": ".DE"}
+# Every suffix that identifies the market. XPAR also accepts ".AS": the documented
+# ArcelorMittal exception (docs/specs/universes-cac40-ftse100.md, C3), whose only
+# Yahoo line is Euronext Amsterdam.
+MARKET_SUFFIXES = {"US": None, "XMAD": ".MC", "XETR": ".DE", "XPAR": ".PA"}
+MARKET_EXTRA_SUFFIXES = {"XPAR": (".AS",)}
 DEFAULT_MARKET = "US"
 
 
@@ -56,7 +61,8 @@ class EodResult:
 def symbol_matches_market(symbol: str, market: str) -> bool:
     """Whether the symbol follows the suffix rule of the market.
 
-    .MC is exactly XMAD and .DE exactly XETR; a US symbol ends in neither.
+    .MC is exactly XMAD, .DE exactly XETR, .PA (and the .AS exception)
+    exactly XPAR; a US symbol ends in none of them.
     """
 
     if market not in MARKET_SUFFIXES:
@@ -66,7 +72,8 @@ def symbol_matches_market(symbol: str, market: str) -> bool:
     for code, suffix in MARKET_SUFFIXES.items():
         if suffix is None:
             continue
-        if upper.endswith(suffix) != (code == market):
+        own = (suffix, *MARKET_EXTRA_SUFFIXES.get(code, ()))
+        if upper.endswith(own) != (code == market):
             return False
 
     return True
@@ -265,7 +272,7 @@ def fetch_eod(symbol: str, market: str = DEFAULT_MARKET) -> EodResult:
     Stooq's current anti-bot challenge can consume the complete request timeout
     before returning unusable content. Yahoo Finance is therefore attempted
     first, while the strict Stooq CSV parser remains the fallback for US.
-    No Stooq mapping for XMAD/XETR has been verified (the symbol rule
+    No Stooq mapping for XMAD/XETR/XPAR has been verified (the symbol rule
     {symbol}.us is US-only), so a failing Yahoo call for a European market
     is a controlled upstream error with no fallback.
     """

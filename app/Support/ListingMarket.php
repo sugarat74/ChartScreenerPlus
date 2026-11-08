@@ -17,16 +17,23 @@ final class ListingMarket
 
     public const XETR = 'XETR';
 
+    public const XPAR = 'XPAR';
+
     /**
      * `suffix` is the ticker suffix that identifies the market (`null` for the
      * US, whose tickers carry none and never end in another market's suffix).
      *
-     * @var array<string, array{timezone: string, open: string, close: string, currency: string, suffix: ?string}>
+     * `extra_suffixes` lists documented exceptions: further suffixes that
+     * also identify the market (`.AS` for XPAR, ArcelorMittal's Amsterdam line,
+     * docs/specs/universes-cac40-ftse100.md, C3). Optional.
+     *
+     * @var array<string, array{timezone: string, open: string, close: string, currency: string, suffix: ?string, extra_suffixes?: list<string>}>
      */
     private const DEFINITIONS = [
         self::US => ['timezone' => 'America/New_York', 'open' => '09:30', 'close' => '16:00', 'currency' => 'USD', 'suffix' => null],
         self::XMAD => ['timezone' => 'Europe/Madrid', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.MC'],
         self::XETR => ['timezone' => 'Europe/Berlin', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.DE'],
+        self::XPAR => ['timezone' => 'Europe/Paris', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.PA', 'extra_suffixes' => ['.AS']],
     ];
 
     /** @return list<string> */
@@ -66,8 +73,26 @@ final class ListingMarket
     }
 
     /**
+     * Every ticker suffix that identifies the market: the primary one plus the
+     * documented exceptions (`.PA` and `.AS` for XPAR). Empty for the US.
+     *
+     * @return list<string>
+     */
+    public static function suffixes(string $code): array
+    {
+        $definition = self::DEFINITIONS[$code];
+
+        if ($definition['suffix'] === null) {
+            return [];
+        }
+
+        return [$definition['suffix'], ...($definition['extra_suffixes'] ?? [])];
+    }
+
+    /**
      * Whether `$ticker` follows the suffix rule of `$market`: `.MC` is exactly
-     * `XMAD`, `.DE` exactly `XETR`, and a US ticker ends in neither.
+     * `XMAD`, `.DE` exactly `XETR`, `.PA` (and the `.AS` exception) exactly
+     * `XPAR`, and a US ticker ends in none of them.
      */
     public static function tickerMatches(string $market, string $ticker): bool
     {
@@ -77,14 +102,22 @@ final class ListingMarket
 
         $ticker = strtoupper($ticker);
 
-        foreach (self::DEFINITIONS as $code => $definition) {
-            $suffix = $definition['suffix'];
+        foreach (array_keys(self::DEFINITIONS) as $code) {
+            $suffixes = self::suffixes($code);
 
-            if ($suffix === null) {
+            if ($suffixes === []) {
                 continue;
             }
 
-            if (str_ends_with($ticker, $suffix) !== ($code === $market)) {
+            $endsWithOwn = false;
+            foreach ($suffixes as $suffix) {
+                if (str_ends_with($ticker, $suffix)) {
+                    $endsWithOwn = true;
+                    break;
+                }
+            }
+
+            if ($endsWithOwn !== ($code === $market)) {
                 return false;
             }
         }

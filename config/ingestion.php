@@ -26,8 +26,11 @@ return [
     'lock_ttl_seconds' => (int) env('INGESTION_LOCK_TTL_SECONDS', 7200),
 
     // How long a pipeline that finds the global pipeline lock held waits for it
-    // before skipping with a warning. Per-market pipelines may share a time.
-    'lock_wait_seconds' => (int) env('INGESTION_LOCK_WAIT_SECONDS', 900),
+    // before skipping with a warning. Per-market pipelines may share a time: the
+    // European ones (XMAD, XETR, XPAR) fire at the same UTC instant on common
+    // trading days and run one after another, so the budget covers several runs.
+    // If they still do not fit, stagger with INGESTION_<CODE>_BUFFER_MINUTES.
+    'lock_wait_seconds' => (int) env('INGESTION_LOCK_WAIT_SECONDS', 3600),
 
     /*
     |--------------------------------------------------------------------------
@@ -133,6 +136,17 @@ return [
     | CONFIRM 2027 on the page during 2027. German public holidays such as
     | Ascension, Whit Monday and Corpus Christi are trading days.
     |
+    | XPAR (Euronext Paris): Euronext's trading hours and holidays page
+    | (https://live.euronext.com/en/resources/trading-hours-holidays, fetched
+    | 2026-11-08). Cash-market closures: 2026 = 1 Jan, 3 Apr (Good Friday), 6 Apr
+    | (Easter Monday), 1 May, 25 Dec; 2027 = 1 Jan, 26 Mar, 29 Mar (1 May and
+    | 25 Dec 2027 fall on weekends and are not listed). 24 and 31 December are
+    | HALF DAYS, not closures: they are trading days listed in `early_closes`
+    | (Euronext: Paris cash instruments close by 14:05 CET on those days). The
+    | closing auction (to 17:35) is not modelled. The same calendar applies to
+    | Amsterdam (ArcelorMittal's `MT.AS` line). 2027 comes from the same page but
+    | is subject to change: CONFIRM it during 2027. REFRESH ANNUALLY.
+    |
     */
 
     'markets' => [
@@ -185,6 +199,31 @@ return [
             ],
             // Xetra has no half days: 24 and 31 December are full closures.
             'early_closes' => [],
+        ],
+        'XPAR' => [
+            'timezone' => env('INGESTION_XPAR_TIMEZONE', 'Europe/Paris'),
+            'open' => env('INGESTION_XPAR_MARKET_OPEN', '09:00'),
+            'close' => env('INGESTION_XPAR_MARKET_CLOSE', '17:30'),
+            'buffer_minutes' => (int) env('INGESTION_XPAR_BUFFER_MINUTES', 45),
+            'holidays' => [
+                // 2026 (Euronext official)
+                '2026-01-01',
+                '2026-04-03',
+                '2026-04-06',
+                '2026-05-01',
+                '2026-12-25',
+                // 2027 (Euronext overview, subject to change: confirm in 2027)
+                '2027-01-01',
+                '2027-03-26',
+                '2027-03-29',
+            ],
+            // Half days (market-hours-status): 24 and 31 December close at 14:05 CET.
+            'early_closes' => [
+                '2026-12-24' => '14:05',
+                '2026-12-31' => '14:05',
+                '2027-12-24' => '14:05',
+                '2027-12-31' => '14:05',
+            ],
         ],
     ],
 

@@ -36,6 +36,7 @@ class MarketStatusApiTest extends TestCase
         $this->universe('sp500', 'US');
         $this->universe('nasdaq100', 'US');
         $this->universe('ibex35', 'XMAD');
+        $this->universe('cac40', 'XPAR');
 
         $response = $this->getJson('/api/markets/status')->assertOk();
 
@@ -47,6 +48,26 @@ class MarketStatusApiTest extends TestCase
         $this->assertSame('2026-07-06T13:30:00Z', $us['opens_at']);
         $this->assertSame('2026-07-06T20:00:00Z', $us['closes_at']);
         $this->assertSame(['open' => '09:30', 'close' => '16:00'], $us['regular_hours']);
+    }
+
+    public function test_paris_appears_in_the_market_order_once_its_universe_is_public(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-06 15:00:00', 'UTC'));
+        config(['universes.public' => ['sp500', 'ibex35', 'dax', 'cac40']]);
+        $this->universe('cac40', 'XPAR');
+        $this->universe('dax', 'XETR');
+        $this->universe('ibex35', 'XMAD');
+        $this->universe('sp500', 'US');
+
+        $response = $this->getJson('/api/markets/status')->assertOk();
+
+        $this->assertSame(['US', 'XMAD', 'XETR', 'XPAR'], array_column($response->json('markets'), 'code'));
+        $paris = $response->json('markets.3');
+        $this->assertSame('Europe/Paris', $paris['timezone']);
+        $this->assertTrue($paris['is_open']);
+        $this->assertSame('2026-07-06T07:00:00Z', $paris['opens_at']);
+        $this->assertSame('2026-07-06T15:30:00Z', $paris['closes_at']);
+        $this->assertSame(['open' => '09:00', 'close' => '17:30'], $paris['regular_hours']);
     }
 
     public function test_the_kill_switch_hides_a_market_and_an_admin_previews_it(): void

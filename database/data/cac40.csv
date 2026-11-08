@@ -1,0 +1,41 @@
+ticker,company,sector,industry,country,exchange
+AC.PA,Accor,Consumer Discretionary,"Hotels, Restaurants & Leisure",FR,PAR
+ACA.PA,Crédit Agricole,Financials,Regional Banks,FR,PAR
+AI.PA,Air Liquide,Materials,Industrial Gases,FR,PAR
+AIR.PA,Airbus,Industrials,Aerospace & Defense,NL,PAR
+BN.PA,Danone,Consumer Staples,Packaged Foods & Meats,FR,PAR
+BNP.PA,BNP Paribas,Financials,Diversified Banks,FR,PAR
+BVI.PA,Bureau Veritas,Industrials,Research & Consulting Services,FR,PAR
+CA.PA,Carrefour,Consumer Staples,Hypermarkets & Super Centers,FR,PAR
+CAP.PA,Capgemini,Information Technology,IT Consulting & Other Services,FR,PAR
+CS.PA,AXA,Financials,Life & Health Insurance,FR,PAR
+DG.PA,Vinci,Industrials,Construction & Engineering,FR,PAR
+DSY.PA,Dassault Systèmes,Information Technology,Application Software,FR,PAR
+EL.PA,EssilorLuxottica,Health Care,"Apparel, Accessories & Luxury Goods",FR,PAR
+EN.PA,Bouygues,Industrials,Construction & Engineering,FR,PAR
+ENGI.PA,Engie,Utilities,Gas Utilities,FR,PAR
+ENX.PA,Euronext,Financials,Financial Exchanges & Data,FR,PAR
+ERF.PA,Eurofins Scientific,Health Care,Biotechnologies,LU,PAR
+FGR.PA,Eiffage,Industrials,Construction & Engineering,FR,PAR
+GLE.PA,Société Générale,Financials,Diversified Banks,FR,PAR
+HO.PA,Thales,Industrials,Aerospace & Defense,FR,PAR
+KER.PA,Kering,Consumer Discretionary,"Apparel, Accessories & Luxury Goods",FR,PAR
+LR.PA,Legrand,Industrials,Electrical Components & Equipment,FR,PAR
+MC.PA,LVMH,Consumer Discretionary,"Apparel, Accessories & Luxury Goods",FR,PAR
+ML.PA,Michelin,Consumer Discretionary,Tires & Rubber,FR,PAR
+MT.AS,ArcelorMittal,Materials,Steel,LU,AMS
+OR.PA,L'Oréal,Consumer Staples,Personal Products,FR,PAR
+ORA.PA,Orange,Communication Services,Integrated Telecommunication Services,FR,PAR
+PUB.PA,Publicis,Communication Services,Advertising,FR,PAR
+RI.PA,Pernod Ricard,Consumer Staples,Distillers & Vintners,FR,PAR
+RMS.PA,Hermès,Consumer Discretionary,"Apparel, Accessories & Luxury Goods",FR,PAR
+RNO.PA,Renault,Consumer Discretionary,Automobile Manufacturers,FR,PAR
+SAF.PA,Safran,Industrials,Aerospace & Defense,FR,PAR
+SAN.PA,Sanofi,Health Care,Pharmaceuticals,FR,PAR
+SGO.PA,Saint-Gobain,Industrials,Building Products,FR,PAR
+STLAP.PA,Stellantis,Consumer Discretionary,Automobile Manufacturers,NL,PAR
+STMPA.PA,STMicroelectronics,Information Technology,Semiconductors,CH,PAR
+SU.PA,Schneider Electric,Industrials,Electrical Components & Equipment,FR,PAR
+TTE.PA,TotalEnergies,Energy,Integrated Oil & Gas,FR,PAR
+URW.PA,Unibail-Rodamco-Westfield,Real Estate,Retail REITs,FR,PAR
+VIE.PA,Veolia,Utilities,Multi-Utilities,FR,PAR

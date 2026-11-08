@@ -18,7 +18,7 @@ A listed security identified by a ticker (e.g. `NVDA`). Carries company name, se
 
 ### Listing Market (Mercado de cotización)
 
-The exchange group whose trading calendar, session close, currency and data-source symbol rules apply to an Instrument: `US` (NYSE/Nasdaq, USD), `XMAD` (Bolsa de Madrid, EUR) or `XETR` (Xetra, EUR). European tickers carry the suffix of their market (`SAN.MC`, `SAP.DE`). Not to be confused with Market Context. Planned, `docs/specs/multi-market-universes.md`.
+The exchange group whose trading calendar, session close, currency and data-source symbol rules apply to an Instrument: `US` (NYSE/Nasdaq, USD), `XMAD` (Bolsa de Madrid, EUR) or `XETR` (Xetra, EUR) or `XPAR` (Euronext Paris, EUR). European tickers carry the suffix of their market (`SAN.MC`, `SAP.DE`, `SAN.PA`; ArcelorMittal's Amsterdam line `MT.AS` is the one documented exception, accepted for `XPAR` only). Not to be confused with Market Context. Planned, `docs/specs/multi-market-universes.md`.
 
 ### Universe
 
