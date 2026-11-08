@@ -2,6 +2,13 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## CAC 40 and FTSE 100 universes planned (3 features, not started) - 2026-11-08
+
+- Explicit owner request ("cac 70" read as CAC 40, plus FTSE 100). Planning PR only: spec `docs/specs/universes-cac40-ftse100.md`, features `universe-cac40` -> `ingestion-xlon-gbx` -> `universe-ftse100` in `feature_list.json` (not_started), AGENTS.md scope guard. No application code, no tests run; JSON validity and `scripts/harness-context.ps1` checked.
+- Findings: CAC 40 = 40 (Euronext: no composition change in Mar, Jun, Sep 2026); 39 resolve as `.PA` on Yahoo, ArcelorMittal only as `MT.AS`. FTSE 100 = 100 (Wikipedia table after 1 Oct 2026; easyJet and Ithaca in, Entain and Persimmon out on 21 Sep); live Yahoo check: 97 quoted in pence (`GBp`), `CPG.L` and `IHG.L` in USD, `MTLN.L` in EUR. Existing engine bug found: the currency is upper-cased, so `GBp` becomes `GBP`.
+- Decision proposed: store and show pence as quoted, currency code GBX, no arithmetic, plus a scale-jump guard. UK and euro-area DST dates coincide (London 17:15 = Paris 18:15 UTC-wise); four European pipelines share one instant, so `lock_wait_seconds` must rise. Half-day close 14:05 for Euronext and 2027 calendars are not officially confirmed.
+- Open owner decisions (defaults in the spec): ArcelorMittal via `.AS`, leave out the three non-pence lines (97 members), pence over pounds, non-public until decided. Next: owner answers, then implement `universe-cac40`.
+
 ## chart-indicator-panels implemented (passing, awaiting validation) - 2026-11-07
 
 - SPA only, backend untouched (feature 7 of `docs/specs/technical-indicators-expansion.md`): the picker gains ADX (+DI/-DI), ATR and Stochastic toggles (closed list `bollinger, adx, atr, stochastic`, same guarded `localStorage` key, all off by default). `InteractiveChart` now takes `series` + `indicators` (replacing `bands`) and draws each pane in the same chart (v5 pane index 2.., so time scale and crosshair are shared): ADX 2px + +DI green / -DI red with a dashed 25 line; ATR; %K/%D on a fixed 0-100 axis with 20/80 lines. Chart height `420 + 120 * panes`, price and volume keep 210 px (stretch factors). `chartData.ts`: `toIndicatorData` (nulls omitted), `noPaneData`, `lastIndicatorValue`, theme colors; `useInstrumentIndicators` unchanged: one request when any indicator is on, shared with Bollinger. Per-pane insufficient-history note, error/retry/loading reuse the overlay's. es/en messages and guide, DESIGN.md updated.
@@ -67,10 +74,3 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 - Verified: engine pytest 137, ruff check clean; phpunit 948 passed / 6 skipped (new `SignalVocabularyTest` compares engine registry, constant and labels); Vitest 411, lint, build; `.\init.ps1` Baseline OK. Existing tests only changed where the vocabulary grew (checkbox/button counts 9 to 15, AI tests use `AI_SIGNAL_TYPES`, guide test: illustrations required for the first nine only).
 - Rollout (`deploy/README.md` item 15): after deploy, `signals:detect --universe=<slug>` per universe, then `screener:refresh`; thresholds are uncalibrated (R1), record production counts per Signal. Not verified: PostgreSQL by CI only, real production counts.
 - Next: independent validation, then `screener-technical-filters-api` and `chart-indicator-overlays`.
-
-## indicators-expansion-storage implemented (passing, awaiting validation) - 2026-10-27
-
-- Migration `2026_10_29_000001` adds nullable `atr14`, `plus_di`, `minus_di`, `stoch_k`, `stoch_d` (`decimal(12,4)`) to `indicator_snapshots` (reversible). `ComputeIndicators::SNAPSHOT_COLUMNS`, `IndicatorSnapshot` fillable/casts and the factory carry them; `show` keeps its keys and appends the five to `snapshot`; new public `GET /api/instruments/{ticker}/indicators?limit=252` (ascending, limit clamped 1..2000, warm-up `null`, 404 `instrument_not_found`). `api.ts` types and `instrumentApi.indicators()` added (no UI). `deploy/README.md` entry 14 documents the backfill; `ARCHITECTURE.md` contract updated.
-- Verified: new `IndicatorsExpansionStorageTest` (9 tests incl. forecast `input_hash` and Company Card context identical with new columns null vs filled), full phpunit 946 OK (6 skipped as before), `.init.ps1` Baseline OK (phpunit, frontend lint/test/build, engine pytest 124 passed).
-- Measured recompute (synthetic 518 instruments x 520 bars = 269,360 snapshots, SQLite, real engine, `indicators:compute --universe=sp500`): 4m40s first pass, 7m51s re-run. `updateOrCreate` kept (one-off, idempotent); chunked `upsert` (D5) not needed. PostgreSQL behind PgBouncer will be slower: run it off-hours.
-- Next: independent validation, then `signals-expansion`.

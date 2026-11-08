@@ -22,7 +22,7 @@ The exchange group whose trading calendar, session close, currency and data-sour
 
 ### Universe
 
-A named, curated set of Instruments that a Screener runs against. The first real Universe is the **S&P 500**, the default. Planned since 2026-10-26 (`docs/specs/multi-market-universes.md`): **Nasdaq-100**, **IBEX 35** and **DAX**. A Screener universe has one Listing Market and one currency; an Instrument in two universes (S&P 500 and Nasdaq-100) is a single Instrument with one set of bars. Russell 2000 and the full Nasdaq Composite remain future scope. The `market-context` Universe (SPY and the 11 SPDR sector ETFs) is ingested daily for Market Context; it is not a Screener universe.
+A named, curated set of Instruments that a Screener runs against. The first real Universe is the **S&P 500**, the default. Planned since 2026-10-26 (`docs/specs/multi-market-universes.md`): **Nasdaq-100**, **IBEX 35** and **DAX**; since 2026-11-08 also planned the **CAC 40** (Euronext Paris) and **FTSE 100** (London, prices in pence, GBX; `docs/specs/universes-cac40-ftse100.md`). A Screener universe has one Listing Market and one currency; an Instrument in two universes (S&P 500 and Nasdaq-100) is a single Instrument with one set of bars. Russell 2000 and the full Nasdaq Composite remain future scope. The `market-context` Universe (SPY and the 11 SPDR sector ETFs) is ingested daily for Market Context; it is not a Screener universe.
 
 ### Daily Bar (OHLCV)
 
