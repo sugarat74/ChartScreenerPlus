@@ -73,7 +73,9 @@ Also in scope since 2026-10-26 (explicit user request, planned, not started): th
 
 Also in scope since 2026-11-05 (explicit user request, planned, not started): `screener-filter-panel-compact` (`docs/specs/screener-filter-panel-compact.md`), a layout-only refactor of the Screener «Criterios técnicos» panel into a compact Finviz-style toolbar with the same filters, URL and requests; no new or removed filter.
 
-Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, other fundamentals data feeds and news, real-time or push/SMS notifications, other non-US markets and indices (only the IBEX 35 and DAX above; no full Nasdaq Composite), currency conversion, native apps, AI Copilot (chat or free-text AI), paid plans.
+Also in scope since 2026-11-08 (explicit user request, planned, not started): two more Screener universes, as specified in `docs/specs/universes-cac40-ftse100.md` (`universe-cac40`, `ingestion-xlon-gbx`, `universe-ftse100`): the **CAC 40** (Euronext Paris, EUR; the request said "cac 70", read as CAC 40) and the **FTSE 100** (London Stock Exchange, quoted in pence and stored and shown as GBX, no currency conversion), from dated offline constituent snapshots, through the same EOD source path, with per-market calendars and schedules. Both start **non-public** (`SCREENER_UNIVERSES_PUBLIC` unchanged, Admin preview) until the owner decides. US-only features stay US-only. Open owner decisions are listed in the spec.
+
+Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, other fundamentals data feeds and news, real-time or push/SMS notifications, other non-US markets and indices (only the IBEX 35, DAX, CAC 40 and FTSE 100 above; no full Nasdaq Composite), currency conversion, native apps, AI Copilot (chat or free-text AI), paid plans.
 
 ## Startup Workflow
 

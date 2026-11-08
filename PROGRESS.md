@@ -2,6 +2,13 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## CAC 40 and FTSE 100 universes planned (3 features, not started) - 2026-11-08
+
+- Explicit owner request ("cac 70" read as CAC 40, plus FTSE 100). Planning PR only: spec `docs/specs/universes-cac40-ftse100.md`, features `universe-cac40` -> `ingestion-xlon-gbx` -> `universe-ftse100` in `feature_list.json` (not_started), AGENTS.md scope guard. No application code, no tests run; JSON validity and `scripts/harness-context.ps1` checked.
+- Findings: CAC 40 = 40 (Euronext: no composition change in Mar, Jun, Sep 2026); 39 resolve as `.PA` on Yahoo, ArcelorMittal only as `MT.AS`. FTSE 100 = 100 (Wikipedia table after 1 Oct 2026; easyJet and Ithaca in, Entain and Persimmon out on 21 Sep); live Yahoo check: 97 quoted in pence (`GBp`), `CPG.L` and `IHG.L` in USD, `MTLN.L` in EUR. Existing engine bug found: the currency is upper-cased, so `GBp` becomes `GBP`.
+- Decision proposed: store and show pence as quoted, currency code GBX, no arithmetic, plus a scale-jump guard. UK and euro-area DST dates coincide (London 17:15 = Paris 18:15 UTC-wise); four European pipelines share one instant, so `lock_wait_seconds` must rise. Half-day close 14:05 for Euronext and 2027 calendars are not officially confirmed.
+- Open owner decisions (defaults in the spec): ArcelorMittal via `.AS`, leave out the three non-pence lines (97 members), pence over pounds, non-public until decided. Next: owner answers, then implement `universe-cac40`.
+
 ## screener-filter-panel-compact implemented (passing, awaiting validation) - 2026-11-05
 
 - SPA only. The «Criterios técnicos» block is now a compact toolbar: triggers Señales / RSI / Patrones / Sector (value shown, `aria-expanded`/`aria-controls`) opening ONE inline editor card (Esc closes and returns focus, no focus trap), native selects for min RVOL and MA cross, a Price > SMA 200 toggle, header with title, hint, active count and Limpiar filtros. New `ScreenerCriteriaEditors.tsx` (editors extracted unchanged) and `lib/screenerToolbar.ts` (summaries); `ScreenerFilterPanel.tsx` rewritten; es/en `screener.toolbar.*`, `noFiltersHint` removed, `filtersInUrl` is now the Clear button title. DESIGN.md updated. Defaults applied: column funnels untouched, open card not persisted, header count unchanged.
@@ -67,10 +74,3 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 - Verified: new `IndicatorsExpansionStorageTest` (9 tests incl. forecast `input_hash` and Company Card context identical with new columns null vs filled), full phpunit 946 OK (6 skipped as before), `.init.ps1` Baseline OK (phpunit, frontend lint/test/build, engine pytest 124 passed).
 - Measured recompute (synthetic 518 instruments x 520 bars = 269,360 snapshots, SQLite, real engine, `indicators:compute --universe=sp500`): 4m40s first pass, 7m51s re-run. `updateOrCreate` kept (one-off, idempotent); chunked `upsert` (D5) not needed. PostgreSQL behind PgBouncer will be slower: run it off-hours.
 - Next: independent validation, then `signals-expansion`.
-
-## indicators-expansion-engine implemented (passing, awaiting validation) — 2026-10-26
-
-- Engine only: `atr`, `directional_indicators` (+DI/-DI) and `stochastic` (14,3,3 slow) in `engine/app/indicators/core.py`; `adx` now reads the shared `_wilder_sums` helper with identical arithmetic. `Snapshot` and `POST /indicators/compute` gain `atr14`, `plus_di`, `minus_di`, `stoch_k`, `stoch_d` (null during warm-up). Flat stochastic window reads 50.0.
-- Verified: engine pytest 124 passed (hand-computed fixtures plus exact-equality regression of ADX/Bollinger/SMA20/RSI/MACD/RVOL vs `engine/tests/fixtures/indicator_regression.json`, captured before the change), ruff clean, `.\init.ps1` Baseline OK.
-- Next: independent validation, then `indicators-expansion-storage`.
-

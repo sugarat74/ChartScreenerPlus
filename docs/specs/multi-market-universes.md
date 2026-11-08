@@ -13,6 +13,8 @@ This umbrella spec covers six features, implemented in this order. Each one ship
 | 5 | `universe-ibex35` | data | `universe-selector-ui` | IBEX 35 dated snapshot and seeder, Bolsa de Madrid calendar, EUR, `.MC` symbols |
 | 6 | `universe-dax` | data | `universe-selector-ui` | DAX dated snapshot and seeder, Xetra calendar, EUR, `.DE` symbols |
 
+Follow-up (2026-11-08): the CAC 40 (`XPAR`) and FTSE 100 (`XLON`, pence) universes are specified in `docs/specs/universes-cac40-ftse100.md`, which extends the Listing Market list of D1.
+
 Features 4, 5 and 6 are independent of each other once Feature 3 is accepted.
 
 Related future features requested the same day and kept out of this delivery:
