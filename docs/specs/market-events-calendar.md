@@ -1,86 +1,38 @@
-# Feature Implementation Spec: Market events calendar (short spec)
+# Market events calendar - free scope
 
-## Source Feature
+Feature `market-events-calendar`; dependencies `market-context-ui` and `macro-series-fred` (accepted). Owner authorized the free scope on 2026-11-10. Status: passing, awaiting independent validation.
 
-- `id`: `market-events-calendar`
-- `area`: `backend`
-- `depends_on`: `market-context-ui`, `macro-series-fred`. If the owner chooses European coverage, also `universe-ibex35` and `universe-dax`.
-- `status`: `not_started`. This is a future feature and not part of the multi-universe delivery. It is **blocked on the earnings provider and display-licence choice (Q1)** and on coverage (Q3) below; the owner chose an external earnings source on 2026-10-26. Refine this file into a full contract once they are answered.
-- `source`: `feature_list.json`. Requested 2026-10-26: "añadir un calendario de eventos económicos, presentación de resultados, reuniones de la fed... cosas que afecten al mercado".
+## Goal and scope
 
-## Goal
+On `/mercado`, show Fed/ECB policy meetings from CentralBankCalendar and US release dates for CPI (FRED release 10), Employment Situation (50), GDP (53), Personal Income and Outlays / PCE (54), and Retail Sales (9). IDs/titles checked on official FRED release pages on 2026-11-10. No new numeric series are fetched; none of these releases has a matching series in the current Macro Observation allowlist. A date does not assert that a release or policy decision actually occurred.
 
-A dated, descriptive list of upcoming and recent events that move markets:
+Earnings dates, the chart earnings chip and additional European macro feeds are deferred until a provider with public-display rights is selected. No paid provider or account. Existing MACRO_ENABLED and FRED_API_KEY enable macro dates; Fed/ECB meetings work with macro off. Existing Market Context legal/access gate stays in force.
 
-- central bank policy meetings;
-- key macro releases (CPI, payrolls/employment situation, GDP, PCE, retail sales);
-- company earnings dates for Screener Instruments.
+## Contract and scenarios
 
-The list is shown on `/mercado`. Each Instrument's chart page also shows the date of its next or last earnings.
+1. Meetings reuse `CentralBankCalendar.meetings`, decision date and config source URL/name/checked_at. Future Fed dates are tentative; ECB dates scheduled; elapsed dates are past, never published. Source checks older than one year are stale. Given macro is off, meetings still appear and FRED rows are neither fetched nor shown. Source days stay date-only without timezone conversion.
+2. Extend FredClient with a closed releaseDates method using its spacing/retries/secret handling. Fetch `/release/dates` with release_id, realtime_start/end, include_release_dates_with_no_data=true, sort_order=asc, limit=10000. Validate list shape, release ID, exact ISO date, count and zero offset; reject truncation. Given malformed, empty, unknown-release or partial data, store no dates for that source, retaining last good rows. Future FRED dates tentative, elapsed dates past. Store no third-party text, forecasts, consensus, estimates or AI summaries.
+3. market_events uniquely stores (code,date); market_event_sources stores last attempt, last success and sanitized error code. events:refresh replaces a fully validated source window transactionally, removing withdrawn/rescheduled dates; window today in ingestion timezone minus30 to plus90 days. Given a source failure, retain its data, continue the remaining sources and record failure. Command exit1 on any failure. Disabled or malformed-key paths request nothing; a lock prevents overlap. Schedule daily06:45 in ingestion timezone incl weekends; isolated US pipeline stage after macro. Admin rerun reuses queued/runlog workflow and shows failed status. Sources stale after3 days or a failed attempt.
+4. GET /api/market-context/events behind auth + view-market-context: guest401, disallowed user404, Admin preview while public flag off. Optional days=14|30|90 (default14), strict ISO from/to (defaults today-7 to today+days), kind=central_bank|macro_release, region=US|EU. Reject reversed or >100-day ranges. Read-only, no provider calls. Response as_of/from/to/macro_enabled/macro_configured/sources/events. Each event has id,code,kind,region,date,status,source,source_url,checked_at,stale; sorted by date then id. Public source state exposes checked_at and stale only.
+5. Full-width calendar card on /mercado; upcoming includes today; recent last7 days descending. Horizon14/30/90, kind/region native selects, localized names, explicit tentative/stale, sources and review dates. Distinct loading/error/retry/empty/disabled/unconfigured/not-refreshed states. Error isolated from other Market cards. Existing FRED notice and binding terms appear when calendar is the only FRED content shown. No hardcoded product copy or public EOD wording.
 
-## Build On What Exists (do not duplicate)
+## Tasks
 
-- **Central banks.** `config/central_banks.php` and `App\Services\Macro\CentralBankCalendar` already keep the FOMC and ECB meeting dates by hand, with `source_url`, `checked_at` and a staleness test (`CentralBankCalendarTest`). `/mercado` already shows the last decision and next meeting (`docs/specs/macro-series-fred.md`, Domain Rule 7; `docs/specs/market-context.md`). The events calendar **reads this source**. It does not create a second one.
-- **Macro releases.** FRED is already the only allowed macro feed (`macro-series-fred`, opt-in `MACRO_ENABLED`, same key). FRED's release endpoints (`fred/releases/dates`, `fred/release/dates`) publish the scheduled dates of public US releases (BLS CPI and Employment Situation, BEA GDP and PCE, Census Retail Sales). This is the preferred source because it adds no new vendor. It needs a terms check per release, as `macro-series-fred` did: the FRED attribution and the no-AI rule apply.
-  - Only a closed list of release ids is used.
-  - The calendar shows dates and, after publication, the published value already stored as a Macro Observation where one exists.
-- **Access.** This is a Market Context surface, so it is behind the existing `view-market-context` ability: Registered-only, with Admin preview while `MARKET_CONTEXT_PUBLIC` is off. That is one gate for a future paid plan.
+- [x] Config, schema, closed parser and atomic refresh/source metadata (1-3).
+- [x] Opt-in command, daily schedule, isolated pipeline and Admin rerun (3).
+- [x] Authorized bounded API (4).
+- [x] Calendar, filters, es/en messages and legal attribution (5).
+- [x] Offline regression tests, init.ps1, docs and evidence (1-5).
 
-## Hard Rules
+## Sources, reuse and fixtures
 
-- **No forecasts, consensus estimates, "expected" values, surprises or advice.** Only dates, event names, the source, and (after the fact) the published value. This is consistent with the Market Context rules (`docs/specs/market-context.md`, decision 4).
-- Every event shows its source and its `checked_at` or last-refresh date. Unknown or unconfirmed dates are labelled "tentativa" / "tentative". A date is never guessed.
-- No EOD labels in public UI. Dates and times are shown in the viewer's timezone, or as dates only when the source gives no time.
-- No news, no text from third parties, no AI-written summaries. Calendar data is never sent to the AI provider (this is a FRED rule anyway).
-- Failures are isolated, as in Market Context decision 5: a failed refresh is logged and shown in Admin, and never fails the pipeline.
+FRED endpoint: https://fred.stlouisfed.org/docs/api/fred/release_dates.html (future dates require include_release_dates_with_no_data=true). Release URLs: https://fred.stlouisfed.org/release?rid=10 and rid=50/53/54/9. Source organizations BLS, BEA and Census; factual US federal release dates only, no report prose or copyrighted third-party series. BLS public-domain policy https://www.bls.gov/bls/linksite.htm. FRED API terms https://fred.stlouisfed.org/docs/api/terms_of_use.html; existing notice, binding clause and owner legal gate apply. Calendar data never enters AI payloads. Official Fed/ECB URLs/review dates remain in config/central_banks.php.
 
-## Open Decisions (owner) — blocking
+Fixtures use the documented FRED JSON envelope and synthetic dates, explicitly not a claimed live API capture. Tests stay offline using Http::preventStrayRequests and a fake Sleeper. Parser tests include wrong release/date, empty list, count mismatch, truncated response and ignored extra fields. Refresh tests cover repeat/withdrawal, failure preservation, isolation and sanitized errors. Cover API access matrix, ranges/filters, off/no-key/lock paths, schedule/pipeline, Admin rerun, UI filters/horizon/async states/es/en. Run init.ps1. Leave passing for independent validation only after evidence.
 
-1. **Earnings dates provider and display licence (still blocking).** The owner decided on 2026-10-26 to use an **external source** for earnings dates, not a hand-kept list and not SEC-only. SEC EDGAR only shows past results (10-Q/10-K, 8-K item 2.02). The **provider is still pending** the owner's choice. The blocking question is budget and a licence that allows **public display on chartiko.com**. No feed may be wired before that choice, and AGENTS.md records this exception to "other fundamentals data feeds".
-2. **Macro releases source.** Recommended: FRED release dates for the US, at no cost from an already approved provider (see candidates). FOMC and ECB dates keep coming from the existing hand-kept calendar.
-3. **Coverage (still open).**
-   - US only (FOMC, US releases, US earnings).
-   - Or Europe too: ECB (already in config), Eurostat HICP/GDP release calendar (a new public source to clear), Spanish and German national releases, and IBEX 35 / DAX earnings. The European earnings dates need the same feed decision as Q1, because SEC does not cover them.
 
-   If Europe is chosen, this feature depends on `universe-ibex35` and `universe-dax`, and on Listing Market data from `universe-registry`.
+## Implementation evidence (2026-11-10)
 
-## Candidate Sources (orchestrator research 2026-10-26 — verify before contracting)
+Full init.ps1 exited 0 (Laravel 1023 passed / 6 skipped; SPA 61 files / 486 passed; lint/typecheck/build; engine 160 passed). Final focused reruns after adding scalar-response protection and two page integration cases: backend MarketEventsTest 8 passed / 77 assertions, SPA 28 passed. Earlier broader backend selection 37 passed / 303 assertions. Existing RequireAuth lint, Vite bundle-size and Starlette/httpx warnings persist.
 
-- **Macro release dates: FRED API `fred/releases/dates`** with `include_release_dates_with_no_data=true`. It returns scheduled future release dates. FRED is already an approved provider (`macro-series-fred`), so it is recommended for US macro releases at no cost. The FRED attribution and no-AI rules apply.
-- **Central bank meetings:** reuse `config/central_banks.php` / `CentralBankCalendar` (FOMC, ECB), as described above.
-- **Earnings dates: EODHD `/api/calendar/earnings`** (past and upcoming, global coverage claimed).
-  - It is included in the personal Fundamentals (€59.99/month) and All-In-One (€99.99/month) plans.
-  - The commercial "Internal use" plan (€399/month) explicitly forbids showing data to people outside the company.
-  - Public display needs Enterprise (€2,499/month) or a custom agreement. Confirm with EODHD sales.
-  - Coverage of Madrid (`.MC`) and Xetra earnings is not confirmed on its documentation page.
-- **Alternatives to evaluate:**
-  - **Financial Modeling Prep**: earnings and economic calendar. Its pricing page could not be retrieved, so check its display terms.
-  - **Finnhub**: earnings and economic calendar. Its free tier is reportedly personal use only.
-- **Key risk:** personal-tier licences do not allow public display on chartiko.com. Budget and display licence are the blocking decision. Whatever provider is chosen sits behind a replaceable source interface, like the Cboe put/call source, and its terms are recorded in `docs/risks-and-open-questions.md` before any production use.
-
-## Scope Sketch (to refine after the decisions)
-
-- Table `market_events`, one row per event:
-  - `kind` (`central_bank`, `macro_release`, `earnings`);
-  - `region` (`US`, `EU`, `ES`, `DE`);
-  - `date`;
-  - `time_utc` (nullable);
-  - `title_key` or `series_code`;
-  - `instrument_id` (nullable, earnings only);
-  - `status` (`scheduled`, `tentative`, `published`);
-  - `source`;
-  - `source_url`;
-  - `refreshed_at`.
-
-  Central bank rows can be read straight from `CentralBankCalendar` instead of being stored.
-- `events:refresh`: opt-in, idempotent, run by the US pipeline next to `macro:refresh` and isolated like it.
-- `GET /api/market-context/events?from=&to=` behind `view-market-context`. The `/mercado` section has "Próximos eventos" / "Upcoming events" (14 days) and "Recientes" / "Recent" (7 days), with filters by kind and region. A chart-page chip shows "Resultados: {date}" / "Earnings: {date}" when known.
-- es/en i18n, DESIGN.md, and a short educational "¿Qué significa?" text per kind, with no advice wording.
-
-## Acceptance (summary, after refinement)
-
-- Recorded FRED release-date fixtures parse to the closed release list. An unknown or changed response stores nothing and records the error.
-- The central bank events equal `CentralBankCalendar` output, with no second copy of the dates.
-- The access matrix matches Market Context: Visitor 401, Registered User allowed only when the flag is on, Admin preview.
-- No forecast, consensus or advice wording (Vitest scan of the messages). es/en complete. No EOD wording.
-- `.\init.ps1` passes.
+Browser smoke was attempted with a temporary isolated preview; CUA reported browser access host unavailable. Preview/server removed. No real FRED request, PostgreSQL execution or production rollout; fixtures are synthetic contract examples. Independent validator must assess those limits before acceptance. Operations are in deploy/README.md.

@@ -7,7 +7,7 @@ import { FIXTURE_CONTEXT, FIXTURE_REGIME, regimeHistory } from '../components/ma
 import { I18nProvider } from '../i18n/I18nProvider.tsx'
 import { LOCALE_STORAGE_KEY } from '../i18n/locales.ts'
 import { resetLegalInfoCache } from '../legal/useLegalInfo.ts'
-import type { AuthUser, MarketContext } from '../lib/api.ts'
+import type { AuthUser, MarketContext, MarketEventsResponse } from '../lib/api.ts'
 import MarketPage from './MarketPage.tsx'
 
 // market-context-patterns: the page is for Registered Users with the capability.
@@ -22,13 +22,14 @@ function json(body: unknown, status = 200): Response {
 }
 
 type Mock = {
+  events?: MarketEventsResponse | 'error'
   context?: MarketContext | 'error' | 'unavailable' | 'guest'
   user?: AuthUser | null | 'pending'
   /** `market_context` of `GET /api/legal` (the owner's go-live flag). */
   flag?: boolean
 }
 
-function mockApi({ context = FIXTURE_CONTEXT, user = USER, flag = true }: Mock = {}) {
+function mockApi({ context = FIXTURE_CONTEXT, user = USER, flag = true, events }: Mock = {}) {
   const fetchMock = vi.fn(async (input: string) => {
     if (input === '/api/legal') {
       return json({ privacy_published: true, notice_published: false, owner: null, updated_at: '2026-10-23', retention: {}, market_context: flag })
@@ -42,6 +43,11 @@ function mockApi({ context = FIXTURE_CONTEXT, user = USER, flag = true }: Mock =
       if (context === 'unavailable') return json({ message: 'Esta página aún no está disponible.' }, 404)
       if (context === 'guest') return json({ message: 'Unauthenticated.' }, 401)
       return json(context)
+    }
+    if (input.startsWith('/api/market-context/events')) {
+      if (events === 'error') return json({ message: 'Server Error' }, 500)
+      if (events) return json(events)
+      return json({ as_of: '2026-10-23', from: '2026-10-16', to: '2026-11-06', macro_enabled: false, macro_configured: false, sources: {}, events: [] })
     }
     if (input.startsWith('/api/market-context/history')) {
       const range = new URL(input, 'http://localhost').searchParams.get('range') as '1y' | '3y'
@@ -307,6 +313,25 @@ describe('MarketPage states', () => {
     expect(await screen.findByText('Datos macroeconómicos no disponibles.')).toBeTruthy()
     expect(screen.queryByRole('region', { name: 'Tipos y curva' })).toBeNull()
     expect(screen.queryByTestId('fred-notice')).toBeNull()
+  })
+
+  it('keeps the FRED notice when release dates are the only FRED content', async () => {
+    mockApi({ context: { ...FIXTURE_CONTEXT, macro: null }, events: {
+      as_of: '2026-11-10', from: '2026-11-03', to: '2026-11-24', macro_enabled: true, macro_configured: true,
+      sources: { cpi: { checked_at: '2026-11-10', stale: false } },
+      events: [{ id: 'cpi:2026-11-12', code: 'cpi', kind: 'macro_release', region: 'US', date: '2026-11-12', status: 'tentative', source: 'BLS via FRED', source_url: 'https://fred.stlouisfed.org/release?rid=10', checked_at: '2026-11-10', stale: false }],
+    } })
+    renderPage()
+    expect(await screen.findByText('Índice de precios al consumo (IPC)')).toBeTruthy()
+    await waitFor(() => expect(screen.getByTestId('fred-notice')).toBeTruthy())
+  })
+
+  it('a calendar failure keeps the other market cards visible', async () => {
+    mockApi({ events: 'error' })
+    renderPage()
+    expect(await screen.findByText('No se ha podido cargar el calendario de eventos.')).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Entorno de mercado' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Tipos y curva' })).toBeTruthy()
   })
 
   it('a load error offers a retry', async () => {

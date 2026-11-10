@@ -116,6 +116,10 @@ A public time series from the closed list in `config/macro.php`, fetched from FR
 
 The Fed (FOMC) and ECB monetary policy meeting dates, copied by hand from the official calendars into `config/central_banks.php`. It gives each bank's last and next meeting; Chartiko never infers a "hold" or a probability from it.
 
+### Market Event (Evento de mercado)
+
+A dated central-bank meeting or US economic release in the Market Context calendar. Meetings reuse the Central Bank Calendar; release dates come from the closed FRED release list. Dates can be tentative or stale; an elapsed date does not assert that data was published. Company earnings dates remain deferred.
+
 ### Admin (Operator)
 
 The role that controls and supervises Ingestion Runs and the Instrument universe through the Admin panel.

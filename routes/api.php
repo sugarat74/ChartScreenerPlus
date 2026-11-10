@@ -152,6 +152,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // MARKET_CONTEXT_PUBLIC is off; Admins always, as a preview). The ability
         // is the paid-plan seam: no route checks the role or the flag itself.
         Route::middleware('can:view-market-context')->group(function () {
+            Route::get('/market-context/events', \App\Http\Controllers\MarketEventsController::class)
+                ->middleware('throttle:60,1,market-events');
             Route::get('/market-context', [MarketContextController::class, 'show'])
                 ->middleware('throttle:60,1,market-context');
             // A closed metric list (422 otherwise).

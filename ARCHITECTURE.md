@@ -1,5 +1,9 @@
 # Architecture
 
+## Market events calendar
+
+`MarketEvents` combines config-backed `CentralBankCalendar` meetings with date-only `market_events` rows. `market_event_sources` records attempts, successful checks and sanitized failures. All remote calls go through `FredClient::releaseDates`; reads never fetch. `events:refresh` atomically replaces one validated source window, runs daily at 06:45 in the ingestion timezone and as an isolated US pipeline stage after macro refresh, and shares Admin run recording/rerun with the other Market Context commands. `GET /api/market-context/events` uses `view-market-context`. `MarketEventsCalendar` renders independently on `/mercado`; FRED calendar content triggers the existing legal notice. See `docs/specs/market-events-calendar.md` for source IDs, schemas, bounds and failure rules.
+
 Runtime surfaces, directory boundaries and dependency direction for Chartiko (repository directory ChartScreenPlus).
 
 ## Product Identity And Hosting

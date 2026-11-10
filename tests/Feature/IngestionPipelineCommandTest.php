@@ -521,6 +521,7 @@ class IngestionPipelineCommandTest extends TestCase
             ->assertExitCode(0);
 
         $this->assertSame('succeeded', MarketContextRunLog::get('market-context:compute')['status']);
+        $this->assertSame('failed', MarketContextRunLog::get('events:refresh')['status']);
         $this->assertSame(['failed', 1], [MarketContextRunLog::get('macro:refresh')['status'], MarketContextRunLog::get('macro:refresh')['exit_code']]);
         $this->assertSame('succeeded', MarketContextRunLog::get('market-regime:compute')['status']);
         $this->assertNotSame($version, MarketContextCache::version());

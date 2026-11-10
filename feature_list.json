@@ -875,22 +875,28 @@
   {
     "id": "market-events-calendar",
     "area": "backend",
-    "planning_spec": "docs/specs/market-events-calendar.md (prepared 2026-10-26)",
-    "title": "Market events calendar: central banks, macro releases and earnings dates",
-    "user_visible_behavior": "Registered Users with Market Context access see on /mercado a dated list of upcoming and recent central bank meetings, key macro releases and earnings dates, each with its source, and an earnings date chip on the chart; no forecasts, consensus or advice.",
+    "planning_spec": "docs/specs/market-events-calendar.md",
+    "title": "Free market events calendar: central banks and US macro release dates",
+    "user_visible_behavior": "Users with Market Context access see upcoming and recent Fed/ECB meetings and five US macro release calendars with sources, review dates and tentative/stale labels, filtered by kind and region.",
     "depends_on": [
       "market-context-ui",
       "macro-series-fred"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
-      "Central bank events come from the existing CentralBankCalendar (no duplicated dates)",
-      "Recorded FRED release-date fixtures parse to the closed release list; a changed response stores nothing and records the error",
-      "Access matches Market Context (view-market-context); no forecast, consensus, advice or EOD wording; es/en complete",
-      ".\\init.ps1 passes"
+      "Fed/ECB dates reuse CentralBankCalendar; FRED dates validate the closed five-release list, incomplete/error responses preserve previous data, credentials never leak",
+      "events:refresh is opt-in, idempotent and isolated in the US pipeline; daily schedule and Admin rerun report failures",
+      "GET /api/market-context/events preserves the view-market-context access gate and validates bounded ranges and closed filters",
+      "Spanish/English calendar handles upcoming/recent, filters, tentative/stale, empty/loading/error/retry and source attribution; init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Requested 2026-10-26 ('añadir un calendario de eventos económicos, presentación de resultados, reuniones de la fed... cosas que afecten al mercado'). Future feature. Owner chose an external source for earnings dates (2026-10-26); blocked until the owner picks the provider and its public-display licence/budget (candidates in the spec: EODHD, Financial Modeling Prep, Finnhub; personal tiers forbid public display). US macro release dates from FRED fred/releases/dates; FOMC/ECB from the existing calendar. Coverage US-only vs also Europe still open (if Europe, also depends on universe-ibex35 and universe-dax)."
+    "evidence": [
+      "2026-11-10: full init.ps1 in a child PowerShell process exited 0: Laravel 1023 passed / 6 skipped, SPA 61 files / 486 passed, lint/typecheck/build passed, engine 160 passed.",
+      "Final focused checks after adding scalar-response protection and two calendar/page integration cases: MarketEventsTest 8 passed / 77 assertions; SPA calendar + MarketPage + AdminMarketContextPage 28 passed.",
+      "Focused backend integration earlier: MarketEventsTest, AdminMarketContextTest, IngestionPipelineCommandTest and FredClientTest selection: 37 passed / 303 assertions.",
+      "Offline fixtures cover source withdrawal, atomic replacement, failure preservation and isolation, opt-in/missing-key/lock paths, secret-safe transport failure, API access/range/filter matrix, schedule and Admin source errors. UI tests cover filters/horizon, source dates and statuses, retry, es/en, FRED-only attribution and calendar failure isolation.",
+      "Browser preview attempted through CUA, but browser access host unavailable. No visual mobile/theme smoke or live FRED API request performed. Preview files/server removed; PostgreSQL awaits CI. No production migration/refresh/deploy performed."
+    ],
+    "notes": "Owner authorized the free scope on 2026-11-10: existing Fed/ECB calendar and FRED US release dates only. Earnings dates and additional European macro sources are deferred; no paid provider. See docs/specs/market-events-calendar.md."
   },
   {
     "id": "indicators-expansion-engine",

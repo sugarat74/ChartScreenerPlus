@@ -24,7 +24,7 @@ function status(overrides: Partial<AdminMarketContextStatus> = {}): AdminMarketC
   return {
     public: false,
     macro_enabled: true,
-    runs: { 'market-context:compute': SUCCEEDED, 'macro:refresh': null, 'market-regime:compute': SUCCEEDED },
+    runs: { 'market-context:compute': SUCCEEDED, 'macro:refresh': null, 'market-regime:compute': SUCCEEDED, 'events:refresh': null },
     snapshots: {
       sectors: { first_date: '2025-10-22', latest_date: '2026-10-22', latest_rows: 11 },
       breadth: { first_date: '2025-10-22', latest_date: '2026-10-22' },
@@ -136,7 +136,8 @@ it('disables macro:refresh with a note while macro series are off', async () => 
   vi.mocked(adminMarketContextApi.status).mockResolvedValue(status({ macro_enabled: false }))
   renderPage()
 
-  expect(await screen.findByText('Las series macro están desactivadas: macro:refresh no se puede lanzar.')).toBeTruthy()
+  expect(await screen.findByText('Las series macro y sus calendarios de publicaciones están desactivados: no se pueden actualizar.')).toBeTruthy()
   expect(within(row('macro:refresh')).getByRole('button', { name: 'Recalcular macro:refresh' }).hasAttribute('disabled')).toBe(true)
+  expect(within(row('events:refresh')).getByRole('button', { name: 'Recalcular events:refresh' }).hasAttribute('disabled')).toBe(true)
   expect(within(row('market-context:compute')).getByRole('button', { name: 'Recalcular market-context:compute' }).hasAttribute('disabled')).toBe(false)
 })

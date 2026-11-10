@@ -6,6 +6,7 @@ import LeadingCard from '../components/market/LeadingCard.tsx'
 import LiquidityCard from '../components/market/LiquidityCard.tsx'
 import { CARD_CLASS } from '../components/market/MarketCard.tsx'
 import MarketLegalFooter from '../components/market/MarketLegalFooter.tsx'
+import MarketEventsCalendar from '../components/market/MarketEventsCalendar.tsx'
 import MarketSignInBox from '../components/market/MarketSignInBox.tsx'
 import { dateLine } from '../components/market/marketText.ts'
 import RatesCard from '../components/market/RatesCard.tsx'
@@ -38,6 +39,7 @@ export default function MarketPage() {
   const access = useMarketContextAccess()
   const [fetched, setFetched] = useState<PageState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
+  const [eventsUseFred, setEventsUseFred] = useState(false)
   const allowed = access.status === 'allowed'
 
   useEffect(() => {
@@ -138,7 +140,8 @@ export default function MarketPage() {
             </div>
           )}
         </div>
-        <MarketLegalFooter hasMacro={data.macro !== null} />
+        <MarketEventsCalendar onFredUsage={setEventsUseFred} />
+        <MarketLegalFooter hasMacro={data.macro !== null || eventsUseFred} />
       </>
     )
   }

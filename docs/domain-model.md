@@ -71,6 +71,8 @@ Recomputed on every Ingestion Run. A Signal is not edited by users; it is derive
 
 ## Edge Cases
 
+Market events: `market_events` contains unique `(code,date)` US release dates; `market_event_sources` tracks the last attempted/successful refresh and sanitized error per closed release code. Meeting events are derived directly from CentralBankCalendar, with no duplicated date rows. Upcoming dates can be tentative; an elapsed date does not imply publication. Earnings dates are deferred.
+
 - A new Instrument added to a Universe has too little history to compute a 200-day indicator: it must be flagged, not silently misreported.
 - A trading day with no new bar for an Instrument (halt, holiday): the latest Snapshot stays valid and the date is shown.
 - A Signal that was valid on the previous run may no longer be valid; results are date-stamped.

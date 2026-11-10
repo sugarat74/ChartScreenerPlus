@@ -79,6 +79,8 @@ Also in scope since 2026-11-08 (explicit user request, planned, not started): tw
 
 Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, other fundamentals data feeds and news, real-time or push/SMS notifications, other non-US markets and indices (only the IBEX 35, DAX, CAC 40 and FTSE 100 above; no full Nasdaq Composite), currency conversion, native apps, AI Copilot (chat or free-text AI), paid plans.
 
+Market events calendar is also in scope (owner, 2026-11-10): existing Fed/ECB meetings and the closed list of free FRED US release dates in `docs/specs/market-events-calendar.md`. Earnings dates and additional European macro feeds remain deferred pending source/display rights.
+
 ## Startup Workflow
 
 Before writing code:

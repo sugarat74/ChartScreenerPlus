@@ -54,10 +54,10 @@ class AdminMarketContextTest extends TestCase
     {
         $body = $this->actingAs($this->admin)->getJson('/api/admin/market-context')->assertOk()->json();
 
-        $this->assertSame(['public', 'macro_enabled', 'runs', 'snapshots', 'series'], array_keys($body));
+        $this->assertSame(['public', 'macro_enabled', 'runs', 'snapshots', 'series', 'event_sources'], array_keys($body));
         $this->assertFalse($body['public']);
         $this->assertTrue($body['macro_enabled']);
-        $this->assertSame(['market-context:compute' => null, 'macro:refresh' => null, 'market-regime:compute' => null], $body['runs']);
+        $this->assertSame(['market-context:compute' => null, 'macro:refresh' => null, 'market-regime:compute' => null, 'events:refresh' => null], $body['runs']);
         $this->assertSame(['sectors' => null, 'breadth' => null, 'regime' => null], $body['snapshots']);
         $this->assertSame(array_keys(config('macro.series')), array_column($body['series'], 'code'));
         $this->assertNull($body['series'][0]['last_observation_date']);

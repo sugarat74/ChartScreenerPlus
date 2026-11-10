@@ -346,6 +346,11 @@ export const guideEn: GuideTexts = {
       ],
       entries: [
         {
+          term: 'Market events calendar',
+          summary: 'Upcoming Fed and ECB meetings and US economic release dates, with source links and last review dates. Choose a 14, 30 or 90-day horizon and filter by type or region.',
+          details: ['Tentative dates can change. Recent dates describe the schedule and do not confirm that a release occurred. Stale dates need checking with the source. Company earnings dates are not included.'],
+        },
+        {
           term: 'Market regime',
           summary: 'A label (Favourable, Neutral, Adverse or Not enough data) that adds up each component: +1, 0 or −1 using fixed thresholds.',
           details: [

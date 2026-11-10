@@ -158,6 +158,10 @@ Selectable in the header (sun/moon control next to the language selector, `ui-da
 - **Admin › Contexto de mercado (`/admin/market-context`):** a tab after Ingesta with the public/macro switches as mono text, a runs table (status as text, times, exit code, yellow «Recalcular» per command, disabled while active or when macro is off), snapshot coverage with the regime distribution and a series table (last observation, refresh, attempt, error and stale as text). EOD wording is allowed here.
 - **Copilot IA:** present in the prototype only; out of MVP scope.
 
+## Market events calendar
+
+Market events calendar on `/mercado`: a full-width standard bordered, hard-shadow card after the data cards; headline and intro, wrapping native selects for 14/30/90 days, event type and region, then one column at mobile / two at desktop for upcoming and recent events. Each event shows a date-only mono label, text region/status chips, optional stale text, localized title, source link and last review date. Empty/loading/error+retry states stay inside the card. Source availability is explained above the lists. Details explains tentative dates without claiming publication outcomes.
+
 ## Responsive Baseline
 
 - Desktop-first, usable on tablet. Tables may scroll horizontally on narrow screens.

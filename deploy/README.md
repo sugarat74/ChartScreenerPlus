@@ -524,3 +524,12 @@ La migración marcó como verificadas todas las cuentas existentes. Con la clave
 - **Se activa** después de probar la entrega con Brevo, con `AUTH_EMAIL_VERIFICATION_ENABLED=true` además de `MAIL_MAILER=brevo`, `BREVO_API_KEY` y `MAIL_PROVIDER*`. Solo surte efecto si `MAIL_PROVIDER` y `MAIL_PROVIDER_LOCATION` están rellenas y `MAIL_MAILER` no es `log` ni `array` (con `log`, las direcciones y los enlaces acabarían en `laravel.log`). Sube `updated_at` en `config/legal.php` al activar la función, ejecuta `config:cache` y **reinicia `alphapulse-queue`**: los emails de confirmación salen de la cola.
 - **Prueba:** registra una cuenta de prueba, comprueba que solo ve «Confirma tu correo», que llega un email (es/en, con el píxel de Brevo comunicado, Reply-To `contacto@`) y que su enlace `https://www.chartiko.com/verificar-correo/…` confirma la cuenta (también en una ventana privada).
 - **Marcha atrás:** `AUTH_EMAIL_VERIFICATION_ENABLED=false`, `config:cache` y reinicia el worker. Las cuentas pendientes pasan a tener acceso completo al momento; no hace falta tocar la base de datos.
+
+
+## Free market events calendar (market-events-calendar)
+
+The release migration creates `market_events` and `market_event_sources`. Fed/ECB meetings reuse `config/central_banks.php` immediately, even with macro disabled. US release dates reuse the existing opt-in `MACRO_ENABLED=true` and `FRED_API_KEY` server settings; no new provider or paid account is needed.
+
+After deployment, run `php artisan events:refresh` once (as the deploy user, from current) or use Admin > Market Context > events:refresh. Existing cron/scheduler then refreshes dates daily at 06:45 in the ingestion timezone, including weekends, and the US pipeline refreshes them after macro. The Admin run status and calendar-source details report failures. A failed source retains its last good dates with a stale warning. Check source timestamps before relying on dates. No Screener refresh is needed for calendar-only changes.
+
+This does not enable MARKET_CONTEXT_PUBLIC or bypass the existing FRED notice/legal gate. Dates are visible only to users allowed by view-market-context. Earnings calendars and other European macro feeds remain deferred. Turning MACRO_ENABLED off stops remote refreshes and hides stored FRED dates; Fed/ECB meetings remain visible.

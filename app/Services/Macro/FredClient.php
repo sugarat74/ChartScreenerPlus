@@ -122,6 +122,44 @@ class FredClient
     }
 
     /**
+     * Dates only from a closed, configured release; never return provider names or estimates.
+     *
+     * @return list<string>
+     */
+    public function releaseDates(int $releaseId, string $from, string $to): array
+    {
+        if (! in_array($releaseId, array_column((array) config('market_events.releases'), 'id'), true)) {
+            throw new FredUnavailable('unknown_release');
+        }
+        $data = $this->get('release_dates', (string) $releaseId, [
+            'realtime_start' => $from, 'realtime_end' => $to,
+            'include_release_dates_with_no_data' => 'true',
+            'sort_order' => 'asc', 'limit' => '10000',
+        ]);
+        $rows = $data['release_dates'] ?? null;
+        // Reject empty, partial or changed responses before replacing any stored dates.
+        if (! is_array($rows) || ! array_is_list($rows) || $rows === []
+            || ($data['count'] ?? null) !== count($rows) || ($data['offset'] ?? null) !== 0) {
+            throw $this->invalid((string) $releaseId, 'release_dates');
+        }
+        $dates = [];
+        foreach ($rows as $row) {
+            $date = is_array($row) ? ($row['date'] ?? null) : null;
+            if (! is_array($row) || ($row['release_id'] ?? null) !== $releaseId || ! is_string($date) || ! self::validDate($date)) {
+                throw $this->invalid((string) $releaseId, 'release_dates');
+            }
+            if ($date >= $from && $date <= $to) {
+                $dates[] = $date;
+            }
+        }
+        if ($dates === []) {
+            throw $this->invalid((string) $releaseId, 'release_dates');
+        }
+
+        return array_values(array_unique($dates));
+    }
+
+    /**
      * @param  array<string, string>  $query
      * @return array<mixed>
      */
@@ -132,9 +170,14 @@ class FredClient
             throw new FredUnavailable('invalid_key');
         }
 
-        $path = $endpoint === 'series' ? '/series' : '/series/observations';
+        $path = match ($endpoint) {
+            'series' => '/series',
+            'release_dates' => '/release/dates',
+            default => '/series/observations',
+        };
         $url = rtrim((string) config('macro.base_url'), '/').$path;
-        $query = ['series_id' => $code, 'api_key' => $key, 'file_type' => 'json'] + $query;
+        $identity = $endpoint === 'release_dates' ? 'release_id' : 'series_id';
+        $query = [$identity => $code, 'api_key' => $key, 'file_type' => 'json'] + $query;
         $retries = max(0, (int) config('macro.retries'));
         $backoff = array_values((array) config('macro.backoff_seconds'));
         $context = ['series' => $code, 'endpoint' => $endpoint];

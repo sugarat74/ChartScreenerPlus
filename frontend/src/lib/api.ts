@@ -1729,6 +1729,34 @@ export const marketContextApi = {
   },
 }
 
+export type MarketEventCode = 'fed' | 'ecb' | 'cpi' | 'employment' | 'gdp' | 'pce' | 'retail'
+export type MarketEvent = {
+  id: string
+  code: MarketEventCode
+  kind: 'central_bank' | 'macro_release'
+  region: 'US' | 'EU'
+  date: string
+  status: 'scheduled' | 'tentative' | 'past'
+  source: string
+  source_url: string
+  checked_at: string | null
+  stale: boolean
+}
+export type MarketEventsResponse = {
+  as_of: string
+  from: string
+  to: string
+  macro_enabled: boolean
+  macro_configured: boolean
+  sources: Record<string, { checked_at: string | null; stale: boolean }>
+  events: MarketEvent[]
+}
+export const marketEventsApi = {
+  async list(days: 14 | 30 | 90, signal?: AbortSignal): Promise<MarketEventsResponse> {
+    return request<MarketEventsResponse>(`/api/market-context/events?days=${days}`, { signal })
+  },
+}
+
 /**
  * `GET /api/instruments/{ticker}/market-context` (market-context-patterns,
  * C3): a stock's sector ETF, sector trend and rank and the Market Regime, each
@@ -1757,9 +1785,10 @@ export const instrumentMarketContextApi = {
   },
 }
 
-export type MarketContextCommand = 'market-context:compute' | 'macro:refresh' | 'market-regime:compute'
+export type MarketContextCommand = 'market-context:compute' | 'macro:refresh' | 'market-regime:compute' | 'events:refresh'
 
 export const MARKET_CONTEXT_COMMANDS: readonly MarketContextCommand[] = [
+  'events:refresh',
   'market-context:compute',
   'macro:refresh',
   'market-regime:compute',
@@ -1789,6 +1818,7 @@ export type AdminMarketContextSeries = {
 }
 
 export type AdminMarketContextStatus = {
+  event_sources?: { code: string; last_attempted_at: string | null; last_refreshed_at: string | null; last_error: string | null }[]
   public: boolean
   macro_enabled: boolean
   runs: Record<MarketContextCommand, MarketContextRun | null>

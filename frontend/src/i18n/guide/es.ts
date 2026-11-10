@@ -346,6 +346,11 @@ export const guideEs: GuideTexts = {
       ],
       entries: [
         {
+          term: 'Calendario de eventos de mercado',
+          summary: 'Próximas reuniones de la Fed y el BCE y fechas de publicaciones económicas de EE. UU., con enlaces a la fuente y fecha de revisión. Permite ver 14, 30 o 90 días y filtrar por tipo o región.',
+          details: ['Las fechas tentativas pueden cambiar. Las fechas recientes describen el calendario y no confirman que se haya publicado un dato. Las fechas desactualizadas deben comprobarse en la fuente. No incluye fechas de resultados de empresas.'],
+        },
+        {
           term: 'Entorno de mercado',
           summary: 'Una etiqueta (Favorable, Neutral, Adverso o Sin datos suficientes) que suma la aportación de cada componente: +1, 0 o −1 según umbrales fijos.',
           details: [

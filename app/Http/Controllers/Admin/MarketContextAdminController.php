@@ -40,6 +40,15 @@ class MarketContextAdminController extends Controller
                 'regime' => $this->regimeCoverage(),
             ],
             'series' => $this->series(),
+            'event_sources' => DB::table('market_event_sources')
+                ->whereIn('code', array_keys((array) config('market_events.releases')))
+                ->orderBy('code')->get(['code', 'last_attempted_at', 'last_refreshed_at', 'last_error'])
+                ->map(fn ($source): array => [
+                    'code' => $source->code,
+                    'last_attempted_at' => $source->last_attempted_at === null ? null : Carbon::parse($source->last_attempted_at)->utc()->toIso8601ZuluString(),
+                    'last_refreshed_at' => $source->last_refreshed_at === null ? null : Carbon::parse($source->last_refreshed_at)->utc()->toIso8601ZuluString(),
+                    'last_error' => $source->last_error,
+                ])->all(),
         ]);
     }
 
@@ -52,7 +61,7 @@ class MarketContextAdminController extends Controller
             throw ValidationException::withMessages(['command' => [__('market_context.command_invalid')]]);
         }
 
-        if ($command === 'macro:refresh' && ! config('macro.enabled')) {
+        if (in_array($command, ['macro:refresh', 'events:refresh'], true) && ! config('macro.enabled')) {
             throw ValidationException::withMessages(['command' => [__('market_context.macro_disabled')]]);
         }
 

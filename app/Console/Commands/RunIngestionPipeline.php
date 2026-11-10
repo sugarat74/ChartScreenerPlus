@@ -192,6 +192,7 @@ class RunIngestionPipeline extends Command
         if ($isUs) {
             $this->runMarketContext();
             $this->runMacro();
+            $this->runEvents();
             $this->runMarketRegime();
         }
 
@@ -319,10 +320,26 @@ class RunIngestionPipeline extends Command
     }
 
     /**
-     * Refresh the FRED Macro Series. Failures never reach the exit code.
-     * `FredClient` never lets a key-bearing message out, so a reported
-     * exception cannot leak the key.
+     * Refresh scheduled release dates without letting a source failure stop the pipeline.
      */
+    private function runEvents(): void
+    {
+        if (! config('macro.enabled')) {
+            return;
+        }
+        try {
+            $exit = $this->call('events:refresh');
+        } catch (Throwable $exception) {
+            report($exception);
+            $exit = self::FAILURE;
+        }
+        if ($exit !== self::SUCCESS) {
+            $this->warn('Market event dates could not be refreshed; the pipeline continues.');
+            Log::warning('Market event refresh failed.', ['exit' => $exit]);
+        }
+    }
+
+    /** Refresh the FRED Macro Series; failures never reach the pipeline exit code. */
     private function runMacro(): void
     {
         if (! config('macro.enabled')) {

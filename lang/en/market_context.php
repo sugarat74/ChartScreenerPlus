@@ -1,10 +1,11 @@
 <?php
 
 return [
+    'events_range_invalid' => 'The calendar range must be ordered and span at most 100 days.',
     'not_available' => 'This page is not available yet.',
     'metric_invalid' => 'The requested metric does not exist.',
     'range_invalid' => 'The range must be 1y or 3y.',
-    'command_invalid' => 'Only market-context:compute, macro:refresh and market-regime:compute can be rerun.',
+    'command_invalid' => 'Only market-context:compute, macro:refresh, market-regime:compute and events:refresh can be rerun.',
     'macro_disabled' => 'Macro series are disabled (MACRO_ENABLED=false).',
     'run_active' => 'This command is already queued or running.',
     'sign_in_required' => 'Sign in to use the sector context filters.',

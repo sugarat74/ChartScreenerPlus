@@ -81,6 +81,14 @@ Schedule::command('macro:refresh')
     ->withoutOverlapping(30)
     ->runInBackground();
 
+Schedule::command('events:refresh')
+    ->name('market-events-refresh')
+    ->dailyAt(config('market_events.schedule_time', '06:45'))
+    ->timezone($timezone)
+    ->when(fn (): bool => (bool) config('macro.enabled'))
+    ->withoutOverlapping(30)
+    ->runInBackground();
+
 /*
 |--------------------------------------------------------------------------
 | Personal-data retention

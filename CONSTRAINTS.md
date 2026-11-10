@@ -260,6 +260,8 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 
 ## Operations And Scheduling
 
+- Market calendar dates MUST remain descriptive dates: elapsed dates MUST NOT be labelled as confirmed publications or policy decisions. `events:refresh` MUST validate each complete FRED release response before replacing its window; a failed source retains its last good dates and is marked stale. Reason: scheduled dates can be withdrawn or rescheduled, and dates alone do not prove publication.
+
 - `config/app.php` **MUST** keep `timezone = 'UTC'`. The daily EOD event **MUST** get its timezone from `config('ingestion.timezone')` via the event's `->timezone()` (default `America/New_York`). Reason: changing the app-wide timezone would ripple into `now()`, stored timestamps and tests; applying the market timezone only to the event keeps the wall-clock time DST-aware while everything else stays UTC.
 - The EOD schedule **MUST** be registered in `routes/console.php` with the `Schedule` facade as exactly one named event (`ingestion-pipeline`) using `->dailyAt(<market_close + buffer>)`, `->timezone(...)`, `->weekdays()`, a holiday `->skip(...)` and `->withoutOverlapping(120)`. `bootstrap/app.php` **MUST NOT** need changing. Reason: one obvious, inspectable schedule definition; `php artisan schedule:list` is the verification surface.
 - Close time, buffer, universe, lock TTL and the holiday list **MUST** come from `config/ingestion.php` (`INGESTION_*` env keys) and **MUST NOT** be hardcoded in `routes/console.php` or the command. Reason: operators must retune the schedule without code changes.

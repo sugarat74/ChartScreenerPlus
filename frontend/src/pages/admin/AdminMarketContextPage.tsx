@@ -11,6 +11,7 @@ const COMMAND_LABEL: Record<MarketContextCommand, MessageKey> = {
   'market-context:compute': 'admin.marketContext.commands.compute',
   'macro:refresh': 'admin.marketContext.commands.macro',
   'market-regime:compute': 'admin.marketContext.commands.regime',
+  'events:refresh': 'marketEvents.refresh',
 }
 
 const CARD = 'rounded-md border-2 border-outline bg-surface-bright p-4 shadow-[2px_2px_0px_var(--color-shadow)]'
@@ -123,7 +124,7 @@ export default function AdminMarketContextPage() {
                   {MARKET_CONTEXT_COMMANDS.map((command) => {
                     const run = status.runs[command]
                     const active = isActive(run)
-                    const macroOff = command === 'macro:refresh' && !status.macro_enabled
+                    const macroOff = (command === 'macro:refresh' || command === 'events:refresh') && !status.macro_enabled
                     return (
                       <tr key={command} data-command={command}>
                         <th scope="row" className="px-2 py-1.5 text-left">
@@ -155,6 +156,17 @@ export default function AdminMarketContextPage() {
               </table>
             </div>
             <p className="mt-2 font-mono text-[11px] text-on-surface-variant">{t('admin.marketContext.regimeHint')}</p>
+            {status.event_sources && status.event_sources.length > 0 ? (
+              <details className="mt-3 text-xs">
+                <summary className="cursor-pointer font-bold">{t('marketEvents.title')}</summary>
+                <ul className="mt-2 flex flex-col gap-2 font-mono">
+                  {status.event_sources.map((source) => <li key={source.code} className="break-words">
+                    <strong>{source.code}</strong> · {t('admin.marketContext.columns.lastRefresh')}: {source.last_refreshed_at ? formatDateTime(source.last_refreshed_at) : t('common.empty')}
+                    {' · '}{t('admin.marketContext.columns.lastError')}: {source.last_error ?? t('common.empty')}
+                  </li>)}
+                </ul>
+              </details>
+            ) : null}
             {!status.macro_enabled ? (
               <p className="mt-1 font-mono text-[11px] text-on-surface-variant">{t('admin.marketContext.macroDisabledNote')}</p>
             ) : null}

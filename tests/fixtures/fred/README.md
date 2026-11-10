@@ -1,5 +1,7 @@
 # FRED test fixtures (macro-series-fred)
 
+`release_dates_cpi.json` is a synthetic calendar contract fixture using the documented `/fred/release/dates` JSON shape (https://fred.stlouisfed.org/docs/api/fred/release_dates.html, checked 2026-11-10). Its November dates are test data, not a live FRED capture. MarketEventsTest changes the configured release ID to exercise all five sources offline.
+
 Offline FRED API responses for `tests/Concerns/FakesFred.php`, in the documented
 API JSON shape (`seriess[]` for `/fred/series`, `observations[]{realtime_start,
 realtime_end, date, value}` for `/fred/series/observations`). No API key was used

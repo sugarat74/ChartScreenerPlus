@@ -18,7 +18,7 @@ use Throwable;
  */
 final class MarketContextRunLog
 {
-    public const COMMANDS = ['market-context:compute', 'macro:refresh', 'market-regime:compute'];
+    public const COMMANDS = ['market-context:compute', 'macro:refresh', 'market-regime:compute', 'events:refresh'];
 
     public const QUEUED = 'queued';
 
