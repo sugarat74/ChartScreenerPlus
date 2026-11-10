@@ -1,6 +1,6 @@
 # London Listing Market and pence handling
 
-Feature `ingestion-xlon-gbx`; dependency `universe-cac40` is accepted. Implementation requested 2026-11-10. This is Feature 2 of `universes-cac40-ftse100.md`; its C1/C2/C5/C6/P1 decisions apply. Status: in_progress.
+Feature `ingestion-xlon-gbx`; dependency `universe-cac40` is accepted. Implementation requested 2026-11-10. This is Feature 2 of `universes-cac40-ftse100.md`; its C1/C2/C5/C6/P1 decisions apply. Status: passing, pending independent validation.
 
 ## Contract
 
@@ -28,7 +28,7 @@ Yahoo chart endpoint https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?
 - [x] XLON definitions, source normalization and scale guard.
 - [x] London calendar/env overrides and schedule coverage.
 - [x] Fixture-backed pipeline, pence storage, currency mismatch and UI compatibility coverage.
-- [ ] Live smoke, full verification, durable docs and handoff evidence.
+- [x] Live smoke, full verification, durable docs and handoff evidence.
 
 
-Local evidence: full init.ps1 exit0 (Laravel1030 passed/6 skipped, SPA491 passed, engine185 passed, lint/typecheck/build); final added BST fallback test included in London engine26 passed. London Laravel7 passed/737 assertions; targeted frontend38 passed. Live API evidence in PROGRESS.md. PostgreSQL CI pending; no production rollout or capacity timing.
+Final evidence: full init.ps1 exit0 after all fixes (Laravel1031 passed/6 skipped, SPA491 passed, engine186 passed, lint/typecheck/build). London engine26 passed, Laravel7 passed/737 assertions, targeted frontend38 passed. CI test and test-pgsql both passed on aba5ad2, run42827026111 (draft PR99). The preceding calendar needed a narrow legacy-copy table-classification fix and a driver-independent schema-policy test. Live API evidence in PROGRESS.md. No production rollout or capacity timing; independent validation pending.

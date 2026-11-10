@@ -995,7 +995,7 @@
     "depends_on": [
       "universe-cac40"
     ],
-    "status": "in_progress",
+    "status": "passing",
     "verification": [
       "Engine fixtures: real AZN.L (GBp) returns GBX with unchanged prices, a GBP-labelled response stays GBP, a 100x scale step is rejected, market mismatch returns 422",
       "currency_mismatch fails cleanly for GBP/USD/EUR on a GBX Instrument; XLON calendar tests (UK-only bank holidays, 12:30 early closes, GMT/BST) and the 17:15 Europe/London schedule event; scale-invariance check on a fixture universe",
@@ -1003,9 +1003,11 @@
       ".\\init.ps1 passes"
     ],
     "evidence": [
-      "Full init.ps1 exit0: Laravel1030 passed/6 skipped, SPA61 files/491 passed, lint/typecheck/build passed, engine185 passed. Final London engine suite26 passed after adding a BST timezone fallback regression.",
-      "London Laravel fixture suite7 passed/737 assertions. Live in-process API GET with real Yahoo: AZN.L/BT-A.L GBX506 bars each, SAN.PA EUR510; weekdays and UK-only bank holidays verified. No production DB writes.",
-      "PostgreSQL CI and independent validation pending. FTSE universe/public enablement and full production pipeline-contention timing remain outside this foundation release."
+      "Final init.ps1 exit0 after all supporting fixes: Laravel1031 passed/6 skipped, SPA61 files/491 passed, lint/typecheck/build passed, engine186 passed.",
+      "London engine suite26 passed; Laravel London fixture suite7 passed/737 assertions; targeted Screener/chart UI38 passed. Real recorded AZN/BT fixtures verify normalization, unchanged prices, scale guards and timezone/holiday behavior.",
+      "CI test and test-pgsql passed on aba5ad2: https://github.com/sugarat74/ChartScreenerPlus/actions/runs/42827026111 . Draft PR99 targets feat/market-events-calendar; no deploy.",
+      "Live in-process FastAPI GET against real Yahoo: AZN.L and BT-A.L GBX506 weekday bars each, SAN.PA EUR510. UK May4/May25/Aug31 absent in London and present in Paris. No persistence or production run.",
+      "CI exposed unclassified calendar tables in the preceding calendar feature: fixed on its base branch and added a schema-classification regression that also runs on SQLite. Production European pipeline-contention measurement remains for FTSE enablement. Independent validation pending; no FTSE seeder or public enablement."
     ],
     "notes": "Implementation requested 2026-11-10. Store source pence unchanged as GBX; London calendar/schedule and engine scale guards only. No FTSE 100 seeder or public enablement. Umbrella contract: docs/specs/universes-cac40-ftse100.md Feature 2."
   },
