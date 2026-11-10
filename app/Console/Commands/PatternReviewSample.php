@@ -65,6 +65,11 @@ class PatternReviewSample extends Command
         'bear_flag' => 'BRF',
         'bull_pennant' => 'BLP',
         'bear_pennant' => 'BRP',
+        'head_and_shoulders' => 'HS',
+        'inverse_head_and_shoulders' => 'IHS',
+        'ascending_triangle' => 'AT',
+        'descending_triangle' => 'DTG',
+        'symmetrical_triangle' => 'ST',
     ];
 
     /**

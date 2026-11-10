@@ -7,7 +7,7 @@ from a real number.
 
 Periods are fixed by the feature spec: SMA 20/50/200, EMA 21/55, RSI 14,
 MACD 12/26/9, ADX 14 (+DI/-DI 14), ATR 14, Stochastic 14/3/3,
-Bollinger 20/2, RVOL against the previous 50 sessions.
+Bollinger 20/2, RVOL against the previous 50 sessions, Supertrend 10/3 and cumulative OBV.
 """
 
 
@@ -85,6 +85,26 @@ def rsi(values: list[float], period: int = 14) -> list[float | None]:
         average_loss = (average_loss * (period - 1) + loss) / period
         result[index] = _rsi_value(average_gain, average_loss)
 
+    return result
+
+
+def on_balance_volume(closes: list[float], volumes: list[float]) -> list[float | None]:
+    """Cumulative signed volume; starts at the first bar's volume."""
+
+    if len(closes) != len(volumes):
+        raise ValueError("closes and volumes must have the same length")
+    if not closes:
+        return []
+
+    result: list[float | None] = [float(volumes[0])]
+    for index in range(1, len(closes)):
+        previous = result[-1]
+        assert previous is not None
+        if closes[index] > closes[index - 1]:
+            previous += volumes[index]
+        elif closes[index] < closes[index - 1]:
+            previous -= volumes[index]
+        result.append(previous)
     return result
 
 
@@ -273,6 +293,50 @@ def atr(
         result[index] = previous
 
     return result
+
+
+def supertrend(
+    highs: list[float],
+    lows: list[float],
+    closes: list[float],
+    period: int = 10,
+    multiplier: float = 3.0,
+) -> tuple[list[float | None], list[int | None]]:
+    """Wilder ATR Supertrend (10, 3 by default), direction +1 up / -1 down."""
+
+    length = len(closes)
+    values: list[float | None] = [None] * length
+    directions: list[int | None] = [None] * length
+    ranges = atr(highs, lows, closes, period)
+    if period <= 0 or multiplier <= 0 or length <= period:
+        return values, directions
+
+    upper: float | None = None
+    lower: float | None = None
+    for index in range(period, length):
+        current_atr = ranges[index]
+        if current_atr is None:
+            continue
+        midpoint = (highs[index] + lows[index]) / 2.0
+        basic_upper = midpoint + multiplier * current_atr
+        basic_lower = midpoint - multiplier * current_atr
+        if upper is None or lower is None:
+            upper, lower = basic_upper, basic_lower
+            direction = 1 if closes[index] >= midpoint else -1
+        else:
+            previous_close = closes[index - 1]
+            upper = basic_upper if basic_upper < upper or previous_close > upper else upper
+            lower = basic_lower if basic_lower > lower or previous_close < lower else lower
+            previous_direction = directions[index - 1]
+            direction = previous_direction if previous_direction is not None else 1
+            if direction < 0 and closes[index] > upper:
+                direction = 1
+            elif direction > 0 and closes[index] < lower:
+                direction = -1
+        directions[index] = direction
+        values[index] = lower if direction > 0 else upper
+
+    return values, directions
 
 
 def _clamp_percent(value: float | None) -> float | None:

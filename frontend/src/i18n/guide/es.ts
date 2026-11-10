@@ -107,7 +107,7 @@ export const guideEs: GuideTexts = {
         },
         {
           term: 'Patrones chartistas',
-          summary: 'Muestra valores con un patrón activo de los tipos elegidos. Los diez tipos se agrupan en alcistas (doble y triple suelo, taza con asa, bandera alcista, banderín alcista) y bajistas (doble y triple techo, taza con asa invertida, bandera bajista, banderín bajista).',
+          summary: 'Muestra valores con un patrón activo de los tipos elegidos. Los quince tipos se agrupan por dirección fija; los triángulos mantienen dirección neutra hasta confirmar la ruptura.',
           details: [
             'El control de estado («Cualquiera», «En formación», «Confirmado») se activa al elegir algún patrón y filtra solo esos patrones.',
           ],
@@ -180,7 +180,7 @@ export const guideEs: GuideTexts = {
       ],
       notes: [
         'Las imágenes son esquemas con datos ficticios: explican la forma de cada indicador, no muestran cotizaciones ni señales actuales.',
-        'Chartiko también calcula las EMA de 21 y 55 sesiones, el ADX y el ATR de 14 sesiones, las Bandas de Bollinger (20 sesiones, 2 desviaciones) y el Estocástico (14, 3, 3). El ADX, el %B, el ancho de bandas, el ATR % y el %K se pueden filtrar, ordenar y mostrar como columnas opcionales del listado (ver «El listado de candidatos»); las Bandas de Bollinger también se pueden dibujar en el gráfico, y el ADX (con +DI y -DI), el ATR y el Estocástico (%K y %D, con líneas en 20 y 80) tienen cada uno su propio panel bajo el precio: usa los botones «Indicadores» que hay sobre el gráfico (todos apagados por defecto; tu elección se recuerda en este navegador). El panel del ADX marca el nivel 25. Cuando un cierre cruza una banda, el gráfico marca además ese nivel con una línea discontinua.',
+        'Chartiko también calcula las EMA de 21 y 55 sesiones, el ADX y el ATR de 14 sesiones, las Bandas de Bollinger (20 sesiones, 2 desviaciones) y el Estocástico (14, 3, 3). El ADX, el %B, el ancho de bandas, el ATR % y el %K se pueden filtrar, ordenar y mostrar como columnas opcionales del listado (ver «El listado de candidatos»); las Bandas de Bollinger y Supertrend (10, 3) se dibujan sobre el precio. RSI (14), MACD (12, 26, 9), OBV y el ADX (con +DI y -DI), ATR y Estocástico (%K y %D, con líneas en 20 y 80) tienen cada uno su propio panel bajo el precio: usa los botones «Indicadores» que hay sobre el gráfico (todos apagados por defecto; tu elección se recuerda en este navegador). El panel del ADX marca el nivel 25 y el RSI los niveles 30 y 70. Cuando un cierre cruza una banda, el gráfico marca además ese nivel con una línea discontinua.',
       ],
     },
     {
@@ -216,7 +216,7 @@ export const guideEs: GuideTexts = {
       title: 'Patrones chartistas',
       paragraphs: [
         'Los patrones son formaciones geométricas del precio que Chartiko detecta automáticamente con reglas fijas sobre los máximos y mínimos locales (un máximo o mínimo se confirma cuando lo rodean 5 sesiones a cada lado, así que un patrón aparece como pronto 5 sesiones después de su último máximo o mínimo local).',
-        '«En formación» significa que la figura está completa pero aún no ha roto su nivel. «Confirmado» significa que un cierre ha roto el nivel de ruptura en las últimas 10 sesiones: por encima en los patrones alcistas y por debajo en los bajistas (doble y triple techo, taza con asa invertida, bandera bajista, banderín bajista). Pasado ese plazo, o si el precio invalida la figura, el patrón deja de mostrarse. Un patrón en formación también caduca si no rompe a tiempo: 60 sesiones desde el último suelo o techo, un asa de más de 25 sesiones o una bandera o un banderín de más de 20. Chartiko solo muestra el nivel de ruptura: nunca calcula objetivos de precio.',
+        '«En formación» significa que la figura está completa pero aún no ha roto su límite. «Confirmado» significa que un cierre ha roto el nivel en las últimas 10 sesiones. Hombro-cabeza-hombro tiene dirección fija; los triángulos reciben dirección al confirmarse la ruptura. Chartiko dibuja la clavicular inclinada o los límites del triángulo y no inventa un nivel horizontal mientras se forma ni calcula objetivos.',
       ],
       entries: [
         {
@@ -278,6 +278,36 @@ export const guideEs: GuideTexts = {
           summary: 'El mástil de la bandera bajista seguido de un banderín de 5 a 20 sesiones que se estrecha del mismo modo, con menos volumen y sin recuperar más de la mitad del mástil.',
           illustration: { kind: 'bearPennant', alt: 'Precio que cae con fuerza, se estrecha entre dos líneas convergentes y rompe a la baja.' },
           details: ['Nivel de ruptura: el mínimo del banderín. Se confirma con un cierre por debajo; un cierre posterior por encima del máximo del banderín lo invalida. Si el mismo mástil forma también una bandera bajista, solo se muestra el banderín.'],
+        },
+        {
+          term: 'Hombro-cabeza-hombro',
+          summary: 'Tres máximos locales: la cabeza central supera dos hombros de altura parecida y una clavicular une los mínimos intermedios.',
+          illustration: { kind: 'headAndShoulders', alt: 'Tres máximos de precio; el central es más alto y una clavicular inclinada une los mínimos intermedios.' },
+          details: ['Patrón bajista; se confirma con un cierre por debajo de la clavicular inclinada. El gráfico marca sus extremos y no calcula objetivos.'],
+        },
+        {
+          term: 'Hombro-cabeza-hombro invertido',
+          summary: 'Tres mínimos locales: la cabeza central cae por debajo de dos hombros de profundidad parecida y una clavicular une los máximos intermedios.',
+          illustration: { kind: 'inverseHeadAndShoulders', alt: 'Tres mínimos de precio; el central es más bajo y una clavicular inclinada une los máximos intermedios.' },
+          details: ['Patrón alcista; se confirma con un cierre por encima de la clavicular inclinada. El gráfico marca sus extremos y no calcula objetivos.'],
+        },
+        {
+          term: 'Triángulo ascendente',
+          summary: 'Un límite superior casi horizontal y otro inferior ascendente forman máximos y mínimos locales convergentes.',
+          illustration: { kind: 'ascendingTriangle', alt: 'Oscilaciones del precio entre un límite superior plano y otro inferior ascendente.' },
+          details: ['Durante la formación no hay dirección. Un cierre por encima del límite superior confirma ruptura alcista; por debajo del inferior confirma ruptura bajista.'],
+        },
+        {
+          term: 'Triángulo descendente',
+          summary: 'Un límite superior descendente y otro inferior casi horizontal forman máximos y mínimos locales convergentes.',
+          illustration: { kind: 'descendingTriangle', alt: 'Oscilaciones del precio entre un límite superior descendente y otro inferior plano.' },
+          details: ['Durante la formación no hay dirección. El cierre de ruptura fija la dirección alcista o bajista; el gráfico dibuja ambos límites.'],
+        },
+        {
+          term: 'Triángulo simétrico',
+          summary: 'Un límite superior descendente y otro inferior ascendente convergen alrededor de máximos y mínimos locales sucesivos.',
+          illustration: { kind: 'symmetricalTriangle', alt: 'Oscilaciones del precio entre un límite superior descendente y otro inferior ascendente.' },
+          details: ['El tipo se mantiene cualquiera que sea la ruptura. La dirección es neutra mientras se forma y pasa a alcista o bajista al confirmarse.'],
         },
       ],
       notes: [

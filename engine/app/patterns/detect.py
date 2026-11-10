@@ -9,6 +9,13 @@ from app.indicators.core import rvol
 from app.models import Bar, Pattern
 from app.patterns.extended import ALL_DETECTORS
 
+FIXED_DIRECTIONS = {
+    "double_bottom": "bullish", "triple_bottom": "bullish", "cup_with_handle": "bullish",
+    "bull_flag": "bullish", "bull_pennant": "bullish", "inverse_cup_with_handle": "bearish",
+    "double_top": "bearish", "triple_top": "bearish", "bear_flag": "bearish", "bear_pennant": "bearish",
+    "head_and_shoulders": "bearish", "inverse_head_and_shoulders": "bullish",
+}
+
 WINDOW = 330
 MIN_BARS = 60
 RVOL_PERIOD = 50
@@ -27,6 +34,8 @@ def detect_patterns(bars: list[Bar]) -> list[Pattern]:
     for _pattern_type, detector in ALL_DETECTORS:
         pattern = detector(bars, volume_ratios, start)
         if pattern is not None:
+            if pattern.direction is None and pattern.type in FIXED_DIRECTIONS:
+                pattern = pattern.model_copy(update={"direction": FIXED_DIRECTIONS[pattern.type]})
             detected.append(pattern)
     return apply_precedence(detected)
 

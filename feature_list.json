@@ -1017,5 +1017,52 @@
     ],
     "evidence": [],
     "notes": "Planned 2026-11-08 at explicit user request. Planning only. Constituents verified 2026-11-08 against Wikipedia (table after 1 Oct 2026, 100 rows) and the LSEG 2 Sep 2026 notice (easyJet and Ithaca in, Entain and Persimmon out). Open owner decisions with defaults: leave out the three non-pence lines (97 members), pence over pounds."
+  },
+  {
+    "id": "chart-indicators-rsi-macd-obv-supertrend",
+    "area": "chart",
+    "title": "Chart: RSI, MACD, OBV and Supertrend indicators",
+    "user_visible_behavior": "Users can enable RSI, MACD, OBV and Supertrend in the chart; the oscillators render in synchronized panes and Supertrend overlays price.",
+    "depends_on": [
+      "indicators-expansion-engine",
+      "indicators-expansion-storage",
+      "chart-indicator-overlays",
+      "chart-indicator-panels"
+    ],
+    "status": "passing",
+    "verification": [
+      "New series are engine-computed and served from stored snapshots",
+      "Indicator toggles persist and request history lazily",
+      "RSI, MACD and OBV panes and Supertrend price overlay render accessibly"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-11-10. OBV and Supertrend use fixed definitions documented in docs/specs/chart-indicators-rsi-macd-obv-supertrend.md. Baseline init.ps1 passed before implementation."
+  },
+  {
+    "id": "chart-patterns-head-shoulders-triangles",
+    "area": "engine + screener + chart",
+    "title": "Chart patterns: Head and Shoulders and Triangles",
+    "user_visible_behavior": "Visitors can filter Candidates by deterministic Head and Shoulders and triangle patterns and inspect their geometry on the chart.",
+    "depends_on": [
+      "chart-patterns-detect",
+      "chart-patterns-ui",
+      "chart-patterns-calibration",
+      "chart-patterns-extended",
+      "saved-screeners"
+    ],
+    "status": "passing",
+    "verification": [
+      "Fixture-backed deterministic rules cover both H&S orientations and triangle geometries",
+      "Patterns persist and flow through the API, Screener filter, Saved Screeners and chart",
+      "Confirmation direction, trendline/neckline display and calibration are documented",
+      "Existing pattern behavior is unchanged"
+    ],
+    "evidence": [
+      "engine/tests/test_patterns_geometry.py: 7 synthetic checks cover both H&S orientations, triangle geometry, both breakout directions and opposite-boundary invalidation.",
+      "Focused engine pattern tests: 61 passed; focused Laravel pattern/Screener/AI/alert/Card tests: 79 passed.",
+      "Focused SPA pattern/chart/manual/alert tests: 31 passed; SPA lint/typecheck passed (one pre-existing RequireAuth.test.tsx warning).",
+      "Final .\\init.ps1: Laravel 1015 passed / 6 skipped; Vitest 60 files / 480 passed; engine 160 passed; SPA lint/typecheck and production build passed."
+    ],
+    "notes": "Requested 2026-11-10. See docs/specs/chart-patterns-head-shoulders-triangles.md. Conservative named geometry limits are not validated against a labeled real sample: the existing calibration sample has none of these five patterns. Retain this calibration limitation for independent validation. Alerts and AI vocabularies intentionally remain on LEGACY_TYPES."
   }
 ]

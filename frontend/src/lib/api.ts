@@ -513,6 +513,11 @@ export type ScreenerPatternType =
   | 'bear_flag'
   | 'bull_pennant'
   | 'bear_pennant'
+  | 'head_and_shoulders'
+  | 'inverse_head_and_shoulders'
+  | 'ascending_triangle'
+  | 'descending_triangle'
+  | 'symmetrical_triangle'
 
 export type PatternStatus = 'forming' | 'confirmed'
 
@@ -615,7 +620,8 @@ export type ScreenerFilters = {
 export type CandidatePattern = {
   type: string
   status: PatternStatus
-  breakout_level: number
+  direction?: 'bullish' | 'bearish' | null
+  breakout_level: number | null
   end_date: string
 }
 
@@ -985,6 +991,9 @@ export type InstrumentSnapshot = {
   minus_di?: number | null
   stoch_k?: number | null
   stoch_d?: number | null
+  obv?: number | null
+  supertrend?: number | null
+  supertrend_direction?: number | null
 }
 
 /** One stored indicator point (`GET /api/instruments/{ticker}/indicators`); warm-up values are `null`. */
@@ -999,6 +1008,13 @@ export type InstrumentIndicatorPoint = {
   atr14: number | null
   stoch_k: number | null
   stoch_d: number | null
+  rsi14?: number | null
+  macd?: number | null
+  macd_signal?: number | null
+  macd_hist?: number | null
+  obv?: number | null
+  supertrend?: number | null
+  supertrend_direction?: number | null
 }
 
 export type InstrumentIndicatorsResponse = {
@@ -1023,7 +1039,8 @@ export type InstrumentPattern = {
   status: PatternStatus
   start_date: string
   end_date: string
-  breakout_level: number
+  direction?: 'bullish' | 'bearish' | null
+  breakout_level: number | null
   points: InstrumentPatternPoint[]
 }
 

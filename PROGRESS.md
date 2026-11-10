@@ -2,6 +2,17 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## Head and Shoulders and Triangles implemented — 2026-11-10
+
+- Implemented `chart-patterns-head-shoulders-triangles`: both H&S orientations and ascending/descending/symmetrical triangles, nullable direction for forming triangles, nullable sloped breakout levels, explicit endpoint roles, chart trendline segments, Screener/Saved Screener support and Spanish/English guide diagrams. New patterns remain outside Watchlist alerts, Company Card context and the AI Screener schema.
+- Verification: focused engine patterns 61 passed; focused Laravel pattern/Screener/AI/alert/Card tests 79 passed; focused SPA pattern/chart/manual/alert tests 31 passed. Final `init.ps1`: Laravel 1015 passed / 6 skipped; Vitest 60 files / 480 passed; engine 160 passed; SPA lint/typecheck and production build passed. Existing warnings: RequireAuth lint, Vite bundle advisory and Starlette/httpx deprecation.
+- Calibration limit: the existing labeled calibration sample contains none of these five patterns, so no real-sample precision claim is available. Named limits were exercised with synthetic positive/near-breakout cases and remain conservative pending labeled review. No production data backfill was run.
+
+## Chart indicators extension — 2026-11-10
+
+- Started `chart-indicators-rsi-macd-obv-supertrend` after the owner requested RSI, MACD, OBV and Supertrend in the chart. RSI/MACD reuse computed snapshots; OBV and Supertrend are added to the engine, nullable snapshot storage and shared lazy chart-series endpoint. RSI/MACD/OBV render in panes; Supertrend overlays price. Selection stays off by default.
+- Added spec, backlog entry and DESIGN/indicator-expansion documentation. Baseline `.\init.ps1` passed before code changes (Laravel 1015 passed/6 skipped, frontend lint, 479 Vitest, build, engine 153). Post-change: SPA lint/typecheck passed (one pre-existing RequireAuth warning); PHP syntax, Python compile and `git diff --check` passed. Test suites have not been rerun; feature remains `in_progress`.
+
 ## CAC 40 universe implemented (`universe-cac40`, passing, awaiting validation) - 2026-11-08
 
 - Implemented as in `docs/specs/universes-cac40-ftse100.md` Feature 1, owner defaults O1 (ArcelorMittal via `MT.AS`, `.AS` a second suffix of `XPAR` only), O4 (non-public) and O5 (labels "Euronext Paris" / "Bolsa de París (Euronext)"). `ListingMarket::XPAR` (Europe/Paris 09:00-17:30, EUR, `.PA`, `extra_suffixes` `.AS`, new `suffixes()`; `tickerMatches` generalised), engine `MARKET_TIMEZONES`/`MARKET_SUFFIXES`/`MARKET_EXTRA_SUFFIXES`/`Literal`, `config/ingestion.php` `markets.XPAR` (2026 and 2027 Euronext closures; 24/31 Dec are half days in `early_closes` 14:05, not holidays), `CacUniverseSeeder` (slug `cac40`, "CAC 40", position 4) in `DatabaseSeeder` and `deploy/deploy.sh`, `database/data/cac40.csv` (40 rows) + `cac40.md` (hashes, per-ticker sector/country/industry, exceptions, rebalance), SPA `ListingMarketCode` + market labels es/en, user guide es/en, `deploy/README.md` item 18, ARCHITECTURE/CONTEXT/CONSTRAINTS/domain-model. `INGESTION_LOCK_WAIT_SECONDS` default 900 -> 3600 (`config`, `.env.example`).

@@ -50,6 +50,10 @@ export const CHART_THEME_COLORS = {
     atr: CHART_COLORS.tertiary,
     stochK: CHART_COLORS.tertiary,
     stochD: CHART_COLORS.muted,
+    rsi: CHART_COLORS.ink,
+    macd: CHART_COLORS.tertiary,
+    macdSignal: CHART_COLORS.muted,
+    obv: CHART_COLORS.ink,
     reference: CHART_COLORS.muted,
   },
   dark: {
@@ -66,6 +70,10 @@ export const CHART_THEME_COLORS = {
     atr: '#7aa2ff', // --color-tertiary
     stochK: '#7aa2ff', // --color-tertiary
     stochD: '#b5afa6', // --color-on-surface-variant
+    rsi: '#f2ede5',
+    macd: '#7aa2ff',
+    macdSignal: '#b5afa6',
+    obv: '#f2ede5',
     reference: '#b5afa6', // --color-on-surface-variant
   },
 } as const
@@ -189,7 +197,7 @@ export interface ChartPatternPoint {
 export interface ChartPattern {
   type: string
   status: string
-  breakout_level: number
+  breakout_level: number | null
   points: readonly ChartPatternPoint[]
 }
 
@@ -220,20 +228,44 @@ const HIGH_ROLES = new Set([
   'pole_peak',
   'flag_high',
   'pennant_high',
+  'left_shoulder',
+  'head',
+  'right_shoulder',
+  'upper_start',
+  'upper_end',
 ])
 
-/**
- * One breakout-level line per active pattern (chart-patterns-ui). The breakout
- * level is the only price line a pattern exposes: no target or stop is ever
- * derived (`CONSTRAINTS.md` -> Frontend Chart).
- */
+/** A horizontal line only when an active pattern has a finite breakout level. */
 export function patternLevels(
   patterns: readonly ChartPattern[],
   title: (pattern: ChartPattern) => string,
 ): ChartLevel[] {
   return patterns
-    .filter((pattern) => Number.isFinite(pattern.breakout_level))
+    .filter((pattern): pattern is ChartPattern & { breakout_level: number } => typeof pattern.breakout_level === 'number' && Number.isFinite(pattern.breakout_level))
     .map((pattern) => ({ price: pattern.breakout_level, title: title(pattern), color: CHART_COLORS.tertiary }))
+}
+
+/** Explicit sloped neckline and triangle-boundary segments with translated labels. */
+export function patternBoundarySegments(patterns: readonly ChartPattern[], title: (pattern: ChartPattern) => string, lineLabel: (kind: 'neckline' | 'upper' | 'lower') => string) {
+  const rolePairs: Record<string, [string, string]> = {
+    head_and_shoulders: ['neckline_start', 'neckline_end'],
+    inverse_head_and_shoulders: ['neckline_start', 'neckline_end'],
+    ascending_triangle: ['upper_start', 'upper_end'],
+    descending_triangle: ['upper_start', 'upper_end'],
+    symmetrical_triangle: ['upper_start', 'upper_end'],
+  }
+  return patterns.flatMap((pattern) => {
+    const roles = rolePairs[pattern.type]
+    if (!roles) return []
+    const points = roles.map((role) => pattern.points.find((point) => point.role === role))
+    if (!points[0] || !points[1]) return []
+    const segments = [{ points: points as [ChartPatternPoint, ChartPatternPoint], title: `${title(pattern)} · ${lineLabel(pattern.type.includes('head_and_shoulders') ? 'neckline' : 'upper')}` }]
+    if (!pattern.type.includes('head_and_shoulders')) {
+      const lower = ['lower_start', 'lower_end'].map((role) => pattern.points.find((point) => point.role === role))
+      if (lower[0] && lower[1]) segments.push({ points: lower as [ChartPatternPoint, ChartPatternPoint], title: `${title(pattern)} · ${lineLabel('lower')}` })
+    }
+    return segments
+  })
 }
 
 /**
@@ -256,7 +288,9 @@ export function patternMarkers(
       }
       markers.push({
         time: point.date,
-        position: HIGH_ROLES.has(point.role) ? 'aboveBar' : 'belowBar',
+        position: pattern.type === 'inverse_head_and_shoulders' && ['left_shoulder', 'head', 'right_shoulder'].includes(point.role)
+          ? 'belowBar'
+          : HIGH_ROLES.has(point.role) ? 'aboveBar' : 'belowBar',
         shape: 'circle',
         color: CHART_COLORS.tertiary,
         text: label(point.role),
@@ -313,12 +347,12 @@ export function toBandData(series: readonly ChartBandPoint[], key: BandKey): Lin
 }
 
 /** Keys of the stored series the sub-panes draw (chart-indicator-panels). */
-export type PaneKey = 'adx' | 'plus_di' | 'minus_di' | 'atr14' | 'stoch_k' | 'stoch_d'
+export type PaneKey = 'rsi14' | 'macd' | 'macd_signal' | 'macd_hist' | 'obv' | 'adx' | 'plus_di' | 'minus_di' | 'atr14' | 'stoch_k' | 'stoch_d'
 
-export type IndicatorKey = BandKey | PaneKey
+export type IndicatorKey = BandKey | PaneKey | 'supertrend'
 
 /** Structural stored point with every indicator optional (the API point is assignable). */
-export type ChartIndicatorPoint = { date: string } & { [K in IndicatorKey]?: number | null }
+export type ChartIndicatorPoint = { date: string; supertrend_direction?: number | null } & { [K in IndicatorKey]?: number | null }
 
 /** Fixed reference levels: ADX trend threshold and the stochastic zones. */
 export const ADX_REFERENCE = 25
@@ -337,6 +371,27 @@ export function toIndicatorData(series: readonly ChartIndicatorPoint[], key: Ind
     }
   }
   return points
+}
+
+/** MACD histogram; values above/below zero receive distinct, accessible colors. */
+export function toMacdHistogramData(series: readonly ChartIndicatorPoint[]): VolumePoint[] {
+  const points: VolumePoint[] = []
+  for (const point of series) {
+    const value = point.macd_hist
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      points.push({ time: point.date, value, color: value >= 0 ? CHART_COLORS.gain : CHART_COLORS.loss })
+    }
+  }
+  return points
+}
+
+/** Supertrend line with explicit whitespace breaks so up/down segments do not join. */
+export function toSupertrendData(series: readonly ChartIndicatorPoint[], direction: 1 | -1): Array<LinePoint | { time: string }> {
+  return series.map((point) => (
+    typeof point.supertrend === 'number' && point.supertrend_direction === direction
+      ? { time: point.date, value: point.supertrend }
+      : { time: point.date }
+  ))
 }
 
 /** `true` when no point has a complete band, so nothing can be drawn. */
@@ -372,8 +427,10 @@ export function bandSignalLevels(
 }
 
 /** `true` when a pane's primary line has no value at all (ADX, ATR or %K), so the pane would be empty. */
-export function noPaneData(series: readonly ChartIndicatorPoint[], pane: 'adx' | 'atr' | 'stochastic'): boolean {
-  const key: PaneKey = pane === 'adx' ? 'adx' : pane === 'atr' ? 'atr14' : 'stoch_k'
+export type ChartPaneId = 'rsi' | 'macd' | 'obv' | 'adx' | 'atr' | 'stochastic'
+
+export function noPaneData(series: readonly ChartIndicatorPoint[], pane: ChartPaneId): boolean {
+  const key: PaneKey = pane === 'rsi' ? 'rsi14' : pane === 'macd' ? 'macd' : pane === 'obv' ? 'obv' : pane === 'adx' ? 'adx' : pane === 'atr' ? 'atr14' : 'stoch_k'
   return toIndicatorData(series, key).length === 0
 }
 

@@ -51,6 +51,9 @@ class Snapshot(BaseModel):
     minus_di: float | None = None
     stoch_k: float | None = None
     stoch_d: float | None = None
+    obv: float | None = None
+    supertrend: float | None = None
+    supertrend_direction: int | None = None
 
 
 class IndicatorsComputeRequest(BaseModel):
@@ -101,16 +104,18 @@ class Pattern(BaseModel):
     """A chartist pattern active on the as-of bar.
 
     ``status`` is ``forming`` (geometry complete, no breakout yet) or
-    ``confirmed`` (breakout close within the last sessions). ``breakout_level``
-    is the single price line the pattern exposes; no target is ever computed.
+    ``confirmed`` (breakout close within the last sessions). Direction can be
+    null for a forming triangle; ``breakout_level`` is nullable when only
+    sloped geometry is honest. No target is ever computed.
     """
 
     type: str
+    direction: str | None = None
     status: str
     as_of_date: date
     start_date: date
     end_date: date
-    breakout_level: float
+    breakout_level: float | None
     points: list[PatternPoint]
     metadata: dict[str, float]
 

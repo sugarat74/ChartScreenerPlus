@@ -36,11 +36,14 @@ import {
   CHART_THEME_COLORS,
   bandSignalLevels,
   patternLevels,
+  patternBoundarySegments,
   patternMarkers,
   signalLevels,
   smaLevels,
   toBandData,
   toIndicatorData,
+  toMacdHistogramData,
+  toSupertrendData,
   toCandlestickData,
   toVolumeData,
 } from '../../lib/chartData.ts'
@@ -61,7 +64,7 @@ interface InteractiveChartProps {
   patterns?: InstrumentPattern[]
   /** Stored indicator series; `null` (default) draws no band, no pane and no band line. */
   series?: InstrumentIndicatorPoint[] | null
-  /** Switched-on indicators: Bollinger on the price pane, ADX/ATR/Stochastic as panes. */
+  /** Switched-on indicators: Bollinger/Supertrend on price; other indicators in sub-panes. */
   indicators?: readonly ChartIndicatorId[]
 }
 
@@ -81,6 +84,7 @@ export default function InteractiveChart({
   const upperBandTitle = t('chart.bandUpper')
   const lowerBandTitle = t('chart.bandLower')
   const bands = series !== null && indicators.includes('bollinger') ? series : null
+  const supertrendOn = series !== null && indicators.includes('supertrend')
   // Panes only exist once the stored series arrived; their height follows the count.
   const activeIds = series === null ? [] : activePanes(indicators)
   const paneKey = activeIds.join(',')
@@ -134,14 +138,29 @@ export default function InteractiveChart({
     volumeSeries.setData(toVolumeData(bars))
 
     const panes = (paneKey === '' ? [] : paneKey.split(',')) as ChartPaneId[]
-    // Indicator sub-panes after the volume pane (index 1): 2, 3, 4 in the fixed order.
+    // Indicator sub-panes after the volume pane (index 1), in their fixed order.
     // A pane's stretch factor is its pixel share (price and volume 210 each as
     // before, 120 per indicator pane), so the price pane keeps its size.
     if (series !== null && panes.length > 0) {
       const line = { priceLineVisible: false, lastValueVisible: true, lineWidth: 1 } as const
       panes.forEach((pane, offset) => {
         const index = 2 + offset
-        if (pane === 'adx') {
+        if (pane === 'rsi') {
+          const fixedRange = () => ({ priceRange: { minValue: 0, maxValue: 100 } })
+          const rsi = chart.addSeries(LineSeries, { ...line, color: chrome.rsi, lineWidth: 2, title: 'RSI', autoscaleInfoProvider: fixedRange }, index)
+          rsi.setData(toIndicatorData(series, 'rsi14'))
+          rsi.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.05 } })
+          for (const zone of [30, 70]) {
+            rsi.createPriceLine({ price: zone, color: chrome.reference, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: '' })
+          }
+        } else if (pane === 'macd') {
+          const histogram = chart.addSeries(HistogramSeries, { title: 'Histogram' }, index)
+          histogram.setData(toMacdHistogramData(series))
+          chart.addSeries(LineSeries, { ...line, color: chrome.macd, title: 'MACD' }, index).setData(toIndicatorData(series, 'macd'))
+          chart.addSeries(LineSeries, { ...line, color: chrome.macdSignal, title: 'Signal' }, index).setData(toIndicatorData(series, 'macd_signal'))
+        } else if (pane === 'obv') {
+          chart.addSeries(LineSeries, { ...line, color: chrome.obv, lineWidth: 2, title: 'OBV' }, index).setData(toIndicatorData(series, 'obv'))
+        } else if (pane === 'adx') {
           const adx = chart.addSeries(LineSeries, { ...line, color: chrome.adx, lineWidth: 2, title: 'ADX' }, index)
           adx.setData(toIndicatorData(series, 'adx'))
           adx.createPriceLine({
@@ -197,6 +216,23 @@ export default function InteractiveChart({
       for (let offset = 0; offset < panes.length; offset += 1) {
         layout[2 + offset]?.setStretchFactor(120)
       }
+    }
+
+    if (supertrendOn && series !== null) {
+      chart.addSeries(LineSeries, {
+        color: CHART_COLORS.gain,
+        lineWidth: 2,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        title: 'Supertrend up',
+      }).setData(toSupertrendData(series, 1))
+      chart.addSeries(LineSeries, {
+        color: CHART_COLORS.loss,
+        lineWidth: 2,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        title: 'Supertrend down',
+      }).setData(toSupertrendData(series, -1))
     }
 
     // Bollinger Bands (only when the overlay is on): stored series, warm-up
@@ -256,6 +292,10 @@ export default function InteractiveChart({
         title: level.title,
       })
     }
+    for (const segment of patternBoundarySegments(patterns, (pattern) => patternLabel(pattern.type, t), (kind) => t(`chart.patternLine.${kind}` as MessageKey))) {
+      chart.addSeries(LineSeries, { color: tint(CHART_COLORS.tertiary), lineWidth: 2, lineStyle: LineStyle.Dashed, title: segment.title })
+        .setData(segment.points.map((point) => ({ time: point.date as `${number}-${number}-${number}`, value: point.price })))
+    }
     const markers = patternMarkers(patterns, bars, (role) => t(`patterns.rolesShort.${role}` as MessageKey))
     if (markers.length > 0) {
       createSeriesMarkers(candleSeries, markers.map((marker) => ({ ...marker, color: tint(marker.color) })))
@@ -267,7 +307,7 @@ export default function InteractiveChart({
       // Removes the series, price lines and observers from the container.
       chart.remove()
     }
-  }, [ticker, bars, snapshot, signals, patterns, series, bands, paneKey, locale, pivotTitle, upperBandTitle, lowerBandTitle, t, theme])
+  }, [ticker, bars, snapshot, signals, patterns, series, bands, supertrendOn, paneKey, locale, pivotTitle, upperBandTitle, lowerBandTitle, t, theme])
 
   return (
     <div

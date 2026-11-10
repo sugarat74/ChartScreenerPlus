@@ -23,7 +23,7 @@ They go through the whole existing path with no new tables: engine detection, `c
 
 ## Non-Goals
 
-- No triangles, wedges, rectangles, head-and-shoulders, rounding bottoms or candlestick patterns (later batches; they need trendline or neckline fitting).
+- Wedges, rectangles, rounding bottoms and candlestick patterns stay outside this batch. Head-and-shoulders and triangles are tracked in `chart-patterns-head-shoulders-triangles`.
 - No price targets, measured moves, stops or probabilities. Each pattern still exposes one horizontal breakout level.
 - No change to the four existing types' rules or parameters. The only change to their output is the precedence rule (decision 6), which removes double counting. Tuning stays in `chart-patterns-calibration`.
 - No sloped breakout lines (pennant trendlines are not drawn) and no new chart drawing primitives.

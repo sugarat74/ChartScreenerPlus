@@ -12,14 +12,30 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * A chartist pattern active on an instrument's as-of bar.
  *
  * Rows are the *current* set written by `patterns:detect` (replace per
- * instrument); `breakout_level` is the only price line a pattern exposes and
- * no target is ever stored. `points` is a list of `{date, price, role}`.
+ * instrument); direction may be null while a triangle forms and
+ * `breakout_level` may be null when only sloped geometry is honest. No target
+ * is ever stored. `points` is a list of `{date, price, role}`.
  */
-#[Fillable(['instrument_id', 'as_of_date', 'type', 'status', 'start_date', 'end_date', 'breakout_level', 'points', 'metadata'])]
+#[Fillable(['instrument_id', 'as_of_date', 'type', 'status', 'direction', 'start_date', 'end_date', 'breakout_level', 'points', 'metadata'])]
 class ChartPattern extends Model
 {
     /** @use HasFactory<ChartPatternFactory> */
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $pattern): void {
+            if ($pattern->direction !== null) {
+                return;
+            }
+
+            if (in_array($pattern->type, ['double_bottom', 'cup_with_handle', 'bull_flag', 'triple_bottom', 'inverse_cup_with_handle', 'bull_pennant', 'inverse_head_and_shoulders'], true)) {
+                $pattern->direction = 'bullish';
+            } elseif (in_array($pattern->type, ['double_top', 'triple_top', 'bear_flag', 'bear_pennant', 'head_and_shoulders'], true)) {
+                $pattern->direction = 'bearish';
+            }
+        });
+    }
 
     /**
      * The fixed vocabulary owned by the engine (`engine/app/patterns/rules.py`
@@ -37,7 +53,14 @@ class ChartPattern extends Model
         'bear_flag',
         'bull_pennant',
         'bear_pennant',
+        'head_and_shoulders',
+        'inverse_head_and_shoulders',
+        'ascending_triangle',
+        'descending_triangle',
+        'symmetrical_triangle',
     ];
+
+    public const LEGACY_TYPES = ['double_top', 'double_bottom', 'cup_with_handle', 'bull_flag', 'triple_top', 'triple_bottom', 'inverse_cup_with_handle', 'bear_flag', 'bull_pennant', 'bear_pennant'];
 
     public const STATUSES = ['forming', 'confirmed'];
 

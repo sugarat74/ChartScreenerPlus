@@ -11,10 +11,12 @@ from app.indicators.core import (
     directional_indicators,
     ema,
     macd,
+    on_balance_volume,
     rsi,
     rvol,
     sma,
     stochastic,
+    supertrend,
 )
 from app.models import Bar, Snapshot
 
@@ -29,6 +31,8 @@ STOCHASTIC_PERIODS = (14, 3, 3)
 BOLLINGER_PERIOD = 20
 BOLLINGER_DEVIATIONS = 2.0
 RVOL_PERIOD = 50
+SUPERTREND_PERIOD = 10
+SUPERTREND_MULTIPLIER = 3.0
 
 
 def compute_snapshots(bars: list[Bar]) -> list[Snapshot]:
@@ -59,6 +63,8 @@ def compute_snapshots(bars: list[Bar]) -> list[Snapshot]:
         closes, BOLLINGER_PERIOD, BOLLINGER_DEVIATIONS
     )
     rvol50 = rvol(volumes, RVOL_PERIOD)
+    obv = on_balance_volume(closes, volumes)
+    supertrend_values, supertrend_directions = supertrend(highs, lows, closes, SUPERTREND_PERIOD, SUPERTREND_MULTIPLIER)
 
     return [
         Snapshot(
@@ -82,6 +88,9 @@ def compute_snapshots(bars: list[Bar]) -> list[Snapshot]:
             minus_di=minus_di[index],
             stoch_k=stoch_k[index],
             stoch_d=stoch_d[index],
+            obv=obv[index],
+            supertrend=supertrend_values[index],
+            supertrend_direction=supertrend_directions[index],
         )
         for index, bar in enumerate(bars)
     ]

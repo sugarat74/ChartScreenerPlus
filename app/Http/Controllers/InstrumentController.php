@@ -77,6 +77,7 @@ class InstrumentController extends Controller
             ->map(fn (ChartPattern $pattern): array => [
                 'type' => $pattern->type,
                 'status' => $pattern->status,
+                'direction' => $pattern->direction,
                 'start_date' => $pattern->start_date->format('Y-m-d'),
                 'end_date' => $pattern->end_date->format('Y-m-d'),
                 'breakout_level' => $pattern->breakout_level,
@@ -132,6 +133,13 @@ class InstrumentController extends Controller
                 'atr14' => $this->nullableFloat($snapshot->atr14),
                 'stoch_k' => $this->nullableFloat($snapshot->stoch_k),
                 'stoch_d' => $this->nullableFloat($snapshot->stoch_d),
+                'rsi14' => $this->nullableFloat($snapshot->rsi14),
+                'macd' => $this->nullableFloat($snapshot->macd),
+                'macd_signal' => $this->nullableFloat($snapshot->macd_signal),
+                'macd_hist' => $this->nullableFloat($snapshot->macd_hist),
+                'obv' => $this->nullableFloat($snapshot->obv),
+                'supertrend' => $this->nullableFloat($snapshot->supertrend),
+                'supertrend_direction' => $snapshot->supertrend_direction === null ? null : (int) $snapshot->supertrend_direction,
             ])
             ->all();
 
@@ -234,6 +242,9 @@ class InstrumentController extends Controller
             'minus_di' => $this->nullableFloat($snapshot->minus_di),
             'stoch_k' => $this->nullableFloat($snapshot->stoch_k),
             'stoch_d' => $this->nullableFloat($snapshot->stoch_d),
+            'obv' => $this->nullableFloat($snapshot->obv),
+            'supertrend' => $this->nullableFloat($snapshot->supertrend),
+            'supertrend_direction' => $snapshot->supertrend_direction === null ? null : (int) $snapshot->supertrend_direction,
         ];
     }
 

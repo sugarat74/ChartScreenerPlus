@@ -68,6 +68,9 @@ class ComputeIndicators extends Command
         'minus_di',
         'stoch_k',
         'stoch_d',
+        'obv',
+        'supertrend',
+        'supertrend_direction',
     ];
 
     /**
@@ -207,7 +210,7 @@ class ComputeIndicators extends Command
      * A missing or invalid value becomes `null` (never a wrong number); an
      * invalid date drops the whole snapshot.
      *
-     * @return array{date: string, values: array<string, float|null>}|null
+     * @return array{date: string, values: array<string, float|int|null>}|null
      */
     private function normalizeSnapshot(mixed $snapshot): ?array
     {
@@ -225,6 +228,11 @@ class ComputeIndicators extends Command
 
         foreach (self::SNAPSHOT_COLUMNS as $column) {
             $value = $snapshot[$column] ?? null;
+            if ($column === 'supertrend_direction') {
+                $direction = is_numeric($value) ? (float) $value : 0.0;
+                $values[$column] = in_array($direction, [-1.0, 1.0], true) ? (int) $direction : null;
+                continue;
+            }
             $values[$column] = is_numeric($value) ? (float) $value : null;
         }
 

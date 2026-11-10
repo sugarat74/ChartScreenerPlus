@@ -24,7 +24,7 @@ class ScreenerQuerySchema
 
     public const MAX_SIGNALS = 9;
 
-    public const MAX_PATTERNS = 10; // the whole ChartPattern::TYPES vocabulary
+    public const MAX_PATTERNS = 10; // AI vocabulary deliberately excludes newer pattern types
 
     public const MAX_UNSUPPORTED = 5;
 
@@ -80,7 +80,7 @@ class ScreenerQuerySchema
                 ],
                 'pattern' => [
                     'type' => 'array',
-                    'items' => ['type' => 'string', 'enum' => ScreenerFilterParser::PATTERN_TYPES],
+                    'items' => ['type' => 'string', 'enum' => \App\Models\ChartPattern::LEGACY_TYPES],
                     'description' => 'Chartist patterns, OR-combined. At most 10, no duplicates. Empty when not requested.',
                 ],
                 'pattern_status' => [
@@ -141,7 +141,7 @@ class ScreenerQuerySchema
             'min_rvol' => self::number($data['min_rvol'], self::MAX_RVOL),
             'price_above_sma200' => self::boolean($data['price_above_sma200']),
             'ma_cross' => self::nullableEnum($data['ma_cross'], ScreenerFilterParser::MA_CROSSES),
-            'pattern' => self::enumList($data['pattern'], ScreenerFilterParser::PATTERN_TYPES, self::MAX_PATTERNS),
+            'pattern' => self::enumList($data['pattern'], \App\Models\ChartPattern::LEGACY_TYPES, self::MAX_PATTERNS),
             'pattern_status' => self::enum($data['pattern_status'], ScreenerFilterParser::PATTERN_STATUSES),
             'sort' => self::enum($data['sort'], ScreenerFilterParser::SORTS),
             'sector_trend' => self::nullableEnum($data['sector_trend'], ScreenerFilterParser::SECTOR_TRENDS),

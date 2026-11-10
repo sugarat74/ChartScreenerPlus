@@ -7,17 +7,17 @@
 
 export const CHART_INDICATORS_STORAGE_KEY = 'chartiko.chart.indicators'
 
-/** Closed list of indicator toggles: one price overlay, then the sub-panes (chart-indicator-panels). */
-export const CHART_INDICATOR_IDS = ['bollinger', 'adx', 'atr', 'stochastic'] as const
+/** Closed list of price overlays and sub-pane toggles. */
+export const CHART_INDICATOR_IDS = ['bollinger', 'supertrend', 'rsi', 'macd', 'obv', 'adx', 'atr', 'stochastic'] as const
 
 export type ChartIndicatorId = (typeof CHART_INDICATOR_IDS)[number]
 
 /** The toggles that get their own pane under the volume pane, in pane order. */
-export const CHART_PANE_IDS = ['adx', 'atr', 'stochastic'] as const
+export const CHART_PANE_IDS = ['rsi', 'macd', 'obv', 'adx', 'atr', 'stochastic'] as const
 
 export type ChartPaneId = (typeof CHART_PANE_IDS)[number]
 
-/** Active panes of a selection, in the fixed pane order (ADX, ATR, Stochastic). */
+/** Active panes of a selection, in a fixed order independent of toggle order. */
 export function activePanes(selection: readonly ChartIndicatorId[]): ChartPaneId[] {
   return CHART_PANE_IDS.filter((id) => selection.includes(id))
 }

@@ -32,7 +32,7 @@ class IndicatorsExpansionStorageTest extends TestCase
     /** @return list<string> */
     private function seriesKeys(): array
     {
-        return ['date', 'bb_upper', 'bb_middle', 'bb_lower', 'adx', 'plus_di', 'minus_di', 'atr14', 'stoch_k', 'stoch_d'];
+        return ['date', 'bb_upper', 'bb_middle', 'bb_lower', 'adx', 'plus_di', 'minus_di', 'atr14', 'stoch_k', 'stoch_d', 'rsi14', 'macd', 'macd_signal', 'macd_hist', 'obv', 'supertrend', 'supertrend_direction'];
     }
 
     private function snapshots(Instrument $instrument, int $count, array $overrides = []): void
@@ -195,7 +195,7 @@ class IndicatorsExpansionStorageTest extends TestCase
 
         $snapshot = $this->getJson('/api/instruments/NVDA')->assertOk()->json('snapshot');
 
-        $this->assertSame([...self::OLD_KEYS, ...self::NEW_COLUMNS], array_keys($snapshot));
+        $this->assertSame([...self::OLD_KEYS, ...self::NEW_COLUMNS, 'obv', 'supertrend', 'supertrend_direction'], array_keys($snapshot));
         $this->assertEqualsWithDelta(2.5, $snapshot['atr14'], 0.0001);
         $this->assertNull($snapshot['plus_di']);
         $this->assertIsFloat($snapshot['stoch_k']);

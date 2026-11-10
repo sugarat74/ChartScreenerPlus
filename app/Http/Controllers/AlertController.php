@@ -71,7 +71,7 @@ class AlertController extends Controller
                 'array',
                 'min:1',
             ],
-            'pattern_types.*' => ['required', 'string', Rule::in(ChartPattern::TYPES)],
+            'pattern_types.*' => ['required', 'string', Rule::in(ChartPattern::LEGACY_TYPES)],
             'pattern_events' => [
                 'sometimes',
                 Rule::prohibitedIf(in_array($kind, [Alert::KIND_SCREENER, Alert::KIND_WATCHLIST], true)),
@@ -149,7 +149,7 @@ class AlertController extends Controller
                 'array',
                 'min:1',
             ],
-            'pattern_types.*' => ['required', 'string', Rule::in(ChartPattern::TYPES)],
+            'pattern_types.*' => ['required', 'string', Rule::in(ChartPattern::LEGACY_TYPES)],
             'pattern_events' => [
                 'sometimes',
                 Rule::prohibitedIf($owned->kind !== Alert::KIND_WATCHLIST_PATTERN),
@@ -176,7 +176,7 @@ class AlertController extends Controller
 
         // Changing the pattern types or events to a different canonical set
         // starts a fresh baseline, like the Signal types above.
-        foreach (['pattern_types' => ChartPattern::TYPES, 'pattern_events' => Alert::PATTERN_EVENTS] as $field => $vocabulary) {
+        foreach (['pattern_types' => ChartPattern::LEGACY_TYPES, 'pattern_events' => Alert::PATTERN_EVENTS] as $field => $vocabulary) {
             if (array_key_exists($field, $validated)) {
                 $values = $this->canonical($validated[$field], $vocabulary);
                 $resetBaseline = $resetBaseline || $values !== $owned->{$field};

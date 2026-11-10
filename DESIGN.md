@@ -184,3 +184,7 @@ Selectable in the header (sun/moon control next to the language selector, `ui-da
 - ~~Charting library and whether the embedded TradingView widget's built-in look conflicts with the terminal aesthetic.~~ Resolved by `chart-interactive` (2026-09-30): **self-hosted Lightweight Charts 5.2.1**, not the embedded widget. The terminal aesthetic is preserved by mapping every canvas color to an `index.css` token (surface/grid/text/gain/loss/accent) inside the same 2px-border, hard-shadow card; the library's attribution logo stays visible.
 - Density of the Candidate table on smaller laptops.
 - ~~How to represent "stale" vs "fresh" EOD data visually.~~ Resolved by `market-context-ui` (2026-10-23): every reading carries its own date line; a stale one adds a bordered «Desactualizado» / «Stale» text chip in the loss ink with an explanatory `title`, never colour alone.
+
+## Additional chart indicators (2026-11-10)
+
+RSI (14), MACD (12, 26, 9), OBV and Supertrend (10, 3) join the existing indicator picker, remembered per browser and off by default. RSI, MACD and OBV each use a synchronized pane below volume; RSI is fixed at 0–100 with 30/70 guides, MACD shows both lines and a positive/negative histogram. Supertrend overlays the price pane. All four share one lazy stored-series request; the SPA does not calculate indicator values. Indicator panes add 120 px each to chart height and preserve shared crosshair/time scale.

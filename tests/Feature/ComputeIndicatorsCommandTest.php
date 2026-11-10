@@ -74,6 +74,9 @@ class ComputeIndicatorsCommandTest extends TestCase
             'minus_di' => null,
             'stoch_k' => null,
             'stoch_d' => null,
+            'obv' => null,
+            'supertrend' => null,
+            'supertrend_direction' => null,
         ], $overrides);
     }
 
@@ -153,7 +156,7 @@ class ComputeIndicatorsCommandTest extends TestCase
         foreach ([
             'sma20', 'sma50', 'sma200', 'ema21', 'ema55', 'rsi14', 'adx',
             'macd', 'macd_signal', 'macd_hist', 'bb_upper', 'bb_middle', 'bb_lower', 'rvol',
-            'atr14', 'plus_di', 'minus_di', 'stoch_k', 'stoch_d',
+            'atr14', 'plus_di', 'minus_di', 'stoch_k', 'stoch_d', 'obv', 'supertrend', 'supertrend_direction',
         ] as $column) {
             $this->assertNull(
                 $snapshot->getAttribute($column),

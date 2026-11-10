@@ -107,7 +107,7 @@ export const guideEn: GuideTexts = {
         },
         {
           term: 'Chart patterns',
-          summary: 'Shows stocks with an active pattern of the chosen types. The ten types are grouped as bullish (double and triple bottom, cup with handle, bull flag, bullish pennant) and bearish (double and triple top, inverse cup with handle, bear flag, bearish pennant).',
+          summary: 'Shows stocks with an active pattern of the chosen types. Fifteen types are grouped by fixed direction; triangle direction stays neutral until a breakout is confirmed.',
           details: [
             'The status control ("Any", "Forming", "Confirmed") becomes available once a pattern is chosen and only narrows those patterns.',
           ],
@@ -180,7 +180,7 @@ export const guideEn: GuideTexts = {
       ],
       notes: [
         'The illustrations are diagrams with fictional data. They explain the shape of each indicator; they do not show live quotes or current signals.',
-        'Chartiko also computes the 21- and 55-session EMAs, the 14-session ADX and ATR, the Bollinger Bands (20 sessions, 2 deviations) and the Stochastic (14, 3, 3). ADX, %B, band width, ATR % and Stochastic %K can be filtered, sorted and shown as optional columns of the candidate list (see "The candidate list"); the Bollinger Bands can also be drawn on the chart, and the ADX (with +DI and -DI), the ATR and the Stochastic (%K and %D, with lines at 20 and 80) each get their own panel under the price: use the "Indicators" buttons above the chart (all off by default; your choice is remembered in this browser). The ADX panel marks the 25 level. When a close crosses a band, the chart also marks that band level with a dashed line.',
+        'Chartiko also computes the 21- and 55-session EMAs, the 14-session ADX and ATR, the Bollinger Bands (20 sessions, 2 deviations) and the Stochastic (14, 3, 3). ADX, %B, band width, ATR % and Stochastic %K can be filtered, sorted and shown as optional columns of the candidate list (see "The candidate list"); Bollinger Bands and Supertrend (10, 3) are drawn over price. RSI (14), MACD (12, 26, 9), OBV, ADX (with +DI and -DI), ATR and Stochastic (%K and %D, with lines at 20 and 80) each get their own panel under price: use the "Indicators" buttons above the chart (all off by default; your choice is remembered in this browser). The ADX panel marks 25 and RSI marks 30 and 70. When a close crosses a band, the chart also marks that band level with a dashed line.',
       ],
     },
     {
@@ -216,7 +216,7 @@ export const guideEn: GuideTexts = {
       title: 'Chart patterns',
       paragraphs: [
         'Patterns are geometric price formations that Chartiko detects automatically with fixed rules on local highs and lows (a high or low is confirmed when 5 sessions surround it on each side, so a pattern appears at the earliest 5 sessions after its last local high or low).',
-        '"Forming" means the figure is complete but has not broken its level yet. "Confirmed" means a close broke through the breakout level within the last 10 sessions: above it for bullish patterns, below it for bearish ones (double and triple top, inverse cup with handle, bear flag, bearish pennant). After that, or if the price invalidates the figure, the pattern is no longer shown. A forming pattern also expires if it does not break out in time: 60 sessions after the last bottom or top, a handle longer than 25 sessions or a flag or pennant longer than 20. Chartiko only shows the breakout level: it never computes price targets.',
+        '"Forming" means the figure is complete but has not broken its boundary yet. "Confirmed" means a close broke through the breakout level within the last 10 sessions. Head-and-shoulders patterns have a fixed direction; triangles get a direction only at breakout. After that, or if the price invalidates the figure, the pattern is no longer shown. Chartiko draws the sloped neckline or triangle boundaries and does not invent a horizontal forming level or compute price targets.',
       ],
       entries: [
         {
@@ -278,6 +278,36 @@ export const guideEn: GuideTexts = {
           summary: 'The bear flag pole followed by a pennant of 5 to 20 sessions that narrows the same way, on lower volume and without retracing more than half of the pole.',
           illustration: { kind: 'bearPennant', alt: 'Price falling sharply, narrowing between two converging lines and then breaking downward.' },
           details: ['Breakout level: the low of the pennant. Confirmed by a close below it; a later close above the pennant high invalidates it. When the same pole also forms a bear flag, only the pennant is shown.'],
+        },
+        {
+          term: 'Head and shoulders',
+          summary: 'Three swing highs: the middle head stands above two shoulders of similar height, with a neckline through the two intervening lows.',
+          illustration: { kind: 'headAndShoulders', alt: 'Three price peaks with the middle peak higher and a sloping neckline through the intervening lows.' },
+          details: ['The pattern is bearish. A close below the sloped neckline confirms it. The chart marks both neckline endpoints; no target is calculated.'],
+        },
+        {
+          term: 'Inverse head and shoulders',
+          summary: 'Three swing lows: the middle head falls below two shoulders of similar depth, with a neckline through the intervening highs.',
+          illustration: { kind: 'inverseHeadAndShoulders', alt: 'Three price troughs with the middle trough lower and a sloping neckline through the intervening highs.' },
+          details: ['The pattern is bullish. A close above the sloped neckline confirms it. The chart marks both neckline endpoints; no target is calculated.'],
+        },
+        {
+          term: 'Ascending triangle',
+          summary: 'A near-horizontal upper boundary and rising lower boundary form converging swing highs and lows.',
+          illustration: { kind: 'ascendingTriangle', alt: 'Price swings between a flat upper line and a rising lower line.' },
+          details: ['While forming, the direction is neutral. A close above the upper boundary confirms a bullish breakout; a close below the lower boundary confirms a bearish breakout. The chart draws both sloped or flat boundaries.'],
+        },
+        {
+          term: 'Descending triangle',
+          summary: 'A falling upper boundary and a near-horizontal lower boundary form converging swing highs and lows.',
+          illustration: { kind: 'descendingTriangle', alt: 'Price swings between a falling upper line and a flat lower line.' },
+          details: ['While forming, the direction is neutral. A close above the upper boundary confirms a bullish breakout; a close below the lower boundary confirms a bearish breakout. The chart draws both boundaries.'],
+        },
+        {
+          term: 'Symmetrical triangle',
+          summary: 'A falling upper boundary and rising lower boundary converge around successive swing highs and lows.',
+          illustration: { kind: 'symmetricalTriangle', alt: 'Price swings between a falling upper line and a rising lower line.' },
+          details: ['The type stays symmetrical whichever way it breaks. Direction is neutral while forming and is set to bullish or bearish on the confirming close. The chart draws both boundaries.'],
         },
       ],
       notes: [

@@ -65,6 +65,7 @@ class ScreenerFilterParser
      * Pattern types accepted by `?pattern` (owned by `ChartPattern`).
      */
     public const PATTERN_TYPES = ChartPattern::TYPES;
+    public const ALERT_PATTERN_TYPES = ChartPattern::LEGACY_TYPES;
 
     /**
      * Pattern statuses accepted by `?pattern_status` (`any` = both).

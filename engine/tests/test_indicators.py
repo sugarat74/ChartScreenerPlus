@@ -63,6 +63,9 @@ INDICATOR_FIELDS = (
     "minus_di",
     "stoch_k",
     "stoch_d",
+    "obv",
+    "supertrend",
+    "supertrend_direction",
 )
 
 client = TestClient(main_module.app)
@@ -337,7 +340,14 @@ def test_a_series_without_any_history_yields_only_nulls() -> None:
 
     assert len(snapshots) == 5
     for snapshot in snapshots:
-        assert all(getattr(snapshot, field) is None for field in INDICATOR_FIELDS)
+        assert all(
+            getattr(snapshot, field) is None
+            for field in INDICATOR_FIELDS
+            if field != "obv"
+        )
+    assert snapshots[0].obv == pytest.approx(1000.0)
+    assert snapshots[-1].obv == pytest.approx(5000.0)
+    assert compute_snapshots([]) == []
 
 
 def test_compute_endpoint_returns_one_snapshot_per_bar() -> None:
