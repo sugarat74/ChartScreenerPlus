@@ -100,6 +100,14 @@ class CopySqliteToPgsqlCommandTest extends TestCase
             ->assertFailed();
     }
 
+    public function test_every_migrated_table_has_an_explicit_copy_or_skip_policy(): void
+    {
+        $tables = array_column(DB::connection('sqlite_source')->getSchemaBuilder()->getTables(), 'name');
+        $classified = array_merge(CopySqliteToPgsql::COPIED_TABLES, CopySqliteToPgsql::SKIPPED_TABLES);
+        $this->assertSame([], array_values(array_diff($tables, $classified)), 'New migrations need a copy/skip decision.');
+        $this->assertSame([], array_values(array_intersect(CopySqliteToPgsql::COPIED_TABLES, CopySqliteToPgsql::SKIPPED_TABLES)));
+    }
+
     public function test_it_refuses_a_missing_source_file(): void
     {
         $this->artisan('db:copy-sqlite-to-pgsql', ['--source' => $this->sourcePath.'-missing'])

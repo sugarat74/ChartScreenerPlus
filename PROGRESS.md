@@ -14,6 +14,8 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 
 ## Free market events calendar implemented - 2026-11-10
 
+- PostgreSQL CI of the stacked London PR revealed that the two calendar tables were missing from the legacy SQLite-copy table classification. Added them to SKIPPED_TABLES (refreshed by events:refresh) and a driver-independent schema-policy regression so future new tables are detected by the SQLite gate too. PostgreSQL rerun follows in PR99.
+
 - Implemented market-events-calendar after the owner authorized the free scope: Fed/ECB meetings from CentralBankCalendar, and five US FRED release-date calendars (CPI, employment, GDP, income/outlays/PCE, retail). Earnings dates and extra European macro feeds are deferred. Existing Market Context access/legal gate preserved.
 - New closed FredClient parser, atomic per-source date replacement, persisted attempt/success/error metadata, opt-in events:refresh, daily 06:45 schedule and isolated US pipeline stage. Admin can rerun and inspect source failures. Registered-only events API validates filters and ranges; calendar shows upcoming/recent, 14/30/90-day horizons, region/type filters, sources/review dates, tentative/stale states and localized async states.
 - Verification: full init.ps1 (PowerShell child) exit 0: Laravel 1023 passed / 6 skipped; SPA 61 files / 486 passed; lint/typecheck/build passed; engine 160 passed. Final focused reruns after scalar-response protection and two page integration tests: MarketEventsTest 8 passed / 77 assertions; SPA calendar/page/Admin 28 passed. Earlier broader backend integration 37 passed / 303 assertions. Existing RequireAuth, Vite bundle and Starlette/httpx warnings remain.
