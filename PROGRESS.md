@@ -3,9 +3,18 @@
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
 
+
+## London pence foundation implemented - 2026-11-10
+
+- Implemented ingestion-xlon-gbx in feat/ingestion-xlon-gbx (passing; independent validation pending). XLON definitions/calendar, engine GBp-to-GBX normalization without conversion, London-only ratio/cap guard, labels/type support and fixture-backed coverage are written. No FTSE 100 seeder or public enablement.
+- Baseline init.ps1 passed before implementation. Focused engine London/source tests: 68 passed; London Laravel tests: 7 passed / 737 assertions; frontend Screener/chart GBX tests: 38 passed; lint/typecheck passed with the existing RequireAuth warning. Final init.ps1 after supporting fixes passed: Laravel1031 passed/6 skipped, SPA61 files/491 passed, lint/typecheck/build passed, engine186 passed. The26-case London engine suite includes BST timezone fallback. CI test and test-pgsql passed on aba5ad2, run42827026111; draft PR99. No deploy.
+- Live in-process FastAPI GET smoke against real Yahoo: AZN.L and BT-A.L returned GBX with 506 weekday bars each; SAN.PA EUR with 510. UK May4/May25/Aug31 absent from London and present in Paris. Max close ratios 1.1121/1.1043/1.0983. No DB writes or production commands. Real fixtures exclude the current incomplete AZN session; provenance in docs/specs/ingestion-xlon-gbx.md.
+- Calendar source check: LSE business-days confirms 2027 closures and 12:30 December half days; gov.uk England/Wales confirms all 2026/2027 holidays. Production timing/lock-contention measurement remains for later FTSE enablement.
+- Previous calendar work saved in local feat/market-events-calendar commits 965a70d/aef2d1f; the second fixes its new FRED fixture path casing for Linux. London branches from that state. Existing untracked specs/screener-filter-expansion/ remains untouched.
+
 ## Free market events calendar implemented - 2026-11-10
 
-- PostgreSQL CI of the stacked London PR revealed that the two calendar tables were missing from the legacy SQLite-copy table classification. Added them to SKIPPED_TABLES (refreshed by events:refresh) and a driver-independent schema-policy regression so future new tables are detected by the SQLite gate too. PostgreSQL rerun follows in PR99.
+- PostgreSQL CI of the stacked London PR revealed that the two calendar tables were missing from the legacy SQLite-copy table classification. Added them to SKIPPED_TABLES (refreshed by events:refresh) and a driver-independent schema-policy regression so future new tables are detected by the SQLite gate too. PostgreSQL rerun passed in PR99, run42827026111.
 
 - Implemented market-events-calendar after the owner authorized the free scope: Fed/ECB meetings from CentralBankCalendar, and five US FRED release-date calendars (CPI, employment, GDP, income/outlays/PCE, retail). Earnings dates and extra European macro feeds are deferred. Existing Market Context access/legal gate preserved.
 - New closed FredClient parser, atomic per-source date replacement, persisted attempt/success/error metadata, opt-in events:refresh, daily 06:45 schedule and isolated US pipeline stage. Admin can rerun and inspect source failures. Registered-only events API validates filters and ranges; calendar shows upcoming/recent, 14/30/90-day horizons, region/type filters, sources/review dates, tentative/stale states and localized async states.
@@ -70,9 +79,3 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 - Unchanged by design: default chart and requests (test asserts no `indicators` call with everything off), SMA/EMA/RSI/MACD not drawn, forecast, Company Card, AI schema.
 - Verified: Vitest 56 files / 439 passed (13 new), lint (1 pre-existing oxlint warning), tsc, build, `.\init.ps1` Baseline OK. Manual browser pass (temp SQLite with a seeded DEMO instrument, vite + artisan serve, both stopped afterwards): 1440 and 390 px, light and dark; default shows no indicators request, toggle draws bands aligned to candles plus the band-signal line, canvas count stable over repeated toggles and theme switch, no horizontal overflow at 390 px. Not verified: real production data, language switch visually (covered by es/en message keys), a real failing endpoint in the browser (Vitest covers error/retry).
 - Next: independent validation, then `chart-indicator-panels`.
-
-## Compact Screener filter panel planned (1 feature, not started) - 2026-11-05
-
-- Explicit user request: rethink the «Criterios técnicos» block as a cleaner, Finviz-style panel with the same options in less space. Planning only, no application code. New `screener-filter-panel-compact` and `docs/specs/screener-filter-panel-compact.md`.
-- Decision: one-row toolbar of value-showing triggers (Signals, RSI, Patterns, Sector) that open a single inline editor card, native selects for Min RVOL and MA cross, a toggle for Price above SMA200, count and Clear in the header. Tabs, whole-panel collapse and floating popovers rejected (reasons in the spec). Frontend only, no new dependency, same 30 criteria keys, URL, requests and Saved Screeners.
-- Open questions (with defaults) are in the spec. The column-header sort/filter menu idea stays separate.

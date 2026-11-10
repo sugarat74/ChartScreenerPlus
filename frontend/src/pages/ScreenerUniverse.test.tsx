@@ -19,6 +19,7 @@ const USER: AuthUser = { id: 1, name: 'Ana', email: 'ana@example.test', role: 'u
 let universes: ScreenerUniverse[] = []
 let saved: SavedScreener[] = []
 const requests: string[] = []
+const LONDON: ScreenerUniverse = { slug: 'london-fixture', name: 'London fixture', market: 'XLON', currency: 'GBX', members: 1, latest_date: '2026-11-09', is_default: false }
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -76,10 +77,11 @@ beforeEach(() => {
     }
     if (input.startsWith('/api/screener?')) {
       const eu = input.includes('universe=ibex35')
+      const london = input.includes('universe=london-fixture')
       return json({
-        universe: eu ? { slug: 'ibex35', name: 'IBEX 35' } : { slug: 'sp500', name: 'S&P 500' },
+        universe: london ? { slug: LONDON.slug, name: LONDON.name } : eu ? { slug: 'ibex35', name: 'IBEX 35' } : { slug: 'sp500', name: 'S&P 500' },
         sort: 'rvol_desc',
-        candidates: eu ? [candidate('SAN.MC', 'EUR', 'XMAD')] : [candidate('AAPL', 'USD', 'US')],
+        candidates: london ? [candidate('AZN.L', 'GBX', 'XLON')] : eu ? [candidate('SAN.MC', 'EUR', 'XMAD')] : [candidate('AAPL', 'USD', 'US')],
         meta: { limit: 50, offset: 0, returned: 1, total: 1 },
       })
     }
@@ -93,6 +95,16 @@ afterEach(() => {
 })
 
 describe('ScreenerPage universe selector (universe-selector-ui)', () => {
+  it.each([['es', 'Cierre (GBX)'], ['en', 'Close (GBX)']])('keeps London price filters and displays pence in %s', async (locale, heading) => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale)
+    universes = [SP500, LONDON]
+    render(tree(null, '/?universe=london-fixture&close_min=500'))
+    await screen.findByText('AZN.L')
+    expect(screen.getAllByText(heading).length).toBeGreaterThan(0)
+    expect(document.body.textContent).toContain(`${heading} ≥ 500`)
+    expect(screenerCalls().at(-1)).toContain('close_min=500')
+    expect(screen.getByTestId('url').textContent).toContain('close_min=500')
+  })
   it('shows nothing extra while only one universe is public and keeps the plain Close heading', async () => {
     universes = [SP500]
     render(tree(null, '/'))

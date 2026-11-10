@@ -204,6 +204,20 @@ describe('Market Context strip and pattern chips (market-context-patterns)', () 
 })
 
 describe('US-only panels follow market and availability (universe-selector-ui)', () => {
+  it('shows the LSE/GBX chart header with US-only panels unavailable', async () => {
+    vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({
+      ticker: 'AZN.L', company: 'AstraZeneca', sector: 'Health Care', exchange: 'LSE',
+      kind: 'stock', market: 'XLON', currency: 'GBX',
+      availability: { company_card: false, fundamentals: false, forecast: false },
+    }))
+    show('AZN.L', ALLOWED)
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    expect(screen.getByText('AstraZeneca · Health Care · LSE · GBX')).toBeTruthy()
+    expect(companyCardApi.get).not.toHaveBeenCalled()
+    expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
+    expect(screen.queryByRole('region', { name: 'Contexto de mercado' })).toBeNull()
+  })
   const MADRID = {
     ticker: 'SAN.MC',
     company: 'Banco Santander',
