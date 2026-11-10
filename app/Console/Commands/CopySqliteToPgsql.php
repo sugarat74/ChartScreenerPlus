@@ -87,6 +87,10 @@ class CopySqliteToPgsql extends Command
         // Market Regime: derived, rebuilt by `market-regime:compute`;
         // postdates the cut-over.
         'market_regime_snapshots',
+        // Scheduled release dates and refresh metadata postdate the cut-over;
+        // reloaded by events:refresh, like the macro data above.
+        'market_event_sources',
+        'market_events',
     ];
 
     private const CHUNK = 500;
