@@ -533,3 +533,14 @@ The release migration creates `market_events` and `market_event_sources`. Fed/EC
 After deployment, run `php artisan events:refresh` once (as the deploy user, from current) or use Admin > Market Context > events:refresh. Existing cron/scheduler then refreshes dates daily at 06:45 in the ingestion timezone, including weekends, and the US pipeline refreshes them after macro. The Admin run status and calendar-source details report failures. A failed source retains its last good dates with a stale warning. Check source timestamps before relying on dates. No Screener refresh is needed for calendar-only changes.
 
 This does not enable MARKET_CONTEXT_PUBLIC or bypass the existing FRED notice/legal gate. Dates are visible only to users allowed by view-market-context. Earnings calendars and other European macro feeds remain deferred. Turning MACRO_ENABLED off stops remote refreshes and hides stored FRED dates; Fed/ECB meetings remain visible.
+
+
+## London foundation (ingestion-xlon-gbx)
+
+This release adds the XLON calendar and GBX handling only. It seeds no London universe and does not enable the FTSE 100. The schedule and market-hours strip discover London only after a Screener universe with market XLON exists; that seeder is a later feature.
+
+Quoted pence remain GBX without dividing prices by100. GBP-labelled, USD or EUR responses on a GBX Instrument fail the existing currency_mismatch check without persisting that item's bars. A suspected >=40x London scale step or GBX close above1,000,000 produces an engine502. Inspect the source and units; do not force-convert failed data. Deploy Laravel and engine from the same release so GBp normalization is present in the engine.
+
+Default session08:00-16:30 Europe/London, pipeline17:15 including half days; optional INGESTION_XLON_TIMEZONE / MARKET_OPEN / MARKET_CLOSE / BUFFER_MINUTES overrides follow config/ingestion.php. Refresh its2026/2027 England/Wales holiday snapshot annually from the official LSE business-days calendar and gov.uk/bank-holidays.json. Half-day closing process starts12:30 on24/31 December. Auctions are not separately modelled.
+
+The existing INGESTION_LOCK_WAIT_SECONDS=3600 applies to all European pipelines, which share the same UTC start. Before later FTSE enablement, measure full production pipeline durations and stagger with per-market buffer overrides if they cannot fit the wait budget. No production capacity claim is made from fixture tests.

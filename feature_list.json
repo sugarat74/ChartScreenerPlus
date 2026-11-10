@@ -989,21 +989,25 @@
   {
     "id": "ingestion-xlon-gbx",
     "area": "ingestion",
-    "planning_spec": "docs/specs/universes-cac40-ftse100.md (prepared 2026-11-08)",
+    "planning_spec": "docs/specs/ingestion-xlon-gbx.md",
     "title": "London Listing Market and pence (GBX) handling",
     "user_visible_behavior": "No visible change by itself: prepares the engine, calendar and schedule for London-listed stocks quoted in pence.",
     "depends_on": [
       "universe-cac40"
     ],
-    "status": "not_started",
+    "status": "in_progress",
     "verification": [
       "Engine fixtures: real AZN.L (GBp) returns GBX with unchanged prices, a GBP-labelled response stays GBP, a 100x scale step is rejected, market mismatch returns 422",
       "currency_mismatch fails cleanly for GBP/USD/EUR on a GBX Instrument; XLON calendar tests (UK-only bank holidays, 12:30 early closes, GMT/BST) and the 17:15 Europe/London schedule event; scale-invariance check on a fixture universe",
       "Live smoke on AZN.L and BT-A.L: GBX bars, weekday dates, no bar on UK bank holidays but bars on those days for SAN.PA",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-11-08. Decision: store and show pence as quoted with currency code GBX (no arithmetic); fixes the engine upper-casing of Yahoo's 'GBp' to 'GBP'. Live check 2026-11-08 of all 100 FTSE 100 .L symbols: 97 GBp, 2 USD, 1 EUR."
+    "evidence": [
+      "Full init.ps1 exit0: Laravel1030 passed/6 skipped, SPA61 files/491 passed, lint/typecheck/build passed, engine185 passed. Final London engine suite26 passed after adding a BST timezone fallback regression.",
+      "London Laravel fixture suite7 passed/737 assertions. Live in-process API GET with real Yahoo: AZN.L/BT-A.L GBX506 bars each, SAN.PA EUR510; weekdays and UK-only bank holidays verified. No production DB writes.",
+      "PostgreSQL CI and independent validation pending. FTSE universe/public enablement and full production pipeline-contention timing remain outside this foundation release."
+    ],
+    "notes": "Implementation requested 2026-11-10. Store source pence unchanged as GBX; London calendar/schedule and engine scale guards only. No FTSE 100 seeder or public enablement. Umbrella contract: docs/specs/universes-cac40-ftse100.md Feature 2."
   },
   {
     "id": "universe-ftse100",

@@ -24,7 +24,7 @@ use Throwable;
  * behavior and ledger.
  *
  * Per Listing Market (docs/specs/multi-market-universes.md, Feature 2):
- * `--market=US|XMAD|XETR|XPAR` runs the market's Screener universes in `position`
+ * `--market=US|XMAD|XETR|XPAR|XLON` runs the market's Screener universes in `position`
  * order. A ticker that belongs to several universes is handled once, by the
  * first one (`--except-universe`). The Market Context block, macro, Market
  * Regime, alerts and forecast stages are US-only. The first universe keeps
@@ -74,7 +74,7 @@ class RunIngestionPipeline extends Command
      * @var string
      */
     protected $signature = 'ingestion:pipeline
-                            {--market=US : Listing Market to run (US, XMAD, XETR or XPAR)}
+                            {--market=US : Listing Market to run (US, XMAD, XETR, XPAR or XLON)}
                             {--universe= : Limit the run to one universe slug (defaults to every Screener universe of the market, in position order)}
                             {--force : Run even on a non-trading day}';
 

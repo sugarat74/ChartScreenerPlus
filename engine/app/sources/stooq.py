@@ -13,6 +13,7 @@ unusable response becomes a controlled upstream error rather than bad data.
 import csv
 import io
 import json
+import math
 from dataclasses import dataclass
 from datetime import date, datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -41,13 +42,16 @@ MARKET_TIMEZONES = {
     "XMAD": "Europe/Madrid",
     "XETR": "Europe/Berlin",
     "XPAR": "Europe/Paris",
+    "XLON": "Europe/London",
 }
 # Every suffix that identifies the market. XPAR also accepts ".AS": the documented
 # ArcelorMittal exception (docs/specs/universes-cac40-ftse100.md, C3), whose only
 # Yahoo line is Euronext Amsterdam.
-MARKET_SUFFIXES = {"US": None, "XMAD": ".MC", "XETR": ".DE", "XPAR": ".PA"}
+MARKET_SUFFIXES = {"US": None, "XMAD": ".MC", "XETR": ".DE", "XPAR": ".PA", "XLON": ".L"}
 MARKET_EXTRA_SUFFIXES = {"XPAR": (".AS",)}
 DEFAULT_MARKET = "US"
+MAX_LONDON_CLOSE_RATIO = 40.0
+MAX_PENCE_CLOSE = 1_000_000.0
 
 
 @dataclass(frozen=True)
@@ -191,11 +195,9 @@ def parse_yahoo_eod(text: str, market: str = DEFAULT_MARKET) -> EodResult:
     meta = meta if isinstance(meta, dict) else {}
     timezone_info = _resolve_timezone(meta.get("exchangeTimezoneName"), market)
     raw_currency = meta.get("currency")
-    currency = (
-        raw_currency.strip().upper()
-        if isinstance(raw_currency, str) and raw_currency.strip()
-        else None
-    )
+    raw_currency = raw_currency.strip() if isinstance(raw_currency, str) else ""
+    # Yahoo's case-sensitive GBp means pence; GBP means pounds. Never rescale.
+    currency = "GBX" if raw_currency in ("GBp", "GBX") else (raw_currency.upper() or None)
 
     series = (timestamps, opens, highs, lows, closes, volumes)
     if not all(isinstance(values, list) for values in series):
@@ -230,7 +232,29 @@ def parse_yahoo_eod(text: str, market: str = DEFAULT_MARKET) -> EodResult:
 
     bars.sort(key=lambda bar: bar.date)
 
+    if market == "XLON":
+        _validate_london_scale(bars, currency)
+
     return EodResult(bars=bars, currency=currency)
+
+
+def _validate_london_scale(bars: list[Bar], currency: str | None) -> None:
+    """Fail closed on suspected pence/pound flips; never infer a conversion.
+
+    Scoped to London so this new guard does not change other markets' handling
+    of historic stock splits. Absolute pence prices stay in source units.
+    """
+
+    previous = None
+    for bar in bars:
+        close = bar.close
+        if not math.isfinite(close) or close <= 0:
+            raise ValueError("invalid London close for scale validation")
+        if currency == "GBX" and close > MAX_PENCE_CLOSE:
+            raise ValueError("London pence close exceeds the supported range")
+        if previous is not None and max(close, previous) / min(close, previous) >= MAX_LONDON_CLOSE_RATIO:
+            raise ValueError("suspected London pence/pound scale change")
+        previous = close
 
 
 def parse_yahoo_eod_json(text: str, market: str = DEFAULT_MARKET) -> list[Bar]:
@@ -272,7 +296,7 @@ def fetch_eod(symbol: str, market: str = DEFAULT_MARKET) -> EodResult:
     Stooq's current anti-bot challenge can consume the complete request timeout
     before returning unusable content. Yahoo Finance is therefore attempted
     first, while the strict Stooq CSV parser remains the fallback for US.
-    No Stooq mapping for XMAD/XETR/XPAR has been verified (the symbol rule
+    No Stooq mapping for XMAD/XETR/XPAR/XLON has been verified (the symbol rule
     {symbol}.us is US-only), so a failing Yahoo call for a European market
     is a controlled upstream error with no fallback.
     """

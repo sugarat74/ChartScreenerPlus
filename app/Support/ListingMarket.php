@@ -19,6 +19,8 @@ final class ListingMarket
 
     public const XPAR = 'XPAR';
 
+    public const XLON = 'XLON';
+
     /**
      * `suffix` is the ticker suffix that identifies the market (`null` for the
      * US, whose tickers carry none and never end in another market's suffix).
@@ -34,6 +36,7 @@ final class ListingMarket
         self::XMAD => ['timezone' => 'Europe/Madrid', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.MC'],
         self::XETR => ['timezone' => 'Europe/Berlin', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.DE'],
         self::XPAR => ['timezone' => 'Europe/Paris', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.PA', 'extra_suffixes' => ['.AS']],
+        self::XLON => ['timezone' => 'Europe/London', 'open' => '08:00', 'close' => '16:30', 'currency' => 'GBX', 'suffix' => '.L'],
     ];
 
     /** @return list<string> */

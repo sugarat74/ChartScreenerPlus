@@ -27,7 +27,7 @@ return [
 
     // How long a pipeline that finds the global pipeline lock held waits for it
     // before skipping with a warning. Per-market pipelines may share a time: the
-    // European ones (XMAD, XETR, XPAR) fire at the same UTC instant on common
+    // European ones (XMAD, XETR, XPAR, XLON) fire at the same UTC instant on common
     // trading days and run one after another, so the budget covers several runs.
     // If they still do not fit, stagger with INGESTION_<CODE>_BUFFER_MINUTES.
     'lock_wait_seconds' => (int) env('INGESTION_LOCK_WAIT_SECONDS', 3600),
@@ -150,6 +150,27 @@ return [
     */
 
     'markets' => [
+        'XLON' => [
+            'timezone' => env('INGESTION_XLON_TIMEZONE', 'Europe/London'),
+            'open' => env('INGESTION_XLON_MARKET_OPEN', '08:00'),
+            'close' => env('INGESTION_XLON_MARKET_CLOSE', '16:30'),
+            'buffer_minutes' => (int) env('INGESTION_XLON_BUFFER_MINUTES', 45),
+            // Checked 2026-11-10. Refresh annually from LSE business-days and
+            // England/Wales bank holidays: https://www.gov.uk/bank-holidays.json
+            // https://www.londonstockexchange.com/en/resources/markets-products/business-days
+            'holidays' => [
+                '2026-01-01', '2026-04-03', '2026-04-06', '2026-05-04',
+                '2026-05-25', '2026-08-31', '2026-12-25', '2026-12-28',
+                '2027-01-01', '2027-03-26', '2027-03-29', '2027-05-03',
+                '2027-05-31', '2027-08-30', '2027-12-27', '2027-12-28',
+            ],
+            // LSE: closing process commences at 12:30 London time. The
+            // pipeline still runs after the regular close + buffer (17:15).
+            'early_closes' => [
+                '2026-12-24' => '12:30', '2026-12-31' => '12:30',
+                '2027-12-24' => '12:30', '2027-12-31' => '12:30',
+            ],
+        ],
         'XMAD' => [
             'timezone' => env('INGESTION_XMAD_TIMEZONE', 'Europe/Madrid'),
             'open' => env('INGESTION_XMAD_MARKET_OPEN', '09:00'),

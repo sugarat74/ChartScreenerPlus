@@ -1429,3 +1429,9 @@ Older sessions moved verbatim from `PROGRESS.md`, newest first.
 - Unchanged by design: the AI schema (`FILTER_KEYS` projection), prompt and `SORTS`; original sorts and the `rvol_desc` default. Existing tests changed only where exact lists/counts grew (payload key lists, stored keys 20 to 30, the all-sorts loop restricted to the original sorts). Docs: `CONSTRAINTS.md`, `ARCHITECTURE.md`, `docs/specs/saved-screeners.md`, `deploy/README.md` item 16 (migrate, `screener:refresh`, checks, rollback).
 - Verified: new `ScreenerTechnicalFiltersTest` (12 tests), phpunit 960 passed / 6 skipped, Vitest 411, lint, build, engine pytest 137, `.\init.ps1` Baseline OK. Not verified: PostgreSQL by CI only; production `screener:refresh`. No frontend change (feature 5 consumes this API).
 - Next: independent validation, then `screener-technical-filters-ui`.
+
+## Compact Screener filter panel planned (1 feature, not started) - 2026-11-05
+
+- Explicit user request: rethink the «Criterios técnicos» block as a cleaner, Finviz-style panel with the same options in less space. Planning only, no application code. New `screener-filter-panel-compact` and `docs/specs/screener-filter-panel-compact.md`.
+- Decision: one-row toolbar of value-showing triggers (Signals, RSI, Patterns, Sector) that open a single inline editor card, native selects for Min RVOL and MA cross, a toggle for Price above SMA200, count and Clear in the header. Tabs, whole-panel collapse and floating popovers rejected (reasons in the spec). Frontend only, no new dependency, same 30 criteria keys, URL, requests and Saved Screeners.
+- Open questions (with defaults) are in the spec. The column-header sort/filter menu idea stays separate.

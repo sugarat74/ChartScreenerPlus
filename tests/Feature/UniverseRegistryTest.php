@@ -573,7 +573,7 @@ class UniverseRegistryTest extends TestCase
         $this->assertSame('EUR', ListingMarket::currency('XETR'));
         $this->assertSame('Europe/Madrid', ListingMarket::timezone('XMAD'));
         $this->assertSame('17:30', ListingMarket::close('XMAD'));
-        $this->assertSame(['US', 'XMAD', 'XETR', 'XPAR'], ListingMarket::codes());
+        $this->assertSame(['US', 'XMAD', 'XETR', 'XPAR', 'XLON'], ListingMarket::codes());
         $this->assertTrue(ListingMarket::tickerMatches('XPAR', 'SAN.PA'));
         $this->assertTrue(ListingMarket::tickerMatches('XPAR', 'MT.AS'));
         $this->assertFalse(ListingMarket::tickerMatches('XETR', 'MT.AS'));
