@@ -50,6 +50,10 @@ export const CHART_THEME_COLORS = {
     atr: CHART_COLORS.tertiary,
     stochK: CHART_COLORS.tertiary,
     stochD: CHART_COLORS.muted,
+    rsi: CHART_COLORS.ink,
+    macd: CHART_COLORS.tertiary,
+    macdSignal: CHART_COLORS.muted,
+    obv: CHART_COLORS.ink,
     reference: CHART_COLORS.muted,
   },
   dark: {
@@ -66,6 +70,10 @@ export const CHART_THEME_COLORS = {
     atr: '#7aa2ff', // --color-tertiary
     stochK: '#7aa2ff', // --color-tertiary
     stochD: '#b5afa6', // --color-on-surface-variant
+    rsi: '#f2ede5',
+    macd: '#7aa2ff',
+    macdSignal: '#b5afa6',
+    obv: '#f2ede5',
     reference: '#b5afa6', // --color-on-surface-variant
   },
 } as const
@@ -339,12 +347,12 @@ export function toBandData(series: readonly ChartBandPoint[], key: BandKey): Lin
 }
 
 /** Keys of the stored series the sub-panes draw (chart-indicator-panels). */
-export type PaneKey = 'adx' | 'plus_di' | 'minus_di' | 'atr14' | 'stoch_k' | 'stoch_d'
+export type PaneKey = 'rsi14' | 'macd' | 'macd_signal' | 'macd_hist' | 'obv' | 'adx' | 'plus_di' | 'minus_di' | 'atr14' | 'stoch_k' | 'stoch_d'
 
-export type IndicatorKey = BandKey | PaneKey
+export type IndicatorKey = BandKey | PaneKey | 'supertrend'
 
 /** Structural stored point with every indicator optional (the API point is assignable). */
-export type ChartIndicatorPoint = { date: string } & { [K in IndicatorKey]?: number | null }
+export type ChartIndicatorPoint = { date: string; supertrend_direction?: number | null } & { [K in IndicatorKey]?: number | null }
 
 /** Fixed reference levels: ADX trend threshold and the stochastic zones. */
 export const ADX_REFERENCE = 25
@@ -363,6 +371,27 @@ export function toIndicatorData(series: readonly ChartIndicatorPoint[], key: Ind
     }
   }
   return points
+}
+
+/** MACD histogram; values above/below zero receive distinct, accessible colors. */
+export function toMacdHistogramData(series: readonly ChartIndicatorPoint[]): VolumePoint[] {
+  const points: VolumePoint[] = []
+  for (const point of series) {
+    const value = point.macd_hist
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      points.push({ time: point.date, value, color: value >= 0 ? CHART_COLORS.gain : CHART_COLORS.loss })
+    }
+  }
+  return points
+}
+
+/** Supertrend line with explicit whitespace breaks so up/down segments do not join. */
+export function toSupertrendData(series: readonly ChartIndicatorPoint[], direction: 1 | -1): Array<LinePoint | { time: string }> {
+  return series.map((point) => (
+    typeof point.supertrend === 'number' && point.supertrend_direction === direction
+      ? { time: point.date, value: point.supertrend }
+      : { time: point.date }
+  ))
 }
 
 /** `true` when no point has a complete band, so nothing can be drawn. */
@@ -398,8 +427,10 @@ export function bandSignalLevels(
 }
 
 /** `true` when a pane's primary line has no value at all (ADX, ATR or %K), so the pane would be empty. */
-export function noPaneData(series: readonly ChartIndicatorPoint[], pane: 'adx' | 'atr' | 'stochastic'): boolean {
-  const key: PaneKey = pane === 'adx' ? 'adx' : pane === 'atr' ? 'atr14' : 'stoch_k'
+export type ChartPaneId = 'rsi' | 'macd' | 'obv' | 'adx' | 'atr' | 'stochastic'
+
+export function noPaneData(series: readonly ChartIndicatorPoint[], pane: ChartPaneId): boolean {
+  const key: PaneKey = pane === 'rsi' ? 'rsi14' : pane === 'macd' ? 'macd' : pane === 'obv' ? 'obv' : pane === 'adx' ? 'adx' : pane === 'atr' ? 'atr14' : 'stoch_k'
   return toIndicatorData(series, key).length === 0
 }
 

@@ -183,6 +183,9 @@ function ErrorPanel({ message, onRetry }: { message: string; onRetry: () => void
 }
 
 const PANE_LABEL_KEYS = {
+  rsi: 'chart.indicatorRsi',
+  macd: 'chart.indicatorMacd',
+  obv: 'chart.indicatorObv',
   adx: 'chart.indicatorAdx',
   atr: 'chart.indicatorAtr',
   stochastic: 'chart.indicatorStochastic',
@@ -262,9 +265,10 @@ export default function InstrumentChartPage() {
   const showForecast = availability?.forecast !== false
   const showCompanyCard = availability?.company_card !== false
   // The stored series is requested only while an indicator is switched on.
-  // One request serves the Bollinger overlay and every sub-pane.
+  // One request serves all overlays and sub-panes.
   const anyIndicatorOn = indicators.length > 0
   const bollingerOn = indicators.includes('bollinger')
+  const supertrendOn = indicators.includes('supertrend')
   const indicatorSeries = useInstrumentIndicators(
     current !== null && current.bars.length > 0 ? current.instrument.ticker : null,
     anyIndicatorOn,
@@ -420,6 +424,11 @@ export default function InstrumentChartPage() {
               {storedSeries !== null && bollingerOn && noBandData(storedSeries) ? (
                 <p className="mt-2 rounded-[4px] border border-outline-variant bg-surface-container px-2 py-1.5 text-xs text-on-surface-variant">
                   {t('chart.indicatorsInsufficient')}
+                </p>
+              ) : null}
+              {storedSeries !== null && supertrendOn && !storedSeries.some((point) => typeof point.supertrend === 'number') ? (
+                <p className="mt-2 rounded-[4px] border border-outline-variant bg-surface-container px-2 py-1.5 text-xs text-on-surface-variant">
+                  {t('chart.indicatorsInsufficientPane', { name: t('chart.indicatorSupertrend') })}
                 </p>
               ) : null}
               {storedSeries !== null

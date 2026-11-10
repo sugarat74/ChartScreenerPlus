@@ -1019,6 +1019,26 @@
     "notes": "Planned 2026-11-08 at explicit user request. Planning only. Constituents verified 2026-11-08 against Wikipedia (table after 1 Oct 2026, 100 rows) and the LSEG 2 Sep 2026 notice (easyJet and Ithaca in, Entain and Persimmon out). Open owner decisions with defaults: leave out the three non-pence lines (97 members), pence over pounds."
   },
   {
+    "id": "chart-indicators-rsi-macd-obv-supertrend",
+    "area": "chart",
+    "title": "Chart: RSI, MACD, OBV and Supertrend indicators",
+    "user_visible_behavior": "Users can enable RSI, MACD, OBV and Supertrend in the chart; the oscillators render in synchronized panes and Supertrend overlays price.",
+    "depends_on": [
+      "indicators-expansion-engine",
+      "indicators-expansion-storage",
+      "chart-indicator-overlays",
+      "chart-indicator-panels"
+    ],
+    "status": "passing",
+    "verification": [
+      "New series are engine-computed and served from stored snapshots",
+      "Indicator toggles persist and request history lazily",
+      "RSI, MACD and OBV panes and Supertrend price overlay render accessibly"
+    ],
+    "evidence": [],
+    "notes": "Requested 2026-11-10. OBV and Supertrend use fixed definitions documented in docs/specs/chart-indicators-rsi-macd-obv-supertrend.md. Baseline init.ps1 passed before implementation."
+  },
+  {
     "id": "chart-patterns-head-shoulders-triangles",
     "area": "engine + screener + chart",
     "title": "Chart patterns: Head and Shoulders and Triangles",

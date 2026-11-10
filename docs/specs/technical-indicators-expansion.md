@@ -25,11 +25,11 @@ Make four indicators useful to a Chartiko user: ADX and Bollinger Bands (already
 
 ## Non-Goals
 
-- No other indicators. **Deferred, to be asked separately:** OBV, Ichimoku, VWAP, SuperTrend, CCI, Williams %R, Fibonacci levels, Keltner, Donchian, Parabolic SAR. VWAP also needs intraday data and is out for that reason.
+- No other indicators. **Deferred, to be asked separately:** Ichimoku, VWAP, CCI, Williams %R, Fibonacci levels, Keltner, Donchian, Parabolic SAR. OBV and SuperTrend were later requested for chart display only; see `docs/specs/chart-indicators-rsi-macd-obv-supertrend.md`. VWAP also needs intraday data and is out for that reason.
 - No intraday data, backtesting, advice, targets, stops or "buy/sell" wording. Signals describe a condition; they never say to trade.
 - No change to the natural-language Screener schema, sort enum or prompt (decision D9).
 - No change to the forecast inputs or results, and no change to the AI Company Card context (D10).
-- No SMA/EMA/RSI/MACD series on the chart (see Open Question 1: the chart does not draw them today).
+- SMA/EMA series remain outside this feature. RSI/MACD chart panes were later requested; see `docs/specs/chart-indicators-rsi-macd-obv-supertrend.md`.
 - No new data source, no new dependency in the engine (pure standard library, like `core.py`), no new frontend charting library.
 - No per-user indicator parameters. Periods are fixed constants, like every existing indicator.
 - No public "EOD/end-of-day" wording outside Admin.
@@ -222,11 +222,11 @@ ADX, ATR and Stochastic panes in `InteractiveChart.tsx` (v5 pane index after the
 
 ## Open Questions (owner, priority order)
 
-1. **Chart scope.** The chart does not draw SMA/EMA/RSI/MACD series today (only latest SMA lines). Do you also want those as overlays/panels? The Feature 2 endpoint can serve them at low cost, but it is outside the two groups you named; default here: no.
+1. **Chart scope.** This question was partly resolved by the later owner request: RSI and MACD have chart panes; SMA/EMA remain only latest reference lines, not historical overlays.
 2. **Defaults.** Confirm Stochastic 14,3,3 (slow), ATR 14 and the thresholds ADX 25, stochastic 20/80, squeeze at a 120-session low. Default: as written.
 3. **AI Screener.** Should the natural-language Screener learn the new Signals and filters? Default: no (schema, prompt and cache unchanged); doing it is a separate feature touching the strict schema.
 4. **Default visibility.** Indicator picker and the Indicators columns start off. Do you prefer Bollinger on by default? Default: off, chart unchanged.
-5. **Deferred indicators.** OBV, Ichimoku, VWAP (needs intraday, out), SuperTrend, CCI, Williams %R, Fibonacci: confirm they stay deferred.
+5. **Deferred indicators.** OBV and SuperTrend were requested for chart display only. Ichimoku, VWAP (needs intraday, out), CCI, Williams %R and Fibonacci remain deferred.
 6. **Overlap with `specs/screener-filter-expansion/`.** Its R3 lists ATR and volatility as future technical filters; this umbrella supersedes the ATR part (filter on ATR % of price). The other R3 items (SMA20/SMA50 comparisons, distance to highs/lows, beta, candlesticks) remain there. Decide whether that roadmap should reference this spec.
 
 ## Validator Checklist (all features)
@@ -238,3 +238,7 @@ ADX, ATR and Stochastic panes in `InteractiveChart.tsx` (v5 pane index after the
 - Default chart and default Screener table are unchanged for a user who touches nothing; storage failures never break a page.
 - es/en complete, no EOD wording, no advice wording, DESIGN.md followed, no overflow at 390 px.
 - Backfill procedure run and recorded, rollback documented, evidence in `feature_list.json`, `.\init.ps1` passes.
+
+## Owner-requested chart indicator extension (2026-11-10)
+
+The later feature `chart-indicators-rsi-macd-obv-supertrend` adds chart-only series for existing RSI/MACD plus engine-computed OBV and Supertrend. OBV starts at first-bar volume and accumulates signed volume. Supertrend uses Wilder ATR(10) and multiplier 3, with nullable direction (+1/-1). The new stored fields are additive and nullable; after migration, run `indicators:compute --universe=<slug>` for each enabled universe to backfill them. These indicators add no Screener filters, Signals, AI vocabulary or advice. See `docs/specs/chart-indicators-rsi-macd-obv-supertrend.md`.
