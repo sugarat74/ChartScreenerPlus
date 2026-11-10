@@ -137,7 +137,9 @@ class CacUniverseSeederTest extends TestCase
         $this->assertSame('EUR', $universe->currency);
         $this->assertTrue($universe->is_screener);
         $this->assertSame(4, $universe->position);
-        $this->assertSame($expected, $universe->instruments()->orderBy('ticker')->pluck('ticker')->all());
+        $actual = $universe->instruments()->pluck('ticker')->all();
+        sort($actual);
+        $this->assertSame($expected, $actual);
 
         foreach (Instrument::query()->get() as $instrument) {
             $this->assertSame('XPAR', $instrument->market);
