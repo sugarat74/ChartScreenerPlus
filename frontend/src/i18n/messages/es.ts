@@ -319,11 +319,13 @@ export const es = {
     groups: {
       bullish: 'Alcistas',
       bearish: 'Bajistas',
+      neutral: 'Sin dirección definida',
     },
     activeTitle: 'Patrones activos',
     none: 'Sin patrones activos para este instrumento.',
     span: '{start} – {end}',
     breakoutLevel: 'Nivel de ruptura',
+    direction: { bullish: 'Alcista', bearish: 'Bajista', neutral: 'Sin dirección definida' },
     disclaimer: 'Formación detectada automáticamente con reglas geométricas. Información orientativa, no una recomendación ni un objetivo de precio.',
     contextLabel: 'Contexto actual',
     contextNote: 'El contexto es el de la última sesión, no el de la fecha del patrón.',
@@ -338,6 +340,11 @@ export const es = {
       bear_flag: 'Bandera bajista',
       bull_pennant: 'Banderín alcista',
       bear_pennant: 'Banderín bajista',
+        head_and_shoulders: 'Hombro-cabeza-hombro',
+        inverse_head_and_shoulders: 'Hombro-cabeza-hombro invertido',
+        ascending_triangle: 'Triángulo ascendente',
+        descending_triangle: 'Triángulo descendente',
+        symmetrical_triangle: 'Triángulo simétrico',
     },
     status: {
       any: 'Cualquiera',
@@ -345,6 +352,10 @@ export const es = {
       confirmed: 'Confirmado',
     },
     roles: {
+        left_shoulder: 'Hombro izquierdo', head: 'Cabeza', right_shoulder: 'Hombro derecho',
+        neckline_start: 'Inicio de clavicular', neckline_end: 'Fin de clavicular',
+        upper_start: 'Inicio del límite superior', upper_end: 'Fin del límite superior',
+        lower_start: 'Inicio del límite inferior', lower_end: 'Fin del límite inferior',
       left_peak: 'Primer techo',
       right_peak: 'Segundo techo',
       trough: 'Valle',
@@ -377,6 +388,8 @@ export const es = {
       pennant_high: 'Máximo del banderín',
     },
     rolesShort: {
+      left_shoulder: 'HI', head: 'C', right_shoulder: 'HD', neckline_start: 'C1', neckline_end: 'C2',
+      upper_start: 'S1', upper_end: 'S2', lower_start: 'I1', lower_end: 'I2',
       left_peak: 'T1',
       right_peak: 'T2',
       trough: 'V',
@@ -808,6 +821,7 @@ export const es = {
     saving: 'Guardando…',
   },
   chart: {
+    patternLine: { neckline: 'línea clavicular', upper: 'límite superior', lower: 'límite inferior' },
     badge: 'Superficie',
     access: 'Acceso público',
     intro: 'Gráfico interactivo de un instrumento.',

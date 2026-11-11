@@ -52,9 +52,8 @@ class ScreenerQuerySchemaTest extends TestCase
         $this->assertSame(['string', 'null'], $schema['properties']['sector_trend']['type']);
         $this->assertSame(['integer', 'null'], $schema['properties']['sector_rs_rank_max']['type']);
         $this->assertSame(ScreenerFilterParser::AI_SIGNAL_TYPES, $schema['properties']['signal']['items']['enum']);
-        $this->assertSame(ChartPattern::TYPES, $schema['properties']['pattern']['items']['enum']);
-        // chart-patterns-extended: the AI may pick any number of the vocabulary.
-        $this->assertSame(count(ChartPattern::TYPES), ScreenerQuerySchema::MAX_PATTERNS);
+        $this->assertSame(ChartPattern::LEGACY_TYPES, $schema['properties']['pattern']['items']['enum']);
+        $this->assertSame(count(ChartPattern::LEGACY_TYPES), ScreenerQuerySchema::MAX_PATTERNS);
         $this->assertSame(ScreenerFilterParser::PATTERN_STATUSES, $schema['properties']['pattern_status']['enum']);
         $this->assertSame(ScreenerFilterParser::SORTS, $schema['properties']['sort']['enum']);
         $this->assertSame(['bullish', 'bearish', null], $schema['properties']['ma_cross']['enum']);
@@ -146,9 +145,10 @@ class ScreenerQuerySchemaTest extends TestCase
             $this->assertSame('system', $messages[0]['role']);
             $this->assertStringNotContainsString($query, $messages[0]['content']);
             $this->assertSame(['role' => 'user', 'content' => $query], $messages[1]);
-            foreach ([...ScreenerFilterParser::AI_SIGNAL_TYPES, ...ChartPattern::TYPES, ...ScreenerFilterParser::SORTS] as $value) {
+            foreach ([...ScreenerFilterParser::AI_SIGNAL_TYPES, ...ChartPattern::LEGACY_TYPES, ...ScreenerFilterParser::SORTS] as $value) {
                 $this->assertStringContainsString($value, $messages[0]['content'], "{$locale} prompt lists {$value}");
             }
+            $this->assertStringNotContainsString('head_and_shoulders', $messages[0]['content']);
         }
         $this->assertStringContainsString('«sobrevendidas» significa rsi_max 30', ScreenerQueryPrompt::messages($query, 'es')[0]['content']);
         $this->assertStringContainsString('"oversold" means rsi_max 30', ScreenerQueryPrompt::messages($query, 'en')[0]['content']);

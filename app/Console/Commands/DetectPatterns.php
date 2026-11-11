@@ -159,6 +159,7 @@ class DetectPatterns extends Command
                     'as_of_date' => Carbon::parse($entry['as_of_date'])->startOfDay(),
                     'type' => $entry['type'],
                     'status' => $entry['status'],
+                    'direction' => $entry['direction'],
                     'start_date' => Carbon::parse($entry['start_date'])->startOfDay(),
                     'end_date' => Carbon::parse($entry['end_date'])->startOfDay(),
                     'breakout_level' => $entry['breakout_level'],
@@ -204,8 +205,13 @@ class DetectPatterns extends Command
         }
 
         $level = $pattern['breakout_level'] ?? null;
+        $direction = $pattern['direction'] ?? match ($type) {
+            'double_bottom', 'cup_with_handle', 'bull_flag', 'triple_bottom', 'bull_pennant', 'inverse_head_and_shoulders' => 'bullish',
+            'double_top', 'triple_top', 'inverse_cup_with_handle', 'bear_flag', 'bear_pennant', 'head_and_shoulders' => 'bearish',
+            default => null,
+        };
 
-        if (! is_numeric($level) || ! is_finite((float) $level)) {
+        if (($level !== null && (! is_numeric($level) || ! is_finite((float) $level))) || ! in_array($direction, ['bullish', 'bearish', null], true)) {
             return null;
         }
 
@@ -240,10 +246,11 @@ class DetectPatterns extends Command
         return [
             'type' => $type,
             'status' => $status,
+            'direction' => $direction,
             'as_of_date' => $pattern['as_of_date'],
             'start_date' => $pattern['start_date'],
             'end_date' => $pattern['end_date'],
-            'breakout_level' => (float) $level,
+            'breakout_level' => $level === null ? null : (float) $level,
             'points' => $points,
             'metadata' => $metadata,
         ];

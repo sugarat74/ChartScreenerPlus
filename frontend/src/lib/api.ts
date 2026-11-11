@@ -513,6 +513,11 @@ export type ScreenerPatternType =
   | 'bear_flag'
   | 'bull_pennant'
   | 'bear_pennant'
+  | 'head_and_shoulders'
+  | 'inverse_head_and_shoulders'
+  | 'ascending_triangle'
+  | 'descending_triangle'
+  | 'symmetrical_triangle'
 
 export type PatternStatus = 'forming' | 'confirmed'
 
@@ -615,7 +620,8 @@ export type ScreenerFilters = {
 export type CandidatePattern = {
   type: string
   status: PatternStatus
-  breakout_level: number
+  direction?: 'bullish' | 'bearish' | null
+  breakout_level: number | null
   end_date: string
 }
 
@@ -1023,7 +1029,8 @@ export type InstrumentPattern = {
   status: PatternStatus
   start_date: string
   end_date: string
-  breakout_level: number
+  direction?: 'bullish' | 'bearish' | null
+  breakout_level: number | null
   points: InstrumentPatternPoint[]
 }
 

@@ -141,6 +141,7 @@ class ScreenerRowBuilder
                 ->map(fn (ChartPattern $pattern): array => [
                     'type' => $pattern->type,
                     'status' => $pattern->status,
+                    'direction' => $pattern->direction,
                     'breakout_level' => $pattern->breakout_level,
                     'end_date' => $pattern->end_date->format('Y-m-d'),
                 ])

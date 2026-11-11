@@ -294,7 +294,7 @@ class AlertEvaluator
     private function patternState(Alert $alert): array
     {
         $chosen = is_array($alert->pattern_types) ? $alert->pattern_types : [];
-        $types = array_values(array_filter(ChartPattern::TYPES, fn (string $type): bool => in_array($type, $chosen, true)));
+        $types = array_values(array_filter(ChartPattern::LEGACY_TYPES, fn (string $type): bool => in_array($type, $chosen, true)));
         $instrumentIds = $alert->user->watchlist()->where('instruments.kind', Instrument::KIND_STOCK)->pluck('instruments.id');
 
         if ($types === [] || $instrumentIds->isEmpty()) {

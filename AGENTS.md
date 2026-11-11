@@ -77,6 +77,8 @@ Also in scope since 2026-11-08 (explicit user request, planned, not started): tw
 
 Explicitly out of scope (do not build without an explicit request): intraday/real-time data, order execution/broker, backtesting, other fundamentals data feeds and news, real-time or push/SMS notifications, other non-US markets and indices (only the IBEX 35, DAX, CAC 40 and FTSE 100 above; no full Nasdaq Composite), currency conversion, native apps, AI Copilot (chat or free-text AI), paid plans.
 
+Also in scope since 2026-11-10 (explicit user request): Head and Shoulders, inverse Head and Shoulders and ascending/descending/symmetrical triangles (`docs/specs/chart-patterns-head-shoulders-triangles.md`). On 2026-11-11 the owner authorized deployment with real-sample calibration deferred. No new Watchlist alert or AI vocabulary; no measured accuracy claim.
+
 ## Startup Workflow
 
 Before writing code:

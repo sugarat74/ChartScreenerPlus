@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { patternLevels, patternMarkers } from './chartData.ts'
+import { patternLevels, patternMarkers, patternBoundarySegments } from './chartData.ts'
 import {
   EMPTY_SCREENER_FILTERS,
   SCREENER_PATTERN_GROUPS,
@@ -142,12 +142,21 @@ describe('pattern chart helpers', () => {
 })
 
 describe('pattern vocabulary (chart-patterns-extended)', () => {
-  it('has ten types grouped bullish first, then bearish', () => {
-    expect(SCREENER_PATTERN_TYPES).toHaveLength(10)
-    expect(SCREENER_PATTERN_GROUPS.map((group) => group.direction)).toEqual(['bullish', 'bearish'])
+  it('includes five new types, including direction-neutral triangles', () => {
+    expect(SCREENER_PATTERN_TYPES).toHaveLength(15)
+    expect(SCREENER_PATTERN_GROUPS.map((group) => group.direction)).toEqual(['bullish', 'bearish', 'neutral'])
     expect(patternDirection('bear_pennant')).toBe('bearish')
     expect(patternDirection('triple_bottom')).toBe('bullish')
     expect(patternDirection('inverse_cup_with_handle')).toBe('bearish')
+    expect(patternDirection('symmetrical_triangle')).toBe('neutral')
     expect(normalizePatterns(['bear_flag', 'nope', 'triple_bottom', 'bear_flag'])).toEqual(['triple_bottom', 'bear_flag'])
+  })
+
+  it('keeps null forming levels off horizontal lines and exposes sloped triangle edges', () => {
+    const triangle = { type: 'ascending_triangle', status: 'forming', breakout_level: null, direction: null,
+      points: [{ date: '2026-01-01', price: 10, role: 'upper_start' }, { date: '2026-01-10', price: 10, role: 'upper_end' },
+        { date: '2026-01-02', price: 8, role: 'lower_start' }, { date: '2026-01-10', price: 9, role: 'lower_end' }] }
+    expect(patternLevels([triangle], () => 'Ascending triangle')).toEqual([])
+    expect(patternBoundarySegments([triangle], () => 'Ascending triangle', (kind) => kind)).toHaveLength(2)
   })
 })

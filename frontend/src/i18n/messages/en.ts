@@ -316,11 +316,13 @@ export const en: Messages = {
     groups: {
       bullish: 'Bullish',
       bearish: 'Bearish',
+      neutral: 'Direction neutral',
     },
     activeTitle: 'Active patterns',
     none: 'No active patterns for this instrument.',
     span: '{start} – {end}',
     breakoutLevel: 'Breakout level',
+    direction: { bullish: 'Bullish', bearish: 'Bearish', neutral: 'Direction neutral' },
     disclaimer: 'Formation detected automatically with geometric rules. For information only, not a recommendation or a price target.',
     contextLabel: 'Current context',
     contextNote: 'The context is from the latest session, not from the pattern\'s date.',
@@ -335,6 +337,11 @@ export const en: Messages = {
       bear_flag: 'Bear flag',
       bull_pennant: 'Bullish pennant',
       bear_pennant: 'Bearish pennant',
+      head_and_shoulders: 'Head and shoulders',
+      inverse_head_and_shoulders: 'Inverse head and shoulders',
+      ascending_triangle: 'Ascending triangle',
+      descending_triangle: 'Descending triangle',
+      symmetrical_triangle: 'Symmetrical triangle',
     },
     status: {
       any: 'Any',
@@ -342,6 +349,10 @@ export const en: Messages = {
       confirmed: 'Confirmed',
     },
     roles: {
+        left_shoulder: 'Left shoulder', head: 'Head', right_shoulder: 'Right shoulder',
+        neckline_start: 'Neckline start', neckline_end: 'Neckline end',
+        upper_start: 'Upper boundary start', upper_end: 'Upper boundary end',
+        lower_start: 'Lower boundary start', lower_end: 'Lower boundary end',
       left_peak: 'First top',
       right_peak: 'Second top',
       trough: 'Trough',
@@ -374,6 +385,8 @@ export const en: Messages = {
       pennant_high: 'Pennant high',
     },
     rolesShort: {
+      left_shoulder: 'LS', head: 'H', right_shoulder: 'RS', neckline_start: 'N1', neckline_end: 'N2',
+      upper_start: 'U1', upper_end: 'U2', lower_start: 'L1', lower_end: 'L2',
       left_peak: 'T1',
       right_peak: 'T2',
       trough: 'Tr',
@@ -805,6 +818,7 @@ export const en: Messages = {
     saving: 'Saving…',
   },
   chart: {
+    patternLine: { neckline: 'neckline', upper: 'upper boundary', lower: 'lower boundary' },
     badge: 'Surface',
     access: 'Public access',
     intro: 'Interactive chart for one instrument.',

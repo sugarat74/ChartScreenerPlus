@@ -50,6 +50,9 @@ export default function PatternPanel({
                 <span className="font-mono text-[11px] font-bold uppercase text-on-surface">
                   {t(`patterns.status.${pattern.status}`)}
                 </span>
+                <span className="font-mono text-[10px] uppercase text-on-surface-variant">
+                  {t(`patterns.direction.${pattern.direction ?? 'neutral'}` as MessageKey)}
+                </span>
                 <span className="font-mono text-[11px] text-on-surface-variant">
                   {t('patterns.span', {
                     start: formatMarketDate(pattern.start_date),

@@ -188,6 +188,33 @@ function Drawing({ kind }: Pick<Props, 'kind'>) {
         <path d="M128 130 L236 116 M146 104 L236 113" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
         <circle cx="248" cy="128" r="5" fill="#ffcc00" stroke={INK} strokeWidth="2" />
       </>
+    case 'headAndShoulders':
+      return <>
+        <path d="M18 70 L55 57 L87 88 L129 30 L171 87 L211 58 L246 74 L290 112" stroke={INK} strokeWidth="3" fill="none" />
+        <path d="M87 88 L171 87" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <circle cx="55" cy="57" r="5" fill="#ffcc00" /><circle cx="129" cy="30" r="5" fill="#ffcc00" /><circle cx="211" cy="58" r="5" fill="#ffcc00" />
+      </>
+    case 'inverseHeadAndShoulders':
+      return <>
+        <path d="M18 84 L55 96 L87 67 L129 128 L171 68 L211 96 L246 82 L290 42" stroke={INK} strokeWidth="3" fill="none" />
+        <path d="M87 67 L171 68" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <circle cx="55" cy="96" r="5" fill="#ffcc00" /><circle cx="129" cy="128" r="5" fill="#ffcc00" /><circle cx="211" cy="96" r="5" fill="#ffcc00" />
+      </>
+    case 'ascendingTriangle':
+      return <>
+        <path d="M18 52 H290 M18 128 L76 111 L132 94 L190 76 L246 59 L290 45" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <path d="M18 130 L45 51 L76 112 L104 50 L132 95 L162 51 L190 77 L218 50 L246 60 L270 50 L290 34" stroke={INK} strokeWidth="3" fill="none" />
+      </>
+    case 'descendingTriangle':
+      return <>
+        <path d="M18 44 L76 61 L132 78 L190 96 L246 113 L290 127 M18 128 H290" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <path d="M18 34 L45 126 L76 61 L104 127 L132 78 L162 126 L190 96 L218 126 L246 113 L270 126 L290 137" stroke={INK} strokeWidth="3" fill="none" />
+      </>
+    case 'symmetricalTriangle':
+      return <>
+        <path d="M18 38 L290 126 M18 130 L290 42" style={{ stroke: BLUE }} strokeDasharray="6 5" strokeWidth="2" />
+        <path d="M18 76 L44 41 L70 92 L97 51 L124 100 L151 61 L178 108 L205 72 L232 116 L258 84 L290 129" stroke={INK} strokeWidth="3" fill="none" />
+      </>
   }
 }
 

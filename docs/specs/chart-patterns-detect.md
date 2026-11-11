@@ -19,7 +19,7 @@ First vocabulary (fixed strings, the shared contract): `double_top`, `double_bot
 - No screener filter, API exposure, chart drawing or UI (that is `chart-patterns-ui`).
 - No alerts (`alerts-engine`).
 - No price targets, measured moves, stops or probabilities. Patterns describe geometry only.
-- No triangles, head-and-shoulders, wedges, bear flags or pennants in this slice (add later by extending the vocabulary).
+- No triangles or head-and-shoulders in this first slice; they are tracked in `chart-patterns-head-shoulders-triangles`. Bear flags and pennants are specified in `chart-patterns-extended`; wedges remain future work.
 - No machine learning, no pattern history log, no user editing, no parameter tuning UI. No pandas/numpy.
 
 ## Job Story
