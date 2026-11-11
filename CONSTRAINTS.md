@@ -340,3 +340,6 @@ Durable MUST / MUST NOT rules for future agents working in this repository.
 - Market Context, macro, Market Regime, alerts and forecast stages **MUST** run only in the US pipeline; a non-US pipeline **MUST NOT** call them. Reason: US-only features (D10 of `docs/specs/multi-market-universes.md`).
 - The `ingestion:pipeline` lock **MUST** stay global and a held lock **MUST** be waited on (`ingestion.lock_wait_seconds`), not skipped at once. Reason: per-market events can share a time.
 - Per-market holiday lists in `config/ingestion.php` **MUST** be refreshed annually, like the NYSE list.
+
+- Forming triangles MUST remain direction-neutral and MUST NOT fabricate a horizontal breakout level for sloped boundaries. Reason: geometry type and eventual breakout direction are separate facts.
+- Geometry-only pattern additions MUST NOT silently expand Watchlist pattern-alert, Company Card or natural-language AI closed vocabularies. Reason: this release extends Screener/chart only; those consumers keep ChartPattern::LEGACY_TYPES.

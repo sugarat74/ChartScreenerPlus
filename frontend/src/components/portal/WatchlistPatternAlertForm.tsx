@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { ALERT_PATTERN_EVENTS, ApiError, alertsApi, apiErrorMessage } from '../../lib/api.ts'
 import type { Alert, AlertPatternEvent, ScreenerPatternType } from '../../lib/api.ts'
-import { SCREENER_PATTERN_GROUPS, SCREENER_PATTERN_TYPES, patternLabel } from '../../lib/screenerFilters.ts'
+import { ALERT_PATTERN_TYPES, SCREENER_PATTERN_GROUPS, patternLabel } from '../../lib/screenerFilters.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
 import AlertStatusChip from './AlertStatusChip.tsx'
 
@@ -64,7 +64,7 @@ export default function WatchlistPatternAlertForm({ alert, disabled, onSaved, on
 
   function toggleType(type: ScreenerPatternType) {
     setNotice(null)
-    setTypes((current) => toggled(SCREENER_PATTERN_TYPES, current, type))
+    setTypes((current) => toggled(ALERT_PATTERN_TYPES, current, type))
   }
 
   function toggleEvent(event: AlertPatternEvent) {
@@ -151,12 +151,12 @@ export default function WatchlistPatternAlertForm({ alert, disabled, onSaved, on
         <fieldset disabled={disabled || busy} className="flex flex-col gap-2">
           <legend className={LEGEND_CLASS}>{t('alerts.patternTypesLegend')}</legend>
           <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
-            {SCREENER_PATTERN_GROUPS.map((group) => (
+            {SCREENER_PATTERN_GROUPS.filter((group) => group.types.some((type) => ALERT_PATTERN_TYPES.includes(type))).map((group) => (
               <fieldset key={group.direction} className="flex min-w-0 flex-col gap-1.5">
                 <legend className="mb-1.5 font-mono text-[10px] uppercase text-on-surface-variant">
                   {t(`patterns.groups.${group.direction}`)}
                 </legend>
-                {group.types.map((type) => (
+                {group.types.filter((type) => ALERT_PATTERN_TYPES.includes(type)).map((type) => (
                   <label key={type} className="flex items-center gap-2 text-sm text-on-surface">
                     <input
                       type="checkbox"

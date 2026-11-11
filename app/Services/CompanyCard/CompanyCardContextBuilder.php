@@ -94,7 +94,7 @@ class CompanyCardContextBuilder
             'indicators' => $indicators,
             'signals' => $instrument->signals()->orderBy('type')->get()
                 ->map(fn (Signal $signal): string => $signal->type)->values()->all(),
-            'chart_patterns' => $instrument->chartPatterns()->orderBy('type')->get()
+            'chart_patterns' => $instrument->chartPatterns()->whereIn('type', ChartPattern::LEGACY_TYPES)->orderBy('type')->get()
                 ->map(fn (ChartPattern $pattern): array => [
                     'type' => $pattern->type,
                     'status' => $pattern->status,

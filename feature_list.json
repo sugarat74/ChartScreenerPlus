@@ -1027,5 +1027,33 @@
     ],
     "evidence": [],
     "notes": "Planned 2026-11-08 at explicit user request. Planning only. Constituents verified 2026-11-08 against Wikipedia (table after 1 Oct 2026, 100 rows) and the LSEG 2 Sep 2026 notice (easyJet and Ithaca in, Entain and Persimmon out). Open owner decisions with defaults: leave out the three non-pence lines (97 members), pence over pounds."
+  },
+  {
+    "id": "chart-patterns-head-shoulders-triangles",
+    "area": "engine + screener + chart",
+    "title": "Chart patterns: Head and Shoulders and Triangles",
+    "user_visible_behavior": "Visitors can filter Candidates by deterministic Head and Shoulders and triangle patterns and inspect their geometry on the chart.",
+    "depends_on": [
+      "chart-patterns-detect",
+      "chart-patterns-ui",
+      "chart-patterns-calibration",
+      "chart-patterns-extended",
+      "saved-screeners"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Fixture-backed deterministic rules cover both H&S orientations and triangle geometries",
+      "Patterns persist and flow through the API, Screener filter, Saved Screeners and chart",
+      "Confirmation direction, trendline/neckline display and calibration are documented",
+      "Existing pattern behavior is unchanged"
+    ],
+    "evidence": [
+      "2026-11-11 isolated release from origin/main, with first-breakout confirmation expiry, invalidation/near-miss regressions and inverse-cup bearish mapping fix.",
+      "Focused engine pattern suites71 passed; SPA pattern/chart/guide/Watchlist41 passed. New Laravel geometry/filter/migration replay3 passed/14 assertions.",
+      "Fresh init.ps1 exit0: Laravel1000 passed/6skipped (9209 assertions), SPA60 files/479 passed, lint/typecheck/build passed, engine155 passed. Migration replay added afterward and separately passed.",
+      "Independent validator checks: engine36 passed, Laravel40 passed/397 assertions, SPA25 passed, git diff --check HEAD clean; verdict accept; report docs/validations/chart-patterns-head-shoulders-triangles.md.",
+      "PR100 initial CI run42977562453 passed test and test-pgsql; final evidence/test commit must pass CI again. Owner explicitly deferred real-labelled calibration; no measured precision/recall claim."
+    ],
+    "notes": "Requested 2026-11-10. See docs/specs/chart-patterns-head-shoulders-triangles.md. Conservative named geometry limits are not validated against a labeled real sample: the existing calibration sample has none of these five patterns. Retain this calibration limitation for independent validation. Alerts and AI vocabularies intentionally remain on LEGACY_TYPES. Owner 2026-11-11 explicitly authorizes deployment now and real-labelled calibration later; this supersedes the former real-sample acceptance prerequisite. Release isolated from indicators/CAC40/calendar/London/Contact. Functional repair/review and fresh gates required."
   }
 ]

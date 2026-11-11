@@ -241,3 +241,7 @@ Double tops are 50% of detections, above the 40% guide. The labelled sample conf
 ### Second batch of types (chart-patterns-extended, 2026-10-21)
 
 `patterns:review-sample` exports every type of `ChartPattern::TYPES`. New case-id prefixes: `TT`, `TB`, `ICWH`, `BRF`, `BLP`, `BRP`; a test asserts that every type has one. Near misses still exist only for the first four types: the second batch has no relaxations yet. The mirrored types read the same `PatternParams` fields as their counterparts, so a value tuned here applies to both directions. The inverse cup with handle (34% of local detections) is the first candidate for the next labelled sample.
+
+### Head-and-shoulders and triangles (chart-patterns-head-shoulders-triangles, 2026-11-10)
+
+The review exporter now includes five more types (`HS`, `IHS`, `AT`, `DTG`, `ST`) and `/patterns/parameters` exposes their named geometry limits. The existing frozen labeled sample has no examples for these types, so its precision/recall cannot validate them. Seventeen deterministic geometry tests cover both H&S orientations, all triangle geometries/directions, insufficient history, negative near misses, expiry and opposite-side invalidation. The owner explicitly deferred real-labelled calibration on 2026-11-11 and authorized deployment; do not treat synthetic fixture passes as an empirical accuracy rate. Negative fixtures do not extend the calibration endpoint's near-miss relaxation/export rules, which remain unchanged.

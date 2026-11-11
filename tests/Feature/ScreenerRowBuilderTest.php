@@ -74,7 +74,7 @@ class ScreenerRowBuilderTest extends TestCase
         $this->assertSame('bearish', $bearRow->ma_cross);
         $this->assertSame(2, $bearRow->signal_count);
         $this->assertSame(['death_cross', 'rsi_oversold'], $bearRow->signals);
-        $this->assertSame([['type' => 'double_top', 'status' => 'confirmed', 'breakout_level' => 82.0, 'end_date' => '2026-09-20']], $bearRow->patterns);
+        $this->assertSame([['type' => 'double_top', 'status' => 'confirmed', 'direction' => 'bearish', 'breakout_level' => 82.0, 'end_date' => '2026-09-20']], $bearRow->patterns);
 
         $flat = ScreenerRow::query()->where('ticker', 'FLAT')->sole();
         $this->assertNull($flat->ma_cross);

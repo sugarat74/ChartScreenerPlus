@@ -21,6 +21,7 @@ from app.models import (
 from app.patterns.detect import detect_patterns
 from app.patterns.near_misses import detect_near_misses
 from app.patterns.rules import DEFAULT_PARAMS
+from app.patterns import head_shoulders_triangles as geometry_patterns
 from app.signals.detect import detect_signals
 from app.sources.stooq import fetch_eod, symbol_matches_market
 
@@ -103,7 +104,11 @@ def create_app() -> FastAPI:
         """The production pattern parameters (booleans as 1/0), for calibration reports."""
 
         return PatternParametersResponse(
-            parameters={name: float(value) for name, value in DEFAULT_PARAMS.as_dict().items()}
+            parameters={
+                **{name: float(value) for name, value in DEFAULT_PARAMS.as_dict().items()},
+                **{name.lower(): float(value) for name, value in vars(geometry_patterns).items()
+                   if name.isupper() and isinstance(value, (int, float))},
+            }
         )
 
     return application

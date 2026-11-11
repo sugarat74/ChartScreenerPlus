@@ -36,6 +36,7 @@ import {
   CHART_THEME_COLORS,
   bandSignalLevels,
   patternLevels,
+  patternBoundarySegments,
   patternMarkers,
   signalLevels,
   smaLevels,
@@ -255,6 +256,10 @@ export default function InteractiveChart({
         axisLabelVisible: true,
         title: level.title,
       })
+    }
+    for (const segment of patternBoundarySegments(patterns, (pattern) => patternLabel(pattern.type, t), (kind) => t(`chart.patternLine.${kind}` as MessageKey))) {
+      chart.addSeries(LineSeries, { color: tint(CHART_COLORS.tertiary), lineWidth: 2, lineStyle: LineStyle.Dashed, title: segment.title })
+        .setData(segment.points.map((point) => ({ time: point.date as `${number}-${number}-${number}`, value: point.price })))
     }
     const markers = patternMarkers(patterns, bars, (role) => t(`patterns.rolesShort.${role}` as MessageKey))
     if (markers.length > 0) {

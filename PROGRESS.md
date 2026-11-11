@@ -2,6 +2,14 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
+## Pattern release preparation - 2026-11-11
+
+- Owner explicitly requested deployment of all implemented patterns and real-sample calibration later. Updated chart-patterns-head-shoulders-triangles acceptance contract accordingly; named thresholds remain initial and precision/recall unknown. Japanese candles remain planning only on feat/contact-suggestions.
+- Created release/chart-patterns-nov11 from fresh origin/main (294f748189), extracting only the five H&S/triangle patterns from ac20bec. Mixed indicator/CAC40 PR98, calendar/London PR99 and Contact work remain outside this release. Existing untracked specs/screener-filter-expansion/ untouched.
+- Closed lifecycle/near-miss/filter gaps and the inverse-cup legacy direction regression. Fresh init.ps1 exit0: Laravel1000 passed/6skipped (9209 assertions), SPA60 files/479 passed, lint/typecheck/build passed, engine155 passed. Added migration replay afterward: focused ChartPatternGeometryFilterTest3 passed/14 assertions. Combined focused pattern engine71 passed; focused SPA41 passed. Existing RequireAuth lint, Vite bundle and Starlette/httpx warnings remain.
+- Independent validator returned accept: engine36 tests, Laravel40 tests/397 assertions (including migration replay), SPA25 tests and diff checks; no remaining runtime/security blocker. Report docs/validations/chart-patterns-head-shoulders-triangles.md; feature accepted with calibration deferred. Deploy pending. PR100 initial CI run42977562453 passed test/test-pgsql; final evidence/test commit will rerun CI before merge.
+- Read-only production preflight: active release294f748189, engine active, Laravel13.34; stock universes sp500/nasdaq100/ibex35/dax, latest bar2026-11-10,167 active legacy pattern rows. SSH host verified against existing known_hosts. No production mutation yet.
+
 ## CAC 40 and FTSE 100 universes planned (3 features, not started) - 2026-11-08
 
 - Explicit owner request ("cac 70" read as CAC 40, plus FTSE 100). Planning PR only: spec `docs/specs/universes-cac40-ftse100.md`, features `universe-cac40` -> `ingestion-xlon-gbx` -> `universe-ftse100` in `feature_list.json` (not_started), AGENTS.md scope guard. No application code, no tests run; JSON validity and `scripts/harness-context.ps1` checked.
@@ -66,11 +74,3 @@ Newest first; only the latest 10 sessions are kept here. Older sessions are in `
 - Unchanged by design: the AI schema (`FILTER_KEYS` projection), prompt and `SORTS`; original sorts and the `rvol_desc` default. Existing tests changed only where exact lists/counts grew (payload key lists, stored keys 20 to 30, the all-sorts loop restricted to the original sorts). Docs: `CONSTRAINTS.md`, `ARCHITECTURE.md`, `docs/specs/saved-screeners.md`, `deploy/README.md` item 16 (migrate, `screener:refresh`, checks, rollback).
 - Verified: new `ScreenerTechnicalFiltersTest` (12 tests), phpunit 960 passed / 6 skipped, Vitest 411, lint, build, engine pytest 137, `.\init.ps1` Baseline OK. Not verified: PostgreSQL by CI only; production `screener:refresh`. No frontend change (feature 5 consumes this API).
 - Next: independent validation, then `screener-technical-filters-ui`.
-
-## signals-expansion implemented (passing, awaiting validation) - 2026-10-27
-
-- Engine: six rules appended to `RULES` in `engine/app/signals/rules.py` (ADX crosses above 25; Bollinger bandwidth at a 120-session low, recomputed from closes through `core.bollinger`, needs 139 bars; close crosses the upper/lower band; stochastic %K crosses %D from the 20/80 zones; strict crosses, null never fires). The original nine rules and `detect.py` are untouched.
-- Laravel: `ScreenerFilterParser::SIGNAL_TYPES` is the 15-type vocabulary and the new `AI_SIGNAL_TYPES` keeps the original nine for `ScreenerQuerySchema` (prompt file untouched); `AlertController`, `SavedScreenerController` and `SignalFactory` now reuse the parser constant instead of private copies; es/en email labels. SPA: union, known types, `signals.*` labels, `SignalLevelsPanel` metrics, text-only guide entries (illustrations deferred, D13). No migration; `signals:detect` already stores any engine type.
-- Verified: engine pytest 137, ruff check clean; phpunit 948 passed / 6 skipped (new `SignalVocabularyTest` compares engine registry, constant and labels); Vitest 411, lint, build; `.\init.ps1` Baseline OK. Existing tests only changed where the vocabulary grew (checkbox/button counts 9 to 15, AI tests use `AI_SIGNAL_TYPES`, guide test: illustrations required for the first nine only).
-- Rollout (`deploy/README.md` item 15): after deploy, `signals:detect --universe=<slug>` per universe, then `screener:refresh`; thresholds are uncalibrated (R1), record production counts per Signal. Not verified: PostgreSQL by CI only, real production counts.
-- Next: independent validation, then `screener-technical-filters-api` and `chart-indicator-overlays`.

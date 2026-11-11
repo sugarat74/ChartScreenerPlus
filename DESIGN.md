@@ -184,3 +184,7 @@ Selectable in the header (sun/moon control next to the language selector, `ui-da
 - ~~Charting library and whether the embedded TradingView widget's built-in look conflicts with the terminal aesthetic.~~ Resolved by `chart-interactive` (2026-09-30): **self-hosted Lightweight Charts 5.2.1**, not the embedded widget. The terminal aesthetic is preserved by mapping every canvas color to an `index.css` token (surface/grid/text/gain/loss/accent) inside the same 2px-border, hard-shadow card; the library's attribution logo stays visible.
 - Density of the Candidate table on smaller laptops.
 - ~~How to represent "stale" vs "fresh" EOD data visually.~~ Resolved by `market-context-ui` (2026-10-23): every reading carries its own date line; a stale one adds a bordered «Desactualizado» / «Stale» text chip in the loss ink with an explanatory `title`, never colour alone.
+
+## H&S and triangle chart geometry
+
+The pattern picker adds both H&S orientations and a neutral group for ascending, descending and symmetrical triangles. Existing forming/confirmed badges remain. The chart draws dashed neckline or upper/lower endpoint segments with translated labels and point markers; PatternPanel lists direction and all endpoints accessibly. Forming triangles say direction-neutral and show no invented horizontal price. Existing border/shadow/theme tokens and chart attribution remain.

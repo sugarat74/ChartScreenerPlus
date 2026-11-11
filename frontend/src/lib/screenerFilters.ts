@@ -60,15 +60,21 @@ export const SCREENER_PATTERN_GROUPS: readonly {
   direction: PatternDirection
   types: readonly ScreenerPatternType[]
 }[] = [
-  { direction: 'bullish', types: ['double_bottom', 'triple_bottom', 'cup_with_handle', 'bull_flag', 'bull_pennant'] },
-  { direction: 'bearish', types: ['double_top', 'triple_top', 'inverse_cup_with_handle', 'bear_flag', 'bear_pennant'] },
+  { direction: 'bullish', types: ['double_bottom', 'triple_bottom', 'cup_with_handle', 'bull_flag', 'bull_pennant', 'inverse_head_and_shoulders'] },
+  { direction: 'bearish', types: ['double_top', 'triple_top', 'inverse_cup_with_handle', 'bear_flag', 'bear_pennant', 'head_and_shoulders'] },
+  { direction: 'neutral', types: ['ascending_triangle', 'descending_triangle', 'symmetrical_triangle'] },
 ]
 
-export type PatternDirection = 'bullish' | 'bearish'
+export type PatternDirection = 'bullish' | 'bearish' | 'neutral'
 
 /** Canonical order of the chartist pattern types: bullish group, then bearish. */
 export const SCREENER_PATTERN_TYPES: readonly ScreenerPatternType[] = SCREENER_PATTERN_GROUPS.flatMap(
   (group) => group.types,
+)
+
+/** Existing Watchlist alert vocabulary stays fixed for this Screener-only feature. */
+export const ALERT_PATTERN_TYPES: readonly ScreenerPatternType[] = SCREENER_PATTERN_TYPES.filter((type) =>
+  !['head_and_shoulders', 'inverse_head_and_shoulders', 'ascending_triangle', 'descending_triangle', 'symmetrical_triangle'].includes(type),
 )
 
 export function patternDirection(type: ScreenerPatternType): PatternDirection {

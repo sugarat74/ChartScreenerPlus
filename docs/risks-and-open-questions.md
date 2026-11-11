@@ -84,3 +84,7 @@
 - Prototype the Python indicator/Signal pipeline on a fixture dataset and compare with hand calculations.
 - Spike the Laravel <-> Python contract (HTTP vs queue) with a trivial end-to-end job.
 - Confirm the S&P 500 constituent list source and refresh cadence.
+
+## Deferred H&S / triangle calibration (owner decision 2026-11-11)
+
+The owner authorized deployment of the five implemented H&S/triangle types before real-sample calibration. Named thresholds are initial and uncalibrated; synthetic lifecycle/near-miss coverage and independent code review remain required. No measured precision, recall or predictive performance may be claimed. Label and review a real sample later; see docs/specs/chart-patterns-head-shoulders-triangles.md.

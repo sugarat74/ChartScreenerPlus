@@ -113,6 +113,7 @@ class ChartPatternsApiTest extends TestCase
         $this->assertSame([[
             'type' => 'double_bottom',
             'status' => 'confirmed',
+            'direction' => 'bullish',
             'breakout_level' => 115,
             'end_date' => '2026-02-20',
         ]], $candidate['patterns']);
@@ -140,6 +141,7 @@ class ChartPatternsApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('patterns.0.type', 'double_bottom')
             ->assertJsonPath('patterns.0.status', 'forming')
+            ->assertJsonPath('patterns.0.direction', 'bullish')
             ->assertJsonPath('patterns.0.start_date', '2026-01-05')
             ->assertJsonPath('patterns.0.breakout_level', 115)
             ->assertJsonPath('patterns.0.points.1.role', 'peak')
@@ -154,7 +156,7 @@ class ChartPatternsApiTest extends TestCase
         $filters = [
             'signal' => [], 'rsi_min' => null, 'rsi_max' => null, 'min_rvol' => null,
             'price_above_sma200' => false, 'ma_cross' => null,
-            'pattern' => ['cup_with_handle', 'double_bottom', 'double_bottom'], 'pattern_status' => 'confirmed',
+            'pattern' => ['cup_with_handle', 'double_bottom', 'symmetrical_triangle', 'double_bottom'], 'pattern_status' => 'confirmed',
             'sort' => 'rvol_desc',
         ];
 
@@ -162,7 +164,7 @@ class ChartPatternsApiTest extends TestCase
             ->withHeader('Origin', 'http://localhost:5173')
             ->postJson('/api/screeners', ['name' => 'Patrones', 'filters' => $filters])
             ->assertCreated()
-            ->assertJsonPath('screener.filters.pattern', ['double_bottom', 'cup_with_handle'])
+            ->assertJsonPath('screener.filters.pattern', ['double_bottom', 'cup_with_handle', 'symmetrical_triangle'])
             ->assertJsonPath('screener.filters.pattern_status', 'confirmed');
 
         $this->actingAs($user)

@@ -189,7 +189,7 @@ export interface ChartPatternPoint {
 export interface ChartPattern {
   type: string
   status: string
-  breakout_level: number
+  breakout_level: number | null
   points: readonly ChartPatternPoint[]
 }
 
@@ -220,20 +220,44 @@ const HIGH_ROLES = new Set([
   'pole_peak',
   'flag_high',
   'pennant_high',
+  'left_shoulder',
+  'head',
+  'right_shoulder',
+  'upper_start',
+  'upper_end',
 ])
 
-/**
- * One breakout-level line per active pattern (chart-patterns-ui). The breakout
- * level is the only price line a pattern exposes: no target or stop is ever
- * derived (`CONSTRAINTS.md` -> Frontend Chart).
- */
+/** A horizontal line only when an active pattern has a finite breakout level. */
 export function patternLevels(
   patterns: readonly ChartPattern[],
   title: (pattern: ChartPattern) => string,
 ): ChartLevel[] {
   return patterns
-    .filter((pattern) => Number.isFinite(pattern.breakout_level))
+    .filter((pattern): pattern is ChartPattern & { breakout_level: number } => typeof pattern.breakout_level === 'number' && Number.isFinite(pattern.breakout_level))
     .map((pattern) => ({ price: pattern.breakout_level, title: title(pattern), color: CHART_COLORS.tertiary }))
+}
+
+/** Explicit sloped neckline and triangle-boundary segments with translated labels. */
+export function patternBoundarySegments(patterns: readonly ChartPattern[], title: (pattern: ChartPattern) => string, lineLabel: (kind: 'neckline' | 'upper' | 'lower') => string) {
+  const rolePairs: Record<string, [string, string]> = {
+    head_and_shoulders: ['neckline_start', 'neckline_end'],
+    inverse_head_and_shoulders: ['neckline_start', 'neckline_end'],
+    ascending_triangle: ['upper_start', 'upper_end'],
+    descending_triangle: ['upper_start', 'upper_end'],
+    symmetrical_triangle: ['upper_start', 'upper_end'],
+  }
+  return patterns.flatMap((pattern) => {
+    const roles = rolePairs[pattern.type]
+    if (!roles) return []
+    const points = roles.map((role) => pattern.points.find((point) => point.role === role))
+    if (!points[0] || !points[1]) return []
+    const segments = [{ points: points as [ChartPatternPoint, ChartPatternPoint], title: `${title(pattern)} · ${lineLabel(pattern.type.includes('head_and_shoulders') ? 'neckline' : 'upper')}` }]
+    if (!pattern.type.includes('head_and_shoulders')) {
+      const lower = ['lower_start', 'lower_end'].map((role) => pattern.points.find((point) => point.role === role))
+      if (lower[0] && lower[1]) segments.push({ points: lower as [ChartPatternPoint, ChartPatternPoint], title: `${title(pattern)} · ${lineLabel('lower')}` })
+    }
+    return segments
+  })
 }
 
 /**
@@ -256,7 +280,9 @@ export function patternMarkers(
       }
       markers.push({
         time: point.date,
-        position: HIGH_ROLES.has(point.role) ? 'aboveBar' : 'belowBar',
+        position: pattern.type === 'inverse_head_and_shoulders' && ['left_shoulder', 'head', 'right_shoulder'].includes(point.role)
+          ? 'belowBar'
+          : HIGH_ROLES.has(point.role) ? 'aboveBar' : 'belowBar',
         shape: 'circle',
         color: CHART_COLORS.tertiary,
         text: label(point.role),

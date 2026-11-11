@@ -26,6 +26,7 @@ from app.patterns.rules import (
     _wick,
 )
 from app.patterns.swings import swing_highs, swing_lows
+from app.patterns.head_shoulders_triangles import DETECTORS as GEOMETRY_DETECTORS
 
 BULLISH = ("double_bottom", "triple_bottom", "cup_with_handle", "bull_flag", "bull_pennant")
 BEARISH = ("double_top", "triple_top", "inverse_cup_with_handle", "bear_flag", "bear_pennant")
@@ -479,4 +480,4 @@ EXTENDED_DETECTORS: tuple[tuple[str, Detector], ...] = (
 )
 
 # Every detector in vocabulary order: the first four, then this batch.
-ALL_DETECTORS: tuple[tuple[str, Detector], ...] = DETECTORS + EXTENDED_DETECTORS
+ALL_DETECTORS: tuple[tuple[str, Detector], ...] = DETECTORS + EXTENDED_DETECTORS + GEOMETRY_DETECTORS

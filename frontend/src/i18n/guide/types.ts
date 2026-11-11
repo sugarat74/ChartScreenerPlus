@@ -14,6 +14,7 @@ export type GuideIllustrationKind =
   | 'pivotBreakoutRvol' | 'rsiOverbought' | 'rsiOversold' | 'macdBullish' | 'macdBearish'
   | 'doubleTop' | 'doubleBottom' | 'cupWithHandle' | 'bullFlag'
   | 'tripleTop' | 'tripleBottom' | 'inverseCupWithHandle' | 'bearFlag' | 'bullPennant' | 'bearPennant'
+  | 'headAndShoulders' | 'inverseHeadAndShoulders' | 'ascendingTriangle' | 'descendingTriangle' | 'symmetricalTriangle'
 
 export type GuideEntry = {
   term: string

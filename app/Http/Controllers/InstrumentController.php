@@ -77,6 +77,7 @@ class InstrumentController extends Controller
             ->map(fn (ChartPattern $pattern): array => [
                 'type' => $pattern->type,
                 'status' => $pattern->status,
+                'direction' => $pattern->direction,
                 'start_date' => $pattern->start_date->format('Y-m-d'),
                 'end_date' => $pattern->end_date->format('Y-m-d'),
                 'breakout_level' => $pattern->breakout_level,
