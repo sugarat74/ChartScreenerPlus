@@ -3,7 +3,7 @@
 ## Backlog feature
 
 - **ID:** `chart-patterns-head-shoulders-triangles`
-- **Status:** `passing` (self-verified; awaiting independent validation)
+- **Status:** `accepted` (independent validator accept, 2026-11-11; real-labelled calibration deferred by owner)
 - **Depends on:** `chart-patterns-detect`, `chart-patterns-ui`, `chart-patterns-calibration`, `chart-patterns-extended`, `saved-screeners` (all accepted)
 - **Request:** 2026-11-10 — start with Head and Shoulders and triangle formations.
 
@@ -27,7 +27,7 @@ Extend the existing deterministic Chartist Pattern pipeline so Visitors can filt
 
 - Triangles keep one stable geometry type (`ascending_triangle`, `descending_triangle`, `symmetrical_triangle`) while forming. `direction` is nullable and is populated only on a confirmed breakout. Head-and-shoulders directions are fixed by orientation; existing patterns are normalized to bullish/bearish direction too.
 - `breakout_level` is nullable. Forming patterns with sloped boundaries do not fabricate a horizontal price. Confirmed patterns retain the boundary value at breakout. Geometry endpoints use explicit point roles and the chart draws the segments with localized labels.
-- Conservative initial constants are named in `engine/app/patterns/head_shoulders_triangles.py`. Synthetic fixture calibration and the existing sample review are required before acceptance; no representative labeled sample for these five new types exists yet, so precision/recall cannot be claimed and this limitation remains open.
+- Conservative initial constants are named in `engine/app/patterns/head_shoulders_triangles.py`. Synthetic functional coverage is required before acceptance. The owner deferred real-labelled calibration on 2026-11-11; no representative labeled sample for these five new types exists yet, so precision/recall cannot be claimed and this limitation remains open.
 
 ## Acceptance outline
 

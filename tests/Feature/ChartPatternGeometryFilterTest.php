@@ -9,6 +9,7 @@ use App\Models\Instrument;
 use App\Models\Universe;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -91,5 +92,27 @@ class ChartPatternGeometryFilterTest extends TestCase
             'bearish',
             ChartPattern::query()->where('instrument_id', $instrument->id)->where('type', 'inverse_cup_with_handle')->sole()->direction,
         );
+    }
+
+    public function test_geometry_migration_backfills_legacy_pattern_directions(): void
+    {
+        $instrument = $this->member('OLD');
+        $inverseCup = ChartPattern::factory()->create([
+            'instrument_id' => $instrument->id,
+            'type' => 'inverse_cup_with_handle',
+        ]);
+        $doubleBottom = ChartPattern::factory()->create([
+            'instrument_id' => $instrument->id,
+            'type' => 'double_bottom',
+        ]);
+        // Simulate rows created before the nullable direction column existed.
+        DB::table('chart_patterns')->whereIn('id', [$inverseCup->id, $doubleBottom->id])->update(['direction' => null]);
+
+        $migration = require database_path('migrations/2026_11_10_000002_extend_chart_patterns_geometry.php');
+        $migration->down();
+        $migration->up();
+
+        $this->assertSame('bearish', ChartPattern::query()->findOrFail($inverseCup->id)->direction);
+        $this->assertSame('bullish', ChartPattern::query()->findOrFail($doubleBottom->id)->direction);
     }
 }

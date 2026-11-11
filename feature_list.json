@@ -1040,7 +1040,7 @@
       "chart-patterns-extended",
       "saved-screeners"
     ],
-    "status": "passing",
+    "status": "accepted",
     "verification": [
       "Fixture-backed deterministic rules cover both H&S orientations and triangle geometries",
       "Patterns persist and flow through the API, Screener filter, Saved Screeners and chart",
@@ -1048,10 +1048,11 @@
       "Existing pattern behavior is unchanged"
     ],
     "evidence": [
-      "engine/tests/test_patterns_geometry.py: 7 synthetic checks cover both H&S orientations, triangle geometry, both breakout directions and opposite-boundary invalidation.",
-      "Focused engine pattern tests: 61 passed; focused Laravel pattern/Screener/AI/alert/Card tests: 79 passed.",
-      "Focused SPA pattern/chart/manual/alert tests: 31 passed; SPA lint/typecheck passed (one pre-existing RequireAuth.test.tsx warning).",
-      "Final .\\init.ps1: Laravel 1015 passed / 6 skipped; Vitest 60 files / 480 passed; engine 160 passed; SPA lint/typecheck and production build passed."
+      "2026-11-11 isolated release from origin/main, with first-breakout confirmation expiry, invalidation/near-miss regressions and inverse-cup bearish mapping fix.",
+      "Focused engine pattern suites71 passed; SPA pattern/chart/guide/Watchlist41 passed. New Laravel geometry/filter/migration replay3 passed/14 assertions.",
+      "Fresh init.ps1 exit0: Laravel1000 passed/6skipped (9209 assertions), SPA60 files/479 passed, lint/typecheck/build passed, engine155 passed. Migration replay added afterward and separately passed.",
+      "Independent validator checks: engine36 passed, Laravel40 passed/397 assertions, SPA25 passed, git diff --check HEAD clean; verdict accept; report docs/validations/chart-patterns-head-shoulders-triangles.md.",
+      "PR100 initial CI run42977562453 passed test and test-pgsql; final evidence/test commit must pass CI again. Owner explicitly deferred real-labelled calibration; no measured precision/recall claim."
     ],
     "notes": "Requested 2026-11-10. See docs/specs/chart-patterns-head-shoulders-triangles.md. Conservative named geometry limits are not validated against a labeled real sample: the existing calibration sample has none of these five patterns. Retain this calibration limitation for independent validation. Alerts and AI vocabularies intentionally remain on LEGACY_TYPES. Owner 2026-11-11 explicitly authorizes deployment now and real-labelled calibration later; this supersedes the former real-sample acceptance prerequisite. Release isolated from indicators/CAC40/calendar/London/Contact. Functional repair/review and fresh gates required."
   }
