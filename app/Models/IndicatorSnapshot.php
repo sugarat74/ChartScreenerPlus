@@ -30,6 +30,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'minus_di',
     'stoch_k',
     'stoch_d',
+    'obv',
+    'supertrend',
+    'supertrend_direction',
 ])]
 class IndicatorSnapshot extends Model
 {
@@ -64,6 +67,9 @@ class IndicatorSnapshot extends Model
             'minus_di' => 'decimal:4',
             'stoch_k' => 'decimal:4',
             'stoch_d' => 'decimal:4',
+            'obv' => 'decimal:4',
+            'supertrend' => 'decimal:4',
+            'supertrend_direction' => 'integer',
         ];
     }
 

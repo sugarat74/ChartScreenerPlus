@@ -2,6 +2,13 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## screener-technical-filters-ui implemented (passing, awaiting validation) - 2026-10-29
+
+- SPA only, backend untouched: `api.ts` types (ten filter fields, ten sorts, five optional Candidate fields, thirty-key Saved Screener definition); `screenerFilters.ts` (bounds, URL parse/patch/key, serialize/deserialize, chip summaries, 28 sort options; legacy twenty-key rows load with the indicator keys off); `screenerColumns.ts` (four optional columns ADX, %B, ATR %, Stoch %K; the %B control also edits the band width, which has no column); `CandidateTable`/`CandidateResults`, `ScreenerColumnFilters` (range editor now handles several ranges), `IndicatorsToggle` (button in the results header, remembered in `localStorage` key `chartiko.screener.indicators` under try/catch), `ScreenerPage`. A criterion or an indicator sort forces the columns visible (button pressed and disabled with a hint). es/en messages, user guide entries (listado columns, filters, sorts, indicator note) and `DESIGN.md` updated.
+- Unchanged by design: default table (nine columns), default request, AI natural-language screener. Existing tests changed only where lists grew (sort options 18 to 28, stored keys 20 to 30, interpreter patch keys).
+- Verified: Vitest 427 passed (16 new), lint (1 pre-existing warning), tsc, build, `.\init.ps1` Baseline OK (phpunit 960 / 6 skipped, engine 137). Manual browser pass done by the independent validator (1440 and 390 px, light and dark); implementer had not verified: manual browser pass at 390 px and 1440 px light/dark.
+- Next: independent validation, then `chart-indicator-overlays`.
+
 ## screener-technical-filters-api implemented (passing, awaiting validation) - 2026-10-28
 
 - Migration `2026_10_29_000002` adds nullable, indexed `screener_rows.adx`, `bb_pctb`, `bb_width`, `atr_pct`, `stoch_k` (reversible). `ScreenerRowBuilder` copies ADX and %K and derives %B, bandwidth (percent) and ATR % of close with the 17-digit `exact()` binding (%B null for a zero-width band, ATR % null for a zero close). `ScreenerFilterParser` gets five inclusive min/max ranges (bounds 0-100, -1-2, 0-1000, 0-100, 0-100; inverted pair 422 on the min key) and ten sorts in `COLUMN_SORTS`; `CandidateQuery` filters, sorts, `fromSaved` and the Candidate payload (five additive floats between `rsi14` and `signals`); `SavedScreenerController` stores/reads the thirty-key definition (ten new keys optional on create, null on read).
