@@ -23,6 +23,7 @@ import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerFilters, ScreenerMaCross } from '../../lib/api.ts'
 import { rsiSummary, rvolSelectValues, triggerText } from '../../lib/screenerToolbar.ts'
 import { TREND_ICON } from '../market/marketText.ts'
+import LockIcon from '../registered-only/LockIcon.tsx'
 import {
   PatternsEditor,
   RsiEditor,
@@ -141,6 +142,8 @@ export default function ScreenerFilterPanel({
       return null
     }
     const open = openNow === group
+    // The sector trigger of a Visitor stays an opener (its editor is the disabled, explained part): dimmed with a lock.
+    const locked = group === 'sector' && access?.status === 'signIn'
     return (
       <button
         key={group}
@@ -152,9 +155,12 @@ export default function ScreenerFilterPanel({
         aria-expanded={open}
         aria-controls={CARD_ID}
         onClick={() => toggleGroup(group)}
-        className={`${controlClass(item.active)} flex items-center justify-between gap-2 text-left`}
+        className={`${controlClass(item.active)} flex items-center justify-between gap-2 text-left ${locked ? 'opacity-60' : ''}`}
       >
-        <span>{item.text}</span>
+        <span className="flex items-center gap-1.5">
+          {locked ? <LockIcon className="h-3 w-3" /> : null}
+          {item.text}
+        </span>
         <span aria-hidden="true" className={`text-[9px] transition-transform ${open ? 'rotate-180' : ''}`}>
           ▼
         </span>

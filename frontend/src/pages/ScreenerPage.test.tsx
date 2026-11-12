@@ -81,10 +81,11 @@ describe('ScreenerPage sector context filters (market-context-patterns)', () => 
     await waitFor(() => expect(screenerCalls()).toHaveLength(1))
     expect(screenerCalls()[0]).toBe('/api/screener?rsi_min=40&sort=rvol_desc&limit=50')
     expect(screen.getByTestId('url').textContent).toBe('?sector_trend=uptrend&sector_rs_rank_max=3&rsi_min=40')
-    // The filter panel offers a sign-in box instead of the controls (inside the sector card).
+    // The filter panel shows the sector controls disabled with the shared reason (inside the sector card).
     fireEvent.click(document.getElementById('screener-criteria-trigger-sector')!)
-    expect(screen.getByText('Inicia sesión para filtrar por la tendencia y la fuerza relativa del sector de cada acción.')).toBeTruthy()
-    expect(screen.queryByLabelText('Fuerza relativa del sector')).toBeNull()
+    const card = document.getElementById('screener-criteria-card')!
+    expect(within(card).getByTestId('registered-only-reason').textContent).toContain('Disponible al iniciar sesión')
+    expect((screen.getByLabelText('Fuerza relativa del sector') as HTMLSelectElement).disabled).toBe(true)
   })
 
   it('a user without access gets the "not available" notice and no sector controls', async () => {
@@ -124,6 +125,47 @@ describe('ScreenerPage sector context filters (market-context-patterns)', () => 
     render(tree(auth(null, 'loading'), '/?rsi_min=40'))
 
     await waitFor(() => expect(screenerCalls()).toEqual(['/api/screener?rsi_min=40&sort=rvol_desc&limit=50']))
+  })
+})
+
+describe('ScreenerPage registered-only options (guest-disabled-screener)', () => {
+  const REGISTERED_ONLY = /^\/api\/(screeners|screener\/interpret|instruments\/.*\/company-card|watchlist|alerts|notifications)/
+
+  it('shows a Visitor the AI box, Saved Screeners and sector trigger disabled and requests no registered-only API', async () => {
+    render(tree(auth(null), '/?rsi_min=40'))
+
+    await waitFor(() => expect(screenerCalls()).toHaveLength(1))
+    expect(await screen.findByRole('heading', { name: /Describe lo que buscas/i })).toBeTruthy()
+    expect((screen.getByLabelText('Búsqueda en tus palabras') as HTMLInputElement).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Screeners guardados' }).getAttribute('aria-disabled')).toBe('true')
+    expect(screen.getByRole('button', { name: /^Sector/ })).toBeTruthy()
+    expect(requests.filter((url) => REGISTERED_ONLY.test(url))).toEqual([])
+  })
+
+  it('activates the AI box and Saved Screeners in place when the session appears', async () => {
+    const view = render(tree(auth(null), '/?rsi_min=40'))
+    await waitFor(() => expect(screenerCalls()).toHaveLength(1))
+    const input = screen.getByLabelText('Búsqueda en tus palabras') as HTMLInputElement
+
+    view.rerender(tree(auth(ALLOWED), '/?rsi_min=40'))
+    expect(screen.getByLabelText('Búsqueda en tus palabras')).toBe(input)
+    expect(input.disabled).toBe(false)
+    await waitFor(() => expect(requests).toContain('/api/screeners'))
+    expect(document.querySelector('details')).not.toBeNull()
+
+    view.rerender(tree(auth(null), '/?rsi_min=40'))
+    expect((screen.getByLabelText('Búsqueda en tus palabras') as HTMLInputElement).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Screeners guardados' }).getAttribute('aria-disabled')).toBe('true')
+  })
+
+  it('does not show the sector trigger to a Visitor while the Market Context flag is off', async () => {
+    flag = false
+    render(tree(auth(null), '/'))
+
+    await waitFor(() => expect(screenerCalls()).toHaveLength(1))
+    await waitFor(() => expect(requests).toContain('/api/legal'))
+    await act(() => new Promise((resolve) => setTimeout(resolve, 30)))
+    expect(screen.queryByRole('button', { name: /^Sector/ })).toBeNull()
   })
 })
 

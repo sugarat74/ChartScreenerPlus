@@ -75,14 +75,23 @@ describe('ScreenerFilterPanel sector context (market-context-patterns)', () => {
     expect(within(sectorFieldset()!).getByText('Vista previa')).toBeTruthy()
   })
 
-  it('shows a dashed sign-in box to a Visitor once the flag is on', () => {
-    show({ status: 'signIn', preview: false })
+  it('shows a Visitor the dimmed Sector trigger and a read-only editor with the sign-in reason once the flag is on', () => {
+    const onChange = show({ status: 'signIn', preview: false })
+    const trigger = screen.getByRole('button', { name: /^Sector/ })
+    expect(trigger.className).toContain('opacity-60')
     openSector()
 
     const fieldset = sectorFieldset()!
-    expect(within(fieldset).getByRole('link', { name: 'Iniciar sesión' }).getAttribute('href')).toBe('/login')
-    expect(within(fieldset).queryByRole('button')).toBeNull()
-    expect(within(fieldset).queryByRole('combobox')).toBeNull()
+    expect(screen.getByTestId('registered-only-reason').textContent).toContain('Disponible al iniciar sesión')
+    const link = within(screen.getByTestId('registered-only-reason')).getByRole('link', { name: 'Iniciar sesión' })
+    expect(link.getAttribute('href')).toBe('/login')
+    const select = within(fieldset).getByLabelText('Fuerza relativa del sector') as HTMLSelectElement
+    expect(select.disabled).toBe(true)
+    for (const button of within(fieldset).getAllByRole('button')) {
+      expect((button as HTMLButtonElement).disabled).toBe(true)
+      fireEvent.click(button)
+    }
+    expect(onChange).not.toHaveBeenCalled()
   })
 
   it('renders no sector control while loading, when hidden or without access info', () => {

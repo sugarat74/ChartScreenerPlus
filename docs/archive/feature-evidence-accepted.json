@@ -2302,5 +2302,31 @@
       "Validator runs on f0f943f: Vitest 66 files / 566 tests passed; lint 0 errors; build clean; php artisan test --filter Login|Auth 25 passed (round 1); .init.ps1 as a child process with process-level redirect printed Baseline OK (phpunit 1020 passed 6 skipped, Vitest 566, engine pytest 177). nextPath hostile inputs (//host, /host, %2F%2Fhost, scheme, javascript:, data:, control characters, auth routes with query/hash/trailing slash, encoded and dot-segment forms) tried in Node and in the browser: no open redirect, every accepted value stays same-origin. Flows: Visitor /portal -> /login?next=%2Fportal -> /portal; logout from the Portal goes home; login/register cross links keep next; register with next returned to it."
     ],
     "notes": "Planned 2026-11-12 at explicit user request. Planning only. Presentation only: no backend diff. Open owner decisions with defaults are in the spec (O1-O11). Independently accepted 2026-11-12. Not verified: email-pending state in a browser (verification is not required in the local config; unit-tested only), real touch, a real screen reader, light-mode contrast ratio (dark measured 8.2:1), next through a full email-verification round trip."
+  },
+  {
+    "id": "guest-disabled-screener",
+    "area": "frontend",
+    "planning_spec": "docs/specs/guest-disabled-registered-options.md (prepared 2026-11-12)",
+    "title": "Screener registered-only options visible but disabled for Visitors",
+    "user_visible_behavior": "A Visitor sees the natural-language box, Saved Screeners, the Ficha IA row link and the sector filter dimmed with a sign-in reason; they become usable when the user logs in.",
+    "depends_on": [
+      "guest-disabled-primitive",
+      "saved-screeners",
+      "ai-screener-natural-language",
+      "market-context-patterns"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Vitest per component in guest, loading, pending and signed-in states, asserting no call to screenerApi.interpret, the saved screeners API or companyCardApi for a Visitor",
+      "Sector trigger shown disabled only when Market Context access is signIn, absent when hidden",
+      "Real browser pass as a Visitor then logging in and out in the same SPA at 390 and 1440 px, light and dark, es and en, with the network list proving no request to a registered-only API and bounding boxes proving no layout shift",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-11-12 implemented (SPA only, no backend diff): ScreenerAiQuery and the Sector editor are RegisteredOnlyPanel, SavedScreenersPanel is a dimmed summary row with the popover (no expandable details, list fetch gated on state enabled), CandidateTable takes companyCardLink hidden|disabled|enabled (disabled = RegisteredOnly tabbable=false, reason once above the table in a reserved-height slot), the Sector trigger is dimmed with a lock for access signIn and absent otherwise. Removed unused keys saved.signInToSave, screener.sectorContext.signInTitle/signInBody (aiQuery.guestIntro/signIn and saved.guestIntro are now orphaned but still in the catalogs, harmless); added companyCard.candidateLinkNote (es/en).",
+      "Vitest 67 files / 578 passed (new SavedScreenersPanel.test.tsx; guest, loading, pending and signed-in states for the AI box, Saved Screeners, row link and Sector editor; ScreenerPage guest test asserts no /screeners, /screener/interpret, /company-card, /watchlist, /alerts or /notifications request, in-place activation and deactivation, flag off = no Sector trigger); lint 0 errors, build clean; .\\init.ps1 exit 0 Baseline OK (phpunit 1020, Vitest 578, engine 177).",
+      "Independent validation 2026-11-12 (ACCEPT, round 1): diff against main reviewed (no backend diff, registered-only primitive and auth hook byte-unchanged); .init.ps1 as a child process with process-level redirect printed Baseline OK. Real browser pass on an isolated dev server (Laravel 8391 + Vite 5391, scratch SQLite copy, MARKET_CONTEXT_PUBLIC true/false): Visitor at 1440 es light, 390 es light, 390 and 1440 en dark: NL box, Saved Screeners row, row Ficha IA items (aria-disabled, tabindex -1, no href, reason once above the table) and Sector trigger dimmed with lock, reason text 4.5:1 or better, no horizontal overflow at 390; flag off = no Sector trigger; Tab order inside the NL box = one stop (the sign-in link), Saved Screeners one stop; popover opens on click with login/register links carrying next=%2F%3Fsort%3Drvol_desc, Escape closes; Sector editor controls natively disabled. Network capture as Visitor: only GET /api/legal, /markets/status, /universes, /screener, /user (401 on /user expected); none to /screeners, /screener/interpret, /company-card, /watchlist, /alerts, /notifications, /market-context. Login from the popover link returned to the same filtered URL, all options active (0 aria-disabled, input enabled, row link /instruments/JPM#ai-company-card); GET /screeners and /notifications started only after login; logout in the same SPA flipped back to disabled with only POST /logout. Bounding boxes before/after login: NL box, Saved row, table identical except the note slot 17 px (lock icon) vs 16 px signed in, shifting the table 1 px (accepted as negligible). Threshold >15 to >10 in translate.test.ts justified (sectorContext now 14 keys after removing 2; a floor guarding against emptying the catalog)."
+    ],
+    "notes": "Planned 2026-11-12. Planning only. Supersedes for presentation the hidden Ficha IA row link of premium-panels-auth-only."
   }
 ]

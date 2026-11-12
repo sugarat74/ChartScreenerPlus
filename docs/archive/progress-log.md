@@ -2,6 +2,14 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Market hours status implemented (`market-hours-status`, passing, awaiting validation) - 2026-11-05
+
+- Backend: `ListingMarket::open()`, `config/ingestion.php` gains `market_open`/`early_closes` (US) and `markets.<code>.open`/`early_closes` (XMAD 24 and 31 Dec 14:00; XETR none, those days are closures; US day after Thanksgiving and 24 Dec 13:00), `MarketCalendar::session()/regularHours()/coversYear()/upcomingEvents()`, new `MarketHoursStatus` service and public `GET /api/markets/status` (throttled, markets of the caller's visible universes in US/XMAD/XETR order; UTC ISO instants, `is_open`, `next_open_at`, `next_close_at`, `upcoming`, `calendar_covered`). Schedule and clock only.
+- SPA: `MarketHoursStrip` on the home page (one extra GET, status derived from the clock every minute, refetch only when a boundary has passed; filled/hollow marker plus text; disclosure with regular hours, holidays, early closes; visible note; nothing rendered on failure or no public market), `lib/marketHours.ts`, `marketHours.*` es/en keys.
+- Verified: `.\init.ps1` exit 0 (phpunit 998 passed / 6 skipped, Vitest 443, lint/tsc/build, engine 138). New `MarketHoursStatusTest` (boundaries, weekends, own holidays, early closes, US and EU DST in different weeks, next open over weekend plus holidays, uncovered year), `MarketStatusApiTest`, Vitest for the strip (flip at a boundary, refetch, es/en, no colour-only, no EOD, StrictMode) and the home page. Browser pass (scratch SQLite, vite + artisan serve) at 390 and 1440 px, light/dark, es/en: no horizontal overflow, StrictMode abort bug found and fixed.
+- Assumptions: strip shows `US`, `XMAD`, `XETR` of the visible universes (admins see unreleased ones); uncovered year means weekday-only status plus a warning note; early close dates XMAD 2027 derived like its holidays; auctions not modelled; details are an inline disclosure, not a popover or page.
+- Not verified: PostgreSQL (CI only), 2027 early closes (confirm with exchanges), production. Next: independent validation.
+
 ## chart-indicator-overlays implemented (passing, awaiting validation) - 2026-10-29
 
 - SPA only, backend untouched (feature 6 of `docs/specs/technical-indicators-expansion.md`): `lib/chartIndicators.ts` (closed list, guarded `localStorage` key `chartiko.chart.indicators`, default none), `ChartIndicatorPicker` (aria-pressed toggle row; Bollinger only, panels are feature 7), `useInstrumentIndicators` (one `GET /api/instruments/{ticker}/indicators` only while a toggle is on), `chartData.ts` (`toBandData` omits warm-up nulls, `noBandData`, `bandSignalLevels`, theme `band` color), three Bollinger line series and a dashed price line per band Signal in `InteractiveChart` (`chart.remove()` cleanup unchanged), inline loading/error+retry/not-enough-history states, es/en messages, guide text, `DESIGN.md`.

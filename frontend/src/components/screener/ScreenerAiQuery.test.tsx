@@ -136,22 +136,63 @@ describe('ScreenerAiQuery', () => {
     fireEvent.click(screen.getByRole('button', { name: es.submit }))
   }
 
-  it('keeps its space while auth is loading, with no link or input', () => {
+  it('keeps the real form, dimmed and busy, while auth is loading: no sign-in link, no request', () => {
     const interpret = vi.spyOn(screenerApi, 'interpret')
     show(true, 'loading')
-    expect(screen.getByRole('heading', { name: new RegExp(es.title) }).closest('section')?.getAttribute('aria-busy')).toBe('true')
+    expect((screen.getByLabelText(es.label) as HTMLInputElement).disabled).toBe(true)
+    expect(screen.getByTestId('registered-only-reason').textContent).toBe('')
     expect(screen.queryByRole('link')).toBeNull()
-    expect(screen.queryByRole('textbox')).toBeNull()
     expect(interpret).not.toHaveBeenCalled()
   })
 
-  it('shows a Visitor a sign-in prompt instead of the input', () => {
+  it('shows a Visitor the real form disabled with one tab stop (the sign-in link) and makes no request', () => {
     const interpret = vi.spyOn(screenerApi, 'interpret')
     show(false)
-    expect(screen.getByRole('link', { name: es.signIn }).getAttribute('href')).toBe('/login')
-    expect(screen.getByText(es.guestIntro)).toBeTruthy()
-    expect(screen.queryByRole('textbox')).toBeNull()
+    const input = screen.getByLabelText(es.label) as HTMLInputElement
+    expect(input.disabled).toBe(true)
+    expect(input.placeholder).toBe(es.placeholder)
+    expect((screen.getByRole('button', { name: es.submit }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: es.examples.first }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText('Disponible al iniciar sesión')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' }).getAttribute('href')).toBe('/login')
+    expect(screen.getAllByRole('link')).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: es.examples.first }))
+    fireEvent.submit(input.closest('form')!)
+    expect(input.value).toBe('')
     expect(interpret).not.toHaveBeenCalled()
+  })
+
+  it('shows the pending account the confirm-email reason with a link to the account page', () => {
+    render(
+      <AuthContext.Provider value={{ ...auth, user: { ...auth.user, email_verification_pending: true } }}>
+        <I18nProvider>
+          <MemoryRouter>
+            <ScreenerAiQuery searchParams={new URLSearchParams()} onApply={onApply} onRestore={onRestore} />
+          </MemoryRouter>
+        </I18nProvider>
+      </AuthContext.Provider>,
+    )
+    expect(screen.queryByText('Disponible al iniciar sesión')).toBeNull()
+    expect(screen.getByText('Confirma tu email para usarlo')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Ir a mi cuenta' }).getAttribute('href')).toBe('/portal/cuenta')
+    expect((screen.getByLabelText(es.label) as HTMLInputElement).disabled).toBe(true)
+  })
+
+  it('activates in place when the session appears, without remounting the form', () => {
+    const view = show(false)
+    const input = screen.getByLabelText(es.label) as HTMLInputElement
+    view.rerender(
+      <AuthContext.Provider value={auth}>
+        <I18nProvider>
+          <MemoryRouter>
+            <ScreenerAiQuery searchParams={new URLSearchParams()} onApply={onApply} onRestore={onRestore} />
+          </MemoryRouter>
+        </I18nProvider>
+      </AuthContext.Provider>,
+    )
+    expect(screen.getByLabelText(es.label)).toBe(input)
+    expect(input.disabled).toBe(false)
+    expect(screen.queryByRole('link')).toBeNull()
   })
 
   it('shows examples and the privacy hint, and an example fills the input without a request', () => {

@@ -427,11 +427,25 @@ describe('CandidateTable AI card link', () => {
     ['no AuthProvider', null],
     ['auth loading', { ...auth, status: 'loading' as const, user: null }],
     ['Visitor', { ...auth, user: null }],
-  ])('CandidateResults shows no AI card link for %s', (_label, value) => {
+  ])('CandidateResults shows the AI card item dimmed, linkless and out of the tab order for %s', (label, value) => {
     results(value)
     expect(screen.getByRole('link', { name: 'NVDA' })).toBeTruthy()
-    expect(screen.queryByText('Ficha IA')).toBeNull()
-    expect(screen.queryByText(/inicia sesión/i)).toBeNull()
+    const item = screen.getByText('Ficha IA')
+    expect(item.getAttribute('aria-disabled')).toBe('true')
+    expect(item.hasAttribute('href')).toBe(false)
+    expect(item.tabIndex).toBe(-1)
+    expect(item.className).toContain('opacity-60')
+    // The reason is stated once above the table (not while the session loads).
+    const note = screen.getByTestId('company-card-link-note').textContent
+    expect(note).toBe(label === 'auth loading' ? '' : 'Ficha IA: disponible al iniciar sesión')
+    expect(companyCardApi.get).not.toHaveBeenCalled()
+  })
+
+  it('a click on the dimmed item opens the sign-in popover with a next link and navigates nowhere', () => {
+    results({ ...auth, user: null })
+    fireEvent.click(screen.getByText('Ficha IA'))
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' }).getAttribute('href')).toBe('/login')
+    expect(companyCardApi.get).not.toHaveBeenCalled()
   })
 
   it('CandidateResults links each Candidate to its chart Company Card anchor for a signed-in user', () => {
