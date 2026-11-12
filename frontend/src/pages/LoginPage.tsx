@@ -2,17 +2,20 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import RedirectSignedIn from '../auth/RedirectSignedIn.tsx'
+import { registerHref } from '../auth/nextPath.ts'
 import { useAuth } from '../auth/useAuth.ts'
+import { useNextPath } from '../auth/useNextPath.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import AuthField from '../components/AuthField.tsx'
 import { ApiError } from '../lib/api.ts'
 import type { ValidationErrors } from '../lib/api.ts'
-import { DEFAULT_ROUTE, FORGOT_PASSWORD_ROUTE, REGISTER_ROUTE } from '../nav.ts'
+import { FORGOT_PASSWORD_ROUTE } from '../nav.ts'
 
 export default function LoginPage() {
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const { t } = useI18n()
+  const next = useNextPath()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,7 +35,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password)
-      navigate(DEFAULT_ROUTE, { replace: true })
+      navigate(next, { replace: true })
     } catch (error) {
       if (error instanceof ApiError) {
         setErrors(error.errors)
@@ -108,7 +111,7 @@ export default function LoginPage() {
 
       <p className="text-sm text-on-surface-variant">
         {t('auth.noAccount')}{' '}
-        <Link to={REGISTER_ROUTE} className="font-bold text-on-surface underline">
+        <Link to={registerHref(next)} className="font-bold text-on-surface underline">
           {t('auth.createAccount')}
         </Link>
       </p>

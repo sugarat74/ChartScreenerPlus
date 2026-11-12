@@ -1030,7 +1030,6 @@
       "chart-indicator-panels"
     ]
   },
-
   {
     "id": "chart-patterns-head-shoulders-triangles",
     "area": "engine + screener + chart",
@@ -1072,24 +1071,14 @@
   {
     "id": "guest-disabled-primitive",
     "area": "frontend",
-    "planning_spec": "docs/specs/guest-disabled-registered-options.md (prepared 2026-11-12)",
     "title": "Shared registered-only disabled primitive and sign-in return path",
-    "user_visible_behavior": "No visible change by itself: adds the reusable dimmed, focusable, aria-disabled option with a sign-in reason, and makes sign-in return the user to the page they came from.",
+    "status": "accepted",
     "depends_on": [
       "premium-panels-auth-only",
       "auth-email-verification",
       "app-multilanguage",
       "ui-dark-mode"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Vitest: useRegisteredOnly states (no provider, loading, Visitor, email-pending, signed-in, logout), RegisteredOnly and RegisteredOnlyPanel (aria-disabled without native disabled, tab order, Enter/Space/click swallowed, popover with sign-in link and Escape, no wrapper when enabled, flips on context change)",
-      "Vitest: next path validator accepts relative paths and rejects //host, schemes and auth routes; Login/Register/RequireAuth honour next",
-      "Catalog parity es/en; lint and build clean",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-11-12 at explicit user request. Planning only. Presentation only: no backend diff. Open owner decisions with defaults are in the spec (O1-O11)."
+    ]
   },
   {
     "id": "guest-disabled-screener",
