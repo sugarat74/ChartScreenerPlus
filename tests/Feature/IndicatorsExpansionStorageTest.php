@@ -32,7 +32,7 @@ class IndicatorsExpansionStorageTest extends TestCase
     /** @return list<string> */
     private function seriesKeys(): array
     {
-        return ['date', 'bb_upper', 'bb_middle', 'bb_lower', 'adx', 'plus_di', 'minus_di', 'atr14', 'stoch_k', 'stoch_d'];
+        return ['date', 'bb_upper', 'bb_middle', 'bb_lower', 'adx', 'plus_di', 'minus_di', 'atr14', 'stoch_k', 'stoch_d', 'rsi14', 'macd', 'macd_signal', 'macd_hist', 'obv', 'supertrend', 'supertrend_direction'];
     }
 
     private function snapshots(Instrument $instrument, int $count, array $overrides = []): void
@@ -142,6 +142,33 @@ class IndicatorsExpansionStorageTest extends TestCase
             ->assertJsonPath('series.1.date', '2026-09-03');
     }
 
+    public function test_the_series_endpoint_exposes_obv_and_supertrend_ascending_with_null_warm_up(): void
+    {
+        $instrument = Instrument::factory()->create(['ticker' => 'NVDA']);
+        // Inserted newest first on purpose.
+        foreach (['2026-09-03' => [1500, 98.5, -1], '2026-09-01' => [null, null, null], '2026-09-02' => [1000, 97.25, 1]] as $date => [$obv, $line, $direction]) {
+            IndicatorSnapshot::factory()->create([
+                'instrument_id' => $instrument->id,
+                'date' => $date,
+                'obv' => $obv,
+                'supertrend' => $line,
+                'supertrend_direction' => $direction,
+            ]);
+        }
+
+        $series = $this->getJson('/api/instruments/NVDA/indicators')->assertOk()->json('series');
+
+        $this->assertSame(['2026-09-01', '2026-09-02', '2026-09-03'], array_column($series, 'date'));
+        $this->assertNull($series[0]['obv']);
+        $this->assertNull($series[0]['supertrend']);
+        $this->assertNull($series[0]['supertrend_direction']);
+        $this->assertEqualsWithDelta(1000.0, $series[1]['obv'], 0.0001);
+        $this->assertEqualsWithDelta(97.25, $series[1]['supertrend'], 0.0001);
+        $this->assertSame(1, $series[1]['supertrend_direction']);
+        $this->assertEqualsWithDelta(1500.0, $series[2]['obv'], 0.0001);
+        $this->assertSame(-1, $series[2]['supertrend_direction']);
+    }
+
     public function test_the_series_limit_is_clamped_silently(): void
     {
         $instrument = Instrument::factory()->create(['ticker' => 'NVDA']);
@@ -195,7 +222,7 @@ class IndicatorsExpansionStorageTest extends TestCase
 
         $snapshot = $this->getJson('/api/instruments/NVDA')->assertOk()->json('snapshot');
 
-        $this->assertSame([...self::OLD_KEYS, ...self::NEW_COLUMNS], array_keys($snapshot));
+        $this->assertSame([...self::OLD_KEYS, ...self::NEW_COLUMNS, 'obv', 'supertrend', 'supertrend_direction'], array_keys($snapshot));
         $this->assertEqualsWithDelta(2.5, $snapshot['atr14'], 0.0001);
         $this->assertNull($snapshot['plus_di']);
         $this->assertIsFloat($snapshot['stoch_k']);

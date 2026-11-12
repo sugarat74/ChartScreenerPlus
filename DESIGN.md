@@ -188,3 +188,7 @@ Selectable in the header (sun/moon control next to the language selector, `ui-da
 ## H&S and triangle chart geometry
 
 The pattern picker adds both H&S orientations and a neutral group for ascending, descending and symmetrical triangles. Existing forming/confirmed badges remain. The chart draws dashed neckline or upper/lower endpoint segments with translated labels and point markers; PatternPanel lists direction and all endpoints accessibly. Forming triangles say direction-neutral and show no invented horizontal price. Existing border/shadow/theme tokens and chart attribution remain.
+
+## Additional chart indicators (2026-11-10)
+
+RSI (14), MACD (12, 26, 9), OBV and Supertrend (10, 3) join the existing indicator picker, remembered per browser and off by default. RSI, MACD and OBV each use a synchronized pane below volume; RSI is fixed at 0–100 with 30/70 guides, MACD shows both lines and a positive/negative histogram. Supertrend overlays the price pane. All four share one lazy stored-series request; the SPA does not calculate indicator values. Indicator panes add 120 px each to chart height and preserve shared crosshair/time scale.

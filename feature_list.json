@@ -1019,6 +1019,19 @@
     "notes": "Planned 2026-11-08 at explicit user request. Planning only. Constituents verified 2026-11-08 against Wikipedia (table after 1 Oct 2026, 100 rows) and the LSEG 2 Sep 2026 notice (easyJet and Ithaca in, Entain and Persimmon out). Open owner decisions with defaults: leave out the three non-pence lines (97 members), pence over pounds."
   },
   {
+    "id": "chart-indicators-rsi-macd-obv-supertrend",
+    "area": "chart",
+    "title": "Chart: RSI, MACD, OBV and Supertrend indicators",
+    "status": "accepted",
+    "depends_on": [
+      "indicators-expansion-engine",
+      "indicators-expansion-storage",
+      "chart-indicator-overlays",
+      "chart-indicator-panels"
+    ]
+  },
+
+  {
     "id": "chart-patterns-head-shoulders-triangles",
     "area": "engine + screener + chart",
     "title": "Chart patterns: Head and Shoulders and Triangles",

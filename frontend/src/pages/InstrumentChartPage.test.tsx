@@ -418,3 +418,62 @@ describe('Indicator panes (chart-indicator-panels)', () => {
     expect(await screen.findByText('No hay historial suficiente para Estocástico.')).toBeTruthy()
   })
 })
+
+describe('RSI, MACD, OBV and Supertrend toggles (chart-indicators-rsi-macd-obv-supertrend)', () => {
+  const FULL_POINT = {
+    bb_upper: null, bb_middle: null, bb_lower: null, adx: null, plus_di: null, minus_di: null, atr14: null,
+    stoch_k: null, stoch_d: null, rsi14: 55, macd: 1.2, macd_signal: 1, macd_hist: 0.2,
+    obv: 5000, supertrend: 98, supertrend_direction: 1,
+  }
+  const SERIES = {
+    ticker: 'NVDA',
+    series: [{ date: '2026-10-01', ...FULL_POINT }],
+    meta: { limit: 252, point_count: 1, latest_date: '2026-10-01' },
+  }
+  const panes = () => screen.getByTestId('interactive-chart').getAttribute('data-panes')
+  const NAMES = ['Supertrend (10, 3)', 'RSI (14)', 'MACD (12, 26, 9)', 'OBV']
+
+  beforeEach(() => {
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'NVDA', company: 'NVIDIA', exchange: 'NASDAQ' }))
+    vi.mocked(instrumentApi.indicators).mockReset()
+  })
+
+  it('offers the four toggles off by default without any indicator request', async () => {
+    show('NVDA')
+    await screen.findByTestId('interactive-chart')
+    for (const name of NAMES) {
+      expect(screen.getByRole('button', { name }).getAttribute('aria-pressed')).toBe('false')
+    }
+    expect(instrumentApi.indicators).not.toHaveBeenCalled()
+  })
+
+  it('makes a single request for all four, remembers them and keeps the request on toggle-off', async () => {
+    vi.mocked(instrumentApi.indicators).mockResolvedValue(SERIES)
+    show('NVDA')
+    await screen.findByTestId('interactive-chart')
+
+    for (const name of NAMES) {
+      fireEvent.click(screen.getByRole('button', { name }))
+    }
+    await waitFor(() => expect(panes()).toBe('supertrend,rsi,macd,obv'))
+    expect(instrumentApi.indicators).toHaveBeenCalledTimes(1)
+    expect(window.localStorage.getItem('chartiko.chart.indicators')).toBe('["supertrend","rsi","macd","obv"]')
+    for (const name of NAMES) {
+      expect(screen.getByRole('button', { name }).getAttribute('aria-pressed')).toBe('true')
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: 'RSI (14)' }))
+    expect(screen.getByRole('button', { name: 'RSI (14)' }).getAttribute('aria-pressed')).toBe('false')
+    expect(instrumentApi.indicators).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores stored selections of the new ids on reload', async () => {
+    window.localStorage.setItem('chartiko.chart.indicators', '["obv","macd"]')
+    vi.mocked(instrumentApi.indicators).mockResolvedValue(SERIES)
+    show('NVDA')
+
+    await waitFor(() => expect(panes()).toBe('macd,obv'))
+    expect(screen.getByRole('button', { name: 'OBV' }).getAttribute('aria-pressed')).toBe('true')
+    expect(instrumentApi.indicators).toHaveBeenCalledTimes(1)
+  })
+})
