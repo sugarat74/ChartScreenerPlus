@@ -2,6 +2,12 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Compact Screener filter panel planned (1 feature, not started) - 2026-11-05
+
+- Explicit user request: rethink the «Criterios técnicos» block as a cleaner, Finviz-style panel with the same options in less space. Planning only, no application code. New `screener-filter-panel-compact` and `docs/specs/screener-filter-panel-compact.md`.
+- Decision: one-row toolbar of value-showing triggers (Signals, RSI, Patterns, Sector) that open a single inline editor card, native selects for Min RVOL and MA cross, a toggle for Price above SMA200, count and Clear in the header. Tabs, whole-panel collapse and floating popovers rejected (reasons in the spec). Frontend only, no new dependency, same 30 criteria keys, URL, requests and Saved Screeners.
+- Open questions (with defaults) are in the spec. The column-header sort/filter menu idea stays separate.
+
 ## DAX universe implementation (`universe-dax`, passing, awaiting validation) - 2026-10-31
 
 - Feature 6 of `docs/specs/multi-market-universes.md`. New `database/data/dax.csv` (40 `.DE` companies, exchange `XETRA`, as_of 2026-10-31) with `dax.md` (sources, SHA-256, editorial sector/country, rebalance procedure), `DaxUniverseSeeder` (slug `dax`, "DAX", `XETR`/EUR, position 3) run by `DatabaseSeeder` and `deploy/deploy.sh`, `markets.XETR.holidays` from Deutsche Boerse (2026 official; 24 and 31 Dec are full closures; 2027 in the same overview but subject to change, to confirm), guide es/en wording, ARCHITECTURE, spec notes and `deploy/README.md` item 17.
