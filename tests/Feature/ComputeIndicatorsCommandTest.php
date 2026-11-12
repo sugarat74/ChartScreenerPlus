@@ -165,6 +165,33 @@ class ComputeIndicatorsCommandTest extends TestCase
         }
     }
 
+    public function test_obv_and_supertrend_are_stored_and_a_bad_direction_becomes_null(): void
+    {
+        $this->instrumentWithBars('NVDA', 5);
+
+        $dates = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05'];
+        $directions = [1, -1, 0, 2, 'up'];
+        $snapshots = [];
+        foreach ($dates as $index => $date) {
+            $snapshots[] = $this->snapshot($date, [
+                'obv' => 1000 * ($index + 1),
+                'supertrend' => 100.5 + $index,
+                'supertrend_direction' => $directions[$index],
+            ]);
+        }
+
+        Http::fake(['*/indicators/compute' => Http::response($this->snapshotsResponse($snapshots))]);
+
+        $this->artisan('indicators:compute', ['--ticker' => 'NVDA'])->assertExitCode(0);
+
+        $stored = IndicatorSnapshot::query()->orderBy('date')->get();
+        $this->assertCount(5, $stored);
+        $this->assertEqualsWithDelta(1000.0, (float) $stored[0]->obv, 0.0001);
+        $this->assertEqualsWithDelta(5000.0, (float) $stored[4]->obv, 0.0001);
+        $this->assertEqualsWithDelta(101.5, (float) $stored[1]->supertrend, 0.0001);
+        $this->assertSame([1, -1, null, null, null], $stored->map(fn ($row) => $row->supertrend_direction)->all());
+    }
+
     public function test_the_engine_error_is_handled_without_writing(): void
     {
         $this->instrumentWithBars('NVDA', 2);

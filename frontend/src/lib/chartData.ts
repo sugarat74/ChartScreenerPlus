@@ -439,3 +439,16 @@ export function lastIndicatorValue(series: readonly ChartIndicatorPoint[], key: 
   const points = toIndicatorData(series, key)
   return points.length === 0 ? null : points[points.length - 1].value
 }
+
+/** Compact axis label for large signed volumes (OBV): 40M, -15.2M, 1.5K, 800. */
+export function formatCompactVolume(value: number): string {
+  const abs = Math.abs(value)
+  const units: Array<[number, string]> = [[1e9, 'B'], [1e6, 'M'], [1e3, 'K']]
+  for (const [size, suffix] of units) {
+    if (abs >= size) {
+      const scaled = Math.round((value / size) * 10) / 10
+      return `${Number.isInteger(scaled) ? scaled : scaled.toFixed(1)}${suffix}`
+    }
+  }
+  return String(Math.round(value))
+}

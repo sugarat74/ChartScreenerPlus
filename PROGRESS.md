@@ -2,10 +2,11 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
-## Chart indicators extension — 2026-11-10
+## Chart indicators extension (`chart-indicators-rsi-macd-obv-supertrend`, passing, awaiting independent validation) - 2026-11-12
 
-- Started `chart-indicators-rsi-macd-obv-supertrend` after the owner requested RSI, MACD, OBV and Supertrend in the chart. RSI/MACD reuse computed snapshots; OBV and Supertrend are added to the engine, nullable snapshot storage and shared lazy chart-series endpoint. RSI/MACD/OBV render in panes; Supertrend overlays price. Selection stays off by default.
-- Added spec, backlog entry and DESIGN/indicator-expansion documentation. Baseline `.\init.ps1` passed before code changes (Laravel 1015 passed/6 skipped, frontend lint, 479 Vitest, build, engine 153). Post-change: SPA lint/typecheck passed (one pre-existing RequireAuth warning); PHP syntax, Python compile and `git diff --check` passed. Test suites have not been rerun; feature remains `in_progress`.
+- Implemented RSI, MACD, OBV and Supertrend (10,3) in the chart. RSI/MACD reuse stored snapshots; OBV and Supertrend are engine-computed and stored (nullable `obv`, `supertrend`, `supertrend_direction`) and served by the shared lazy chart-series endpoint. RSI/MACD/OBV render in sub-panes, Supertrend overlays price; all off by default. Spec, DESIGN and technical-indicators-expansion docs updated (spec now states the Supertrend start condition).
+- Independent validation returned REVISE (math, storage, API and UI correct; tests missing). Fixes applied: engine tests for OBV up/down/tie/first bar/flat, Supertrend warm-up, hand-computed flips, ramp known values, an independent pure-Python oracle and flat prices; Laravel tests for the history endpoint (ascending, null warm-up) and `ComputeIndicators` normalising a bad `supertrend_direction` (0, 2, string) to null; Vitest for persistence of the four ids, pane order, `toMacdHistogramData`, `toSupertrendData`, `noPaneData`, one shared lazy request and `aria-pressed` (new `ChartIndicatorPicker.test.tsx`); OBV axis labels now compact (`formatCompactVolume`, 40M / -15.2M).
+- Verified in the worktree: engine pytest 177 passed; targeted phpunit (ComputeIndicators, IndicatorsExpansionStorage, InstrumentDetailApi) 27 passed; full phpunit 1026 tests, 6 failures in AdminUsersSessionsTest/LocalizationTest (auth/session tests, untouched code, worktree has no `.env`; CI covers the full suite); Vitest 492 passed (61 files); `npm run lint` (one pre-existing RequireAuth warning) and `npm run build` OK. `.\init.ps1` not run in the worktree. Not verified: manual browser pass of the OBV pane bottom label (not checked visually). Feature stays `in_progress` until independent re-validation.
 
 ## CAC 40 universe implemented (`universe-cac40`, passing, awaiting validation) - 2026-11-08
 

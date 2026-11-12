@@ -20,6 +20,7 @@ Reuse the stored RSI/MACD snapshots; compute OBV and Supertrend in the Python in
 - MACD pane: MACD and Signal lines plus a positive/negative colored histogram, using the existing stored 12/26/9 series.
 - OBV: cumulative volume, starts at the first bar's volume; add volume on an up close, subtract on a down close, unchanged on an equal close.
 - Supertrend: Wilder ATR period 10 and multiplier 3; direction is a nullable `+1` bullish / `-1` bearish value. The displayed line uses the price scale.
+- Supertrend start: the first value is at index 10 (11 bars needed). Wilder ATR is seeded with the mean of TR[1..10] (bar 0 has no true range); the initial direction is `+1` when `close >= (high + low) / 2`, else `-1`. Final bands carry forward (upper only tightens, lower only rises, unless the previous close crossed it) and a flip is tested against the current final band: `-1` to `+1` when `close > final upper`, `+1` to `-1` when `close < final lower`. The line is the final lower band when bullish and the final upper band when bearish.
 - Warm-up/missing history is `null`; no partial-window values. New snapshot fields are additive and nullable until recomputation.
 - All four toggles are off by default. Existing Bollinger, ADX, ATR and Stochastic behavior and persisted selections remain compatible.
 

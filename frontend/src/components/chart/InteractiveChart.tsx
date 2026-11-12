@@ -35,6 +35,7 @@ import {
   STOCH_ZONES,
   CHART_THEME_COLORS,
   bandSignalLevels,
+  formatCompactVolume,
   patternLevels,
   patternBoundarySegments,
   patternMarkers,
@@ -159,7 +160,9 @@ export default function InteractiveChart({
           chart.addSeries(LineSeries, { ...line, color: chrome.macd, title: 'MACD' }, index).setData(toIndicatorData(series, 'macd'))
           chart.addSeries(LineSeries, { ...line, color: chrome.macdSignal, title: 'Signal' }, index).setData(toIndicatorData(series, 'macd_signal'))
         } else if (pane === 'obv') {
-          chart.addSeries(LineSeries, { ...line, color: chrome.obv, lineWidth: 2, title: 'OBV' }, index).setData(toIndicatorData(series, 'obv'))
+          const obv = chart.addSeries(LineSeries, { ...line, color: chrome.obv, lineWidth: 2, title: 'OBV', priceFormat: { type: 'custom', minMove: 1, formatter: formatCompactVolume } }, index)
+          obv.setData(toIndicatorData(series, 'obv'))
+          obv.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.1 } })
         } else if (pane === 'adx') {
           const adx = chart.addSeries(LineSeries, { ...line, color: chrome.adx, lineWidth: 2, title: 'ADX' }, index)
           adx.setData(toIndicatorData(series, 'adx'))

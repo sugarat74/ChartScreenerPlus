@@ -2,6 +2,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import {
   CHART_INDICATORS_STORAGE_KEY,
+  CHART_INDICATOR_IDS,
   activePanes,
   chartHeight,
   readStoredIndicators,
@@ -9,13 +10,17 @@ import {
   writeStoredIndicators,
 } from './chartIndicators.ts'
 import {
+  CHART_COLORS,
   CHART_THEME_COLORS,
+  formatCompactVolume,
   bandSignalLevels,
   lastIndicatorValue,
   noBandData,
   noPaneData,
   toBandData,
   toIndicatorData,
+  toMacdHistogramData,
+  toSupertrendData,
 } from './chartData.ts'
 
 afterEach(() => {
@@ -128,4 +133,89 @@ it('has pane colors for both themes', () => {
       expect(CHART_THEME_COLORS[theme][key]).toMatch(/^#/)
     }
   }
+})
+
+it('lists the four new ids, persists them in closed order and drops duplicates', () => {
+  expect(CHART_INDICATOR_IDS).toEqual(['bollinger', 'supertrend', 'rsi', 'macd', 'obv', 'adx', 'atr', 'stochastic'])
+  writeStoredIndicators(['obv', 'rsi', 'supertrend', 'macd'])
+  expect(readStoredIndicators()).toEqual(['supertrend', 'rsi', 'macd', 'obv'])
+  window.localStorage.setItem(CHART_INDICATORS_STORAGE_KEY, '["macd","macd","obv","vwap"]')
+  expect(readStoredIndicators()).toEqual(['macd', 'obv'])
+  expect(toggleIndicator(['obv'], 'supertrend')).toEqual(['supertrend', 'obv'])
+  expect(toggleIndicator(['supertrend', 'obv'], 'obv')).toEqual(['supertrend'])
+})
+
+it('orders active panes with RSI, MACD and OBV first and keeps Supertrend out of the panes', () => {
+  expect(activePanes(['obv', 'stochastic', 'supertrend', 'macd', 'rsi', 'adx'])).toEqual([
+    'rsi', 'macd', 'obv', 'adx', 'stochastic',
+  ])
+  expect(activePanes(['supertrend'])).toEqual([])
+  expect(chartHeight(activePanes(['rsi', 'macd', 'obv']).length)).toBe(780)
+})
+
+const NEW_SERIES = [
+  { date: '2026-10-01', rsi14: null, macd: null, macd_signal: null, macd_hist: null, obv: null, supertrend: null, supertrend_direction: null },
+  { date: '2026-10-02', rsi14: 61, macd: 1.5, macd_signal: 1.2, macd_hist: 0.3, obv: 2000, supertrend: 98, supertrend_direction: 1 },
+  { date: '2026-10-03', rsi14: 40, macd: 0.5, macd_signal: 1.0, macd_hist: -0.5, obv: -1500, supertrend: 106, supertrend_direction: -1 },
+  { date: '2026-10-04', rsi14: 41, macd: 0.4, macd_signal: 0.9, macd_hist: 0, obv: -1500, supertrend: 99, supertrend_direction: 1 },
+]
+
+it('maps the MACD histogram without nulls and colors it by sign', () => {
+  expect(toMacdHistogramData(NEW_SERIES)).toEqual([
+    { time: '2026-10-02', value: 0.3, color: CHART_COLORS.gain },
+    { time: '2026-10-03', value: -0.5, color: CHART_COLORS.loss },
+    { time: '2026-10-04', value: 0, color: CHART_COLORS.gain },
+  ])
+  expect(toMacdHistogramData([])).toEqual([])
+})
+
+it('splits Supertrend by direction with whitespace so segments do not join', () => {
+  expect(toSupertrendData(NEW_SERIES, 1)).toEqual([
+    { time: '2026-10-01' },
+    { time: '2026-10-02', value: 98 },
+    { time: '2026-10-03' },
+    { time: '2026-10-04', value: 99 },
+  ])
+  expect(toSupertrendData(NEW_SERIES, -1)).toEqual([
+    { time: '2026-10-01' },
+    { time: '2026-10-02' },
+    { time: '2026-10-03', value: 106 },
+    { time: '2026-10-04' },
+  ])
+  // A line value with a missing direction is never drawn.
+  expect(toSupertrendData([{ date: '2026-10-05', supertrend: 100, supertrend_direction: null }], 1)).toEqual([
+    { time: '2026-10-05' },
+  ])
+})
+
+it('keeps nulls out of the new lines, keeps negative OBV and detects empty panes', () => {
+  expect(toIndicatorData(NEW_SERIES, 'obv')).toEqual([
+    { time: '2026-10-02', value: 2000 },
+    { time: '2026-10-03', value: -1500 },
+    { time: '2026-10-04', value: -1500 },
+  ])
+  expect(toIndicatorData(NEW_SERIES, 'rsi14').map((point) => point.value)).toEqual([61, 40, 41])
+  expect(lastIndicatorValue(NEW_SERIES, 'macd_signal')).toBe(0.9)
+  for (const pane of ['rsi', 'macd', 'obv'] as const) {
+    expect(noPaneData(NEW_SERIES, pane)).toBe(false)
+    expect(noPaneData([NEW_SERIES[0]], pane)).toBe(true)
+    expect(noPaneData([], pane)).toBe(true)
+  }
+})
+
+it('has colors for the new panes in both themes', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    for (const key of ['rsi', 'macd', 'macdSignal', 'obv'] as const) {
+      expect(CHART_THEME_COLORS[theme][key]).toMatch(/^#/)
+    }
+  }
+})
+
+it('formats OBV axis labels compactly', () => {
+  expect(formatCompactVolume(40_000_000)).toBe('40M')
+  expect(formatCompactVolume(-15_200_000)).toBe('-15.2M')
+  expect(formatCompactVolume(1_500)).toBe('1.5K')
+  expect(formatCompactVolume(2_300_000_000)).toBe('2.3B')
+  expect(formatCompactVolume(-800)).toBe('-800')
+  expect(formatCompactVolume(0)).toBe('0')
 })
