@@ -126,6 +126,8 @@ describe('Screener pattern controls', () => {
       patterns: [{ type: 'bull_flag', status: 'forming', breakout_level: 101, end_date: '2026-09-30' }],
     }
     withI18n(<CandidateTable candidates={[candidate]} />)
+    // signal + pattern = 2 items: collapsed behind the trigger (screener-signals-cell-compact).
+    fireEvent.click(screen.getByTestId('candidate-signals-trigger'))
     expect(screen.getByTestId('candidate-pattern').textContent).toBe('Bandera alcista · En formación')
   })
 
@@ -150,6 +152,8 @@ describe('Screener pattern controls', () => {
       ],
     }
     withI18n(<CandidateTable candidates={[candidate]} />)
+    // two patterns: collapsed behind the trigger until opened.
+    fireEvent.click(screen.getByTestId('candidate-signals-trigger'))
     const [confirmed, forming] = screen.getAllByTestId('candidate-pattern')
 
     expect(confirmed.className).toContain('bg-primary-container')

@@ -2,6 +2,19 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Compact Screener filter panel planned (1 feature, not started) - 2026-11-05
+
+- Explicit user request: rethink the «Criterios técnicos» block as a cleaner, Finviz-style panel with the same options in less space. Planning only, no application code. New `screener-filter-panel-compact` and `docs/specs/screener-filter-panel-compact.md`.
+- Decision: one-row toolbar of value-showing triggers (Signals, RSI, Patterns, Sector) that open a single inline editor card, native selects for Min RVOL and MA cross, a toggle for Price above SMA200, count and Clear in the header. Tabs, whole-panel collapse and floating popovers rejected (reasons in the spec). Frontend only, no new dependency, same 30 criteria keys, URL, requests and Saved Screeners.
+- Open questions (with defaults) are in the spec. The column-header sort/filter menu idea stays separate.
+
+## DAX universe implementation (`universe-dax`, passing, awaiting validation) - 2026-10-31
+
+- Feature 6 of `docs/specs/multi-market-universes.md`. New `database/data/dax.csv` (40 `.DE` companies, exchange `XETRA`, as_of 2026-10-31) with `dax.md` (sources, SHA-256, editorial sector/country, rebalance procedure), `DaxUniverseSeeder` (slug `dax`, "DAX", `XETR`/EUR, position 3) run by `DatabaseSeeder` and `deploy/deploy.sh`, `markets.XETR.holidays` from Deutsche Boerse (2026 official; 24 and 31 Dec are full closures; 2027 in the same overview but subject to change, to confirm), guide es/en wording, ARCHITECTURE, spec notes and `deploy/README.md` item 17.
+- Composition: Wikipedia table (22 Sep 2025) updated with STOXX announcements: no DAX change in Dec 2025, Mar 2026 and Sep 2026; Hochtief replaced Porsche SE on 2026-06-22; `AIR.PA` mapped to `AIR.DE`. All 40 `.DE` symbols resolved on Yahoo (EUR, Europe/Berlin, 507 sessions); `SAP.DE` has no session on the Xetra closures (new fixture `yahoo_sap_de_easter.json`).
+- Verified: `.\init.ps1` Baseline OK (phpunit 970 passed / 6 skipped, Vitest 427, engine 138, ruff clean). New `DaxUniverseSeederTest` (10 tests incl. `MRK.DE` vs `MRK`, label "DAX", light 8-member XETR pipeline). Universe stays non-public.
+- Not verified: PostgreSQL (CI only), a real production run and Admin preview, the 2025 quarterly reviews and off-cycle DAX changes (Wikipedia only / not searched exhaustively), Deutsche Boerse's own factsheet, 2027 holidays. Next: independent validation, production rollout (item 17), then `market-hours-status`.
+
 ## screener-technical-filters-ui implemented (passing, awaiting validation) - 2026-10-29
 
 - SPA only, backend untouched: `api.ts` types (ten filter fields, ten sorts, five optional Candidate fields, thirty-key Saved Screener definition); `screenerFilters.ts` (bounds, URL parse/patch/key, serialize/deserialize, chip summaries, 28 sort options; legacy twenty-key rows load with the indicator keys off); `screenerColumns.ts` (four optional columns ADX, %B, ATR %, Stoch %K; the %B control also edits the band width, which has no column); `CandidateTable`/`CandidateResults`, `ScreenerColumnFilters` (range editor now handles several ranges), `IndicatorsToggle` (button in the results header, remembered in `localStorage` key `chartiko.screener.indicators` under try/catch), `ScreenerPage`. A criterion or an indicator sort forces the columns visible (button pressed and disabled with a hint). es/en messages, user guide entries (listado columns, filters, sorts, indicator note) and `DESIGN.md` updated.

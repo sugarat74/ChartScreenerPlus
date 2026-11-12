@@ -25,10 +25,12 @@ from app.indicators.core import (
     directional_indicators,
     ema,
     macd,
+    on_balance_volume,
     rsi,
     rvol,
     sma,
     stochastic,
+    supertrend,
 )
 from app.indicators.snapshots import compute_snapshots
 from app.models import Bar
@@ -63,6 +65,9 @@ INDICATOR_FIELDS = (
     "minus_di",
     "stoch_k",
     "stoch_d",
+    "obv",
+    "supertrend",
+    "supertrend_direction",
 )
 
 client = TestClient(main_module.app)
@@ -337,7 +342,14 @@ def test_a_series_without_any_history_yields_only_nulls() -> None:
 
     assert len(snapshots) == 5
     for snapshot in snapshots:
-        assert all(getattr(snapshot, field) is None for field in INDICATOR_FIELDS)
+        assert all(
+            getattr(snapshot, field) is None
+            for field in INDICATOR_FIELDS
+            if field != "obv"
+        )
+    assert snapshots[0].obv == pytest.approx(1000.0)
+    assert snapshots[-1].obv == pytest.approx(5000.0)
+    assert compute_snapshots([]) == []
 
 
 def test_compute_endpoint_returns_one_snapshot_per_bar() -> None:
@@ -581,3 +593,137 @@ def test_compute_endpoint_returns_the_new_indicator_keys() -> None:
     assert snapshots[15]["stoch_k"] == pytest.approx(RAMP_STOCH)
     assert snapshots[16]["stoch_d"] is None
     assert snapshots[17]["stoch_d"] == pytest.approx(RAMP_STOCH)
+
+
+def test_obv_adds_on_up_closes_subtracts_on_down_and_ignores_ties() -> None:
+    closes = [10.0, 11.0, 11.0, 10.0, 12.0]
+    volumes = [100.0, 50.0, 70.0, 30.0, 20.0]
+
+    # 100 | +50 up | tie keeps | -30 down | +20 up
+    assert on_balance_volume(closes, volumes) == [100.0, 150.0, 150.0, 120.0, 140.0]
+    assert on_balance_volume([], []) == []
+    assert on_balance_volume([5.0], [7.0]) == [7.0]  # first bar = its own volume
+    with pytest.raises(ValueError):
+        on_balance_volume([1.0], [1.0, 2.0])
+
+
+def test_obv_is_flat_for_flat_prices_and_follows_a_monotonic_ramp() -> None:
+    flat = constant_bars(20)
+    assert on_balance_volume([b.close for b in flat], [float(b.volume) for b in flat]) == [1000.0] * 20
+
+    ramp = load_bars(MONOTONIC_FIXTURE)
+    obv = on_balance_volume([b.close for b in ramp], [float(b.volume) for b in ramp])
+    assert obv == [1000.0 * (index + 1) for index in range(len(ramp))]
+    snapshots = compute_snapshots(ramp)
+    assert [s.obv for s in snapshots] == obv
+
+
+def _ramp(count: int) -> tuple[list[float], list[float], list[float]]:
+    closes = [100.0 + index for index in range(count)]
+    return [c + 1 for c in closes], [c - 1 for c in closes], closes
+
+
+def test_supertrend_is_null_until_index_ten_and_with_ten_or_fewer_bars() -> None:
+    highs, lows, closes = _ramp(11)
+    values, directions = supertrend(highs, lows, closes)
+    assert values[:10] == [None] * 10 and directions[:10] == [None] * 10
+    assert values[10] is not None and directions[10] == 1
+
+    for count in (0, 1, 10):
+        highs, lows, closes = _ramp(count)
+        assert supertrend(highs, lows, closes) == ([None] * count, [None] * count)
+
+
+def test_supertrend_ramp_known_values() -> None:
+    # TR is 2 on every bar, so ATR = 2 and the band is close - 6 (hand derived);
+    # the first direction is +1 because close >= hl2 on the seed bar.
+    highs, lows, closes = _ramp(60)
+    values, directions = supertrend(highs, lows, closes)
+    assert directions[10:] == [1] * 50
+    for index in range(10, 60):
+        assert values[index] == pytest.approx(94.0 + index)
+
+
+def test_supertrend_flips_down_and_back_up_with_hand_computed_values() -> None:
+    highs, lows, closes = _ramp(11)  # closes 100..110, ATR(10) at index 10 = 2
+    for close in (90.0, 80.0, 130.0):
+        highs.append(close + 1)
+        lows.append(close - 1)
+        closes.append(close)
+
+    values, directions = supertrend(highs, lows, closes)
+
+    # 10: hl2 110, lower 104, up.
+    assert (directions[10], values[10]) == (1, pytest.approx(104.0))
+    # 11: TR 21, ATR 3.9, upper 90 + 11.7 = 101.7; close 90 < lower 104 -> flip down.
+    assert (directions[11], values[11]) == (-1, pytest.approx(101.7))
+    # 12: TR 11, ATR 4.61, upper 80 + 13.83 = 93.83 tightens; close 80 stays below.
+    assert (directions[12], values[12]) == (-1, pytest.approx(93.83))
+    # 13: TR 51, ATR 9.249; close 130 > final upper 93.83 -> flip up; lower 130 - 27.747.
+    assert (directions[13], values[13]) == (1, pytest.approx(102.253))
+
+
+def _reference_supertrend(highs, lows, closes, period=10, mult=3.0):
+    """Independent re-derivation (list-based final bands) used as an oracle."""
+    n = len(closes)
+    tr = [0.0] + [
+        max(highs[i] - lows[i], abs(highs[i] - closes[i - 1]), abs(lows[i] - closes[i - 1]))
+        for i in range(1, n)
+    ]
+    out_v, out_d = [None] * n, [None] * n
+    if n <= period:
+        return out_v, out_d
+    a = sum(tr[1 : period + 1]) / period
+    fu, fl, d = {}, {}, {}
+    for i in range(period, n):
+        if i > period:
+            a = (a * (period - 1) + tr[i]) / period
+        hl2 = (highs[i] + lows[i]) / 2
+        bu, bl = hl2 + mult * a, hl2 - mult * a
+        if i == period:
+            fu[i], fl[i] = bu, bl
+            d[i] = 1 if closes[i] >= hl2 else -1
+        else:
+            fu[i] = bu if (bu < fu[i - 1] or closes[i - 1] > fu[i - 1]) else fu[i - 1]
+            fl[i] = bl if (bl > fl[i - 1] or closes[i - 1] < fl[i - 1]) else fl[i - 1]
+            d[i] = d[i - 1]
+            if d[i - 1] == -1 and closes[i] > fu[i]:
+                d[i] = 1
+            elif d[i - 1] == 1 and closes[i] < fl[i]:
+                d[i] = -1
+        out_d[i] = d[i]
+        out_v[i] = fl[i] if d[i] == 1 else fu[i]
+    return out_v, out_d
+
+
+def test_supertrend_matches_an_independent_reference_on_a_zigzag_and_real_data() -> None:
+    closes = [100.0 + 12 * ((index // 15) % 2 and (15 - index % 15) or index % 15) for index in range(120)]
+    highs = [c + 1.5 + (index % 3) for index, c in enumerate(closes)]
+    lows = [c - 1.5 - (index % 2) for index, c in enumerate(closes)]
+    values, directions = supertrend(highs, lows, closes)
+    ref_v, ref_d = _reference_supertrend(highs, lows, closes)
+    assert directions == ref_d
+    assert all((a is None and b is None) or a == pytest.approx(b) for a, b in zip(values, ref_v))
+    assert 1 in directions and -1 in directions
+    assert any(a != b for a, b in zip(directions[11:], directions[10:-1]))  # at least one flip
+
+    nvda = load_bars(NVDA_FIXTURE)
+    n_h, n_l, n_c = ([getattr(b, f) for b in nvda] for f in ("high", "low", "close"))
+    got_v, got_d = supertrend(n_h, n_l, n_c)
+    exp_v, exp_d = _reference_supertrend(n_h, n_l, n_c)
+    assert got_d == exp_d
+    assert all((a is None and b is None) or a == pytest.approx(b) for a, b in zip(got_v, exp_v))
+
+
+def test_supertrend_on_flat_prices_is_the_price_going_up() -> None:
+    highs = lows = closes = [50.0] * 30
+    values, directions = supertrend(highs, lows, closes)
+    assert values[:10] == [None] * 10
+    assert values[10:] == [50.0] * 20
+    assert directions[10:] == [1] * 20
+
+    snapshots = compute_snapshots(constant_bars(30))
+    assert [s.obv for s in snapshots] == [1000.0] * 30
+    assert snapshots[9].supertrend is None and snapshots[9].supertrend_direction is None
+    assert snapshots[10].supertrend == pytest.approx(50.0)
+    assert snapshots[10].supertrend_direction == 1

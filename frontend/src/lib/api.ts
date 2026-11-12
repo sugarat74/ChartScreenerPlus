@@ -991,6 +991,9 @@ export type InstrumentSnapshot = {
   minus_di?: number | null
   stoch_k?: number | null
   stoch_d?: number | null
+  obv?: number | null
+  supertrend?: number | null
+  supertrend_direction?: number | null
 }
 
 /** One stored indicator point (`GET /api/instruments/{ticker}/indicators`); warm-up values are `null`. */
@@ -1005,6 +1008,13 @@ export type InstrumentIndicatorPoint = {
   atr14: number | null
   stoch_k: number | null
   stoch_d: number | null
+  rsi14?: number | null
+  macd?: number | null
+  macd_signal?: number | null
+  macd_hist?: number | null
+  obv?: number | null
+  supertrend?: number | null
+  supertrend_direction?: number | null
 }
 
 export type InstrumentIndicatorsResponse = {

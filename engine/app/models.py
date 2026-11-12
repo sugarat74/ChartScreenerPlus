@@ -51,6 +51,9 @@ class Snapshot(BaseModel):
     minus_di: float | None = None
     stoch_k: float | None = None
     stoch_d: float | None = None
+    obv: float | None = None
+    supertrend: float | None = None
+    supertrend_direction: int | None = None
 
 
 class IndicatorsComputeRequest(BaseModel):

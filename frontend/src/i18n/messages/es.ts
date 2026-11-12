@@ -558,6 +558,10 @@ export const es = {
       toggle: 'Indicadores',
       forced: 'Visibles porque hay un filtro u orden por indicador activo.',
     },
+    signalsCell: {
+      trigger: '{count} señales',
+      panel: 'Señales y patrones de {ticker}',
+    },
     columns: {
       sortBy: 'Ordenar por {column}',
       sortedAsc: 'orden ascendente',
@@ -868,6 +872,10 @@ export const es = {
     indicatorsGroup: 'Indicadores del gráfico',
     indicatorsLabel: 'Indicadores',
     indicatorBollinger: 'Bandas de Bollinger',
+    indicatorSupertrend: 'Supertrend (10, 3)',
+    indicatorRsi: 'RSI (14)',
+    indicatorMacd: 'MACD (12, 26, 9)',
+    indicatorObv: 'OBV',
     indicatorAdx: 'ADX (+DI / -DI)',
     indicatorAtr: 'ATR',
     indicatorStochastic: 'Estocástico',

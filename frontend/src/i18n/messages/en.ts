@@ -555,6 +555,10 @@ export const en: Messages = {
       toggle: 'Indicators',
       forced: 'Shown because an indicator filter or sort is active.',
     },
+    signalsCell: {
+      trigger: '{count} signals',
+      panel: 'Signals and patterns of {ticker}',
+    },
     columns: {
       sortBy: 'Sort by {column}',
       sortedAsc: 'ascending order',
@@ -865,6 +869,10 @@ export const en: Messages = {
     indicatorsGroup: 'Chart indicators',
     indicatorsLabel: 'Indicators',
     indicatorBollinger: 'Bollinger Bands',
+    indicatorSupertrend: 'Supertrend (10, 3)',
+    indicatorRsi: 'RSI (14)',
+    indicatorMacd: 'MACD (12, 26, 9)',
+    indicatorObv: 'OBV',
     indicatorAdx: 'ADX (+DI / -DI)',
     indicatorAtr: 'ATR',
     indicatorStochastic: 'Stochastic',
