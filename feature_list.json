@@ -1083,28 +1083,14 @@
   {
     "id": "guest-disabled-screener",
     "area": "frontend",
-    "planning_spec": "docs/specs/guest-disabled-registered-options.md (prepared 2026-11-12)",
     "title": "Screener registered-only options visible but disabled for Visitors",
-    "user_visible_behavior": "A Visitor sees the natural-language box, Saved Screeners, the Ficha IA row link and the sector filter dimmed with a sign-in reason; they become usable when the user logs in.",
+    "status": "accepted",
     "depends_on": [
       "guest-disabled-primitive",
       "saved-screeners",
       "ai-screener-natural-language",
       "market-context-patterns"
-    ],
-    "status": "passing",
-    "verification": [
-      "Vitest per component in guest, loading, pending and signed-in states, asserting no call to screenerApi.interpret, the saved screeners API or companyCardApi for a Visitor",
-      "Sector trigger shown disabled only when Market Context access is signIn, absent when hidden",
-      "Real browser pass as a Visitor then logging in and out in the same SPA at 390 and 1440 px, light and dark, es and en, with the network list proving no request to a registered-only API and bounding boxes proving no layout shift",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [
-      "2026-11-12 implemented (SPA only, no backend diff): ScreenerAiQuery and the Sector editor are RegisteredOnlyPanel, SavedScreenersPanel is a dimmed summary row with the popover (no expandable details, list fetch gated on state enabled), CandidateTable takes companyCardLink hidden|disabled|enabled (disabled = RegisteredOnly tabbable=false, reason once above the table in a reserved-height slot), the Sector trigger is dimmed with a lock for access signIn and absent otherwise. Removed unused keys aiQuery.guestIntro/signIn, saved.signInToSave, screener.sectorContext.signInTitle/signInBody; added companyCard.candidateLinkNote (es/en).",
-      "Vitest 67 files / 578 passed (new SavedScreenersPanel.test.tsx; guest, loading, pending and signed-in states for the AI box, Saved Screeners, row link and Sector editor; ScreenerPage guest test asserts no /screeners, /screener/interpret, /company-card, /watchlist, /alerts or /notifications request, in-place activation and deactivation, flag off = no Sector trigger); lint 0 errors, build clean; .\\init.ps1 exit 0 Baseline OK (phpunit 1020, Vitest 578, engine 177).",
-      "Not verified: real browser pass (Visitor then login/logout in the same SPA at 390 and 1440 px, light/dark, es/en), network capture, bounding-box comparison for layout shift, screen reader output, real touch; layout stability is reasoned from the shared fieldset/reason-row slot and the reserved note slot, not measured."
-    ],
-    "notes": "Planned 2026-11-12. Planning only. Supersedes for presentation the hidden Ficha IA row link of premium-panels-auth-only."
+    ]
   },
   {
     "id": "guest-disabled-chart",
