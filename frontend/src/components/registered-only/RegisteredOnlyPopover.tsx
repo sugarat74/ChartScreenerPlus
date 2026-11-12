@@ -44,11 +44,20 @@ export default function RegisteredOnlyPopover({
   useEffect(() => {
     ref.current?.querySelector<HTMLElement>('a')?.focus()
 
+    let timer: ReturnType<typeof setTimeout> | undefined
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation()
         onClose()
         anchor.focus()
+      }
+      if (event.key === 'Tab' && ref.current?.contains(event.target as Node)) {
+        // Tabbing out through the document wrap blurs with no relatedTarget: check where focus landed.
+        timer = setTimeout(() => {
+          if (ref.current !== null && !ref.current.contains(document.activeElement)) {
+            onClose()
+          }
+        }, 0)
       }
     }
     const onPointerDown = (event: Event) => {
@@ -63,6 +72,7 @@ export default function RegisteredOnlyPopover({
     window.addEventListener('resize', onClose)
 
     return () => {
+      clearTimeout(timer)
       document.removeEventListener('keydown', onKeyDown)
       document.removeEventListener('pointerdown', onPointerDown)
       window.removeEventListener('scroll', onClose, true)

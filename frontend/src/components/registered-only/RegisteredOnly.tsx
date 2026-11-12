@@ -74,7 +74,25 @@ export default function RegisteredOnly({
     event.stopPropagation()
   }
 
+  // A form field must not be editable: block typing, paste, drop, change and the select/checkbox gestures.
+  const field = children.type === 'input' || children.type === 'select' || children.type === 'textarea'
+  const fieldProps: Record<string, unknown> = field
+    ? {
+        readOnly: children.type === 'select' ? undefined : true,
+        onChange: swallow,
+        onInput: swallow,
+        onBeforeInput: swallow,
+        onPaste: swallow,
+        onDrop: swallow,
+        onMouseDown: (event: MouseEvent<HTMLElement>) => {
+          swallow(event)
+          event.currentTarget.focus()
+        },
+      }
+    : {}
+
   const disabledProps: Record<string, unknown> = {
+    ...fieldProps,
     'aria-disabled': 'true',
     'aria-busy': loading ? 'true' : undefined,
     'aria-describedby': loading ? props['aria-describedby'] : [props['aria-describedby'], reasonId].filter(Boolean).join(' '),
@@ -89,6 +107,9 @@ export default function RegisteredOnly({
       if (event.key === 'Enter' || event.key === ' ') {
         swallow(event)
         open(event.currentTarget)
+      } else if (field && event.key !== 'Tab' && event.key !== 'Escape' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        // Fields: no typing, no select/arrow changes (Tab and Escape still work).
+        event.preventDefault()
       }
     },
     onKeyUp: (event: KeyboardEvent<HTMLElement>) => {
@@ -118,7 +139,8 @@ export default function RegisteredOnly({
     <Fragment>
       {control}
       {loading ? null : (
-        <span id={reasonId} className="sr-only">
+        // `hidden` keeps the text out of the reading flow; aria-describedby still resolves it (announced once).
+        <span id={reasonId} hidden className="sr-only">
           {reasonText}
         </span>
       )}

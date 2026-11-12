@@ -41,6 +41,12 @@ describe('nextPath', () => {
     expect(nextPath(undefined)).toBe('/')
   })
 
+  it('caps the length of a return path', () => {
+    const ok = `/${'a'.repeat(2047)}`
+    expect(nextPath(ok)).toBe(ok)
+    expect(nextPath(`${ok}a`)).toBe('/')
+  })
+
   it('does not reject paths that merely start like an auth route', () => {
     expect(nextPath('/login-help')).toBe('/login-help')
   })

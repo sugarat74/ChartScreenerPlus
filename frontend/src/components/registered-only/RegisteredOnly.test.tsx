@@ -179,6 +179,59 @@ describe('RegisteredOnly (inline)', () => {
     expect(screen.getByRole('button', { name: 'Mercado' }).hasAttribute('aria-disabled')).toBe(false)
   })
 
+  it('blocks editing of an input, a textarea, a select and a checkbox while keeping them focusable', () => {
+    const onChange = vi.fn()
+    render(wrap(base,
+      <div>
+        <RegisteredOnly><input aria-label="texto" defaultValue="" onChange={onChange} /></RegisteredOnly>
+        <RegisteredOnly><textarea aria-label="area" defaultValue="" onChange={onChange} /></RegisteredOnly>
+        <RegisteredOnly><select aria-label="plazo" defaultValue="1" onChange={onChange}><option value="1">1</option><option value="2">2</option></select></RegisteredOnly>
+        <RegisteredOnly><input type="checkbox" aria-label="marca" onChange={onChange} /></RegisteredOnly>
+      </div>,
+    ))
+    const text = screen.getByLabelText('texto') as HTMLInputElement
+    const area = screen.getByLabelText('area') as HTMLTextAreaElement
+    const select = screen.getByLabelText('plazo') as HTMLSelectElement
+    const box = screen.getByLabelText('marca') as HTMLInputElement
+
+    for (const element of [text, area, select, box]) {
+      expect(element.getAttribute('aria-disabled')).toBe('true')
+      expect(element.disabled).toBe(false)
+      expect(element.tabIndex).toBe(0)
+    }
+    expect(text.readOnly).toBe(true)
+    expect(area.readOnly).toBe(true)
+    // Typing and arrow keys are cancelled.
+    expect(fireEvent.keyDown(text, { key: 'a' })).toBe(false)
+    expect(fireEvent.keyDown(select, { key: 'ArrowDown' })).toBe(false)
+    expect(fireEvent.keyDown(area, { key: 'b' })).toBe(false)
+    expect(fireEvent.keyDown(text, { key: 'Tab' })).toBe(true)
+    fireEvent.paste(text)
+    fireEvent.input(text, { target: { value: 'x' } })
+    // A click on the checkbox is cancelled, so it does not toggle, and a mousedown on the select does not open it.
+    fireEvent.click(box)
+    expect(box.checked).toBe(false)
+    expect(fireEvent.mouseDown(select)).toBe(false)
+    expect(onChange).not.toHaveBeenCalled()
+    expect(select.value).toBe('1')
+  })
+
+  it('closes the popover when Tab leaves it and focus ends outside', () => {
+    vi.useFakeTimers()
+    try {
+      render(wrap(base, <div><RegisteredOnly><button type="button">Seguir</button></RegisteredOnly></div>))
+      fireEvent.click(screen.getByRole('button', { name: 'Seguir' }))
+      const link = screen.getByRole('link', { name: 'Crear cuenta' })
+      link.focus()
+      fireEvent.keyDown(link, { key: 'Tab' })
+      link.blur()
+      act(() => { vi.runAllTimers() })
+      expect(screen.queryByRole('status')).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('flips to enabled on login and back on logout without remounting the surrounding page', () => {
     let setUser: (user: AuthUser | null) => void = () => {}
     const mounts = vi.fn()
@@ -228,6 +281,34 @@ describe('RegisteredOnlyPanel', () => {
     expect(container.querySelector('fieldset')?.querySelector('a')).toBeNull()
   })
 
+  it('keeps the same box in every state: the reason slot is reserved when loading, guest and enabled', () => {
+    const states: [string, AuthContextValue][] = [
+      ['guest', base],
+      ['loading', { ...base, status: 'loading' }],
+      ['enabled', { ...base, user: member }],
+    ]
+    const shapes = states.map(([, auth]) => {
+      const { container, unmount } = render(wrap(auth, panel()))
+      const outer = container.firstElementChild as HTMLElement
+      const shape = [...outer.children].map((child) => `${child.tagName}.${child.className.split(' ').filter((c) => c.startsWith('min-h') || c === 'flex' || c === 'gap-2').join('.')}`)
+      const slot = screen.getByTestId('registered-only-reason')
+      expect(slot.className).toContain('min-h-5')
+      unmount()
+      return shape.join('|')
+    })
+
+    expect(new Set(shapes).size).toBe(1)
+  })
+
+  it('aria-disabled is on the dimmed fieldset only, not on the wrapper that holds the sign-in links', () => {
+    const { container } = render(wrap(base, panel()))
+    const row = screen.getByTestId('registered-only-reason')
+
+    expect(container.querySelector('fieldset')?.getAttribute('aria-disabled')).toBe('true')
+    expect(container.firstElementChild?.hasAttribute('aria-disabled')).toBe(false)
+    expect(row.closest('[aria-disabled="true"]')).toBeNull()
+  })
+
   it('loading keeps the shell with an empty reason row and no link', () => {
     render(wrap({ ...base, status: 'loading' }, panel()))
 
@@ -251,7 +332,7 @@ describe('RegisteredOnlyPanel', () => {
 
     expect(screen.getByRole('textbox', { name: 'Texto' })).toBe(field)
     expect(field.disabled).toBe(false)
-    expect(screen.queryByTestId('registered-only-reason')).toBeNull()
+    expect(screen.getByTestId('registered-only-reason').textContent).toBe('')
 
     act(() => setUser(null))
     expect(field.disabled).toBe(true)

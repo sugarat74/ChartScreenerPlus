@@ -3,6 +3,9 @@ import { DEFAULT_ROUTE, FORGOT_PASSWORD_ROUTE, LOGIN_ROUTE, REGISTER_ROUTE, RESE
 /** Routes a return path must never point at (a loop back into sign-in). */
 const AUTH_ROUTES: readonly string[] = [LOGIN_ROUTE, REGISTER_ROUTE, FORGOT_PASSWORD_ROUTE, RESET_PASSWORD_ROUTE]
 
+/** Longest accepted return path; anything longer is dropped (home). */
+export const NEXT_MAX_LENGTH = 2048
+
 /** Name of the query parameter that carries the return path. */
 export const NEXT_PARAM = 'next'
 
@@ -15,6 +18,9 @@ export const NEXT_PARAM = 'next'
  */
 export function nextPath(raw: string | null | undefined): string {
   if (typeof raw !== 'string' || raw === '') {
+    return DEFAULT_ROUTE
+  }
+  if (raw.length > NEXT_MAX_LENGTH) {
     return DEFAULT_ROUTE
   }
   if (!raw.startsWith('/') || raw.startsWith('//')) {
