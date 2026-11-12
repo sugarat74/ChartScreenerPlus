@@ -177,7 +177,9 @@ UI involved: yes; source `DESIGN.md` and `alphapulse/` for tone. One new reusabl
 
 Done in this planning PR (minimal, dated, flagged "Superseded 2026-11-12"): the statements that say Visitors must not see the Jev forecast, the Company Card or the row link (`docs/specs/premium-panels-auth-only.md`, `CONSTRAINTS.md`, `DESIGN.md`, `ARCHITECTURE.md`, `docs/user-and-access-model.md`). The supersession is **planned, not yet implemented**: until the features ship, the product still hides them. Feature 1 rewrites those sentences to the new behaviour; Features 2-4 update their surface entries (`DESIGN.md` Screener/Chart/Nav, `ARCHITECTURE.md` SPA bullets, `docs/user-and-access-model.md` capability table: Visitor column "no (disabled, sign-in link)").
 
-## Open Decisions (owner) with recommended defaults
+## Decisions (owner) with recommended defaults
+
+**Resolved 2026-11-12:** the owner accepted every recommended default below (O1 to O11) ("respondo si a todas las sugerencias"); none is open.
 
 - **O1. Hidden panels become visible-disabled (Jev, Company Card, "Ficha IA").** The request implies yes and supersedes 2026-10-15. Default: yes, as specified (this is the request).
 - **O2. Popover vs inline reason.** Default: inline reason row for panels, popover for compact controls, never hover-only tooltips.
