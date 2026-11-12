@@ -216,6 +216,14 @@ export const en: Messages = {
     columnDuration: 'Duration',
     columnCategory: 'Category',
   },
+  registeredOnly: {
+    reasonGuest: 'Sign in to use this',
+    reasonPending: 'Confirm your email to use this',
+    reasonUnreleased: 'Not available yet',
+    signIn: 'Sign in',
+    createAccount: 'Create account',
+    account: 'Go to my account',
+  },
   auth: {
     registerPrivacy:
       'Controller: {owner}. Purpose: to create and manage your account. Legal basis: performance of the terms of use. Recipients: no data is shared unless required by law. Rights: access, rectification, erasure and more, as explained in the {policy}. By creating an account you accept the {terms} and confirm you are at least 14 years old.',

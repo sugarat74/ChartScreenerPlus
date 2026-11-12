@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router'
 import { authApi } from '../lib/api.ts'
-import { DEFAULT_ROUTE } from '../nav.ts'
+import { useNextPath } from './useNextPath.ts'
 import { useAuth } from './useAuth.ts'
 
 /**
@@ -9,11 +9,12 @@ import { useAuth } from './useAuth.ts'
  * user. The 401 paths of the signed-in surfaces send an expired session here
  * without clearing that user, so redirecting home blindly would bounce
  * between home and sign-in forever. The session is checked first: a live one
- * goes home, an expired one clears the user and the page shows its form.
+ * goes to the validated `?next=` return path (home by default), an expired one clears the user and the page shows its form.
  */
 export default function RedirectSignedIn() {
   const { setCurrentUser } = useAuth()
   const [live, setLive] = useState(false)
+  const next = useNextPath()
 
   useEffect(() => {
     let active = true
@@ -42,5 +43,5 @@ export default function RedirectSignedIn() {
     }
   }, [setCurrentUser])
 
-  return live ? <Navigate to={DEFAULT_ROUTE} replace /> : null
+  return live ? <Navigate to={next} replace /> : null
 }

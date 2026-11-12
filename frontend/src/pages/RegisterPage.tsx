@@ -2,19 +2,22 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import RedirectSignedIn from '../auth/RedirectSignedIn.tsx'
+import { loginHref } from '../auth/nextPath.ts'
 import { useAuth } from '../auth/useAuth.ts'
+import { useNextPath } from '../auth/useNextPath.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import AuthField from '../components/AuthField.tsx'
 import Interpolate from '../i18n/Interpolate.tsx'
 import { useLegalInfo } from '../legal/useLegalInfo.ts'
 import { ApiError } from '../lib/api.ts'
 import type { ValidationErrors } from '../lib/api.ts'
-import { DEFAULT_ROUTE, LEGAL_NOTICE_ROUTE, LOGIN_ROUTE, PRIVACY_ROUTE } from '../nav.ts'
+import { LEGAL_NOTICE_ROUTE, PRIVACY_ROUTE } from '../nav.ts'
 
 export default function RegisterPage() {
   const { user, register } = useAuth()
   const navigate = useNavigate()
   const { t } = useI18n()
+  const next = useNextPath()
   // First-layer privacy notice (LOPDGDD art. 11); the full policy is linked
   // only once published (docs/specs/legal-compliance-eu.md).
   const legal = useLegalInfo()
@@ -44,7 +47,7 @@ export default function RegisterPage() {
         password,
         password_confirmation: passwordConfirmation,
       })
-      navigate(DEFAULT_ROUTE, { replace: true })
+      navigate(next, { replace: true })
     } catch (error) {
       if (error instanceof ApiError) {
         setErrors(error.errors)
@@ -167,7 +170,7 @@ export default function RegisterPage() {
 
       <p className="text-sm text-on-surface-variant">
         {t('auth.haveAccount')}{' '}
-        <Link to={LOGIN_ROUTE} className="font-bold text-on-surface underline">
+        <Link to={loginHref(next)} className="font-bold text-on-surface underline">
           {t('auth.signIn')}
         </Link>
       </p>

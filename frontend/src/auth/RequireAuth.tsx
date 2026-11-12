@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Navigate } from 'react-router'
-import { DEFAULT_ROUTE, LOGIN_ROUTE } from '../nav.ts'
+import { Navigate, useLocation } from 'react-router'
+import { DEFAULT_ROUTE } from '../nav.ts'
 import { useI18n } from '../i18n/useI18n.ts'
+import { loginHref } from './nextPath.ts'
 import { useAuth } from './useAuth.ts'
 
 /**
@@ -21,6 +22,7 @@ import { useAuth } from './useAuth.ts'
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const { user, status } = useAuth()
   const { t } = useI18n()
+  const location = useLocation()
   // Derived state (set during render): did this visit ever have a user?
   const [hadUser, setHadUser] = useState(false)
   if (user !== null && !hadUser) {
@@ -48,7 +50,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   }
 
   if (user === null) {
-    return <Navigate to={hadUser ? DEFAULT_ROUTE : LOGIN_ROUTE} replace />
+    return <Navigate to={hadUser ? DEFAULT_ROUTE : loginHref(`${location.pathname}${location.search}${location.hash}`)} replace />
   }
 
   return <>{children}</>

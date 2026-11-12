@@ -2,6 +2,13 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## chart-indicator-overlays implemented (passing, awaiting validation) - 2026-10-29
+
+- SPA only, backend untouched (feature 6 of `docs/specs/technical-indicators-expansion.md`): `lib/chartIndicators.ts` (closed list, guarded `localStorage` key `chartiko.chart.indicators`, default none), `ChartIndicatorPicker` (aria-pressed toggle row; Bollinger only, panels are feature 7), `useInstrumentIndicators` (one `GET /api/instruments/{ticker}/indicators` only while a toggle is on), `chartData.ts` (`toBandData` omits warm-up nulls, `noBandData`, `bandSignalLevels`, theme `band` color), three Bollinger line series and a dashed price line per band Signal in `InteractiveChart` (`chart.remove()` cleanup unchanged), inline loading/error+retry/not-enough-history states, es/en messages, guide text, `DESIGN.md`.
+- Unchanged by design: default chart and requests (test asserts no `indicators` call with everything off), SMA/EMA/RSI/MACD not drawn, forecast, Company Card, AI schema.
+- Verified: Vitest 56 files / 439 passed (13 new), lint (1 pre-existing oxlint warning), tsc, build, `.\init.ps1` Baseline OK. Manual browser pass (temp SQLite with a seeded DEMO instrument, vite + artisan serve, both stopped afterwards): 1440 and 390 px, light and dark; default shows no indicators request, toggle draws bands aligned to candles plus the band-signal line, canvas count stable over repeated toggles and theme switch, no horizontal overflow at 390 px. Not verified: real production data, language switch visually (covered by es/en message keys), a real failing endpoint in the browser (Vitest covers error/retry).
+- Next: independent validation, then `chart-indicator-panels`.
+
 ## Compact Screener filter panel planned (1 feature, not started) - 2026-11-05
 
 - Explicit user request: rethink the «Criterios técnicos» block as a cleaner, Finviz-style panel with the same options in less space. Planning only, no application code. New `screener-filter-panel-compact` and `docs/specs/screener-filter-panel-compact.md`.

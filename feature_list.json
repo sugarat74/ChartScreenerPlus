@@ -1081,14 +1081,19 @@
       "app-multilanguage",
       "ui-dark-mode"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Vitest: useRegisteredOnly states (no provider, loading, Visitor, email-pending, signed-in, logout), RegisteredOnly and RegisteredOnlyPanel (aria-disabled without native disabled, tab order, Enter/Space/click swallowed, popover with sign-in link and Escape, no wrapper when enabled, flips on context change)",
       "Vitest: next path validator accepts relative paths and rejects //host, schemes and auth routes; Login/Register/RequireAuth honour next",
       "Catalog parity es/en; lint and build clean",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
+    "evidence": [
+      "2026-11-12 implemented on feat/guest-disabled-primitive: useRegisteredOnly, RegisteredOnly/RegisteredOnlyPanel (frontend/src/components/registered-only/), nextPath helpers with Login/Register/RedirectSignedIn/RequireAuth honouring next, es/en registeredOnly.* keys, DESIGN/ARCHITECTURE/CONSTRAINTS/access-model statements. No backend diff, no screen converted.",
+      "Vitest: 66 files / 561 tests passed (new: nextPath 28, useRegisteredOnly 6, RegisteredOnly + Panel 15, nextFlow 12); lint 0 errors (4 oxlint react(globals) warnings in test files, same pattern as existing RequireAuth.test); build clean.",
+      "init.ps1 exit 0 Baseline OK (phpunit 1020 passed 6 skipped, Vitest 561, engine pytest 177).",
+      "Browser (Playwright, scratch SQLite, never dev data): Visitor on /portal redirected to /login?next=%2Fportal, login returns to /portal at 1440 dark; at 390 light next=//evil.com, https://x.example, /login, javascript: all land on /, next=/instruments/NVDA#ai-company-card lands there; no horizontal overflow; login/register cross links keep next. Primitive popover not exercised in the browser (unused by any screen yet)."
+    ],
     "notes": "Planned 2026-11-12 at explicit user request. Planning only. Presentation only: no backend diff. Open owner decisions with defaults are in the spec (O1-O11)."
   },
   {

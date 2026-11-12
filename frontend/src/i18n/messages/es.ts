@@ -219,6 +219,14 @@ export const es = {
     columnDuration: 'Duración',
     columnCategory: 'Categoría',
   },
+  registeredOnly: {
+    reasonGuest: 'Disponible al iniciar sesión',
+    reasonPending: 'Confirma tu email para usarlo',
+    reasonUnreleased: 'Aún no disponible',
+    signIn: 'Iniciar sesión',
+    createAccount: 'Crear cuenta',
+    account: 'Ir a mi cuenta',
+  },
   auth: {
     registerPrivacy:
       'Responsable: {owner}. Finalidad: crear y gestionar tu cuenta. Base jurídica: ejecución del contrato. Destinatarios: no se ceden datos salvo obligación legal. Derechos: acceso, rectificación, supresión y otros, como explica la {policy}. Al crear la cuenta aceptas las {terms} y declaras tener al menos 14 años.',
