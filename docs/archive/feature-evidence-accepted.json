@@ -2228,6 +2228,27 @@
     "notes": "Planned 2026-11-08 at explicit user request ('cac 70', read as a typo for CAC 40). Planning only, no application code yet. Constituents verified 2026-11-08 against Wikipedia (Dec 2025 table) and Euronext releases (no CAC 40 change in March, June and September 2026). Owner decisions open with recommended defaults: ArcelorMittal via MT.AS exception, non-public until the owner decides. Half-day close 14:05 unverified. Independently accepted 2026-11-08."
   },
   {
+    "id": "screener-signals-cell-compact",
+    "area": "frontend",
+    "title": "Single-line Signals cell in the Screener Candidate table",
+    "user_visible_behavior": "The Señales cell of every Candidate row is always one line high: a dash for none, the same chip for exactly one signal or chartist pattern, and for two or more (signals and patterns together) one compact \"N señales\" trigger that opens a small popover with every chip. The popover floats above the table (never clipped, never changes row height), closes on Escape (focus back), outside press, scroll, resize or opening another row, and works by keyboard, touch, light/dark and es/en.",
+    "depends_on": [
+      "screener-filter-panel-compact",
+      "chart-patterns-ui"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Vitest: 0/1/pattern-only/2+ items, es/en label, open with all chips, aria-expanded/aria-controls, Escape with focus return, outside press, scroll and resize, only one panel open",
+      "Playwright pass at 390 and 1440 px, light/dark, es/en on a scratch SQLite copy: equal row height for none/one/many, panel inside the viewport and unclipped, no document horizontal overflow, flip above near the bottom",
+      ".\\init.ps1 exit 0"
+    ],
+    "evidence": [
+      "2026-11-12: init.ps1 child process exit 0 (Baseline OK, engine 170 passed). New Vitest CandidateSignalsCell.test.tsx 7 passed; PatternPanel candidate-list tests adapted (open the trigger first). Playwright pass at 390/1440 px, light/dark, es/en on a scratch SQLite copy: equal row height, panel inside viewport and unclipped, no document overflow, flips above near the bottom, keyboard and outside-click close verified. Awaiting independent validation.",
+      "Independent validation 2026-11-12 (ACCEPT): scope 9 files (CandidateTable.tsx, es/en messages, new CandidateSignalsCell.test.tsx, PatternPanel.test.tsx, DESIGN.md, PROGRESS.md, progress-log archive, feature_list.json); the two PatternPanel.test.tsx edits only add the click on the trigger, assertions unchanged. Browser pass on a scratch SQLite copy (20 seeded candidates with 0/1/2/5/12/17 items, signals and patterns) at 1440 and 390 px, light/dark, es/en, Indicators columns on: rows one line high (53-54 px) for none/one/many, table height and row heights unchanged with the panel open, no document horizontal overflow, panel clamped inside the viewport (390 px: 48-368 of 376), flips above near the bottom, Escape returns focus, outside press, page scroll, wrapper scroll and resize close, scroll inside the panel does not, one open at a time, Enter/Space toggle, aria-expanded/aria-controls/aria-haspopup. Vitest screener+chart 130 passed, lint clean (1 pre-existing warning), validator own init.ps1 exit 0 Baseline OK (phpunit 1018 passed/6 skipped, Vitest 487, engine 170). Not verified: real touch device, screen reader announcement, tab order into the portalled panel (chips are non-interactive; panel is not reachable by Tab by design)."
+    ],
+    "notes": "Requested 2026-11-12 (owner, Spanish: signals on the right of the table must not take several lines; group them in a dropdown). Frontend only (CandidateTable.tsx, i18n screener.signalsCell.*). Decision: short neutral label \"N señales\" counting signals and patterns together. Portal + fixed positioning because the table wrapper has overflow-x-auto. Independently accepted 2026-11-12."
+  },
+  {
     "id": "chart-indicators-rsi-macd-obv-supertrend",
     "area": "chart",
     "title": "Chart: RSI, MACD, OBV and Supertrend indicators",

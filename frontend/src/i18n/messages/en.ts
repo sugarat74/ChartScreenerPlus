@@ -555,6 +555,10 @@ export const en: Messages = {
       toggle: 'Indicators',
       forced: 'Shown because an indicator filter or sort is active.',
     },
+    signalsCell: {
+      trigger: '{count} signals',
+      panel: 'Signals and patterns of {ticker}',
+    },
     columns: {
       sortBy: 'Sort by {column}',
       sortedAsc: 'ascending order',
