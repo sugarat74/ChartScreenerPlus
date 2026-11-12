@@ -24,7 +24,7 @@
 | View interactive chart of a Candidate | yes | yes | yes |
 | Request an experimental Jev forecast | no | yes | yes |
 | Read / generate an AI Company Card | no | yes | yes |
-| Describe a Screener search in natural language (AI) | no (sign-in link) | yes | yes |
+| Describe a Screener search in natural language (AI) | no (box shown disabled, sign-in link) | yes | yes |
 | Open `/mercado` and `GET /api/market-context` (Market Context) | no: a sign-in box once `MARKET_CONTEXT_PUBLIC=true`, "not available yet" before; API 401 | yes once public (API 404 before) | yes (preview with a banner while not public) |
 | Market Context history charts (`/api/market-context/history`) | no (API 401) | yes once public | yes |
 | Chart strip and pattern chips (`GET /api/instruments/{ticker}/market-context`) | no: a sign-in box once public, nothing before; API 401 | yes once public (nothing / API 404 before) | yes ("Vista previa" chip while not public) |
@@ -32,7 +32,7 @@
 | Market Context Admin tab (status, rerun the three commands) | no | no | yes |
 | View forecast evaluation metrics | no | no | yes |
 | Start and inspect Jev Backtesting runs | no | no | yes |
-| Save / apply Saved Screeners | no | yes (own) | yes |
+| Save / apply Saved Screeners | no (row shown disabled, sign-in popover) | yes (own) | yes |
 | Maintain Watchlist | no | yes (own) | yes |
 | Trigger / re-run Ingestion Runs | no | no | yes |
 | Manage Instrument universe | no | no | yes |
@@ -62,7 +62,7 @@
 - Browsing requires no session.
 - Saving a Screener, editing a Watchlist, or running ingestion requires authentication.
 - **Watchlist enforcement (implemented):** `GET/POST /api/watchlist*` sit in the `auth:sanctum` group, so a guest receives **401**. A Visitor opening `/portal` is redirected to `/login` by the component-level `RequireAuth`; the chart page's follow toggle instead offers a sign-in **link** and never redirects (the chart stays browseable). The redirect/link is a UI affordance — the API is the enforcement point.
-- **Saved Screeners enforcement (implemented):** `GET/POST/DELETE /api/screeners*` sit in the `auth:sanctum` group, so a guest receives **401**. The panel on `/screener` offers a Visitor a sign-in **link** (never a redirect) because the Screener stays anonymous; a signed-in user only ever sees their own Screeners because ownership is enforced at the query. The link is a UI affordance — the API is the enforcement point.
+- **Saved Screeners enforcement (implemented):** `GET/POST/DELETE /api/screeners*` sit in the `auth:sanctum` group, so a guest receives **401**. The panel on `/screener` shows a Visitor the dimmed row with a sign-in popover (never a redirect; `guest-disabled-screener`) because the Screener stays anonymous; a signed-in user only ever sees their own Screeners because ownership is enforced at the query. The link is a UI affordance — the API is the enforcement point.
 - Only Admin-role accounts see the Admin panel; hiding it in the UI is not sufficient, the API must enforce the role.
 - **Enforcement mechanism (implemented):** admin API routes are grouped under `Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')` in `routes/api.php`. `auth:sanctum` rejects a guest with **401**; the `admin` middleware alias (`App\Http\Middleware\EnsureUserIsAdmin`) then rejects an authenticated non-admin with **403**. An Admin passes.
 - **Role granting:** registration and every request can only ever produce `role=user`. The role is not mass-assignable and no endpoint accepts it. Admin is granted out of band with `php artisan app:make-admin {email}` (promotes an existing account; unknown email fails) or `UserFactory::admin()` in tests.

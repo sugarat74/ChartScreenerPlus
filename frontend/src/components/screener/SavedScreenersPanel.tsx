@@ -1,8 +1,10 @@
 /**
  * Saved Screeners panel for the public Screener at `/`.
  *
- * This is the only auth-aware affordance on the Screener: a Visitor gets a
- * plain sign-in link (never a redirect) so the Screener stays anonymous. Saving
+ * Registered-only, shown to everyone (guest-disabled-screener): a Visitor sees
+ * the summary row dimmed with the sign-in reason; it does not expand, makes no
+ * request and a click opens the sign-in popover (never a redirect), so the
+ * Screener stays anonymous. Saving
  * persists the CURRENT URL filter set; applying deserializes the stored
  * definition and patches the URL, so the results are restored server-side
  * through the page's existing fetch effect. Reads/writes go through
@@ -12,8 +14,8 @@
 
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { useAuth } from '../../auth/useAuth.ts'
+import { useNavigate } from 'react-router'
+import { useRegisteredOnly } from '../../auth/useRegisteredOnly.ts'
 import { useI18n, useTranslateRef } from '../../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, savedScreenersApi } from '../../lib/api.ts'
 import type { SavedScreener, ScreenerFilters } from '../../lib/api.ts'
@@ -23,6 +25,8 @@ import {
   serializeScreenerFilters,
 } from '../../lib/screenerFilters.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
+import LockIcon from '../registered-only/LockIcon.tsx'
+import RegisteredOnly from '../registered-only/RegisteredOnly.tsx'
 
 
 const LABEL_CLASS =
@@ -60,7 +64,7 @@ export default function SavedScreenersPanel({
   onApply,
   reloadToken = 0,
 }: SavedScreenersPanelProps) {
-  const { user, status: authStatus } = useAuth()
+  const { state } = useRegisteredOnly()
   const { t, formatDecimal } = useI18n()
   const tRef = useTranslateRef()
   const navigate = useNavigate()
@@ -81,10 +85,10 @@ export default function SavedScreenersPanel({
   const [removeError, setRemoveError] = useState<string | null>(null)
 
   // Fetch the caller's Screeners on mount and after a save/retry. The keys
-  // (`user`, `reloadToken`, `localToken`) make a login/logout or save re-run the
+  // (`state`, `reloadToken`, `localToken`) make a login/logout or save re-run the
   // request.
   useEffect(() => {
-    if (user === null) {
+    if (state !== 'enabled') {
       return
     }
 
@@ -115,7 +119,7 @@ export default function SavedScreenersPanel({
     return () => {
       active = false
     }
-  }, [user, reloadToken, localToken, navigate, tRef])
+  }, [state, reloadToken, localToken, navigate, tRef])
 
   function reload() {
     setLoading(true)
@@ -177,20 +181,30 @@ export default function SavedScreenersPanel({
     }
   }
 
-  if (authStatus === 'loading') {
-    // Holds the height of the Visitor link so the results do not jump.
-    return <div aria-hidden="true" className="h-4" />
-  }
+  if (state !== 'enabled') {
+    const loadingSession = state === 'loading'
 
-  if (user === null) {
+    // The same box as the signed-in summary row; the reason stays at full contrast outside the dimmed control.
     return (
-      <section aria-label={t('saved.title')} className="flex justify-end">
-        <Link
-          to={LOGIN_ROUTE}
-          className="font-mono text-xs font-bold text-on-surface-variant underline underline-offset-4 hover:text-on-surface focus:outline-2 focus:outline-offset-2 focus:outline-outline"
-        >
-          {t('saved.signInToSave')}
-        </Link>
+      <section aria-label={t('saved.title')} aria-busy={loadingSession || undefined} className="border-b border-outline-variant pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 py-1">
+          <RegisteredOnly>
+            <button
+              type="button"
+              className="bg-transparent p-0 text-left font-headline text-sm font-bold uppercase tracking-wide text-on-surface focus:outline-2 focus:outline-offset-2 focus:outline-outline"
+            >
+              {t('saved.title')}
+            </button>
+          </RegisteredOnly>
+          <span className="flex min-h-5 items-center gap-2 font-mono text-xs text-on-surface-variant">
+            {loadingSession ? null : (
+              <>
+                <LockIcon />
+                {t(state === 'pending' ? 'registeredOnly.reasonPending' : 'registeredOnly.reasonGuest')}
+              </>
+            )}
+          </span>
+        </div>
       </section>
     )
   }

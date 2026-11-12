@@ -1,9 +1,10 @@
 /**
  * Fixed-column Candidate table rendered in the server's order. The row
  * interactive elements are the ticker link into the instrument chart and,
- * only when `showCompanyCardLink` is true (signed-in users, decided by
- * `CandidateResults`), a small "AI card" link to the same chart's Company Card
- * panel (`#ai-company-card`). Both only navigate; the table itself stays
+ * when `companyCardLink` is not `hidden` (decided by `CandidateResults`), a
+ * small "AI card" link to the same chart's Company Card panel
+ * (`#ai-company-card`): `enabled` is a real link, `disabled` the same item
+ * dimmed, out of the tab order, whose click opens the sign-in popover. Both only navigate; the table itself stays
  * presentational (no auth read) and nothing is generated from here. There are
  * no watchlist actions. Styling is DESIGN.md tokens only.
  *
@@ -18,6 +19,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
 import { COMPANY_CARD_ANCHOR } from '../chart/CompanyCardPanel.tsx'
+import RegisteredOnly from '../registered-only/RegisteredOnly.tsx'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerCandidate, ScreenerFilters, ScreenerSort } from '../../lib/api.ts'
 import { patternLabel, signalLabel } from '../../lib/screenerFilters.ts'
@@ -123,10 +125,12 @@ function changeColorClass(value: number | null): string {
   return value > 0 ? 'text-gain' : 'text-secondary'
 }
 
+export type CompanyCardLinkMode = 'hidden' | 'disabled' | 'enabled'
+
 interface CandidateTableProps {
   candidates: ScreenerCandidate[]
-  /** Show the per-row "AI card" link; default `false` (Visitors). */
-  showCompanyCardLink?: boolean
+  /** Per-row "AI card" link: absent, dimmed for a Visitor (popover with sign-in) or a real link. */
+  companyCardLink?: CompanyCardLinkMode
   /** Per-heading sort and filter controls; absent = plain headings. */
   controls?: CandidateTableControls
   /** Currency of the universe (ISO code), shown in the Close heading. */
@@ -310,7 +314,7 @@ function SignalsCell({
 
 export default function CandidateTable({
   candidates,
-  showCompanyCardLink = false,
+  companyCardLink = 'hidden',
   controls,
   currency,
   showIndicators = false,
@@ -342,6 +346,16 @@ export default function CandidateTable({
           {candidates.map((candidate) => {
             const accentRvol = candidate.rvol !== null && candidate.rvol >= 2
 
+            const cardLink = (
+              <Link
+                to={`/instruments/${encodeURIComponent(candidate.ticker)}#${COMPANY_CARD_ANCHOR}`}
+                aria-label={t('companyCard.candidateLinkAria', { ticker: candidate.ticker })}
+                className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant underline underline-offset-2 hover:text-on-surface focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
+              >
+                {t('companyCard.candidateLink')}
+              </Link>
+            )
+
             return (
               <tr key={candidate.ticker} className="border-b border-outline-variant align-top">
                 <th scope="row" className="min-w-44 px-4 py-2 text-left font-normal">
@@ -359,15 +373,11 @@ export default function CandidateTable({
                   <p className="max-w-56 truncate text-xs text-on-surface-variant">
                     {candidate.company}
                   </p>
-                  {showCompanyCardLink ? (
-                    <Link
-                      to={`/instruments/${encodeURIComponent(candidate.ticker)}#${COMPANY_CARD_ANCHOR}`}
-                      aria-label={t('companyCard.candidateLinkAria', { ticker: candidate.ticker })}
-                      className="font-mono text-[10px] font-bold uppercase tracking-wider text-on-surface-variant underline underline-offset-2 hover:text-on-surface focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none"
-                    >
-                      {t('companyCard.candidateLink')}
-                    </Link>
-                  ) : null}
+                  {companyCardLink === 'hidden' ? null : companyCardLink === 'enabled' ? (
+                    cardLink
+                  ) : (
+                    <RegisteredOnly tabbable={false}>{cardLink}</RegisteredOnly>
+                  )}
                 </th>
 
                 <td className="min-w-36 px-4 py-2 text-xs text-on-surface-variant">

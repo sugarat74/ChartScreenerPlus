@@ -73,7 +73,8 @@ describe('Market Context wording (market-context-ui)', () => {
     }
     const texts = { ...strip, ...filters, ...patterns }
     expect(Object.keys(strip).length).toBeGreaterThan(15)
-    expect(Object.keys(filters).length).toBeGreaterThan(15)
+    // signInTitle/signInBody left with the dashed box (guest-disabled-screener).
+    expect(Object.keys(filters).length).toBeGreaterThan(10)
     for (const [key, text] of Object.entries(texts)) {
       expect(text, `${locale}: ${key}`).not.toMatch(ADVICE)
       expect(text, `${locale}: ${key}`).not.toMatch(/\bEOD\b|end[- ]of[- ]day|fin de d[ií]a/i)

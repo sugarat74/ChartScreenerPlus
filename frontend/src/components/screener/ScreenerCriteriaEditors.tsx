@@ -27,7 +27,7 @@ import {
   patternLabel,
   signalLabel,
 } from '../../lib/screenerFilters.ts'
-import MarketSignInBox from '../market/MarketSignInBox.tsx'
+import RegisteredOnlyPanel from '../registered-only/RegisteredOnlyPanel.tsx'
 import { TREND_ICON } from '../market/marketText.ts'
 
 const CHIP_BASE =
@@ -242,20 +242,9 @@ export function PatternsEditor({ filters, onChange }: EditorProps) {
 export function SectorEditor({ filters, access, onChange }: EditorProps & { access: MarketContextAccess }) {
   const { t } = useI18n()
 
-  if (access.status === 'signIn') {
-    return (
-      <fieldset className="flex min-w-0 max-w-sm flex-col gap-2">
-        <legend className={LEGEND_CLASS}>{t('screener.sectorContext.legend')}</legend>
-        <MarketSignInBox
-          title={t('screener.sectorContext.signInTitle')}
-          body={t('screener.sectorContext.signInBody')}
-          link={t('screener.sectorContext.signIn')}
-        />
-      </fieldset>
-    )
-  }
-
   return (
+    <RegisteredOnlyPanel access={access}>
+      {({ disabled }) => (
     <fieldset className="flex min-w-0 flex-col gap-2">
       <legend className={LEGEND_CLASS}>
         {t('screener.sectorContext.legend')}
@@ -278,6 +267,7 @@ export function SectorEditor({ filters, access, onChange }: EditorProps & { acce
               key={trend ?? 'any'}
               type="button"
               aria-pressed={selected}
+              disabled={disabled}
               onClick={() => onChange({ sectorTrend: trend })}
               className={segmentClass(selected, index)}
             >
@@ -298,6 +288,7 @@ export function SectorEditor({ filters, access, onChange }: EditorProps & { acce
       </label>
       <select
         id="screener-sector-rank"
+        disabled={disabled}
         value={filters.sectorRsRankMax === null ? '' : String(filters.sectorRsRankMax)}
         onChange={(event) => onChange({ sectorRsRankMax: event.target.value === '' ? null : Number(event.target.value) })}
         className={SELECT_CLASS}
@@ -311,5 +302,7 @@ export function SectorEditor({ filters, access, onChange }: EditorProps & { acce
       </select>
       <p className="max-w-xs font-mono text-[10px] text-on-surface-variant">{t('screener.sectorContext.hint')}</p>
     </fieldset>
+      )}
+    </RegisteredOnlyPanel>
   )
 }

@@ -1,10 +1,10 @@
 /**
  * Natural-language Screener input (docs/specs/ai-screener-natural-language.md).
  *
- * Signed-in only, like the premium panels: while auth is loading the Visitor
- * box holds the space without its link (no flash, no layout jump), a Visitor
- * sees a sign-in prompt instead of the input,
- * and the server enforces the boundary (`401`). A request is sent only on
+ * Registered-only, shown to everyone (guest-disabled-screener): a Visitor sees
+ * the real form dimmed and natively disabled with an inline sign-in reason (the
+ * `RegisteredOnlyPanel` primitive keeps the same box in every state, so nothing
+ * shifts at login), and the server enforces the boundary (`401`). A request is sent only on
  * submit, never while typing. The answer is ordinary filter state: the page
  * patches the URL with it (page reset to 1), so the user can adjust, share or
  * save it as usual. The previous URL is kept here so "Undo" restores it.
@@ -13,13 +13,13 @@
 
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { useAuth } from '../../auth/useAuth.ts'
+import { useNavigate } from 'react-router'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, screenerApi } from '../../lib/api.ts'
 import type { ScreenerFilters } from '../../lib/api.ts'
 import { interpretedFiltersToPatch } from '../../lib/screenerFilters.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
+import RegisteredOnlyPanel from '../registered-only/RegisteredOnlyPanel.tsx'
 
 const MIN_LENGTH = 3
 const MAX_LENGTH = 300
@@ -52,7 +52,6 @@ interface ScreenerAiQueryProps {
 type Applied = { explanation: string; unsupported: string[]; previous: URLSearchParams }
 
 export default function ScreenerAiQuery({ universe = null, searchParams, onApply, onRestore }: ScreenerAiQueryProps) {
-  const { user, status: authStatus } = useAuth()
   const { t, locale } = useI18n()
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -110,37 +109,6 @@ export default function ScreenerAiQuery({ universe = null, searchParams, onApply
     }
   }
 
-  // While auth loads, the Visitor box is drawn without its sign-in link: it
-  // keeps the space so the filters below do not jump, and it offers nothing
-  // that could flash and disappear for a signed-in user.
-  if (authStatus === 'loading' || user === null) {
-    const loading = authStatus === 'loading'
-
-    return (
-      <section
-        aria-labelledby="ai-query-title"
-        aria-busy={loading || undefined}
-        className="flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-dashed border-outline-variant bg-surface-container px-4 py-3"
-      >
-        <div className="min-w-0">
-          <h2 id="ai-query-title" className="flex items-center gap-2 font-headline text-sm font-bold uppercase tracking-wide text-on-surface">
-            {t('aiQuery.title')}
-            <span className={BADGE_CLASS}>{t('aiQuery.aiBadge')}</span>
-          </h2>
-          <p className="mt-1 text-xs text-on-surface-variant">{t('aiQuery.guestIntro')}</p>
-        </div>
-        {loading ? null : (
-          <Link
-            to={LOGIN_ROUTE}
-            className="font-mono text-xs font-bold text-on-surface underline underline-offset-4 hover:text-primary focus:outline-2 focus:outline-offset-2 focus:outline-outline"
-          >
-            {t('aiQuery.signIn')}
-          </Link>
-        )}
-      </section>
-    )
-  }
-
   if (unavailable) {
     return (
       <p role="status" className="rounded-[4px] border-2 border-dashed border-outline-variant bg-surface-container px-3 py-2 font-mono text-xs text-on-surface-variant">
@@ -156,6 +124,8 @@ export default function ScreenerAiQuery({ universe = null, searchParams, onApply
         <span className={BADGE_CLASS}>{t('aiQuery.aiBadge')}</span>
       </h2>
 
+      <RegisteredOnlyPanel>
+        {({ disabled }) => (
       <form onSubmit={handleSubmit} className="flex flex-col gap-2" aria-busy={busy}>
         <label htmlFor="ai-query-input" className="sr-only">
           {t('aiQuery.label')}
@@ -167,14 +137,14 @@ export default function ScreenerAiQuery({ universe = null, searchParams, onApply
             type="text"
             maxLength={MAX_LENGTH}
             value={query}
-            disabled={busy}
+            disabled={busy || disabled}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t('aiQuery.placeholder')}
             aria-describedby="ai-query-hint"
             autoComplete="off"
             className={INPUT_CLASS}
           />
-          <button type="submit" disabled={busy} className={PRIMARY_BUTTON_CLASS}>
+          <button type="submit" disabled={busy || disabled} className={PRIMARY_BUTTON_CLASS}>
             {busy ? t('aiQuery.submitting') : t('aiQuery.submit')}
           </button>
         </div>
@@ -189,7 +159,7 @@ export default function ScreenerAiQuery({ universe = null, searchParams, onApply
             <button
               key={key}
               type="button"
-              disabled={busy}
+              disabled={busy || disabled}
               title={t(`aiQuery.examples.${key}`)}
               onClick={() => pickExample(t(`aiQuery.examples.${key}`))}
               className="max-w-full truncate rounded-[4px] border border-outline bg-surface-container px-2 py-0.5 text-left font-mono text-[11px] text-on-surface hover:bg-surface-container-high focus:outline-2 focus:outline-offset-2 focus:outline-outline disabled:opacity-60"
@@ -199,6 +169,8 @@ export default function ScreenerAiQuery({ universe = null, searchParams, onApply
           ))}
         </div>
       </form>
+        )}
+      </RegisteredOnlyPanel>
 
       {error !== null ? (
         <p role="alert" className="rounded-[4px] border-2 border-secondary bg-secondary-container px-3 py-2 font-mono text-xs text-on-secondary-container">

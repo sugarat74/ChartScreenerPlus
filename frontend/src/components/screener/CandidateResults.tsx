@@ -4,14 +4,17 @@
  * filters are active), error (with a manual retry) or the Candidate table.
  *
  * Empty is a valid `200 candidates: []`, never an error. There is no auto-retry.
- * The per-row "AI card" link is shown only to signed-in users: the session is
- * read from the already bootstrapped `AuthContext` via `useSignedIn` (no
- * fetch, redirect or prompt), so the Screener page stays anonymous.
+ * The per-row "AI card" link is a real link for a verified user and the same
+ * item dimmed for everyone else, with the reason stated once above the table
+ * (guest-disabled-screener); the session is read from the already bootstrapped
+ * `AuthContext` via `useRegisteredOnly` (no fetch, redirect or prompt), so the
+ * Screener page stays anonymous.
  */
 
-import { useSignedIn } from '../../auth/useSignedIn.ts'
+import { useRegisteredOnly } from '../../auth/useRegisteredOnly.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import type { ScreenerCandidate } from '../../lib/api.ts'
+import LockIcon from '../registered-only/LockIcon.tsx'
 import CandidateTable from './CandidateTable.tsx'
 import type { CandidateTableControls } from './CandidateTable.tsx'
 
@@ -126,7 +129,7 @@ export default function CandidateResults({
   showIndicators = false,
 }: CandidateResultsProps) {
   const { t } = useI18n()
-  const signedIn = useSignedIn()
+  const { state } = useRegisteredOnly()
 
   if (status === 'error') {
     return <ErrorPanel message={error ?? t('common.unknownError')} onRetry={onRetry} />
@@ -146,7 +149,18 @@ export default function CandidateResults({
       {candidates.length === 0 ? (
         <EmptyPanel hasFilters={hasFilters} onClearFilters={onClearFilters} />
       ) : (
-        <CandidateTable candidates={candidates} showCompanyCardLink={signedIn} controls={controls} currency={currency} showIndicators={showIndicators} />
+        <>
+          {/* The slot is always reserved so the table does not move when the session appears. */}
+          <p data-testid="company-card-link-note" className="flex min-h-4 items-center gap-2 font-mono text-[11px] text-on-surface-variant">
+            {state === 'guest' ? (
+              <>
+                <LockIcon />
+                {t('companyCard.candidateLinkNote')}
+              </>
+            ) : null}
+          </p>
+          <CandidateTable candidates={candidates} companyCardLink={state === 'enabled' ? 'enabled' : 'disabled'} controls={controls} currency={currency} showIndicators={showIndicators} />
+        </>
       )}
     </div>
   )
