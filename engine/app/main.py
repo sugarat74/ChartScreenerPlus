@@ -38,7 +38,7 @@ def create_app() -> FastAPI:
         }
 
     @application.get("/eod/{symbol}", response_model=EodResponse)
-    def eod(symbol: str, market: Literal["US", "XMAD", "XETR"] = "US") -> EodResponse:
+    def eod(symbol: str, market: Literal["US", "XMAD", "XETR", "XPAR"] = "US") -> EodResponse:
         """Return parsed EOD bars for one symbol (fetch + parse only).
 
         market is the Listing Market (default US, so existing calls are

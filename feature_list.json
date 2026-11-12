@@ -973,22 +973,12 @@
   {
     "id": "universe-cac40",
     "area": "data",
-    "planning_spec": "docs/specs/universes-cac40-ftse100.md (prepared 2026-11-08)",
     "title": "CAC 40 Screener universe (Euronext Paris, EUR)",
-    "user_visible_behavior": "Once the owner makes it public, everyone can screen the CAC 40 (label 'CAC 40', 40 constituents) with EUR prices and .PA tickers, updated after the Euronext Paris close on Paris trading days, and Paris appears in the market-hours strip.",
+    "status": "accepted",
     "depends_on": [
       "universe-selector-ui",
       "market-hours-status"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Seeder test: 40 rows (39 .PA + MT.AS exception), slug cac40, XPAR/EUR, position 4, valid GICS sectors and ISO countries, hash matches cac40.md, idempotent, other universes untouched, non-public by default; AIR.PA and AIR.DE are separate Instruments",
-      "Suffix rules in PHP and engine (.PA exactly XPAR, .AS only for XPAR, 422 for a wrong market); committed Euronext Paris holidays (weekdays) and 24/31 Dec half days; 18:15 Europe/Paris schedule event; lock-wait budget covers the European pipelines",
-      "Live engine smoke on SAN.PA and MT.AS recorded as fixture; local XPAR pipeline run computes indicators, signals and patterns; holiday-week check (no bar on Paris closures, bars on UK-only closures); browser pass for the five-market strip at 390 and 1440 px",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-11-08 at explicit user request ('cac 70', read as a typo for CAC 40). Planning only, no application code yet. Constituents verified 2026-11-08 against Wikipedia (Dec 2025 table) and Euronext releases (no CAC 40 change in March, June and September 2026). Owner decisions open with recommended defaults: ArcelorMittal via MT.AS exception, non-public until the owner decides. Half-day close 14:05 unverified."
+    ]
   },
   {
     "id": "ingestion-xlon-gbx",
