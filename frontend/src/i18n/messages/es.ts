@@ -558,6 +558,10 @@ export const es = {
       toggle: 'Indicadores',
       forced: 'Visibles porque hay un filtro u orden por indicador activo.',
     },
+    signalsCell: {
+      trigger: '{count} señales',
+      panel: 'Señales y patrones de {ticker}',
+    },
     columns: {
       sortBy: 'Ordenar por {column}',
       sortedAsc: 'orden ascendente',
