@@ -1022,22 +1022,15 @@
     "id": "chart-indicators-rsi-macd-obv-supertrend",
     "area": "chart",
     "title": "Chart: RSI, MACD, OBV and Supertrend indicators",
-    "user_visible_behavior": "Users can enable RSI, MACD, OBV and Supertrend in the chart; the oscillators render in synchronized panes and Supertrend overlays price.",
+    "status": "accepted",
     "depends_on": [
       "indicators-expansion-engine",
       "indicators-expansion-storage",
       "chart-indicator-overlays",
       "chart-indicator-panels"
-    ],
-    "status": "passing",
-    "verification": [
-      "New series are engine-computed and served from stored snapshots",
-      "Indicator toggles persist and request history lazily",
-      "RSI, MACD and OBV panes and Supertrend price overlay render accessibly"
-    ],
-    "evidence": [],
-    "notes": "Requested 2026-11-10. OBV and Supertrend use fixed definitions documented in docs/specs/chart-indicators-rsi-macd-obv-supertrend.md. Baseline init.ps1 passed before implementation."
+    ]
   },
+
   {
     "id": "chart-patterns-head-shoulders-triangles",
     "area": "engine + screener + chart",

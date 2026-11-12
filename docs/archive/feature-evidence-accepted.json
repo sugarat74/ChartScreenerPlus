@@ -2226,5 +2226,31 @@
       "Independent validation 2026-11-08 (ACCEPT): scope 33 files within the feature; cac40.csv 40 rows, 39 .PA + MT.AS, hash matches; Euronext holiday page re-fetched, 2026/2027 closures match config; engine live smoke SAN.PA/MT.AS/AIR.PA/MC.PA EUR 511 bars, no bar on 2026 closures, 422 for wrong market and .AS outside XPAR; visitors see only sp500, admin selector shows CAC 40 'No data yet'; browser pass at 390/1440 px, light/dark, es/en, no horizontal overflow; targeted tests 71 passed, engine pytest 153; phpunit 1015 and Vitest 479 reached in the validator's own init run. Not verified: validator's own init.ps1 exit code (the run was interrupted; the implementer's exit 0 'Baseline OK' stands, CI is the second baseline), 14:05 half-day close against an official 2026/2027 notice, a DB-backed XPAR pipeline run, all 40 symbols re-fetched, composition against Euronext itself, strip while Paris is open."
     ],
     "notes": "Planned 2026-11-08 at explicit user request ('cac 70', read as a typo for CAC 40). Planning only, no application code yet. Constituents verified 2026-11-08 against Wikipedia (Dec 2025 table) and Euronext releases (no CAC 40 change in March, June and September 2026). Owner decisions open with recommended defaults: ArcelorMittal via MT.AS exception, non-public until the owner decides. Half-day close 14:05 unverified. Independently accepted 2026-11-08."
+  },
+  {
+    "id": "chart-indicators-rsi-macd-obv-supertrend",
+    "area": "chart",
+    "title": "Chart: RSI, MACD, OBV and Supertrend indicators",
+    "user_visible_behavior": "Users can enable RSI, MACD, OBV and Supertrend in the chart; the oscillators render in synchronized panes and Supertrend overlays price.",
+    "depends_on": [
+      "indicators-expansion-engine",
+      "indicators-expansion-storage",
+      "chart-indicator-overlays",
+      "chart-indicator-panels"
+    ],
+    "status": "accepted",
+    "verification": [
+      "New series are engine-computed and served from stored snapshots",
+      "Indicator toggles persist and request history lazily",
+      "RSI, MACD and OBV panes and Supertrend price overlay render accessibly"
+    ],
+    "evidence": [
+      "Independent validation 2026-11-12 (REVISE round 1: math, storage, API and UI correct, tests missing; fixed in 26182cc; round 2 ACCEPT). Worktree validation with scratch SQLite copy, engine on a free port, no .env.",
+      "Engine: OBV and Supertrend(10,3) matched an independent pure-Python implementation exactly on random walks of 5/10/11/12/300 bars, flat-volume and flat-price series (warm-up null until index 10, first-bar OBV, ties unchanged, direction flips). All pre-existing snapshot fields are identical (0 diffs, exact equality) to origin/main compute_snapshots on a 400-bar series; only obv, supertrend, supertrend_direction are new. New tests: OBV up/down/tie/flat, Supertrend warm-up, hand-computed flip values, ramp known values, zigzag/NVDA oracle. pytest 177 passed.",
+      "Storage/API: migration 2026_11_10_000001 (obv decimal(20,4), supertrend decimal(16,4), supertrend_direction smallint, all nullable) ran migrate / rollback / migrate on SQLite; Postgres only by syntax. indicators:compute on a seeded 320-bar instrument stored values; GET /api/instruments/TST/indicators (public, ascending, null warm-up) matched an independent recomputation (0 mismatches, 7 flips). New phpunit tests cover the history endpoint and bad-direction normalisation; targeted phpunit (ComputeIndicators, IndicatorsExpansionStorage, InstrumentDetailApi) 27 passed. Full phpunit 6 failures in AdminUsersSessionsTest/LocalizationTest are a worktree .env artefact: both classes pass 41/41 with SANCTUM_STATEFUL_DOMAINS and APP_URL from .env.example. Screener rows, filters and AI schema untouched.",
+      "SPA: Vitest 492 passed (61 files), npm run lint (only the pre-existing RequireAuth warning), npm run build OK. Browser (Playwright, 1440 and 390 px, dark/es and light/en): default has no /indicators request; with all four on exactly one request (limit=252); selection persisted across reload with aria-pressed; RSI fixed 0-100 with 30/70 guides, MACD lines plus red/green histogram, OBV pane, Supertrend up/down overlay; last-bar values on screen (RSI 47.11, MACD -0.31, Signal -0.10, Histogram -0.21, OBV -15.2M, Supertrend 87.09 up) equal the API JSON; chart height 779 px with three panes (420+120*3); no horizontal overflow at 390 or 1440. OBV axis now compact (50M / 25M / -15.2M).",
+      "Residual cosmetic only: the extreme axis labels of the OBV/MACD panes (e.g. -25M, -4.00) are partly clipped by the pane edge and the price axis shows value-less 'Supertrend up/down' title tags."
+    ],
+    "notes": "Requested 2026-11-10. OBV and Supertrend use fixed definitions documented in docs/specs/chart-indicators-rsi-macd-obv-supertrend.md. Baseline init.ps1 passed before implementation. Independently accepted 2026-11-12. Not verified: PostgreSQL execution, real production data (validated on one synthetic instrument), manual keyboard toggling, init.ps1 in the worktree."
   }
 ]
