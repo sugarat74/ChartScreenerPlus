@@ -2273,5 +2273,34 @@
       "Residual cosmetic only: the extreme axis labels of the OBV/MACD panes (e.g. -25M, -4.00) are partly clipped by the pane edge and the price axis shows value-less 'Supertrend up/down' title tags."
     ],
     "notes": "Requested 2026-11-10. OBV and Supertrend use fixed definitions documented in docs/specs/chart-indicators-rsi-macd-obv-supertrend.md. Baseline init.ps1 passed before implementation. Independently accepted 2026-11-12. Not verified: PostgreSQL execution, real production data (validated on one synthetic instrument), manual keyboard toggling, init.ps1 in the worktree."
+  },
+  {
+    "id": "guest-disabled-primitive",
+    "area": "frontend",
+    "planning_spec": "docs/specs/guest-disabled-registered-options.md (prepared 2026-11-12)",
+    "title": "Shared registered-only disabled primitive and sign-in return path",
+    "user_visible_behavior": "No visible change by itself: adds the reusable dimmed, focusable, aria-disabled option with a sign-in reason, and makes sign-in return the user to the page they came from.",
+    "depends_on": [
+      "premium-panels-auth-only",
+      "auth-email-verification",
+      "app-multilanguage",
+      "ui-dark-mode"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Vitest: useRegisteredOnly states (no provider, loading, Visitor, email-pending, signed-in, logout), RegisteredOnly and RegisteredOnlyPanel (aria-disabled without native disabled, tab order, Enter/Space/click swallowed, popover with sign-in link and Escape, no wrapper when enabled, flips on context change)",
+      "Vitest: next path validator accepts relative paths and rejects //host, schemes and auth routes; Login/Register/RequireAuth honour next",
+      "Catalog parity es/en; lint and build clean",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-11-12 implemented on feat/guest-disabled-primitive: useRegisteredOnly, RegisteredOnly/RegisteredOnlyPanel (frontend/src/components/registered-only/), nextPath helpers with Login/Register/RedirectSignedIn/RequireAuth honouring next, es/en registeredOnly.* keys, DESIGN/ARCHITECTURE/CONSTRAINTS/access-model statements. No backend diff, no screen converted.",
+      "Vitest: 66 files / 561 tests passed (new: nextPath 28, useRegisteredOnly 6, RegisteredOnly + Panel 15, nextFlow 12); lint 0 errors (4 oxlint react(globals) warnings in test files, same pattern as existing RequireAuth.test); build clean.",
+      "init.ps1 exit 0 Baseline OK (phpunit 1020 passed 6 skipped, Vitest 561, engine pytest 177).",
+      "Browser (Playwright, scratch SQLite, never dev data): Visitor on /portal redirected to /login?next=%2Fportal, login returns to /portal at 1440 dark; at 390 light next=//evil.com, https://x.example, /login, javascript: all land on /, next=/instruments/NVDA#ai-company-card lands there; no horizontal overflow; login/register cross links keep next. Primitive popover not exercised in the browser (unused by any screen yet).",
+      "2026-11-12 independent validation (REVISE then ACCEPT on f0f943f). Round 1 findings, all fixed in f0f943f and re-verified: (1) RegisteredOnlyPanel reason slot is now reserved (min-h-5, empty) in guest, loading and enabled; measured in a temporary browser harness at 1440 and 390 px, the panel box (118 px) and the slot (20 px) are identical in guest, signed-in (no reload) and after logout; the only movement seen at 390 px (+48 px) is the app header wrapping when signed in, not the panel; the row keeps only the sign-in link (matches spec item 3 'lock icon + text + sign-in link'; create-account stays in the popover and on the login page). (2) RegisteredOnly blocks editing of input, textarea, select and checkbox: typing, synthetic paste and drop, ArrowDown and letter keys on a select, mouse on the select, label click, Space and click on a checkbox change nothing and fire no onChange; Tab and Escape still work and focus is not trapped. (3) aria-disabled is only on the dimmed fieldset; the reason-row links are not reported disabled in the accessibility tree. (4) popover closes when Tab leaves it; the reason is a hidden node referenced by aria-describedby (announced once); nextPath rejects values over 2048 characters. The Panel test that asserted the slot absent when enabled now asserts it present and empty: legitimate, it encodes the reserved-slot requirement.",
+      "Validator runs on f0f943f: Vitest 66 files / 566 tests passed; lint 0 errors; build clean; php artisan test --filter Login|Auth 25 passed (round 1); .init.ps1 as a child process with process-level redirect printed Baseline OK (phpunit 1020 passed 6 skipped, Vitest 566, engine pytest 177). nextPath hostile inputs (//host, /host, %2F%2Fhost, scheme, javascript:, data:, control characters, auth routes with query/hash/trailing slash, encoded and dot-segment forms) tried in Node and in the browser: no open redirect, every accepted value stays same-origin. Flows: Visitor /portal -> /login?next=%2Fportal -> /portal; logout from the Portal goes home; login/register cross links keep next; register with next returned to it."
+    ],
+    "notes": "Planned 2026-11-12 at explicit user request. Planning only. Presentation only: no backend diff. Open owner decisions with defaults are in the spec (O1-O11). Independently accepted 2026-11-12. Not verified: email-pending state in a browser (verification is not required in the local config; unit-tested only), real touch, a real screen reader, light-mode contrast ratio (dark measured 8.2:1), next through a full email-verification round trip."
   }
 ]

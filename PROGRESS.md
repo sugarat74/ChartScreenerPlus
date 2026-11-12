@@ -2,11 +2,12 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
-## guest-disabled-primitive implemented (passing, awaiting validation) - 2026-11-12
+## guest-disabled-primitive accepted - 2026-11-12
 
 - Feature 1 of `docs/specs/guest-disabled-registered-options.md` (owner accepted O1-O11). SPA only, no backend diff, no screen converted. Added `useRegisteredOnly` (loading|guest|pending|enabled), `RegisteredOnly` (inline: aria-disabled, no native disabled, sr-only reason, popover with sign-in/create-account links, Escape/outside/blur close, `tabbable`, `variant`, Market Context `access` seam) and `RegisteredOnlyPanel` (fieldset disabled, reason row, same tree in every state), `nextPath`/`loginHref` helpers and `next` support in LoginPage, RegisterPage, RedirectSignedIn and RequireAuth (`/login?next=/portal`), `registeredOnly.*` es/en keys, DESIGN/ARCHITECTURE/CONSTRAINTS/access-model text.
 - Verified: Vitest 66 files / 561 passed (about 61 new), lint 0 errors, build clean, `.\init.ps1` exit 0 Baseline OK (phpunit 1020, Vitest 561, engine 177). Browser pass on a scratch SQLite: /portal -> /login?next=%2Fportal -> back to /portal (1440 dark); unsafe next values fall back to / and a safe hash path round-trips (390 light); no overflow.
 - Not verified: the primitive's popover and panel look in a real browser (no consumer yet; first visible in `guest-disabled-screener`), 390/1440 light/dark/en matrix for them, screen reader output, real touch. Playwright could only save screenshots under the repo `.playwright-mcp/` (untracked), not the scratchpad. Next: independent validation, then `guest-disabled-screener`.
+- Independent validation 2026-11-12: round 1 REVISE (panel slot shifted 28 px at login, input/select stayed editable, aria-disabled on the wrapper reported the links disabled, popover stayed open on Tab-out, no nextPath length cap); all fixed in f0f943f and re-verified in a temporary browser harness (stable box in guest/signed-in/logout at 390 and 1440, fields blocked, Tab/Escape intact). Vitest 566, lint, build, init.ps1 Baseline OK. Accepted; full record in docs/archive/feature-evidence-accepted.json. Next: `guest-disabled-screener`.
 
 ## Guest-visible disabled registered-only options planned (4 features, not started) - 2026-11-12
 
