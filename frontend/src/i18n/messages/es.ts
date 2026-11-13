@@ -564,7 +564,7 @@ export const es = {
     colAtrPct: 'ATR %',
     colStochK: 'Estocástico %K',
     indicators: {
-      toggle: 'Indicadores',
+      toggle: 'Más columnas',
       forced: 'Visibles porque hay un filtro u orden por indicador activo.',
     },
     signalsCell: {
