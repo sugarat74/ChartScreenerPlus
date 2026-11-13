@@ -1141,17 +1141,9 @@
     "id": "portal-tabs",
     "area": "frontend",
     "title": "Portal split into Saved Screeners and Watchlist tabs",
-    "user_visible_behavior": "The Portal shows a tab bar (Screeners guardados / Watchlist) instead of two columns; one panel at a time in a single column at every width. The tab is kept in ?tab=screeners|watchlist.",
+    "status": "accepted",
     "depends_on": [
       "user-portal"
-    ],
-    "status": "in_progress",
-    "verification": [
-      "Vitest: tab switching, URL sync with replace, invalid ?tab fallback, roving tabindex and Arrow/Home/End keys, guest redirect, opt-in above tabs",
-      "Browser pass at 390 and 1440 px, light and dark",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Owner request 2026-11-13. SPA only. Defaults: default tab Saved Screeners; both panels stay mounted (hidden attribute) so no refetch and unsaved alert-form state survives a switch; AlertEmailOptIn (digest of all alerts) sits above the tab bar; alerts load-error banner stays above the tabs."
+    ]
   }
 ]

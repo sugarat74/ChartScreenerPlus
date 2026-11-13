@@ -2,12 +2,12 @@
 
 Newest first; only the latest 10 sessions are kept here. Older sessions are in `docs/archive/progress-log.md` (read only when you need that history).
 
-## portal-tabs implemented (passing, awaiting validation) - 2026-11-13
+## portal-tabs accepted - 2026-11-13
 
 - Owner request: split the Portal's Watchlist and Saved Screeners into tabs instead of two columns. SPA only. New `components/portal/PortalTabs.tsx` (local small tablist plus `PortalTabPanel`; no existing tab pattern in the repo), `PortalPage` uses it. Owner-chosen defaults: default tab Saved Screeners; `?tab=screeners|watchlist` in the URL (invalid/missing -> default, replace navigation); Watchlist alert forms stay in the Watchlist panel; header, notifications/account links and alerts load-error banner stay above. Decisions mine: `AlertEmailOptIn` (daily digest of all alerts, checked in the code: it is not Watchlist specific) moved above the tab bar; both panels stay mounted with the inactive one `hidden` (Tailwind preflight forces display none), so no refetch on switch and unsaved alert-form state survives; the Watchlist fetch therefore still starts on page load. Single column at every width (xl grid removed). i18n `portal.tabsLabel/tabScreeners/tabWatchlist` es/en. DESIGN and ARCHITECTURE updated.
 - Tests: new `pages/PortalTabs.test.tsx` (default, switching + URL replace + no refetch, URL tab and invalid fallback, roving tabindex and Arrow/Home/End, opt-in above tabs, guest redirect with no tabs and no request); `PortalAlerts.test.tsx` pattern-card test now clicks the Watchlist tab first.
 - Verified: `.\init.ps1` exit 0 Baseline OK (phpunit 1020, Vitest 68 files / 584, engine 177), lint no new warnings.
-- Not verified: real-browser pass at 390/1440 px light/dark (not run), screen reader, real touch. Next: independent validation.
+- Independent validation 2026-11-13: ACCEPT (round 1). init.ps1 child process Baseline OK (Vitest 68 / 584). Real browser pass on isolated servers (8411/5411, scratch SQLite): guest redirect and return to the same tab after login; ARIA and roving tabindex, Arrow/Home/End; inactive panel display none; ?tab= replace (no history growth), invalid value falls back; unsaved alert-form state kept across switches; alert save and email opt-in work; no horizontal overflow at 390/1440, es/en, light/dark. Minor: with the digest available the opt-in card takes ~300 px at 390 px above the tabs. Not verified: screen reader, real touch.
 
 ## guest-disabled-screener accepted - 2026-11-12
 
