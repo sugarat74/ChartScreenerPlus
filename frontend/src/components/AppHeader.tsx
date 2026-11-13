@@ -1,22 +1,58 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Link, NavLink } from 'react-router'
 import { useAuth } from '../auth/useAuth.ts'
 import { useEmailVerificationPending } from '../auth/useEmailVerificationPending.ts'
 import { useMarketContextAccess } from '../auth/useMarketContextAccess.ts'
+import type { MarketContextAccess } from '../auth/useMarketContextAccess.ts'
+import { useRegisteredOnly } from '../auth/useRegisteredOnly.ts'
 import { useI18n } from '../i18n/useI18n.ts'
+import { useLegalInfo } from '../legal/useLegalInfo.ts'
 import { ACCOUNT_ROUTE, DEFAULT_ROUTE, LOGIN_ROUTE, NAV_ITEMS } from '../nav.ts'
+import { ReturnTo, TAB_ACTIVE_CLASS, TAB_CLASS, TAB_IDLE_CLASS, UnreleasedNavTab } from './HeaderNavTab.tsx'
 import LanguageSelector from './LanguageSelector.tsx'
 import NotificationBell from './NotificationBell.tsx'
+import LockIcon from './registered-only/LockIcon.tsx'
+import RegisteredOnly from './registered-only/RegisteredOnly.tsx'
 import ThemeSelector from './ThemeSelector.tsx'
+
+const LOADING_ACCESS: MarketContextAccess = { status: 'loading', preview: false }
+
+/**
+ * How the «Mercado» tab renders (guest-disabled-nav, inventory row 9):
+ * a link with access; dimmed with the sign-in popover for a Visitor while the
+ * page is public; dimmed with "confirm your email" for a pending account that
+ * confirming would unlock; otherwise "not available yet" with no sign-in link
+ * (login would not unlock it).
+ */
+type MarketTab = 'enabled' | 'loading' | 'guest' | 'pending' | 'unreleased'
 
 /** Sticky product chrome: brand, language, session controls and route-backed tabs. */
 export default function AppHeader() {
   const { user, status, logout } = useAuth()
   const { t } = useI18n()
   const marketAccess = useMarketContextAccess()
+  const legal = useLegalInfo()
   const verificationPending = useEmailVerificationPending()
+  const { state: session } = useRegisteredOnly()
   const [signingOut, setSigningOut] = useState(false)
   const isAdmin = user?.role === 'admin'
+  const marketPublic = legal.status === 'ready' && legal.info.market_context === true
+  let marketTab: MarketTab
+  if (marketAccess.status === 'allowed') {
+    marketTab = 'enabled'
+  } else if (marketAccess.status === 'loading') {
+    marketTab = 'loading'
+  } else if (marketAccess.status === 'signIn') {
+    marketTab = 'guest'
+  } else if (session === 'pending' && legal.status === 'loading') {
+    // A pending account: wait for the go-live flag instead of flashing a reason.
+    marketTab = 'loading'
+  } else if (session === 'pending' && (marketPublic || isAdmin)) {
+    // The server denies Market Context to every pending account; confirming unlocks it.
+    marketTab = 'pending'
+  } else {
+    marketTab = 'unreleased'
+  }
   // Admin-only tabs are hidden for everyone else; the API is the real gate.
   const visibleNavItems = NAV_ITEMS.filter(
     (item) => item.adminOnly !== true || isAdmin,
@@ -116,34 +152,61 @@ export default function AppHeader() {
         aria-label={t('header.navAria')}
         className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto border-t border-outline-variant px-4"
       >
-        {visibleNavItems.map((item) =>
-          'marketContext' in item && item.marketContext === true && marketAccess.status !== 'allowed' ? (
-            <span
-              key={item.path}
-              aria-disabled="true"
-              title={t(user ? 'nav.marketUnavailable' : 'nav.marketSignIn')}
-              className="cursor-not-allowed whitespace-nowrap border-b-2 border-transparent px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider text-on-surface-variant opacity-50"
-            >
-              {t(item.labelKey)}
-            </span>
-          ) : (
+        {visibleNavItems.map((item) => {
+          const label = t(item.labelKey)
+          const link = (locked: boolean, title?: string) => (
             <NavLink
-              key={item.path}
               to={item.path}
               end={!('nested' in item && item.nested)}
-              className={({ isActive }) =>
-                [
-                  'whitespace-nowrap border-b-2 px-4 py-2.5 font-headline text-xs font-bold uppercase tracking-wider transition-colors',
-                  isActive
-                    ? 'border-outline bg-surface-container text-on-surface'
-                    : 'border-transparent text-on-surface-variant hover:bg-surface-bright hover:text-on-surface',
-                ].join(' ')
-              }
+              title={title}
+              className={({ isActive }) => `${TAB_CLASS} ${isActive ? TAB_ACTIVE_CLASS : TAB_IDLE_CLASS}`}
             >
-              {t(item.labelKey)}
+              {locked ? <LockIcon className="mr-1 inline h-3 w-3 align-[-1px]" /> : null}
+              {label}
             </NavLink>
-          ),
-        )}
+          )
+
+          if ('marketContext' in item && item.marketContext === true) {
+            switch (marketTab) {
+              case 'enabled':
+                return <Fragment key={item.path}>{link(false)}</Fragment>
+              case 'unreleased':
+                return (
+                  <UnreleasedNavTab
+                    key={item.path}
+                    label={label}
+                    reason={t('registeredOnly.reasonUnreleased')}
+                    title={t('nav.marketUnavailable')}
+                  />
+                )
+              case 'pending':
+                return (
+                  <RegisteredOnly key={item.path}>{link(true)}</RegisteredOnly>
+                )
+              case 'loading':
+                return (
+                  <RegisteredOnly key={item.path} access={LOADING_ACCESS}>{link(false)}</RegisteredOnly>
+                )
+              case 'guest':
+                return (
+                  <ReturnTo key={item.path} path={item.path}>
+                    <RegisteredOnly access={marketAccess}>{link(true, t('nav.marketSignIn'))}</RegisteredOnly>
+                  </ReturnTo>
+                )
+            }
+          }
+
+          if ('registeredOnly' in item && item.registeredOnly === true && session !== 'enabled') {
+            // Visitor, pending account or session loading: the dimmed tab; sign-in returns to the tab's route.
+            return (
+              <ReturnTo key={item.path} path={item.path}>
+                <RegisteredOnly>{link(session !== 'loading')}</RegisteredOnly>
+              </ReturnTo>
+            )
+          }
+
+          return <Fragment key={item.path}>{link(false)}</Fragment>
+        })}
       </nav>
     </header>
   )

@@ -85,6 +85,8 @@ it('a Visitor opening a guarded page is still sent to sign-in', async () => {
 
   await screen.findByText('login page')
   expect(router.state.location.pathname).toBe('/login')
+  // guest-disabled-nav: the return path brings them back to the Portal.
+  expect(router.state.location.search).toBe('?next=%2Fportal')
 })
 
 it('a Visitor opening Admin still sees the sign-in notice', () => {

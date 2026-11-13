@@ -339,7 +339,8 @@ describe('MarketPage access (Scenario 7: Registered Users only)', () => {
 
     expect(await screen.findByText('Contexto de mercado para usuarios registrados')).toBeTruthy()
     expect(screen.getByRole('heading', { level: 1, name: 'Contexto de mercado' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Iniciar sesión' }).getAttribute('href')).toBe('/login')
+    // guest-disabled-nav: the box returns the Visitor to /mercado after sign-in.
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' }).getAttribute('href')).toBe('/login?next=%2Fmercado')
     expect(screen.queryByRole('region', { name: 'Entorno de mercado' })).toBeNull()
     expect(contextCalls(fetchMock)).toEqual([])
   })

@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../../auth/useAuth.ts'
+import { useAuthLinks } from '../../auth/useAuthLinks.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { ApiError, marketContextApi } from '../../lib/api.ts'
 import type { MarketHistory, MarketHistoryMetric, MarketHistoryRange } from '../../lib/api.ts'
-import { LOGIN_ROUTE } from '../../nav.ts'
 import HistoryChart from './HistoryChart.tsx'
 
 export type HistoryOption = {
@@ -49,6 +49,7 @@ export default function HistoryPanel({
   selectLabel?: string
 }) {
   const { user, status } = useAuth()
+  const links = useAuthLinks()
   const { t, formatMarketDate } = useI18n()
   const panelId = useId()
   const selectId = useId()
@@ -109,7 +110,7 @@ export default function HistoryPanel({
           <p className="text-xs text-on-surface-variant">{t('marketContext.history.signInBody')}</p>
         </div>
         <Link
-          to={LOGIN_ROUTE}
+          to={links.login}
           className="font-mono text-xs font-bold text-on-surface underline underline-offset-4 focus:outline-2 focus:outline-offset-2 focus:outline-outline"
         >
           {t('marketContext.history.signIn')}
