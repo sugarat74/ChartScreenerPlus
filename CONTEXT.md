@@ -18,7 +18,7 @@ A listed security identified by a ticker (e.g. `NVDA`). Carries company name, se
 
 ### Listing Market (Mercado de cotización)
 
-The exchange group whose trading calendar, session close, currency and data-source symbol rules apply to an Instrument: `US` (NYSE/Nasdaq, USD), `XMAD` (Bolsa de Madrid, EUR) or `XETR` (Xetra, EUR) or `XPAR` (Euronext Paris, EUR). European tickers carry the suffix of their market (`SAN.MC`, `SAP.DE`, `SAN.PA`; ArcelorMittal's Amsterdam line `MT.AS` is the one documented exception, accepted for `XPAR` only). Not to be confused with Market Context. Planned, `docs/specs/multi-market-universes.md`.
+The exchange group whose trading calendar, session close, currency and data-source symbol rules apply to an Instrument: `US` (NYSE/Nasdaq, USD), `XMAD` (Bolsa de Madrid, EUR), `XETR` (Xetra, EUR), `XPAR` (Euronext Paris, EUR) or `XLON` (London Stock Exchange, pence/GBX). European tickers carry the suffix of their market (`SAN.MC`, `SAP.DE`, `SAN.PA`, `AZN.L`, `BT-A.L`; ArcelorMittal's Amsterdam line `MT.AS` is accepted for `XPAR` only). `GBX` is the quoted pence unit, distinct from pounds (`GBP`); prices are never converted. Not to be confused with Market Context. See `docs/specs/multi-market-universes.md` and `docs/specs/universes-cac40-ftse100.md` (P1, pence).
 
 ### Universe
 

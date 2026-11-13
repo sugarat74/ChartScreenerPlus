@@ -17,6 +17,15 @@ describe('locale-aware number formatting', () => {
     expect(formatPrice('es', 12345.5)).toBe('12.345,50')
   })
 
+  it('shows London pence (GBX) as quoted, never divided or with a currency symbol', () => {
+    // ingestion-xlon-gbx (P1): AZN.L 13,930p and LLOY.L 95.88p stay in pence.
+    expect(formatPrice('en', 13930)).toBe('13,930.00')
+    expect(formatPrice('es', 13930)).toBe('13.930,00')
+    expect(formatPrice('en', 95.88)).toBe('95.88')
+    expect(formatPrice('es', 95.88)).toBe('95,88')
+    expect(formatPrice('en', 95.88)).not.toMatch(/[£p]/)
+  })
+
   it('keeps an explicit sign on changes', () => {
     expect(formatChangePercent('en', 1.234)).toBe('+1.23%')
     expect(formatChangePercent('es', -1.234)).toBe('-1,23%')

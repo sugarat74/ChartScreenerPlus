@@ -133,7 +133,7 @@ interface CandidateTableProps {
   companyCardLink?: CompanyCardLinkMode
   /** Per-heading sort and filter controls; absent = plain headings. */
   controls?: CandidateTableControls
-  /** Currency of the universe (ISO code), shown in the Close heading. */
+  /** Currency code of the universe (ISO, or GBX for London pence), shown in the Close heading. */
   currency?: string | null
   /** Append the optional Indicators columns (ADX, %B, ATR %, Stoch %K); default off. */
   showIndicators?: boolean

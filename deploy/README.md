@@ -321,6 +321,28 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
     6. Si ya se había rellenado el histórico de indicadores (entradas 14 a 16), el universo nuevo no lo necesita:
        el pipeline de la primera ingesta calcula indicadores, Señales y patrones de los 40 valores.
 
+19. Bolsa de Londres, base (`ingestion-xlon-gbx`, `docs/specs/universes-cac40-ftse100.md`, Feature 2): añade
+    el Listing Market `XLON` (`.L`, Europe/London, 08:00-16:30), su calendario y el tratamiento de peniques
+    (`GBX`). **No siembra ningún universo**: ni el planificador ni la franja de mercados muestran Londres hasta
+    que exista un universo del Screener con mercado `XLON` (el FTSE 100 es la entrada siguiente,
+    `universe-ftse100`). No requiere migración ni pasos manuales; desplegar Laravel y el motor de la misma
+    versión (el motor es quien traduce `GBp` de Yahoo a `GBX`). Reglas para operar:
+
+    1. Los precios se guardan y se muestran en peniques tal como cotizan (`GBX`), nunca divididos por 100. Una
+       respuesta en `GBP`, `USD` o `EUR` para un Instrumento `GBX` falla con `currency_mismatch` y no guarda nada.
+    2. Guardia de escala (solo `XLON`): el motor responde `502` si dos cierres seguidos difieren 40 veces o más,
+       o un cierre en `GBX` supera 1.000.000; Laravel falla el valor con `price_scale_mismatch` si la serie nueva
+       difiere 40 veces o más del último cierre guardado. En ambos casos no se guarda nada y la Ingestion Run
+       queda `partial`. No forzar una conversión: revisar el símbolo y la unidad en Yahoo y decidir.
+    3. Pipeline previsto a las 17:15 Europe/London (cierre 16:30 + 45 min), también en las medias sesiones del 24
+       y el 31 de diciembre (cierre a las 12:30). Variables opcionales `INGESTION_XLON_TIMEZONE`,
+       `INGESTION_XLON_MARKET_OPEN`, `INGESTION_XLON_MARKET_CLOSE` y `INGESTION_XLON_BUFFER_MINUTES`. Cada año,
+       renovar `markets.XLON.holidays` y `early_closes` con la página de días hábiles de la LSE y
+       `https://www.gov.uk/bank-holidays.json` (Inglaterra y Gales).
+    4. `INGESTION_LOCK_WAIT_SECONDS=3600` (entrada 18) cubre ya los cuatro pipelines europeos, que arrancan en el
+       mismo instante UTC. Antes de hacer público el FTSE 100, medir la duración real de un pipeline europeo en
+       producción y escalonar con `INGESTION_XLON_BUFFER_MINUTES` (por ejemplo 65) si no caben.
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.

@@ -27,7 +27,7 @@ return [
 
     // How long a pipeline that finds the global pipeline lock held waits for it
     // before skipping with a warning. Per-market pipelines may share a time: the
-    // European ones (XMAD, XETR, XPAR) fire at the same UTC instant on common
+    // European ones (XMAD, XETR, XPAR, XLON) fire at the same UTC instant on common
     // trading days and run one after another, so the budget covers several runs.
     // If they still do not fit, stagger with INGESTION_<CODE>_BUFFER_MINUTES.
     'lock_wait_seconds' => (int) env('INGESTION_LOCK_WAIT_SECONDS', 3600),
@@ -147,6 +147,17 @@ return [
     | Amsterdam (ArcelorMittal's `MT.AS` line). 2027 comes from the same page but
     | is subject to change: CONFIRM it during 2027. REFRESH ANNUALLY.
     |
+    | XLON (London Stock Exchange): England and Wales bank holidays
+    | (https://www.gov.uk/bank-holidays.json) and LSE's business-days page
+    | (https://www.londonstockexchange.com/equities-trading/business-days), both
+    | fetched 2026-11-13; the LSE page lists closures from 31 Aug 2026 to 2028
+    | and they match gov.uk. UK-only closures (early May, spring and summer bank
+    | holidays, substitute Boxing/Christmas days) are Paris/Madrid/Xetra trading
+    | days; 1 May is a London trading day. 24 and 31 December are HALF DAYS
+    | (closing process from 12:30 London time, LSE official), listed in
+    | `early_closes`. The closing auction (to 16:35) is not modelled. REFRESH
+    | ANNUALLY.
+    |
     */
 
     'markets' => [
@@ -223,6 +234,40 @@ return [
                 '2026-12-31' => '14:05',
                 '2027-12-24' => '14:05',
                 '2027-12-31' => '14:05',
+            ],
+        ],
+        'XLON' => [
+            'timezone' => env('INGESTION_XLON_TIMEZONE', 'Europe/London'),
+            'open' => env('INGESTION_XLON_MARKET_OPEN', '08:00'),
+            'close' => env('INGESTION_XLON_MARKET_CLOSE', '16:30'),
+            'buffer_minutes' => (int) env('INGESTION_XLON_BUFFER_MINUTES', 45),
+            'holidays' => [
+                // 2026 (gov.uk England and Wales bank holidays; LSE page from 31 Aug)
+                '2026-01-01',
+                '2026-04-03',
+                '2026-04-06',
+                '2026-05-04',
+                '2026-05-25',
+                '2026-08-31',
+                '2026-12-25',
+                '2026-12-28',
+                // 2027 (LSE business-days page and gov.uk, both checked 2026-11-13)
+                '2027-01-01',
+                '2027-03-26',
+                '2027-03-29',
+                '2027-05-03',
+                '2027-05-31',
+                '2027-08-30',
+                '2027-12-27',
+                '2027-12-28',
+            ],
+            // Half days (LSE official): the closing process commences at 12:30
+            // London time on 24 and 31 December. The pipeline still runs at 17:15.
+            'early_closes' => [
+                '2026-12-24' => '12:30',
+                '2026-12-31' => '12:30',
+                '2027-12-24' => '12:30',
+                '2027-12-31' => '12:30',
             ],
         ],
     ],

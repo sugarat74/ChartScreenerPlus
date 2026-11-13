@@ -29,7 +29,7 @@ interface CandidateResultsProps {
   onClearFilters: () => void
   /** Column sort/filter controls for the table headings (screener-table-column-controls). */
   controls?: CandidateTableControls
-  /** Currency of the screened universe (ISO code). */
+  /** Currency code of the screened universe (ISO, or GBX for London pence; never an Intl currency). */
   currency?: string | null
   /** Show the optional Indicators columns. */
   showIndicators?: boolean

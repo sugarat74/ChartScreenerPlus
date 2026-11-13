@@ -461,7 +461,7 @@ export const en: Messages = {
   marketHours: {
     title: 'Markets',
     groupAria: 'Market hours',
-    markets: { US: 'NYSE/Nasdaq', XMAD: 'Madrid Stock Exchange', XETR: 'Xetra', XPAR: 'Euronext Paris' },
+    markets: { US: 'NYSE/Nasdaq', XMAD: 'Madrid Stock Exchange', XETR: 'Xetra', XPAR: 'Euronext Paris', XLON: 'London Stock Exchange' },
     open: 'Open',
     closed: 'Closed',
     opens: 'Opens {time}',
@@ -549,6 +549,7 @@ export const en: Messages = {
         XMAD: 'Madrid Stock Exchange',
         XETR: 'Xetra',
         XPAR: 'Euronext Paris',
+        XLON: 'London Stock Exchange',
       },
     },
     colChange: 'Chg %',
