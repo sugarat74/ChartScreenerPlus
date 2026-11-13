@@ -343,6 +343,52 @@ Dominio público: `https://www.chartiko.com`. `/var/www/alphapulse` y servicios
        mismo instante UTC. Antes de hacer público el FTSE 100, medir la duración real de un pipeline europeo en
        producción y escalonar con `INGESTION_XLON_BUFFER_MINUTES` (por ejemplo 65) si no caben.
 
+20. FTSE 100 (`universe-ftse100`, `database/data/ftse100.md`): cada despliegue ejecuta
+    `php artisan db:seed --class=Ftse100UniverseSeeder --force` tras el del CAC 40 (sin red e idempotente). Crea
+    el universo `ftse100` (XLON, `GBX` = peniques, posición 5; etiqueta «FTSE 100») con **97 Instrumentos nuevos
+    `.L`** (BT Group como `BT-A.L`): los 97 valores del índice que cotizan en peniques. Compass Group (`CPG.L`,
+    USD), IHG (`IHG.L`, USD) y Metlen (`MTLN.L`, EUR) quedan fuera (decisión P2, sin conversión de divisas).
+    Sigue **sin ser público**: lo ve solo un Admin hasta que se añada a `SCREENER_UNIVERSES_PUBLIC`. Al
+    sembrarse, el planificador crea el evento `ingestion:pipeline --market=XLON` (17:15 Europe/London, días
+    hábiles de Londres; reglas de la entrada 19). Pasos de salida a producción, en orden:
+
+    1. Desplegar (migra y siembra; no hay migración nueva). Comprobar con `php artisan schedule:list` como
+       `deploy` que aparece `ingestion:pipeline --market="XLON"` con `15 17 * * 1-5` (17:15 Europe/London), y
+       con sesión de Admin que `GET /api/universes` lista `ftse100` con `currency` `GBX` (sin sesión, solo los
+       públicos). Si hiciera falta sembrar a mano, como `deploy` en `current`:
+       `php artisan db:seed --class=Ftse100UniverseSeeder --force`.
+    2. Primera ingesta (unos 2 años de velas por valor, unas 49.000 velas): la lanza el evento programado, o a
+       mano como `deploy`, en `current`, mejor fuera de la franja 17:15-18:30 de Londres para no esperar a los
+       otros pipelines europeos: `php artisan ingestion:pipeline --market=XLON --force`. **Duración esperada:**
+       en local (Windows, SQLite, motor local, 2026-11-13) la primera pasada de los 97 tardó 124 s (ingesta 54 s,
+       indicadores 56 s, Señales 7 s, patrones 6 s, filas del Screener 0,1 s) y una segunda pasada completa 160 s
+       (ingesta 48 s, indicadores 97 s al reescribir las 49.163 instantáneas). En producción, calcular entre 2 y
+       6 minutos; anotar la duración real en `PROGRESS.md`. Los cuatro pipelines europeos juntos (IBEX 35 +
+       DAX + CAC 40 + FTSE 100, unos 212 valores) se estiman en 5-15 minutos, muy por debajo de la espera de
+       3600 s; escalonar con `INGESTION_XLON_BUFFER_MINUTES=65` solo si la medida real se acerca al límite.
+    3. Verificar los datos: la última Ingestion Run de `ftse100` tiene `total` = 97 y sin fallos (un
+       `currency_mismatch` indica que Yahoo cambió la divisa de un valor: sacarlo según
+       `database/data/ftse100.md`; un `price_scale_mismatch` o un `502` de la guardia de escala, revisar el
+       símbolo y la unidad en Yahoo sin forzar conversiones); en Admin la tabla de frescura muestra `ftse100`
+       como `fresh`; las velas tienen fechas de sesión de Londres (sin fines de semana ni festivos de Inglaterra
+       y Gales, por ejemplo ninguna el 2026-05-04, el 2026-05-25 ni el 2026-08-31; sí el 2026-05-01), divisa
+       `GBX` y precios en peniques (por ejemplo `AZN.L` en torno a 13.900 y `LLOY.L` en torno a 98 en
+       `/instruments/AZN.L`; `BT-A.L` también responde); con sesión de Admin, `/screener?universe=ftse100` lista
+       Candidatos con la cabecera «Cierre (GBX)» y la franja de mercados muestra Londres. No hay respaldo Stooq:
+       si Yahoo falla, el valor falla.
+    4. Hacer público: en `shared/.env` poner `SCREENER_UNIVERSES_PUBLIC=` con los slugs que ya fueran públicos
+       más `ftse100` y ejecutar `php artisan config:cache` como `deploy`. Anotarlo en `PROGRESS.md`. Para
+       retirarlo, quitar el slug y volver a ejecutar `config:cache` (interruptor de la entrada 11). No cambies el
+       valor por defecto de `.env.example` ni de `config/universes.php`. La decisión de hacerlo público y el
+       riesgo de licencia (FTSE Russell/LSEG, Yahoo no oficial) son del responsable.
+    5. Rebalanceo (FTSE Russell revisa el FTSE 100 en marzo, junio, septiembre y diciembre, con anuncio el primer
+       miércoles y efecto tras el tercer viernes; próxima revisión: anuncio el 2-dic-2026, efecto tras el cierre
+       del 18-dic-2026; además hay bajas extraordinarias por opas o exclusiones): procedimiento en
+       `database/data/ftse100.md` (cada valor nuevo debe responder en `GBX`); la siembra del despliegue aplica el
+       CSV nuevo. Cada año, renovar `markets.XLON.holidays` y `early_closes` (entrada 19).
+    6. Si ya se había rellenado el histórico de indicadores (entradas 14 a 16), el universo nuevo no lo necesita:
+       el pipeline de la primera ingesta calcula indicadores, Señales y patrones de los 97 valores.
+
 Al cambiar `APP_NAME` en un VPS existente, conserva el nombre efectivo de
 `SESSION_COOKIE` para evitar invalidar sesiones por la marca. Actualiza el entorno
 compartido y reconstruye la caché de configuración durante el release.

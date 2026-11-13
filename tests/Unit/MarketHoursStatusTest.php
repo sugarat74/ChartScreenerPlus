@@ -109,6 +109,32 @@ class MarketHoursStatusTest extends TestCase
         $this->assertFalse($this->at('XPAR', '2026-12-25 10:00:00')['is_open']);
     }
 
+    public function test_london_has_its_own_hours_bank_holidays_and_half_days(): void
+    {
+        // Summer (BST): 08:00 to 16:30 London = 07:00Z to 15:30Z.
+        $this->assertFalse($this->at('XLON', '2026-07-06 06:59:59')['is_open']);
+        $this->assertTrue($this->at('XLON', '2026-07-06 07:00:00')['is_open']);
+        $this->assertTrue($this->at('XLON', '2026-07-06 15:29:59')['is_open']);
+        $this->assertFalse($this->at('XLON', '2026-07-06 15:30:00')['is_open']);
+        // Winter (GMT): 08:00Z to 16:30Z.
+        $this->assertTrue($this->at('XLON', '2026-01-12 08:00:00')['is_open']);
+        $this->assertFalse($this->at('XLON', '2026-01-12 16:30:00')['is_open']);
+
+        // UK bank holidays are closed in London only; 1 May is a London trading day.
+        $this->assertFalse($this->at('XLON', '2026-05-25 10:00:00')['is_open']);
+        $this->assertTrue($this->at('XPAR', '2026-05-25 10:00:00')['is_open']);
+        $this->assertTrue($this->at('XLON', '2026-05-01 10:00:00')['is_open']);
+        $this->assertFalse($this->at('XPAR', '2026-05-01 10:00:00')['is_open']);
+        $this->assertFalse($this->at('XLON', '2026-12-28 10:00:00')['is_open']);
+
+        // 31 December 2026: half day closing at 12:30 GMT.
+        $half = $this->at('XLON', '2026-12-31 12:29:59');
+        $this->assertTrue($half['is_open']);
+        $this->assertTrue($half['early_close']);
+        $this->assertSame('2026-12-31T12:30:00Z', $half['closes_at']);
+        $this->assertFalse($this->at('XLON', '2026-12-31 12:30:00')['is_open']);
+    }
+
     public function test_early_closes_shorten_the_session(): void
     {
         // US, day after Thanksgiving 2026: 09:30 EST to 13:00 EST = 14:30Z to 18:00Z.

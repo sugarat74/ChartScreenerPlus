@@ -10,7 +10,7 @@ This umbrella spec covers three features, implemented in this order. Each one sh
 | 2 | `ingestion-xlon-gbx` | ingestion | `universe-cac40` | London (`XLON`) Listing Market, calendar and schedule, and the pence (GBX) currency handling in the engine and Laravel, with no universe yet |
 | 3 | `universe-ftse100` | data | `ingestion-xlon-gbx` | FTSE 100 dated snapshot and seeder, `.L` symbols, GBX, strip entry |
 
-- `status`: `universe-cac40` accepted (2026-11-12, #101); `ingestion-xlon-gbx` accepted (2026-11-13, independent validation); `universe-ftse100` not started. Planned 2026-11-08 at the user's explicit request (Spanish owner): add the **CAC 40** (the request said "cac 70", read as a typo for CAC 40, the only French blue-chip index of that kind) and the **FTSE 100**.
+- `status`: `universe-cac40` accepted (2026-11-12, #101); `ingestion-xlon-gbx` accepted (2026-11-13, independent validation); `universe-ftse100` passing (2026-11-13, self-verified, awaiting independent validation; 97 members, non-public). Planned 2026-11-08 at the user's explicit request (Spanish owner): add the **CAC 40** (the request said "cac 70", read as a typo for CAC 40, the only French blue-chip index of that kind) and the **FTSE 100**.
 - `source`: `feature_list.json`. Scope change recorded in `AGENTS.md` (MVP Scope Guard, 2026-11-08).
 - Same model as the Nasdaq-100 / IBEX 35 / DAX work: dated offline constituent snapshot (`database/data/<slug>.csv` + `<slug>.md`), idempotent seeder on `IndexUniverseSeeder`, per-market calendar and schedule, EOD through the existing Yahoo path, non-public by default (`SCREENER_UNIVERSES_PUBLIC` unchanged), Admin preview, US-only features stay US-only.
 - Evidence in this spec was gathered read-only on 2026-11-08: Wikipedia raw wikitext, Euronext / LSEG / FTSE Russell pages and a live Yahoo chart request per constituent (details per feature).
@@ -170,6 +170,8 @@ Currency conversion, pounds display toggle, FX rates, per-Instrument currencies 
 ---
 
 ## Feature 3 — `universe-ftse100`
+
+**Implementation notes (2026-11-13).** Owner defaults accepted: O2 (97 members; `CPG.L`, `IHG.L`, `MTLN.L` excluded and listed in `ftse100.md`), O3 (pence as `GBX`), O4 (non-public), O5 (labels). The Wikipedia revision live on 2026-11-08 (`oldid=1384229503`) reproduces the spec hash `9acd8ddd...`; the current revision (2026-11-13) has an identical constituents table. Live check 2026-11-13 through the local engine: 97 `GBX`, 502-507 sessions, no weekend or England/Wales bank-holiday bar, largest day-over-day ratio 1.344; the three excluded still report USD/USD/EUR. Editorial choices beyond the C4 rule: the airlines `IAG.L` and `EZJ.L` are Industrials (GICS airlines, same as `IAG.MC`), and the headquarters rule gives Glencore `CH` (Baar) rather than the registration `JE` named as an example in C4; Experian `IE` (Dublin) and Fresnillo `MX` (Mexico City) follow the same rule. Local pipeline on a scratch SQLite database: first run 124 s (ingestion 54 s, indicators 56 s, Signals 7 s, patterns 6 s), second full run 160 s; 49,163 bars, all `GBX`, none on weekends or UK bank holidays.
 
 ### Scope
 

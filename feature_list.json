@@ -998,15 +998,21 @@
     "depends_on": [
       "ingestion-xlon-gbx"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Seeder test: 97 rows, .L suffix, slug ftse100, XLON/GBX, position 5, valid GICS sectors and ISO countries, hash matches ftse100.md, idempotent, excluded tickers (CPG.L, IHG.L, MTLN.L) absent and documented, non-public by default",
       "Local XLON pipeline run ingests the 97 members and computes indicators, signals and patterns; 17:15 Europe/London schedule event; live smoke on the 97 symbols (GBX, 500+ sessions) and a holiday-week check; browser pass for GBX in the table, filter chips, chart header and the strip",
       "Public enablement (ftse100 in SCREENER_UNIVERSES_PUBLIC) only after a verified production run and an explicit owner step; kill-switch documented in deploy/README.md",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-11-08 at explicit user request. Planning only. Constituents verified 2026-11-08 against Wikipedia (table after 1 Oct 2026, 100 rows) and the LSEG 2 Sep 2026 notice (easyJet and Ithaca in, Entain and Persimmon out). Open owner decisions with defaults: leave out the three non-pence lines (97 members), pence over pounds."
+    "evidence": [
+      "2026-11-13 implementation (branch feat/universe-ftse100): database/data/ftse100.csv (97 rows, SHA-256 b6b418896fef2f6c0b3d2b5a0058f2f31f7ff5c83d2df1b4f855ab2a34680e8f) + ftse100.md (source Wikipedia oldid 1384229503, raw SHA-256 9acd8ddd... equal to the spec; current revision 1385074262 has the identical table; per-ticker ICB-to-GICS sector and HQ country, Excluded constituents CPG.L/IHG.L (USD) and MTLN.L (EUR), rebalance procedure); Ftse100UniverseSeeder (ftse100, FTSE 100, XLON/GBX, position 5) in DatabaseSeeder and deploy/deploy.sh; guide es/en; deploy/README.md item 20.",
+      "Live check 2026-11-13 through the local engine (port 8197, no DB): 100/100 symbols resolve; the 97 members return GBX, 502-507 sessions (2024-11-13..2026-11-13), no weekend bar, no bar on the 16 England/Wales bank holidays of the window, max day-over-day close ratio 1.344, last closes 94.08-16,860p; CPG.L USD, IHG.L USD, MTLN.L EUR (326 sessions).",
+      "Local pipeline on a scratch SQLite DB (migrated fresh, not the main DB), `ingestion:pipeline --market=XLON --force`: run 1 exit 0 in 123.7 s wall (ingestion run total=97 succeeded=97 failed=0 in 54 s; indicators 56 s, 49,163 snapshots; Signals 7 s, 72 stored; patterns 6 s, 110 stored; Screener refresh 0.09 s); run 2 exit 0 in 159.6 s (ingestion 48 s, indicators 97 s rewriting all snapshots). 49,163 bars, all GBX, 502-507 per instrument, 0 weekend bars, 0 bars on UK bank holidays, bars on 2026-05-01 (Paris closed), Screener rows 97 XLON/GBX. `schedule:list` shows `15 17 * * 1-5 ingestion:pipeline --market=\"XLON\"`.",
+      "Browser pass (Playwright, scratch DB, Laravel :8000 + Vite :5173, Admin): selector lists six universes (FTSE 100 · Bolsa de Londres), heading 'Cierre (GBX)', chip 'Cierre (GBX) >= 500', chart header 'BT Group · Communication Services · LSE · GBX', strip shows five markets incl. 'Bolsa de Londres'; 390 px and 1440 px, light and dark, no horizontal overflow.",
+      "Tests: tests/Feature/Ftse100UniverseSeederTest.php (14), MarketStatusApiTest London order + kill-switch, MarketHoursStatusTest London hours/holidays/12:30 half day, Vitest MarketHoursStrip London and UniverseSelector ftse100, engine test_london dataset suffix rule. `.\\init.ps1` child process with process-level redirect: exit 0, Baseline OK (phpunit 1045 passed / 6 skipped, Vitest 69 files / 610, engine 204)."
+    ],
+    "notes": "Owner defaults accepted 2026-11-13: 97 members (CPG, IHG, MTLN excluded), pence as GBX, non-public, labels Bolsa de Londres / London Stock Exchange. Editorial: airlines IAG.L/EZJ.L mapped to Industrials (GICS airlines, consistent with IAG.MC); Glencore country CH by the HQ rule (spec example said JE). Not verified: PostgreSQL CI (not pushed), production duration, FTSE Russell's own factsheet. Planned 2026-11-08 at explicit user request. Constituents verified 2026-11-08 against Wikipedia (table after 1 Oct 2026, 100 rows) and the LSEG 2 Sep 2026 notice (easyJet and Ithaca in, Entain and Persimmon out). Open owner decisions with defaults: leave out the three non-pence lines (97 members), pence over pounds."
   },
   {
     "id": "chart-indicators-rsi-macd-obv-supertrend",

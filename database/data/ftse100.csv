@@ -1,0 +1,98 @@
+ticker,company,sector,industry,country,exchange
+AAF.L,Airtel Africa,Communication Services,Telecommunications Service Providers,GB,LSE
+AAL.L,Anglo American,Materials,Industrial Metals and Mining,GB,LSE
+ABDN.L,Aberdeen Group,Financials,Investment Banking and Brokerage Services,GB,LSE
+ABF.L,Associated British Foods,Consumer Staples,Food Producers,GB,LSE
+ADM.L,Admiral Group,Financials,Non-life Insurance,GB,LSE
+ALW.L,Alliance Witan,Financials,Closed End Investments,GB,LSE
+ANTO.L,Antofagasta,Materials,Industrial Metals and Mining,GB,LSE
+AUTO.L,Autotrader Group,Information Technology,Software and Computer Services,GB,LSE
+AV.L,Aviva,Financials,Life Insurance,GB,LSE
+AZN.L,AstraZeneca,Health Care,"Pharmaceuticals, Biotechnology and Marijuana Producers",GB,LSE
+BA.L,BAE Systems,Industrials,Aerospace and Defense,GB,LSE
+BAB.L,Babcock International,Industrials,Aerospace and Defense,GB,LSE
+BARC.L,Barclays,Financials,Banks,GB,LSE
+BATS.L,British American Tobacco,Consumer Staples,Tobacco,GB,LSE
+BBOX.L,Tritax Big Box REIT,Real Estate,Real Estate Investment Trusts,GB,LSE
+BBY.L,Balfour Beatty,Industrials,Construction and Materials,GB,LSE
+BGEO.L,Lion Finance Group,Financials,Banks,GB,LSE
+BLND.L,British Land,Real Estate,Real Estate Investment Trusts,GB,LSE
+BNZL.L,Bunzl,Industrials,General Industrials,GB,LSE
+BP.L,BP,Energy,Non-Renewable Energy,GB,LSE
+BRBY.L,Burberry Group,Consumer Discretionary,Personal Goods,GB,LSE
+BT-A.L,BT Group,Communication Services,Telecommunications Service Providers,GB,LSE
+BTRW.L,Barratt Redrow,Consumer Discretionary,Household Goods and Home Construction,GB,LSE
+CCC.L,Computacenter,Information Technology,Software and Computer Services,GB,LSE
+CCEP.L,Coca-Cola Europacific Partners,Consumer Staples,Beverages,GB,LSE
+CCH.L,Coca-Cola HBC,Consumer Staples,Beverages,CH,LSE
+CNA.L,Centrica,Utilities,"Gas, Water and Multi-utilities",GB,LSE
+CRDA.L,Croda International,Materials,Chemicals,GB,LSE
+CTEC.L,Convatec,Health Care,Medical Equipment and Services,GB,LSE
+DCC.L,DCC Energy,Industrials,Industrial Support Services,IE,LSE
+DGE.L,Diageo,Consumer Staples,Beverages,GB,LSE
+DPLM.L,Diploma,Industrials,Industrial Support Services,GB,LSE
+EDV.L,Endeavour Mining,Materials,Precious Metals and Mining,GB,LSE
+EXPN.L,Experian,Industrials,Industrial Support Services,IE,LSE
+EZJ.L,easyJet,Industrials,Travel and Leisure,GB,LSE
+FCIT.L,F&C Investment Trust,Financials,Closed End Investments,GB,LSE
+FRES.L,Fresnillo,Materials,Precious Metals and Mining,MX,LSE
+GAW.L,Games Workshop,Consumer Discretionary,Leisure Goods,GB,LSE
+GLEN.L,Glencore,Materials,Industrial Metals and Mining,CH,LSE
+GSK.L,GSK,Health Care,"Pharmaceuticals, Biotechnology and Marijuana Producers",GB,LSE
+HLMA.L,Halma,Industrials,Electronic and Electrical Equipment,GB,LSE
+HLN.L,Haleon,Health Care,"Pharmaceuticals, Biotechnology and Marijuana Producers",GB,LSE
+HSBA.L,HSBC,Financials,Banks,GB,LSE
+HSX.L,Hiscox,Financials,Non-life Insurance,BM,LSE
+HWDN.L,Howdens Joinery,Consumer Discretionary,Retailers,GB,LSE
+IAG.L,International Airlines Group,Industrials,Travel and Leisure,ES,LSE
+ICG.L,ICG,Financials,Investment Banking and Brokerage Services,GB,LSE
+IGG.L,IG Group,Financials,Investment Banking and Brokerage Services,GB,LSE
+III.L,3i,Financials,Investment Banking and Brokerage Services,GB,LSE
+IMB.L,Imperial Brands,Consumer Staples,Tobacco,GB,LSE
+IMI.L,IMI,Industrials,Electronic and Electrical Equipment,GB,LSE
+INF.L,Informa,Communication Services,Media,GB,LSE
+INVP.L,Investec,Financials,Banks,GB,LSE
+ITH.L,Ithaca Energy,Energy,Non-Renewable Energy,GB,LSE
+ITRK.L,Intertek,Industrials,Industrial Support Services,GB,LSE
+JD.L,JD Sports,Consumer Discretionary,Retailers,GB,LSE
+KGF.L,Kingfisher,Consumer Discretionary,Retailers,GB,LSE
+LAND.L,Land Securities,Real Estate,Real Estate Investment Trusts,GB,LSE
+LGEN.L,Legal & General,Financials,Life Insurance,GB,LSE
+LLOY.L,Lloyds Banking Group,Financials,Banks,GB,LSE
+LMP.L,LondonMetric Property,Real Estate,Real Estate Investment Trusts,GB,LSE
+LSEG.L,London Stock Exchange Group,Financials,Finance and Credit Services,GB,LSE
+MKS.L,Marks & Spencer,Consumer Staples,"Personal Care, Drug and Grocery Stores",GB,LSE
+MNG.L,M&G,Financials,Investment Banking and Brokerage Services,GB,LSE
+MRO.L,Melrose Industries,Industrials,Aerospace and Defense,GB,LSE
+NG.L,National Grid,Utilities,"Gas, Water and Multi-utilities",GB,LSE
+NWG.L,NatWest Group,Financials,Banks,GB,LSE
+NXT.L,Next,Consumer Discretionary,Retailers,GB,LSE
+PCT.L,Polar Capital Technology Trust,Financials,Closed End Investments,GB,LSE
+PRU.L,Prudential,Financials,Life Insurance,GB,LSE
+PSH.L,Pershing Square Holdings,Financials,Closed End Investments,GG,LSE
+PSON.L,Pearson,Communication Services,Media,GB,LSE
+REL.L,RELX,Information Technology,Software and Computer Services,GB,LSE
+RIO.L,Rio Tinto,Materials,Industrial Metals and Mining,GB,LSE
+RKT.L,Reckitt,Consumer Staples,"Personal Care, Drug and Grocery Stores",GB,LSE
+RR.L,Rolls-Royce Holdings,Industrials,Aerospace and Defense,GB,LSE
+RTO.L,Rentokil Initial,Industrials,Industrial Support Services,GB,LSE
+SBRY.L,Sainsbury's,Consumer Staples,"Personal Care, Drug and Grocery Stores",GB,LSE
+SDLF.L,Standard Life,Financials,Life Insurance,GB,LSE
+SGE.L,Sage Group,Information Technology,Software and Computer Services,GB,LSE
+SGRO.L,Segro,Real Estate,Real Estate Investment Trusts,GB,LSE
+SHEL.L,Shell,Energy,Non-Renewable Energy,GB,LSE
+SMIN.L,Smiths Group,Industrials,General Industrials,GB,LSE
+SMT.L,Scottish Mortgage Investment Trust,Financials,Closed End Investments,GB,LSE
+SN.L,Smith & Nephew,Health Care,Medical Equipment and Services,GB,LSE
+SPX.L,Spirax Group,Industrials,Industrial Engineering,GB,LSE
+SSE.L,SSE,Utilities,Electricity,GB,LSE
+STAN.L,Standard Chartered,Financials,Banks,GB,LSE
+STJ.L,St. James's Place,Financials,Investment Banking and Brokerage Services,GB,LSE
+SVT.L,Severn Trent,Utilities,"Gas, Water and Multi-utilities",GB,LSE
+TSCO.L,Tesco,Consumer Staples,"Personal Care, Drug and Grocery Stores",GB,LSE
+ULVR.L,Unilever,Consumer Staples,"Personal Care, Drug and Grocery Stores",GB,LSE
+UU.L,United Utilities,Utilities,"Gas, Water and Multi-utilities",GB,LSE
+VOD.L,Vodafone Group,Communication Services,Telecommunications Service Providers,GB,LSE
+WEIR.L,Weir,Industrials,Industrial Engineering,GB,LSE
+WPP.L,WPP,Communication Services,Media,GB,LSE
+WTB.L,Whitbread,Consumer Discretionary,Travel and Leisure,GB,LSE

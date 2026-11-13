@@ -34,8 +34,8 @@ export const guideEn: GuideTexts = {
       id: 'datos',
       title: 'What data Chartiko uses',
       paragraphs: [
-        'The default universe is the S&P 500 (about 500 US stocks). When the universe selector appears at the top of the Screener you can also switch to the Nasdaq-100 (about 100 US stocks, most of them also in the S&P 500). A stock that belongs to both indices has a single set of data and appears in both lists. The IBEX 35 (35 Madrid Stock Exchange stocks), the DAX (the 40 largest German stocks on Xetra) and the CAC 40 (about 40 Euronext Paris stocks) may also be offered, all priced in euros: their data is updated after their own exchange’s close, they follow that exchange’s calendar and they have no market context or AI company cards. Chartiko works with daily data: one candle per stock and session, with open, high, low, close and volume.',
-        'Data is updated once a day, every US market trading day, starting at 4:30 pm New York time, about 30 minutes after the session closes; the IBEX 35 is updated every Madrid Stock Exchange trading day, starting at 6:15 pm Madrid time, the DAX every Xetra trading day, starting at 6:15 pm Frankfurt time, and the CAC 40 every Euronext Paris trading day, starting at 6:15 pm Paris time. Indicators, signals, patterns and the list are then recalculated. There are no real-time or intraday quotes.',
+        'The default universe is the S&P 500 (about 500 US stocks). When the universe selector appears at the top of the Screener you can also switch to the Nasdaq-100 (about 100 US stocks, most of them also in the S&P 500). A stock that belongs to both indices has a single set of data and appears in both lists. The IBEX 35 (35 Madrid Stock Exchange stocks), the DAX (the 40 largest German stocks on Xetra) and the CAC 40 (about 40 Euronext Paris stocks), all priced in euros, and the FTSE 100 (about 100 London Stock Exchange stocks: those quoted in pence, priced in pence, GBX, not converted to pounds) may also be offered: their data is updated after their own exchange’s close, they follow that exchange’s calendar and they have no market context or AI company cards. Chartiko works with daily data: one candle per stock and session, with open, high, low, close and volume.',
+        'Data is updated once a day, every US market trading day, starting at 4:30 pm New York time, about 30 minutes after the session closes; the IBEX 35 is updated every Madrid Stock Exchange trading day, starting at 6:15 pm Madrid time, the DAX every Xetra trading day, starting at 6:15 pm Frankfurt time, the CAC 40 every Euronext Paris trading day, starting at 6:15 pm Paris time, and the FTSE 100 every London Stock Exchange trading day, starting at 5:15 pm London time. Indicators, signals, patterns and the list are then recalculated. There are no real-time or intraday quotes.',
         'The date of the latest session is shown on each stock’s page. If a stock has little history (for example fewer than 200 sessions for the SMA 200), that indicator stays empty instead of showing an invented value, and filters that need it leave the stock out.',
       ],
     },
@@ -386,7 +386,7 @@ export const guideEn: GuideTexts = {
   faq: [
     {
       question: 'Which market does Chartiko analyse?',
-      answer: 'The stocks of the US S&P 500 index and, where the universe selector offers it, the Nasdaq-100, the IBEX 35, the DAX and the CAC 40, with daily data.',
+      answer: 'The stocks of the US S&P 500 index and, where the universe selector offers it, the Nasdaq-100, the IBEX 35, the DAX, the CAC 40 and the FTSE 100 (its stocks quoted in pence), with daily data.',
     },
     {
       question: 'How often is the data updated?',
