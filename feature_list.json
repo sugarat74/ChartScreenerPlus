@@ -1108,23 +1108,13 @@
   {
     "id": "guest-disabled-nav",
     "area": "frontend",
-    "planning_spec": "docs/specs/guest-disabled-registered-options.md (prepared 2026-11-12)",
     "title": "Header tabs and entry pages for registered-only areas",
-    "user_visible_behavior": "Mercado and Portal tabs are focusable dimmed entries with a sign-in (or not-available-yet) reason for those who cannot open them, and become links when the user logs in.",
+    "status": "accepted",
     "depends_on": [
       "guest-disabled-primitive",
       "market-context-ui",
       "user-portal"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Vitest: AppHeader (Visitor, pending, user without access, user with access, Admin; flag on and off), MarketPage, RequireAuth with next",
-      "Keyboard-only pass (Tab, Enter, Escape) and accessibility-tree check of aria-disabled and description",
-      "Real browser pass as a Visitor then logging in and out in the same SPA at 390 and 1440 px, light and dark, es and en, with the network list proving no request to a registered-only API and bounding boxes proving no layout shift",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-11-12. Planning only. Mercado page keeps the sign-in box (no fake data); Admin tab stays hidden for non-admins."
+    ]
   },
   {
     "id": "portal-tabs",

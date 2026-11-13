@@ -643,13 +643,10 @@ export const en: Messages = {
     undo: 'Undo',
     dismiss: 'Close',
     unavailable: 'Searching in your own words is not available yet. Use the filters.',
-    guestIntro: 'Describe in your own words which stocks you are looking for and Chartiko turns it into filters.',
-    signIn: 'Sign in to search with AI',
   },
   saved: {
     title: 'Saved Screeners',
     universeChip: 'Universe: {name}',
-    guestIntro: 'Save this filter under a name and apply it again later. You need an account.',
     intro: 'Save the current filter and reuse it whenever you like.',
     countOne: '{count} screener',
     countOther: '{count} screeners',

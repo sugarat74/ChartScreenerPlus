@@ -19,6 +19,12 @@ export type NavItem = {
    * `useMarketContextAccess` is `allowed`. UI affordance only.
    */
   readonly marketContext?: boolean
+  /**
+   * Registered-only area: shown to everyone, linked only for a verified
+   * session; dimmed with a sign-in reason otherwise (guest-disabled-nav).
+   * UI affordance only: the route keeps its `RequireAuth` guard.
+   */
+  readonly registeredOnly?: boolean
 }
 
 export const NAV_ITEMS = [
@@ -26,7 +32,7 @@ export const NAV_ITEMS = [
   { path: '/mercado', labelKey: 'nav.market', marketContext: true },
   { path: '/como-funciona', labelKey: 'nav.howItWorks' },
   { path: '/admin', labelKey: 'nav.admin', adminOnly: true, nested: true },
-  { path: '/portal', labelKey: 'nav.portal', nested: true },
+  { path: '/portal', labelKey: 'nav.portal', nested: true, registeredOnly: true },
 ] satisfies readonly NavItem[]
 
 export const DEFAULT_ROUTE: string = NAV_ITEMS[0].path

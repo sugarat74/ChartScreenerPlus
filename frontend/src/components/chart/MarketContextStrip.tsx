@@ -190,40 +190,43 @@ function PlaceholderStrip({ loadingStatus }: { loadingStatus: boolean }) {
   const titleId = useId()
 
   return (
-    <section aria-labelledby={titleId} aria-busy={loadingStatus ? 'true' : undefined} className={CARD_CLASS}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 id={titleId} className="font-headline text-sm font-black uppercase tracking-wide text-on-surface">
-            {t('marketContext.strip.title')}
-          </h2>
-          {loadingStatus ? (
-            <p role="status" className="sr-only">
-              {t('marketContext.strip.loading')}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <ul aria-label={t('marketContext.strip.aria')} className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 text-sm text-on-surface">
-        <li className="flex min-w-0 flex-wrap items-center gap-2">{t('marketContext.strip.sector', { name: t('common.empty') })}</li>
-        <li className="flex items-center gap-2">
-          <span className="text-on-surface-variant">{t('marketContext.strip.sectorTrend')}</span>
-          <span>{t('common.empty')}</span>
-        </li>
-        <li className="font-mono text-xs font-bold">{t('common.empty')}</li>
-        <li className="flex flex-wrap items-center gap-2">{t('marketContext.strip.regime', { label: t('common.empty') })}</li>
-      </ul>
-
-      <span aria-hidden="true" data-testid="strip-link-slot" className="block h-4 w-fit" />
-
-      <footer className="flex flex-col gap-1 border-t border-outline-variant pt-2 text-[11px] leading-4 text-on-surface-variant">
-        <p>{t('marketContext.legal.disclaimer')}</p>
-        {/* Reserves the FRED attribution line the ready strip shows with a regime (no layout shift). */}
-        <p lang="en" aria-hidden="true" className="invisible" data-testid="strip-fred-slot">
-          {t('marketContext.legal.fredNotice')}
+    <>
+      {/* Outside the aria-busy section: a busy region's live updates are not announced. */}
+      {loadingStatus ? (
+        <p role="status" className="sr-only">
+          {t('marketContext.strip.loading')}
         </p>
-      </footer>
-    </section>
+      ) : null}
+      <section aria-labelledby={titleId} aria-busy={loadingStatus ? 'true' : undefined} className={CARD_CLASS}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 id={titleId} className="font-headline text-sm font-black uppercase tracking-wide text-on-surface">
+              {t('marketContext.strip.title')}
+            </h2>
+          </div>
+        </div>
+
+        <ul aria-label={t('marketContext.strip.aria')} className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 text-sm text-on-surface">
+          <li className="flex min-w-0 flex-wrap items-center gap-2">{t('marketContext.strip.sector', { name: t('common.empty') })}</li>
+          <li className="flex items-center gap-2">
+            <span className="text-on-surface-variant">{t('marketContext.strip.sectorTrend')}</span>
+            <span>{t('common.empty')}</span>
+          </li>
+          <li className="font-mono text-xs font-bold">{t('common.empty')}</li>
+          <li className="flex flex-wrap items-center gap-2">{t('marketContext.strip.regime', { label: t('common.empty') })}</li>
+        </ul>
+
+        <span aria-hidden="true" data-testid="strip-link-slot" className="block h-4 w-fit" />
+
+        <footer className="flex flex-col gap-1 border-t border-outline-variant pt-2 text-[11px] leading-4 text-on-surface-variant">
+          <p>{t('marketContext.legal.disclaimer')}</p>
+          {/* Reserves the FRED attribution line the ready strip shows with a regime (no layout shift). */}
+          <p lang="en" aria-hidden="true" className="invisible" data-testid="strip-fred-slot">
+            {t('marketContext.legal.fredNotice')}
+          </p>
+        </footer>
+      </section>
+    </>
   )
 }
 

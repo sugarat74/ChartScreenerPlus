@@ -646,13 +646,10 @@ export const es = {
     undo: 'Deshacer',
     dismiss: 'Cerrar',
     unavailable: 'La búsqueda descrita con tus palabras aún no está disponible. Usa los filtros.',
-    guestIntro: 'Describe con tus palabras qué acciones buscas y Chartiko lo convierte en filtros.',
-    signIn: 'Inicia sesión para buscar con IA',
   },
   saved: {
     title: 'Screeners guardados',
     universeChip: 'Universo: {name}',
-    guestIntro: 'Guarda este filtro con un nombre y vuelve a aplicarlo más tarde. Necesitas una cuenta.',
     intro: 'Guarda el filtro actual y reutilízalo cuando quieras.',
     countOne: '{count} screener',
     countOther: '{count} screeners',

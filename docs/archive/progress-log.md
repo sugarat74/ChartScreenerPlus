@@ -2,6 +2,13 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## CAC 40 and FTSE 100 universes planned (3 features, not started) - 2026-11-08
+
+- Explicit owner request ("cac 70" read as CAC 40, plus FTSE 100). Planning PR only: spec `docs/specs/universes-cac40-ftse100.md`, features `universe-cac40` -> `ingestion-xlon-gbx` -> `universe-ftse100` in `feature_list.json` (not_started), AGENTS.md scope guard. No application code, no tests run; JSON validity and `scripts/harness-context.ps1` checked.
+- Findings: CAC 40 = 40 (Euronext: no composition change in Mar, Jun, Sep 2026); 39 resolve as `.PA` on Yahoo, ArcelorMittal only as `MT.AS`. FTSE 100 = 100 (Wikipedia table after 1 Oct 2026; easyJet and Ithaca in, Entain and Persimmon out on 21 Sep); live Yahoo check: 97 quoted in pence (`GBp`), `CPG.L` and `IHG.L` in USD, `MTLN.L` in EUR. Existing engine bug found: the currency is upper-cased, so `GBp` becomes `GBP`.
+- Decision proposed: store and show pence as quoted, currency code GBX, no arithmetic, plus a scale-jump guard. UK and euro-area DST dates coincide (London 17:15 = Paris 18:15 UTC-wise); four European pipelines share one instant, so `lock_wait_seconds` must rise. Half-day close 14:05 for Euronext and 2027 calendars are not officially confirmed.
+- Open owner decisions (defaults in the spec): ArcelorMittal via `.AS`, leave out the three non-pence lines (97 members), pence over pounds, non-public until decided. Next: owner answers, then implement `universe-cac40`.
+
 ## chart-indicator-panels implemented (passing, awaiting validation) - 2026-11-07
 
 - SPA only, backend untouched (feature 7 of `docs/specs/technical-indicators-expansion.md`): the picker gains ADX (+DI/-DI), ATR and Stochastic toggles (closed list `bollinger, adx, atr, stochastic`, same guarded `localStorage` key, all off by default). `InteractiveChart` now takes `series` + `indicators` (replacing `bands`) and draws each pane in the same chart (v5 pane index 2.., so time scale and crosshair are shared): ADX 2px + +DI green / -DI red with a dashed 25 line; ATR; %K/%D on a fixed 0-100 axis with 20/80 lines. Chart height `420 + 120 * panes`, price and volume keep 210 px (stretch factors). `chartData.ts`: `toIndicatorData` (nulls omitted), `noPaneData`, `lastIndicatorValue`, theme colors; `useInstrumentIndicators` unchanged: one request when any indicator is on, shared with Bollinger. Per-pane insufficient-history note, error/retry/loading reuse the overlay's. es/en messages and guide, DESIGN.md updated.

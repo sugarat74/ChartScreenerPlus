@@ -165,6 +165,8 @@ describe('MarketContextStrip access and request states (Scenario 2)', () => {
   it('a request in flight is a status line; an API 404 shows nothing; an API 401 the sign-in box', () => {
     show({ status: 'loading' })
     expect(screen.getByRole('status').textContent).toBe('Cargando el contexto de mercado…')
+    // Announced: the live line sits outside the aria-busy frame.
+    expect(screen.getByRole('status').closest('[aria-busy="true"]')).toBeNull()
     cleanup()
 
     const none = show({ status: 'none' })
