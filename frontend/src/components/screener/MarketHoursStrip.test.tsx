@@ -45,6 +45,13 @@ const XPAR: MarketStatus = {
   timezone: 'Europe/Paris',
 }
 
+const XLON: MarketStatus = {
+  ...XETR,
+  code: 'XLON',
+  timezone: 'Europe/London',
+  regular_hours: { open: '08:00', close: '16:30' },
+}
+
 let markets: MarketStatus[] = []
 let status = 200
 const fetchMock = vi.fn()
@@ -122,6 +129,24 @@ describe('MarketHoursStrip (market-hours-status)', () => {
     window.localStorage.setItem(LOCALE_STORAGE_KEY, 'en')
     await renderAt('2026-07-06T14:00:00Z')
     expect(within(card('XPAR')).getByText('Euronext Paris')).toBeTruthy()
+  })
+
+  it('shows London as the fifth market with its own label in Spanish and English', async () => {
+    markets = [US, { ...XETR, code: 'XMAD', timezone: 'Europe/Madrid' }, XETR, XPAR, XLON]
+    const view = await renderAt('2026-07-06T14:00:00Z')
+
+    expect(Array.from(document.querySelectorAll('[data-market]')).map((node) => node.getAttribute('data-market'))).toEqual([
+      'US', 'XMAD', 'XETR', 'XPAR', 'XLON',
+    ])
+    expect(within(card('XLON')).getByText('Bolsa de Londres')).toBeTruthy()
+    expect(within(card('XLON')).getByText('Abierto')).toBeTruthy()
+    // Shown in the viewer's timezone (Madrid): 15:30Z is 17:30.
+    expect(within(card('XLON')).getByText('Cierra 17:30')).toBeTruthy()
+    view.unmount()
+
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, 'en')
+    await renderAt('2026-07-06T14:00:00Z')
+    expect(within(card('XLON')).getByText('London Stock Exchange')).toBeTruthy()
   })
 
   it('flips the status when the clock crosses a boundary, without refetching', async () => {

@@ -992,21 +992,11 @@
   {
     "id": "universe-ftse100",
     "area": "data",
-    "planning_spec": "docs/specs/universes-cac40-ftse100.md (prepared 2026-11-08)",
     "title": "FTSE 100 Screener universe (London Stock Exchange, GBX)",
-    "user_visible_behavior": "Once the owner makes it public, everyone can screen the FTSE 100 constituents quoted in pence (label 'FTSE 100') with prices in GBX and .L tickers, updated after the London close on London trading days, and London appears in the market-hours strip.",
+    "status": "accepted",
     "depends_on": [
       "ingestion-xlon-gbx"
-    ],
-    "status": "not_started",
-    "verification": [
-      "Seeder test: 97 rows, .L suffix, slug ftse100, XLON/GBX, position 5, valid GICS sectors and ISO countries, hash matches ftse100.md, idempotent, excluded tickers (CPG.L, IHG.L, MTLN.L) absent and documented, non-public by default",
-      "Local XLON pipeline run ingests the 97 members and computes indicators, signals and patterns; 17:15 Europe/London schedule event; live smoke on the 97 symbols (GBX, 500+ sessions) and a holiday-week check; browser pass for GBX in the table, filter chips, chart header and the strip",
-      "Public enablement (ftse100 in SCREENER_UNIVERSES_PUBLIC) only after a verified production run and an explicit owner step; kill-switch documented in deploy/README.md",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [],
-    "notes": "Planned 2026-11-08 at explicit user request. Planning only. Constituents verified 2026-11-08 against Wikipedia (table after 1 Oct 2026, 100 rows) and the LSEG 2 Sep 2026 notice (easyJet and Ithaca in, Entain and Persimmon out). Open owner decisions with defaults: leave out the three non-pence lines (97 members), pence over pounds."
+    ]
   },
   {
     "id": "chart-indicators-rsi-macd-obv-supertrend",

@@ -130,3 +130,22 @@ def test_indicators_have_the_correct_scale_on_all_real_azn_bars():
                 assert value == other
             else:
                 assert value == pytest.approx(other * (100 if key in price_fields else 1), rel=1e-7, abs=1e-7), key
+
+
+def test_every_ftse100_member_is_an_xlon_symbol_sent_to_yahoo_verbatim():
+    """universe-ftse100: the committed snapshot passes the engine's suffix rule."""
+    import csv
+
+    dataset = Path(__file__).resolve().parents[2] / "database" / "data" / "ftse100.csv"
+    with dataset.open(encoding="utf-8", newline="") as handle:
+        tickers = [row["ticker"] for row in csv.DictReader(handle)]
+
+    assert len(tickers) == 97
+    assert "BT-A.L" in tickers
+    for excluded in ("CPG.L", "IHG.L", "MTLN.L"):
+        assert excluded not in tickers
+    for ticker in tickers:
+        assert symbol_matches_market(ticker, "XLON"), ticker
+        assert yahoo_symbol(ticker, "XLON") == ticker
+        for other in ("US", "XMAD", "XETR", "XPAR"):
+            assert not symbol_matches_market(ticker, other), (ticker, other)

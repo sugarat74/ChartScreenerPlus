@@ -11,6 +11,7 @@ const UNIVERSES: ScreenerUniverse[] = [
   { slug: 'ibex35', name: 'IBEX 35', market: 'XMAD', currency: 'EUR', members: 35, latest_date: '2026-10-22', is_default: false },
   { slug: 'dax', name: 'DAX', market: 'XETR', currency: 'EUR', members: 40, latest_date: null, is_default: false },
   { slug: 'cac40', name: 'CAC 40', market: 'XPAR', currency: 'EUR', members: 40, latest_date: '2026-11-06', is_default: false },
+  { slug: 'ftse100', name: 'FTSE 100', market: 'XLON', currency: 'GBX', members: 97, latest_date: '2026-11-12', is_default: false },
 ]
 
 afterEach(() => {
@@ -34,13 +35,14 @@ describe('UniverseSelector', () => {
 
     const group = screen.getByRole('group', { name: 'Universo' })
     const buttons = within(group).getAllByRole('button')
-    expect(buttons.map((button) => button.querySelector('span')?.textContent)).toEqual(['S&P 500', 'IBEX 35', 'DAX', 'CAC 40'])
+    expect(buttons.map((button) => button.querySelector('span')?.textContent)).toEqual(['S&P 500', 'IBEX 35', 'DAX', 'CAC 40', 'FTSE 100'])
     expect(buttons[0].textContent).toContain('EE. UU.')
     expect(buttons[0].textContent).toContain('Datos del')
     expect(buttons[1].textContent).toContain('Bolsa de Madrid')
     expect(buttons[2].textContent).toContain('Xetra')
     expect(buttons[2].textContent).toContain('Sin datos todavía')
     expect(buttons[3].textContent).toContain('Bolsa de París (Euronext)')
+    expect(buttons[4].textContent).toContain('Bolsa de Londres')
     expect(buttons[0].getAttribute('aria-pressed')).toBe('true')
     expect(buttons[1].getAttribute('aria-pressed')).toBe('false')
   })
@@ -53,6 +55,7 @@ describe('UniverseSelector', () => {
     expect(text).toContain('United States')
     expect(text).toContain('Madrid Stock Exchange')
     expect(text).toContain('Euronext Paris')
+    expect(text).toContain('London Stock Exchange')
     expect(text).toContain('Data as of')
     expect(text).toContain('No data yet')
     expect(document.body.textContent).not.toContain('DAX 40')
@@ -67,7 +70,7 @@ describe('UniverseSelector', () => {
 
     const select = screen.getByLabelText('Universe', { selector: 'select' }) as HTMLSelectElement
     expect(select.value).toBe('sp500')
-    expect(Array.from(select.options).map((option) => option.value)).toEqual(['sp500', 'ibex35', 'dax', 'cac40'])
+    expect(Array.from(select.options).map((option) => option.value)).toEqual(['sp500', 'ibex35', 'dax', 'cac40', 'ftse100'])
     fireEvent.change(select, { target: { value: 'dax' } })
     expect(onSelect).toHaveBeenLastCalledWith(UNIVERSES[2])
   })

@@ -70,6 +70,32 @@ class MarketStatusApiTest extends TestCase
         $this->assertSame(['open' => '09:00', 'close' => '17:30'], $paris['regular_hours']);
     }
 
+    public function test_london_comes_last_in_the_five_market_order_once_its_universe_is_public(): void
+    {
+        // 15:00Z on a summer Monday is 16:00 BST: London (08:00-16:30 BST = 07:00Z-15:30Z) is open.
+        Carbon::setTestNow(Carbon::parse('2026-07-06 15:00:00', 'UTC'));
+        config(['universes.public' => ['sp500', 'ibex35', 'dax', 'cac40', 'ftse100']]);
+        $this->universe('ftse100', 'XLON');
+        $this->universe('cac40', 'XPAR');
+        $this->universe('dax', 'XETR');
+        $this->universe('ibex35', 'XMAD');
+        $this->universe('sp500', 'US');
+
+        $response = $this->getJson('/api/markets/status')->assertOk();
+
+        $this->assertSame(['US', 'XMAD', 'XETR', 'XPAR', 'XLON'], array_column($response->json('markets'), 'code'));
+        $london = $response->json('markets.4');
+        $this->assertSame('Europe/London', $london['timezone']);
+        $this->assertTrue($london['is_open']);
+        $this->assertSame('2026-07-06T07:00:00Z', $london['opens_at']);
+        $this->assertSame('2026-07-06T15:30:00Z', $london['closes_at']);
+        $this->assertSame(['open' => '08:00', 'close' => '16:30'], $london['regular_hours']);
+
+        // Kill-switch: without `ftse100` in the public list London disappears again.
+        config(['universes.public' => ['sp500', 'ibex35', 'dax', 'cac40']]);
+        $this->assertSame(['US', 'XMAD', 'XETR', 'XPAR'], array_column($this->getJson('/api/markets/status')->assertOk()->json('markets'), 'code'));
+    }
+
     public function test_the_kill_switch_hides_a_market_and_an_admin_previews_it(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-06 15:00:00', 'UTC'));
