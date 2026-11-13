@@ -126,6 +126,7 @@ it('renders both Watchlist alert cards and prefills the pattern alert', async ()
   }
   vi.mocked(alertsApi.list).mockResolvedValue([patternAlert])
   show()
+  fireEvent.click(await screen.findByRole('tab', { name: 'Watchlist' }))
   expect(await screen.findByRole('heading', { name: 'Alertas de mi Watchlist' })).toBeTruthy()
   const card = screen.getByRole('region', { name: 'Mis alertas de patrones' })
   await waitFor(() => expect((within(card).getByRole('checkbox', { name: 'Doble suelo' }) as HTMLInputElement).checked).toBe(true))

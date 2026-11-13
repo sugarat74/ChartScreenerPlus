@@ -687,6 +687,9 @@ export const en: Messages = {
     intro: 'Your saved Screeners, your personal watchlist and your alerts in one place.',
     notificationsLink: 'View notifications',
     accountLink: 'My account',
+    tabsLabel: 'Portal sections',
+    tabScreeners: 'Saved Screeners',
+    tabWatchlist: 'Watchlist',
   },
   account: {
     badge: 'My account',
