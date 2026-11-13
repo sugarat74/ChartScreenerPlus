@@ -20,6 +20,8 @@ const auth = {
   login: vi.fn(), register: vi.fn(), logout: vi.fn(), setCurrentUser: vi.fn(),
 }
 
+const PENDING_USER = { ...auth.user, email_verification_pending: true }
+
 function tree(signedIn: boolean, status: 'loading' | 'ready' = 'ready') {
   return <AuthContext.Provider value={{ ...auth, status, user: signedIn ? auth.user : null }}><I18nProvider><MemoryRouter><ForecastPanel ticker="TEST" /></MemoryRouter></I18nProvider></AuthContext.Provider>
 }
@@ -31,27 +33,67 @@ function show(signedIn: boolean, status: 'loading' | 'ready' = 'ready') {
 beforeEach(() => window.localStorage.setItem(LOCALE_STORAGE_KEY, 'es'))
 afterEach(() => { cleanup(); vi.clearAllMocks(); window.localStorage.clear() })
 
-it('renders nothing for a Visitor: no panel, no sign-in prompt, no request', () => {
-  const { container } = show(false)
-  expect(container.innerHTML).toBe('')
-  expect(screen.queryByText('Pronóstico Jev')).toBeNull()
+function expectDisabledShell() {
+  expect(screen.getByRole('heading', { name: 'Pronóstico Jev' })).toBeTruthy()
+  expect((screen.getByRole('button', { name: 'Analizar' }) as HTMLButtonElement).disabled).toBe(true)
+  expect((screen.getByLabelText('Plazo') as HTMLSelectElement).disabled).toBe(true)
+  expect((screen.getByLabelText(/probabilidad mínima/i) as HTMLInputElement).disabled).toBe(true)
+}
+
+it('shows a Visitor the real panel disabled with one sign-in link and no request', () => {
+  show(false)
+  expectDisabledShell()
+  expect(screen.getByText('Disponible al iniciar sesión')).toBeTruthy()
+  const links = screen.getAllByRole('link')
+  expect(links).toHaveLength(1)
+  expect(links[0].getAttribute('href')).toMatch(/^\/login/)
+  fireEvent.click(screen.getByRole('button', { name: 'Analizar' }))
+  expect(forecastApi.predict).not.toHaveBeenCalled()
+})
+
+it('keeps the shell dimmed with no reason while auth is loading (no sign-in flash)', () => {
+  show(false, 'loading')
+  expectDisabledShell()
+  expect(screen.queryByText('Disponible al iniciar sesión')).toBeNull()
   expect(screen.queryByRole('link')).toBeNull()
   expect(forecastApi.predict).not.toHaveBeenCalled()
 })
 
-it('renders nothing while auth is loading (no flash)', () => {
-  const { container } = show(false, 'loading')
-  expect(container.innerHTML).toBe('')
+it('shows the confirm-email reason for an account pending confirmation, with no request', () => {
+  render(
+    <AuthContext.Provider value={{ ...auth, user: PENDING_USER }}>
+      <I18nProvider><MemoryRouter><ForecastPanel ticker="TEST" /></MemoryRouter></I18nProvider>
+    </AuthContext.Provider>,
+  )
+  expectDisabledShell()
+  expect(screen.getByText('Confirma tu email para usarlo')).toBeTruthy()
   expect(forecastApi.predict).not.toHaveBeenCalled()
 })
 
-it('disappears on sign-out and comes back on sign-in without remounting', () => {
-  const { container, rerender } = show(true)
-  expect(screen.getByRole('button', { name: 'Analizar' })).toBeTruthy()
-  rerender(tree(false))
-  expect(container.innerHTML).toBe('')
+it('enables the same controls for a signed-in user', () => {
+  show(true)
+  expect((screen.getByRole('button', { name: 'Analizar' }) as HTMLButtonElement).disabled).toBe(false)
+  expect(screen.queryByText('Disponible al iniciar sesión')).toBeNull()
+})
+
+it('flips in place on sign-in and back on sign-out, dropping a shown result, without remounting', async () => {
+  vi.mocked(forecastApi.predict).mockResolvedValue({
+    ticker: 'TEST', as_of_date: '2025-01-06', target_date: '2025-01-07', horizon: 1,
+    reference_close: 100, probabilities: { up: .62, down: .28, flat: .1 }, signal: null,
+    minimum_probability: 60, model_version: 'jev-1.13.0', experimental: true,
+  })
+  const { rerender } = show(false)
+  const heading = screen.getByRole('heading', { name: 'Pronóstico Jev' })
+  expectDisabledShell()
   rerender(tree(true))
-  expect(screen.getByRole('button', { name: 'Analizar' })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Pronóstico Jev' })).toBe(heading)
+  fireEvent.click(screen.getByRole('button', { name: 'Analizar' }))
+  await waitFor(() => expect(screen.getByText(/62\.0%/)).toBeTruthy())
+  rerender(tree(false))
+  expect(screen.getByRole('heading', { name: 'Pronóstico Jev' })).toBe(heading)
+  expectDisabledShell()
+  expect(screen.queryByText(/62\.0%/)).toBeNull()
+  expect(forecastApi.predict).toHaveBeenCalledTimes(1)
 })
 
 it('shows the original three probabilities and applies the chosen minimum', async () => {

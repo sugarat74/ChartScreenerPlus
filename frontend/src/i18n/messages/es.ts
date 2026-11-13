@@ -829,7 +829,6 @@ export const es = {
     removing: 'Quitando…',
     remove: 'Quitar',
     checking: 'Comprobando…',
-    signInToFollow: 'Inicia sesión para seguir',
     following: 'Siguiendo',
     follow: 'Seguir',
     saving: 'Guardando…',

@@ -11,7 +11,7 @@ This umbrella spec covers four features, implemented in this order. Each one shi
 | 3 | `guest-disabled-chart` | frontend | `guest-disabled-primitive`, `pronostico-jev`, `ai-company-card`, `watchlist` | Jev forecast, AI Company Card, Watchlist toggle and Market Context strip shown disabled |
 | 4 | `guest-disabled-nav` | frontend | `guest-disabled-primitive`, `market-context-ui`, `user-portal` | Header tabs «Mercado» and «Portal» as focusable disabled entries; `/mercado` and `/portal` entry behaviour |
 
-- `status`: planned 2026-11-12 on `origin/main` 15a500c (planning only). `guest-disabled-primitive` accepted; `guest-disabled-screener` implemented 2026-11-12 (rows 1-4 of the inventory; evidence in `feature_list.json` and `PROGRESS.md`).
+- `status`: planned 2026-11-12 on `origin/main` 15a500c (planning only). `guest-disabled-primitive` accepted; `guest-disabled-screener` accepted (rows 1-4 of the inventory); `guest-disabled-chart` implemented 2026-11-13 (rows 5-8; evidence in `feature_list.json` and `PROGRESS.md`).
 - `source`: `feature_list.json`. Owner request (2026-11-12): "quiero que las opciones que solo estén disponibles para usuarios registrados puedan verse pero deshabilitadas y que se activen una vez el usuario esta logueado".
 
 ## Goal

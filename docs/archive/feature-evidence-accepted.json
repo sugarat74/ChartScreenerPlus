@@ -2348,5 +2348,35 @@
       "Independent validation 2026-11-13: ACCEPT. init.ps1 child process Baseline OK (Vitest 68 / 584). Real browser pass on isolated servers (Laravel 8411, Vite 5411, scratch SQLite, test user): guest /portal?tab=watchlist redirects to /login?next=... and returns to the same tab after login; ARIA tablist/tab/tabpanel with aria-selected/controls/labelledby, roving tabindex, Arrow/Home/End with wrap move focus and select; inactive panel is hidden with computed display none and 0 height; ?tab= updated with replace (history length unchanged), invalid ?tab=bogus falls back to Saved Screeners; unsaved checkbox in the Watchlist alert form survives a switch; signal alert PATCH 200 and email opt-in PUT 200 (digest enabled for the pass) work; opt-in card sits above the tab bar; no horizontal overflow at 390 and 1440 px, es/en, light/dark. Note: with the digest available the opt-in card takes ~300 px at 390 px, pushing the tabs near the fold."
     ],
     "notes": "Owner request 2026-11-13. SPA only. Defaults: default tab Saved Screeners; both panels stay mounted (hidden attribute) so no refetch and unsaved alert-form state survives a switch; AlertEmailOptIn (digest of all alerts) sits above the tab bar; alerts load-error banner stays above the tabs."
+  },
+  {
+    "id": "guest-disabled-chart",
+    "area": "frontend",
+    "planning_spec": "docs/specs/guest-disabled-registered-options.md (prepared 2026-11-12)",
+    "title": "Chart registered-only options visible but disabled for Visitors",
+    "user_visible_behavior": "A Visitor sees the Jev forecast, the AI Company Card, the Seguir button and the Market Context strip dimmed with a sign-in reason; they become usable when the user logs in, without leaving the chart.",
+    "depends_on": [
+      "guest-disabled-primitive",
+      "pronostico-jev",
+      "ai-company-card",
+      "watchlist",
+      "market-context-patterns"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Vitest: ForecastPanel, CompanyCardPanel, WatchlistButton, MarketContextStrip and the chart page in each auth state; no forecast, company-card, watchlist or market-context request for a Visitor; #ai-company-card scrolls for a Visitor and a signed-in user",
+      "Panels stay hidden when availability says the market has no forecast or card (non-US stock, ETF)",
+      "curl guest POST forecast and GET company-card still 401",
+      "Real browser pass as a Visitor then logging in and out in the same SPA at 390 and 1440 px, light and dark, es and en, with the network list proving no request to a registered-only API and bounding boxes proving no layout shift",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "2026-11-13 implementation (SPA only, no backend diff, branch feat/guest-disabled-chart): ForecastPanel and CompanyCardPanel render their real chrome inside RegisteredOnlyPanel (fields natively disabled, one reason row, one tab stop) and gate every effect on useRegisteredOnly().state === 'enabled'; WatchlistButton is the same Seguir button wrapped by RegisteredOnly (aria-disabled, sign-in popover with next, no link, GET /watchlist only when enabled); MarketContextStrip shows a no-figures DisabledStrip frame through RegisteredOnlyPanel with the access seam (signIn and loading; hidden and ETFs render nothing; a mid-visit API 401 keeps the plain sign-in box). The #ai-company-card scroll no longer needs a session. availability false (non-US) still hides the panels. Removed orphan key watchlist.signInToFollow (es/en).",
+      "Vitest: 69 files / 596 passed (new WatchlistButton.test.tsx; rewritten guest/loading/pending/signed-in/flip-on-login-logout and no-request tests in ForecastPanel, CompanyCardPanel, MarketContextStrip and InstrumentChartPage tests, including chart page flip without refetching the chart, ETF and non-US hidden for a Visitor, deep-link scroll for a Visitor). Lint 0 errors, build clean.",
+      "init.ps1 run as a child process with process-level redirect: exit with 'Baseline OK' (phpunit 1020 passed / 6 skipped, Vitest 596, engine 177).",
+      "2026-11-13 independent validator: ACCEPT with one medium finding (Market Context strip frame differed between Visitor and signed-in: reason slot and a taller enabled strip, ~37 px shift). Fixed (owner option 1): one outer structure in every state (RegisteredOnlyPanel reserved reason slot plus a same-tree PlaceholderStrip mirroring the ready strip) and a Vitest structure-parity test. The real-browser pass was performed by the validator. Still not verified: real touch and screen reader, the enabled layout with real Market Context and Company Card data, login from another tab, email-pending in a browser, 1440 dark by computed styles only; curl guest 401 on the three routes (backend untouched, existing feature tests green).",
+      "Independent validation 2026-11-13 (ACCEPT, round 2, re-validating the strip-shift fix 5dd56b4, merge 19f8fde of origin/main incl. #108, test wait 4d82441): primitive (components/registered-only, auth/useRegisteredOnly) unchanged vs main; merge kept main (DESIGN.md Screener line has «Más columnas»; diff vs origin/main only this branch's files; PROGRESS 10 sessions; both JSON files parse). init.ps1 as a child process with process-level redirect: Baseline OK (phpunit 1020 passed / 6 skipped, Vitest 69 files / 597, engine 177). Real browser on isolated servers (Laravel 8941 + Vite 5941, scratch SQLite copy, AAPL with sector and regime snapshots, test users), market-context response held to observe the skeleton. Flag on, strip block [y,h]: 1440 px es/en x light/dark guest 241/200, skeleton 241/200, data 241/200, after logout 241/200; Jev h2 y 1281 and Company Card h2 y 1503 in every state. 390 px es guest 374/244, skeleton 422/244, data 422/296, logout 374/244; en guest 374/216, skeleton 422/216, data 422/296, logout 374/216; the +48 y between guest and signed equals the header growth 162 to 210 px (account chrome, guest-disabled-nav scope), the +52/+80 at data is data-dependent wrapping. Logout from the header flips in place (same URL) back to the identical guest frame. Exactly one GET /market-context per login, none as Visitor; skeleton has aria-busy on the section and one sr-only role=status line; Visitor strip has one tab stop (the sign-in link with next=%2Finstruments%2FAAPL). Flag off: no strip, no early transient frame sampled, no /market-context request; Jev/Card identical guest vs signed at 1440 (1057/1279), 390 differs only by the 48 px header. No horizontal overflow at 390. Login is an SPA navigation through /login (no reload); a true in-place login (other tab) is not supported by the app (no cross-tab session sync) and was not tested."
+    ],
+    "notes": "Planned 2026-11-12. Planning only. Supersedes for presentation the hidden Jev and Company Card panels of premium-panels-auth-only."
   }
 ]

@@ -1,24 +1,31 @@
 /**
  * "Seguir"/"Siguiendo" toggle for one instrument.
  *
- * This is the only auth-aware affordance on the chart page: a Visitor gets a
- * sign-in link, never a redirect, so the chart stays browseable. Reads and
+ * Registered-only, shown to everyone (guest-disabled-chart): a Visitor (or a
+ * loading or unverified session) sees the same "Seguir" button dimmed and
+ * `aria-disabled` through the `RegisteredOnly` primitive, which explains why and
+ * links to sign-in with a return path, never a redirect, so the chart stays
+ * browseable. Membership is read (`GET /watchlist`) only when enabled. Reads and
  * writes go through the owned `watchlistApi` (server-side scoped to the session
  * user); the button is a UI affordance, not access control.
  */
 
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useAuth } from '../../auth/useAuth.ts'
+import { useRegisteredOnly } from '../../auth/useRegisteredOnly.ts'
 import { useI18n, useTranslateRef } from '../../i18n/useI18n.ts'
 import { ApiError, apiErrorMessage, watchlistApi } from '../../lib/api.ts'
 import { LOGIN_ROUTE } from '../../nav.ts'
+import RegisteredOnly from '../registered-only/RegisteredOnly.tsx'
 
 const BASE_BUTTON_CLASS =
   'rounded-md border-2 border-outline px-3 py-1.5 font-headline text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_var(--color-shadow)] transition-transform hover:-translate-y-px focus:shadow-[4px_4px_0px_#ffcc00] focus:outline-none disabled:cursor-not-allowed disabled:opacity-70'
 
 export default function WatchlistButton({ ticker }: { ticker: string }) {
-  const { user, status: authStatus } = useAuth()
+  const { user } = useAuth()
+  const { state } = useRegisteredOnly()
+  const enabled = state === 'enabled'
   const { t } = useI18n()
   const tRef = useTranslateRef()
   const navigate = useNavigate()
@@ -32,11 +39,11 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
   const membershipKey = user === null ? null : `${user.id}|${ticker}`
   const following =
     membership !== null && membership.key === membershipKey ? membership.following : null
-  const checking = user !== null && following === null
+  const checking = user !== null && enabled && following === null
   const visibleError = error !== null && error.key === membershipKey ? error.message : null
 
   useEffect(() => {
-    if (user === null) {
+    if (user === null || !enabled) {
       return
     }
 
@@ -64,7 +71,7 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
     return () => {
       active = false
     }
-  }, [user, ticker, navigate, tRef])
+  }, [user, enabled, ticker, navigate, tRef])
 
   async function toggle() {
     if (user === null || following === null) {
@@ -101,22 +108,13 @@ export default function WatchlistButton({ ticker }: { ticker: string }) {
     }
   }
 
-  if (authStatus === 'loading') {
+  if (!enabled || user === null) {
     return (
-      <button type="button" disabled className={BASE_BUTTON_CLASS}>
-        {t('watchlist.checking')}
-      </button>
-    )
-  }
-
-  if (user === null) {
-    return (
-      <Link
-        to={LOGIN_ROUTE}
-        className={`${BASE_BUTTON_CLASS} bg-primary-container text-on-primary-container`}
-      >
-        {t('watchlist.signInToFollow')}
-      </Link>
+      <RegisteredOnly>
+        <button type="button" className={`${BASE_BUTTON_CLASS} bg-primary-container text-on-primary-container`}>
+          {t('watchlist.follow')}
+        </button>
+      </RegisteredOnly>
     )
   }
 

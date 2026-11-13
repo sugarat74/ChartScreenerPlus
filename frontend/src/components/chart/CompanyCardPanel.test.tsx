@@ -109,30 +109,57 @@ beforeEach(() => window.localStorage.setItem(LOCALE_STORAGE_KEY, 'es'))
 afterEach(() => { cleanup(); vi.clearAllMocks(); window.localStorage.clear() })
 
 describe('CompanyCardPanel', () => {
-  it('renders nothing for a Visitor: no section, no sign-in prompt, no request', () => {
-    const { container } = show(false)
-    expect(container.innerHTML).toBe('')
-    expect(document.getElementById('ai-company-card')).toBeNull()
-    expect(screen.queryByRole('link')).toBeNull()
+  it('shows a Visitor the real chrome disabled, with one sign-in link and no request', async () => {
+    show(false)
+    expect(document.getElementById('ai-company-card')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Ficha de empresa' })).toBeTruthy()
+    expect(screen.getByTestId('company-card-warning').textContent).toContain('Generado por IA · no verificado · no es asesoramiento de inversión')
+    expect((screen.getByRole('button', { name: 'Generar previsión' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText('Disponible al iniciar sesión')).toBeTruthy()
+    const links = screen.getAllByRole('link')
+    expect(links).toHaveLength(1)
+    expect(links[0].getAttribute('href')).toMatch(/^\/login\?next=/)
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(screen.queryByTestId('company-card-metrics')).toBeNull()
+    await new Promise((resolve) => setTimeout(resolve, 10))
     expect(companyCardApi.get).not.toHaveBeenCalled()
     expect(companyCardApi.generate).not.toHaveBeenCalled()
   })
 
-  it('renders nothing while auth is loading (no flash) and makes no request', () => {
-    const { container } = show(false, 'loading')
-    expect(container.innerHTML).toBe('')
+  it('keeps the shell dimmed with no reason while auth is loading and makes no request', () => {
+    show(false, 'loading')
+    expect(document.getElementById('ai-company-card')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Generar previsión' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.queryByText('Disponible al iniciar sesión')).toBeNull()
+    expect(screen.queryByRole('link')).toBeNull()
     expect(companyCardApi.get).not.toHaveBeenCalled()
   })
 
-  it('shows the labelled panel for a signed-in user and hides it on sign-out without a reload', async () => {
+  it('shows the confirm-email reason and makes no request for a pending account', () => {
+    render(
+      <AuthContext.Provider value={{ ...auth, user: { ...auth.user, email_verification_pending: true } }}>
+        <I18nProvider><MemoryRouter><CompanyCardPanel ticker="NVDA" /></MemoryRouter></I18nProvider>
+      </AuthContext.Provider>,
+    )
+    expect(screen.getByText('Confirma tu email para usarlo')).toBeTruthy()
+    expect(companyCardApi.get).not.toHaveBeenCalled()
+  })
+
+  it('activates in place on sign-in (the read starts only then) and dims again on sign-out', async () => {
     vi.mocked(companyCardApi.get).mockResolvedValue(READY_EMPTY)
-    const { container, rerender } = show(true)
-    expect(screen.getByTestId('company-card-warning').textContent).toContain('Generado por IA · no verificado · no es asesoramiento de inversión')
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Generar previsión' })).toBeTruthy())
-    rerender(tree(false))
-    expect(container.innerHTML).toBe('')
+    const { rerender } = show(false)
+    const section = document.getElementById('ai-company-card')
+    expect(companyCardApi.get).not.toHaveBeenCalled()
     rerender(tree(true))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Generar previsión' })).toBeTruthy())
+    expect(document.getElementById('ai-company-card')).toBe(section)
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Generar previsión' }) as HTMLButtonElement).disabled).toBe(false))
+    expect(companyCardApi.get).toHaveBeenCalledTimes(1)
+    rerender(tree(false))
+    expect(document.getElementById('ai-company-card')).toBe(section)
+    expect((screen.getByRole('button', { name: 'Generar previsión' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText('Disponible al iniciar sesión')).toBeTruthy()
+    rerender(tree(true))
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Generar previsión' }) as HTMLButtonElement).disabled).toBe(false))
   })
 
   it('shows loading, then a clear not-available state without a generate button', async () => {
@@ -363,18 +390,20 @@ describe('CompanyCardPanel deep link', () => {
     expect(scroll).toHaveBeenCalledTimes(1)
   })
 
-  it('scrolls when the session resolves after the panel mounted', async () => {
+  it('scrolls once when the session resolves after the panel mounted, with the read only then', async () => {
     const { rerender } = show(false, 'loading', DEEP_LINK)
-    expect(scroll).not.toHaveBeenCalled()
+    expect(scroll).toHaveBeenCalledTimes(1)
+    expect(companyCardApi.get).not.toHaveBeenCalled()
     rerender(tree(true, 'ready', DEEP_LINK))
     expect(scroll).toHaveBeenCalledTimes(1)
     await waitFor(() => expect(companyCardApi.get).toHaveBeenCalledWith('NVDA'))
   })
 
-  it('never scrolls or renders for a Visitor with the hash', () => {
-    const { container } = show(false, 'ready', DEEP_LINK)
-    expect(container.innerHTML).toBe('')
-    expect(scroll).not.toHaveBeenCalled()
+  it('scrolls to the disabled panel for a Visitor with the hash, with no request', () => {
+    show(false, 'ready', DEEP_LINK)
+    expect(scroll).toHaveBeenCalledTimes(1)
+    expect(scroll.mock.contexts[0]).toBe(document.getElementById('ai-company-card'))
+    expect(companyCardApi.get).not.toHaveBeenCalled()
   })
 
   it('does not scroll without the hash', () => {

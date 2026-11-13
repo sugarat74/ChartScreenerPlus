@@ -138,17 +138,25 @@ describe('MarketContextStrip access and request states (Scenario 2)', () => {
     expect(within(screen.getByRole('region', { name: 'Contexto de mercado' })).getByText('Vista previa')).toBeTruthy()
   })
 
-  it('a Visitor with the flag on gets a dashed sign-in box', () => {
+  it('a Visitor with the flag on gets the real frame disabled with the reason and one sign-in link, no figures', () => {
     show({ status: 'off' }, { status: 'signIn', preview: false })
 
-    expect(screen.getByText('Inicia sesión para ver el sector y el entorno de mercado de este valor.')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Iniciar sesión' }).getAttribute('href')).toBe('/login')
-    expect(screen.queryByRole('region')).toBeNull()
+    const strip = screen.getByRole('region', { name: 'Contexto de mercado' })
+    expect(strip.textContent).toContain('Sector: —')
+    expect(strip.textContent).toContain('Entorno: —')
+    expect(strip.closest('fieldset')?.hasAttribute('disabled')).toBe(true)
+    expect(screen.getByText('Disponible al iniciar sesión')).toBeTruthy()
+    const links = screen.getAllByRole('link')
+    expect(links).toHaveLength(1)
+    expect(links[0].getAttribute('href')).toMatch(/^\/login/)
+    expect(screen.queryByText('Ver contexto de mercado')).toBeNull()
   })
 
-  it('renders nothing while loading access or for a hidden user', () => {
-    const { container } = show({ status: 'off' }, { status: 'loading', preview: false })
-    expect(container.textContent).toBe('')
+  it('shows the dimmed frame with no reason while access loads, and nothing for a hidden user', () => {
+    show({ status: 'off' }, { status: 'loading', preview: false })
+    expect(screen.getByRole('region', { name: 'Contexto de mercado' })).toBeTruthy()
+    expect(screen.queryByText('Disponible al iniciar sesión')).toBeNull()
+    expect(screen.queryByRole('link')).toBeNull()
     cleanup()
     const hidden = show({ status: 'off' }, { status: 'hidden', preview: false })
     expect(hidden.container.textContent).toBe('')
@@ -165,6 +173,50 @@ describe('MarketContextStrip access and request states (Scenario 2)', () => {
 
     show({ status: 'signIn' })
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toBeTruthy()
+  })
+
+  it('keeps the same outer structure for a Visitor, a request in flight and the data (no shift at login)', () => {
+    const shape = (root: HTMLElement) => {
+      const slot = within(root).getByTestId('registered-only-reason')
+      const strip = within(root).getByRole('region', { name: 'Contexto de mercado' })
+      const wrapper = slot.parentElement as HTMLElement
+      return {
+        slotFirst: wrapper.firstElementChild === slot,
+        slotEmpty: slot.textContent === '',
+        slotClass: slot.className,
+        wrapperClass: wrapper.className.replace('opacity-60', '').trim(),
+        fieldset: strip.closest('fieldset') !== null,
+        children: Array.from(strip.children).map((child) => (child.tagName === 'A' ? 'SPAN' : child.tagName)),
+        listItems: strip.querySelectorAll('li').length,
+        footer: strip.querySelector('footer') !== null,
+      }
+    }
+
+    const guest = show({ status: 'off' }, { status: 'signIn', preview: false })
+    const guestShape = shape(guest.container)
+    expect(guestShape.slotEmpty).toBe(false)
+    cleanup()
+
+    const loading = show({ status: 'loading' })
+    const loadingShape = shape(loading.container)
+    cleanup()
+
+    const data = show(ready(AAPL_CONTEXT))
+    const dataShape = shape(data.container)
+
+    expect(loadingShape.slotEmpty).toBe(true)
+    expect(dataShape.slotEmpty).toBe(true)
+    for (const other of [loadingShape, dataShape]) {
+      expect(other.slotFirst).toBe(true)
+      expect(other.slotClass).toBe(guestShape.slotClass)
+      expect(other.wrapperClass).toBe(guestShape.wrapperClass)
+      expect(other.fieldset).toBe(true)
+      expect(other.listItems).toBe(guestShape.listItems)
+      expect(other.footer).toBe(true)
+    }
+    // The link row is a placeholder span until the data brings the real link. Skeleton and Visitor frames share the very same tree (title row, list, link slot, footer).
+    expect(loadingShape.children).toEqual(guestShape.children)
+    expect(guestShape.children).toEqual(dataShape.children)
   })
 
   it('an error offers a retry', () => {

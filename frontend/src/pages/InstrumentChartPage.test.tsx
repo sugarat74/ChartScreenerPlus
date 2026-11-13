@@ -144,8 +144,9 @@ describe('Market Context strip and pattern chips (market-context-patterns)', () 
     })
     show('AAPL', ALLOWED)
 
-    const strip = await screen.findByRole('region', { name: 'Contexto de mercado' })
-    expect(strip.textContent).toContain('Sector: Tecnología de la información (XLK)')
+    // The frame shows first as the skeleton, then the data replaces it in place.
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Contexto de mercado' }).textContent).toContain('Sector: Tecnología de la información (XLK)'))
+    const strip = screen.getByRole('region', { name: 'Contexto de mercado' })
     expect(strip.textContent).toContain('Fuerza relativa 1/10')
     expect(within(strip).queryByText('Vista previa')).toBeNull()
     expect(screen.getByText('El contexto es el de la última sesión, no el de la fecha del patrón.')).toBeTruthy()
@@ -159,8 +160,9 @@ describe('Market Context strip and pattern chips (market-context-patterns)', () 
     vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'AAPL', kind: 'stock' }))
     show('AAPL', { ...ALLOWED, role: 'admin' })
 
-    const strip = await screen.findByRole('region', { name: 'Contexto de mercado' })
-    await waitFor(() => expect(within(strip).getByText('Vista previa')).toBeTruthy())
+    await waitFor(() =>
+      expect(within(screen.getByRole('region', { name: 'Contexto de mercado' })).getByText('Vista previa')).toBeTruthy(),
+    )
   })
 
   it('an ETF makes no context request and shows no strip', async () => {
@@ -173,13 +175,16 @@ describe('Market Context strip and pattern chips (market-context-patterns)', () 
     expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
   })
 
-  it('a Visitor gets the sign-in box with the flag on and nothing with it off, never a request', async () => {
+  it('a Visitor gets the disabled strip with the flag on and nothing with it off, never a request', async () => {
     vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
     vi.mocked(instrumentApi.detail).mockResolvedValue({ ...payload({ ticker: 'AAPL', kind: 'stock' }), patterns: [PATTERN] })
     show('AAPL', null)
 
-    expect(await screen.findByText('Inicia sesión para ver el sector y el entorno de mercado de este valor.')).toBeTruthy()
+    const strip = await screen.findByRole('region', { name: 'Contexto de mercado' })
+    expect(strip.closest('fieldset')?.hasAttribute('disabled')).toBe(true)
+    expect(strip.textContent).toContain('Entorno: —')
     expect(screen.queryByText(/no el de la fecha del patrón/)).toBeNull()
+    expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
     cleanup()
 
     resetLegalInfoCache()
@@ -475,5 +480,88 @@ describe('RSI, MACD, OBV and Supertrend toggles (chart-indicators-rsi-macd-obv-s
     await waitFor(() => expect(panes()).toBe('macd,obv'))
     expect(screen.getByRole('button', { name: 'OBV' }).getAttribute('aria-pressed')).toBe('true')
     expect(instrumentApi.indicators).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('registered-only panels visible but disabled (guest-disabled-chart)', () => {
+  function tree(user: AuthUser | null, status: 'loading' | 'ready' = 'ready') {
+    return (
+      <AuthContext.Provider value={{ ...auth, user, status }}>
+        <I18nProvider>
+          <MemoryRouter initialEntries={['/instruments/AAPL#ai-company-card']}>
+            <Routes>
+              <Route path="/instruments/:ticker" element={<InstrumentChartPage />} />
+            </Routes>
+          </MemoryRouter>
+        </I18nProvider>
+      </AuthContext.Provider>
+    )
+  }
+
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn()
+    vi.mocked(legalApi.info).mockResolvedValue({ ...LEGAL, market_context: true })
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'AAPL', kind: 'stock', market: 'US', exchange: 'NASDAQ' }))
+    vi.mocked(instrumentMarketContextApi.get).mockResolvedValue(AAPL_CONTEXT)
+    vi.mocked(companyCardApi.get).mockResolvedValue({ card: null, available: true, fundamentals: null })
+  })
+
+  it('a Visitor sees Jev, the Company Card, the strip and a dimmed Seguir, and makes no registered-only request', async () => {
+    render(tree(null))
+
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    expect(await screen.findByRole('region', { name: 'Contexto de mercado' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Pronóstico Jev' })).toBeTruthy()
+    expect(document.getElementById('ai-company-card')).toBeTruthy()
+    const follow = screen.getByRole('button', { name: 'Seguir' })
+    expect(follow.getAttribute('aria-disabled')).toBe('true')
+    expect(follow.hasAttribute('disabled')).toBe(false)
+    fireEvent.click(follow)
+    expect(screen.getAllByText('Disponible al iniciar sesión').length).toBeGreaterThanOrEqual(3)
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(watchlistApi.list).not.toHaveBeenCalled()
+    expect(watchlistApi.add).not.toHaveBeenCalled()
+    expect(companyCardApi.get).not.toHaveBeenCalled()
+    expect(instrumentMarketContextApi.get).not.toHaveBeenCalled()
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1)
+  })
+
+  it('flips in place at login and back at logout without refetching the chart', async () => {
+    const { rerender } = render(tree(null))
+    expect(await screen.findByRole('region', { name: 'Contexto de mercado' })).toBeTruthy()
+    const chartCalls = vi.mocked(instrumentApi.detail).mock.calls.length
+
+    rerender(tree(ALLOWED))
+    await waitFor(() => expect(companyCardApi.get).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(watchlistApi.list).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(instrumentMarketContextApi.get).toHaveBeenCalledTimes(1))
+    expect(screen.getByRole('button', { name: 'Seguir' }).getAttribute('aria-disabled')).toBeNull()
+    expect(instrumentApi.detail).toHaveBeenCalledTimes(chartCalls)
+
+    rerender(tree(null))
+    expect(screen.getByRole('button', { name: 'Seguir' }).getAttribute('aria-disabled')).toBe('true')
+    expect(screen.getByRole('heading', { name: 'Pronóstico Jev' })).toBeTruthy()
+    expect(instrumentApi.detail).toHaveBeenCalledTimes(chartCalls)
+  })
+
+  it('shows none of the stock-only panels to a Visitor on an ETF', async () => {
+    vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'XLK', kind: 'etf' }))
+    render(tree(null))
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Pronóstico Jev' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull()
+    expect(document.getElementById('ai-company-card')).toBeNull()
+  })
+
+  it('hides the panels disabled for a Visitor on a non-US stock (login would not unlock them)', async () => {
+    vi.mocked(instrumentApi.detail).mockResolvedValue(
+      payload({ ticker: 'SAN.MC', kind: 'stock', market: 'XMAD', availability: { company_card: false, fundamentals: false, forecast: false } }),
+    )
+    render(tree(null))
+    expect(await screen.findByTestId('interactive-chart')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Pronóstico Jev' })).toBeNull()
+    expect(document.getElementById('ai-company-card')).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Contexto de mercado' })).toBeNull()
   })
 })

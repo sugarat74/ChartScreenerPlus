@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useSignedIn } from '../../auth/useSignedIn.ts'
+import { useRegisteredOnly } from '../../auth/useRegisteredOnly.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { forecastApi, apiErrorMessage } from '../../lib/api.ts'
 import type { Forecast } from '../../lib/api.ts'
+import RegisteredOnlyPanel from '../registered-only/RegisteredOnlyPanel.tsx'
 
 /**
- * Experimental Jev forecast panel on the chart page. Signed-in only: it reads
- * the already bootstrapped session itself and renders nothing for a Visitor or
- * while auth is loading (no sign-in prompt; docs/specs/premium-panels-auth-only.md).
+ * Experimental Jev forecast panel on the chart page. Registered-only, shown to
+ * everyone (guest-disabled-chart): a Visitor or a loading session sees the real
+ * panel dimmed, its controls natively disabled, with the shared sign-in reason
+ * row; the same tree is enabled once the session is verified, so nothing shifts
+ * at login. A forecast is requested only on submit of an enabled form.
  */
 export default function ForecastPanel({ ticker }: { ticker: string }) {
-  const signedIn = useSignedIn()
+  const { state } = useRegisteredOnly()
+  const enabled = state === 'enabled'
   const { t, formatMarketDate } = useI18n()
   const [horizon, setHorizon] = useState(1)
   const [minimum, setMinimum] = useState(60)
@@ -21,6 +25,22 @@ export default function ForecastPanel({ ticker }: { ticker: string }) {
   const requestGeneration = useRef(0)
 
   useEffect(() => () => { requestGeneration.current += 1 }, [])
+
+  // The session ended (or is not verified): ignore an in-flight answer and drop a shown result.
+  useEffect(() => {
+    if (!enabled) {
+      requestGeneration.current += 1
+    }
+  }, [enabled])
+  const [wasEnabled, setWasEnabled] = useState(enabled)
+  if (wasEnabled !== enabled) {
+    setWasEnabled(enabled)
+    if (!enabled) {
+      setForecast(null)
+      setError(null)
+      setLoading(false)
+    }
+  }
 
   function invalidateResult() {
     requestGeneration.current += 1
@@ -45,10 +65,6 @@ export default function ForecastPanel({ ticker }: { ticker: string }) {
     }
   }
 
-  if (!signedIn) {
-    return null
-  }
-
   const label = forecast?.signal === 'up' ? t('forecast.up') : forecast?.signal === 'down' ? t('forecast.down') : t('forecast.noSignal')
 
   return (
@@ -58,17 +74,21 @@ export default function ForecastPanel({ ticker }: { ticker: string }) {
         <span className="rounded border border-outline bg-primary-container px-2 py-0.5 font-mono text-[10px] uppercase text-on-primary-container">{t('forecast.experimental')}</span>
       </div>
       <p className="mt-2 text-sm text-on-surface-variant">{t('forecast.explanation')}</p>
-      <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={(event) => void submit(event)}>
-        <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="forecast-horizon">{t('forecast.horizon')}
-          <select id="forecast-horizon" className="rounded border-2 border-outline bg-surface-bright p-2" value={horizon} onChange={(event) => { invalidateResult(); setHorizon(Number(event.target.value)) }}>
-            <option value={1}>{t('forecast.oneSession')}</option><option value={5}>{t('forecast.fiveSessions')}</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="forecast-minimum">{t('forecast.minimum')}
-          <input id="forecast-minimum" className="w-28 rounded border-2 border-outline bg-surface-bright p-2" type="number" min="0" max="100" step="1" required value={minimum} onChange={(event) => { invalidateResult(); setMinimum(Number(event.target.value)) }} />
-        </label>
-        <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] disabled:opacity-60" type="submit" disabled={loading}>{loading ? t('common.loading') : t('forecast.analyze')}</button>
-      </form>
+      <RegisteredOnlyPanel className="mt-4">
+        {({ disabled }) => (
+        <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => void submit(event)}>
+          <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="forecast-horizon">{t('forecast.horizon')}
+            <select id="forecast-horizon" disabled={disabled} className="rounded border-2 border-outline bg-surface-bright p-2" value={horizon} onChange={(event) => { invalidateResult(); setHorizon(Number(event.target.value)) }}>
+              <option value={1}>{t('forecast.oneSession')}</option><option value={5}>{t('forecast.fiveSessions')}</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-bold" htmlFor="forecast-minimum">{t('forecast.minimum')}
+            <input id="forecast-minimum" disabled={disabled} className="w-28 rounded border-2 border-outline bg-surface-bright p-2" type="number" min="0" max="100" step="1" required value={minimum} onChange={(event) => { invalidateResult(); setMinimum(Number(event.target.value)) }} />
+          </label>
+          <button className="rounded border-2 border-outline bg-primary-container px-4 py-2 font-headline text-xs font-bold uppercase text-on-primary-container shadow-[2px_2px_0px_var(--color-shadow)] disabled:opacity-60" type="submit" disabled={loading || disabled}>{loading ? t('common.loading') : t('forecast.analyze')}</button>
+        </form>
+        )}
+      </RegisteredOnlyPanel>
       {error ? <p role="alert" className="mt-3 text-sm text-secondary">{error}</p> : null}
       {forecast ? (
         <div className="mt-4 border-t border-outline pt-3 text-sm">

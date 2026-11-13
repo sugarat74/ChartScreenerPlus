@@ -5,9 +5,12 @@
  * Descriptive only (icon + text, never colour alone).
  *
  * Access comes from `useMarketContextAccess` (the server enforces it): nothing
- * while it loads or for a hidden user, a dashed sign-in box for a Visitor once
- * the owner's go-live flag is on, and the data for an allowed user. A failed
- * request shows a retry and never affects the chart.
+ * for a hidden user, the real frame dimmed with the shared sign-in reason for a
+ * Visitor once the owner's go-live flag is on (guest-disabled-chart; no figures,
+ * no request), and the data for an allowed user. Every state that shows the
+ * frame uses the same outer structure (the panel with its reserved reason slot,
+ * and a placeholder that mirrors the ready strip), so a session flip shifts nothing. A failed request shows a retry
+ * and never affects the chart.
  */
 
 import { useId } from 'react'
@@ -19,6 +22,7 @@ import type { InstrumentMarketContext } from '../../lib/api.ts'
 import { MARKET_ROUTE } from '../../nav.ts'
 import { CARD_CLASS, Chip, StaleBadge } from '../market/MarketCard.tsx'
 import MarketSignInBox from '../market/MarketSignInBox.tsx'
+import RegisteredOnlyPanel from '../registered-only/RegisteredOnlyPanel.tsx'
 import { REGIME_LABEL_STYLE, TREND_ICON, dateLine, trendClass } from '../market/marketText.ts'
 import { TrendChip } from '../market/SectorTable.tsx'
 import type { InstrumentMarketContextState } from './useInstrumentMarketContext.ts'
@@ -174,6 +178,55 @@ function ReadyStrip({ data, preview }: { data: InstrumentMarketContext; preview:
   )
 }
 
+/**
+ * The strip's frame with no figures: the dimmed Visitor state and the skeleton
+ * of an allowed user's request in flight. It mirrors `ReadyStrip` (title row,
+ * the four figure items, the link row and the disclaimer footer) so the block
+ * keeps its height when the session flips and the data arrives. The link row is
+ * an empty placeholder: a Visitor gets no extra focusable element.
+ */
+function PlaceholderStrip({ loadingStatus }: { loadingStatus: boolean }) {
+  const { t } = useI18n()
+  const titleId = useId()
+
+  return (
+    <section aria-labelledby={titleId} aria-busy={loadingStatus ? 'true' : undefined} className={CARD_CLASS}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 id={titleId} className="font-headline text-sm font-black uppercase tracking-wide text-on-surface">
+            {t('marketContext.strip.title')}
+          </h2>
+          {loadingStatus ? (
+            <p role="status" className="sr-only">
+              {t('marketContext.strip.loading')}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <ul aria-label={t('marketContext.strip.aria')} className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 text-sm text-on-surface">
+        <li className="flex min-w-0 flex-wrap items-center gap-2">{t('marketContext.strip.sector', { name: t('common.empty') })}</li>
+        <li className="flex items-center gap-2">
+          <span className="text-on-surface-variant">{t('marketContext.strip.sectorTrend')}</span>
+          <span>{t('common.empty')}</span>
+        </li>
+        <li className="font-mono text-xs font-bold">{t('common.empty')}</li>
+        <li className="flex flex-wrap items-center gap-2">{t('marketContext.strip.regime', { label: t('common.empty') })}</li>
+      </ul>
+
+      <span aria-hidden="true" data-testid="strip-link-slot" className="block h-4 w-fit" />
+
+      <footer className="flex flex-col gap-1 border-t border-outline-variant pt-2 text-[11px] leading-4 text-on-surface-variant">
+        <p>{t('marketContext.legal.disclaimer')}</p>
+        {/* Reserves the FRED attribution line the ready strip shows with a regime (no layout shift). */}
+        <p lang="en" aria-hidden="true" className="invisible" data-testid="strip-fred-slot">
+          {t('marketContext.legal.fredNotice')}
+        </p>
+      </footer>
+    </section>
+  )
+}
+
 export default function MarketContextStrip({
   access,
   state,
@@ -185,7 +238,17 @@ export default function MarketContextStrip({
 }) {
   const { t } = useI18n()
 
-  if (access.status === 'signIn' || (access.status === 'allowed' && state.status === 'signIn')) {
+  if (access.status === 'signIn' || access.status === 'loading') {
+    // A Visitor (flag on) or a session still loading: same frame, no request, no figures.
+    return (
+      <RegisteredOnlyPanel access={access} reasonPosition="top">
+        {() => <PlaceholderStrip loadingStatus={false} />}
+      </RegisteredOnlyPanel>
+    )
+  }
+
+  if (access.status === 'allowed' && state.status === 'signIn') {
+    // The session ended mid-visit (the API answered 401): the plain sign-in box.
     return (
       <MarketSignInBox
         title={t('marketContext.strip.signInTitle')}
@@ -201,10 +264,11 @@ export default function MarketContextStrip({
 
   switch (state.status) {
     case 'loading':
+      // Same outer structure as the Visitor frame (reserved, empty reason slot): no shift at login.
       return (
-        <p role="status" className="font-mono text-xs text-on-surface-variant">
-          {t('marketContext.strip.loading')}
-        </p>
+        <RegisteredOnlyPanel access={access} reasonPosition="top">
+          {() => <PlaceholderStrip loadingStatus />}
+        </RegisteredOnlyPanel>
       )
     case 'error':
       return (
@@ -219,7 +283,11 @@ export default function MarketContextStrip({
         </div>
       )
     case 'ready':
-      return <ReadyStrip data={state.data} preview={access.preview} />
+      return (
+        <RegisteredOnlyPanel access={access} reasonPosition="top">
+          {() => <ReadyStrip data={state.data} preview={access.preview} />}
+        </RegisteredOnlyPanel>
+      )
     default:
       return null
   }

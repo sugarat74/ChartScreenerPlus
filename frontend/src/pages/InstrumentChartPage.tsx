@@ -5,16 +5,16 @@
  * The page itself stays anonymous — it never calls `useAuth`, never redirects
  * and never prompts for login. The auth-aware elements (the watchlist toggle
  * in the header, the forecast panel and the AI Company Card panel) read the
- * already bootstrapped session inside the component: the watchlist toggle
- * offers a Visitor a plain sign-in link, while the forecast and Company Card
- * panels render nothing for a Visitor or while auth is loading (never a
- * redirect or prompt), so the chart remains browseable. A Market Context ETF
+ * already bootstrapped session inside the component through the shared
+ * `RegisteredOnly` primitive (guest-disabled-chart): a Visitor sees them
+ * visible but disabled with a sign-in reason, never a redirect or prompt, and
+ * they activate in place at login, so the chart remains browseable. A Market Context ETF
  * (`instrument.kind === 'etf'`) shows the chart and its signal/pattern panels
  * but none of the stock-only elements (watchlist toggle, forecast, Company
  * Card), which its API endpoints refuse anyway. For a stock, the Market
  * Context strip and the pattern chips (market-context-patterns) come from one
  * `GET /api/instruments/{ticker}/market-context` request made only when
- * `useMarketContextAccess` says `allowed`; a Visitor gets a dashed sign-in box
+ * `useMarketContextAccess` says `allowed`; a Visitor gets the strip's frame disabled
  * once the owner's go-live flag is on, anyone else nothing. The US-only
  * panels (Market Context strip and sector chips, forecast, Company Card with
  * its fundamentals) follow the instrument's `market` and `availability`
