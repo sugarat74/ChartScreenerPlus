@@ -4,9 +4,11 @@ namespace App\Services\Ingestion;
 
 use App\Exceptions\CurrencyMismatchException;
 use App\Exceptions\EmptyIngestionResponseException;
+use App\Exceptions\PriceScaleMismatchException;
 use App\Models\DailyBar;
 use App\Models\Instrument;
 use App\Services\Engine\EngineClient;
+use App\Support\ListingMarket;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Carbon;
@@ -22,6 +24,16 @@ use Illuminate\Support\Facades\DB;
  */
 class InstrumentIngestor
 {
+    /**
+     * Markets whose quoting unit can flip at the source (London pence vs
+     * pounds). Scoped like the engine guard so other markets keep their
+     * existing handling of split-adjusted history.
+     */
+    private const SCALE_GUARDED_MARKETS = [ListingMarket::XLON];
+
+    /** Same threshold as the engine's consecutive-close guard. */
+    private const SCALE_JUMP_RATIO = 40.0;
+
     public function __construct(private readonly EngineClient $client) {}
 
     /**
@@ -45,6 +57,7 @@ class InstrumentIngestor
      * @throws ConnectionException when the engine is unreachable.
      * @throws EmptyIngestionResponseException when the engine returns no bars.
      * @throws CurrencyMismatchException when the engine reports another currency (nothing is stored).
+     * @throws PriceScaleMismatchException when a London series is 40x or more off the stored closes (nothing is stored).
      */
     public function ingestDetailed(Instrument $instrument): array
     {
@@ -60,6 +73,10 @@ class InstrumentIngestor
 
         if ($bars === []) {
             throw EmptyIngestionResponseException::forTicker($instrument->ticker);
+        }
+
+        if (in_array($instrument->listingMarket(), self::SCALE_GUARDED_MARKETS, true)) {
+            $this->guardStoredScale($instrument, $bars);
         }
 
         /** @var array{stored: int, skipped: int} $result */
@@ -100,6 +117,55 @@ class InstrumentIngestor
         });
 
         return $result;
+    }
+
+    /**
+     * Compare the incoming series with the latest stored close: the engine
+     * guard only sees one response, so a source that relabels a whole history
+     * from pence to pounds (or back) would otherwise overwrite stored pence
+     * with values 100x off. The anchor is the incoming bar on the latest
+     * stored date or, if that date is absent, the first one after it.
+     *
+     * @param  list<mixed>  $bars
+     *
+     * @throws PriceScaleMismatchException when the ratio is 40 or more.
+     */
+    private function guardStoredScale(Instrument $instrument, array $bars): void
+    {
+        $stored = DailyBar::query()
+            ->where('instrument_id', $instrument->id)
+            ->orderByDesc('date')
+            ->first(['date', 'close']);
+
+        if ($stored === null || (float) $stored->close <= 0) {
+            return;
+        }
+
+        $storedDate = Carbon::parse($stored->date)->toDateString();
+        $anchor = null;
+
+        foreach ($bars as $bar) {
+            $attributes = $this->normalizeBar($bar);
+
+            if ($attributes === null || $attributes['date'] < $storedDate || $attributes['close'] <= 0) {
+                continue;
+            }
+
+            if ($anchor === null || $attributes['date'] < $anchor['date']) {
+                $anchor = $attributes;
+            }
+        }
+
+        if ($anchor === null) {
+            return;
+        }
+
+        $storedClose = (float) $stored->close;
+        $ratio = max($storedClose, $anchor['close']) / min($storedClose, $anchor['close']);
+
+        if ($ratio >= self::SCALE_JUMP_RATIO) {
+            throw PriceScaleMismatchException::forTicker($instrument->ticker, $anchor['date'], $storedClose, $anchor['close']);
+        }
     }
 
     /**

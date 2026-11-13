@@ -19,9 +19,13 @@ final class ListingMarket
 
     public const XPAR = 'XPAR';
 
+    public const XLON = 'XLON';
+
     /**
      * `suffix` is the ticker suffix that identifies the market (`null` for the
      * US, whose tickers carry none and never end in another market's suffix).
+     * `currency` is the quoted unit: `GBX` for London is pence as quoted by
+     * the source, not ISO 4217 and never converted (universes-cac40-ftse100.md, P1).
      *
      * `extra_suffixes` lists documented exceptions: further suffixes that
      * also identify the market (`.AS` for XPAR, ArcelorMittal's Amsterdam line,
@@ -34,6 +38,7 @@ final class ListingMarket
         self::XMAD => ['timezone' => 'Europe/Madrid', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.MC'],
         self::XETR => ['timezone' => 'Europe/Berlin', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.DE'],
         self::XPAR => ['timezone' => 'Europe/Paris', 'open' => '09:00', 'close' => '17:30', 'currency' => 'EUR', 'suffix' => '.PA', 'extra_suffixes' => ['.AS']],
+        self::XLON => ['timezone' => 'Europe/London', 'open' => '08:00', 'close' => '16:30', 'currency' => 'GBX', 'suffix' => '.L'],
     ];
 
     /** @return list<string> */
@@ -92,7 +97,7 @@ final class ListingMarket
     /**
      * Whether `$ticker` follows the suffix rule of `$market`: `.MC` is exactly
      * `XMAD`, `.DE` exactly `XETR`, `.PA` (and the `.AS` exception) exactly
-     * `XPAR`, and a US ticker ends in none of them.
+     * `XPAR`, `.L` exactly `XLON`, and a US ticker ends in none of them.
      */
     public static function tickerMatches(string $market, string $ticker): bool
     {

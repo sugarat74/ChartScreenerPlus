@@ -86,6 +86,14 @@ describe('switchUniverse', () => {
     expect(back.has('close_min')).toBe(false)
   })
 
+  it('treats pence (GBX) as its own currency, so EUR bounds are never read as pence', () => {
+    const LONDON: ScreenerUniverse = { slug: 'london-fixture', name: 'London fixture', market: 'XLON', currency: 'GBX', members: 1, latest_date: '2026-11-09', is_default: false }
+    const toPence = switchUniverse(new URLSearchParams('universe=ibex35&close_min=5&close_max=50'), LONDON, IBEX)
+    expect(toPence.get('universe')).toBe('london-fixture')
+    expect(toPence.has('close_min')).toBe(false)
+    expect(toPence.has('close_max')).toBe(false)
+  })
+
   it('clears the sector context keys only for a universe without them', () => {
     const params = 'sector_trend=uptrend&sector_rs_rank_max=3'
     expect(switchUniverse(new URLSearchParams(params), IBEX, SP500).toString()).toBe('universe=ibex35')

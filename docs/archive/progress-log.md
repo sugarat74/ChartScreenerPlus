@@ -2,6 +2,14 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## Pattern release preparation - 2026-11-11
+
+- Owner explicitly requested deployment of all implemented patterns and real-sample calibration later. Updated chart-patterns-head-shoulders-triangles acceptance contract accordingly; named thresholds remain initial and precision/recall unknown. Japanese candles remain planning only on feat/contact-suggestions.
+- Created release/chart-patterns-nov11 from fresh origin/main (294f748189), extracting only the five H&S/triangle patterns from ac20bec. Mixed indicator/CAC40 PR98, calendar/London PR99 and Contact work remain outside this release. Existing untracked specs/screener-filter-expansion/ untouched.
+- Closed lifecycle/near-miss/filter gaps and the inverse-cup legacy direction regression. Fresh init.ps1 exit0: Laravel1000 passed/6skipped (9209 assertions), SPA60 files/479 passed, lint/typecheck/build passed, engine155 passed. Added migration replay afterward: focused ChartPatternGeometryFilterTest3 passed/14 assertions. Combined focused pattern engine71 passed; focused SPA41 passed. Existing RequireAuth lint, Vite bundle and Starlette/httpx warnings remain.
+- Independent validator returned accept: engine36 tests, Laravel40 tests/397 assertions (including migration replay), SPA25 tests and diff checks; no remaining runtime/security blocker. Report docs/validations/chart-patterns-head-shoulders-triangles.md; feature accepted with calibration deferred. Deploy pending. PR100 initial CI run42977562453 passed test/test-pgsql; final evidence/test commit will rerun CI before merge.
+- Read-only production preflight: active release294f748189, engine active, Laravel13.34; stock universes sp500/nasdaq100/ibex35/dax, latest bar2026-11-10,167 active legacy pattern rows. SSH host verified against existing known_hosts. No production mutation yet.
+
 ## CAC 40 and FTSE 100 universes planned (3 features, not started) - 2026-11-08
 
 - Explicit owner request ("cac 70" read as CAC 40, plus FTSE 100). Planning PR only: spec `docs/specs/universes-cac40-ftse100.md`, features `universe-cac40` -> `ingestion-xlon-gbx` -> `universe-ftse100` in `feature_list.json` (not_started), AGENTS.md scope guard. No application code, no tests run; JSON validity and `scripts/harness-context.ps1` checked.

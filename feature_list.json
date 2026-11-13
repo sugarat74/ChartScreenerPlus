@@ -983,21 +983,28 @@
   {
     "id": "ingestion-xlon-gbx",
     "area": "ingestion",
-    "planning_spec": "docs/specs/universes-cac40-ftse100.md (prepared 2026-11-08)",
+    "planning_spec": "docs/specs/universes-cac40-ftse100.md (prepared 2026-11-08; Feature 2, implementation notes 2026-11-13)",
     "title": "London Listing Market and pence (GBX) handling",
     "user_visible_behavior": "No visible change by itself: prepares the engine, calendar and schedule for London-listed stocks quoted in pence.",
     "depends_on": [
       "universe-cac40"
     ],
-    "status": "not_started",
+    "status": "passing",
     "verification": [
       "Engine fixtures: real AZN.L (GBp) returns GBX with unchanged prices, a GBP-labelled response stays GBP, a 100x scale step is rejected, market mismatch returns 422",
       "currency_mismatch fails cleanly for GBP/USD/EUR on a GBX Instrument; XLON calendar tests (UK-only bank holidays, 12:30 early closes, GMT/BST) and the 17:15 Europe/London schedule event; scale-invariance check on a fixture universe",
       "Live smoke on AZN.L and BT-A.L: GBX bars, weekday dates, no bar on UK bank holidays but bars on those days for SAN.PA",
       ".\\init.ps1 passes"
     ],
-    "evidence": [],
-    "notes": "Planned 2026-11-08. Decision: store and show pence as quoted with currency code GBX (no arithmetic); fixes the engine upper-casing of Yahoo's 'GBp' to 'GBP'. Live check 2026-11-08 of all 100 FTSE 100 .L symbols: 97 GBp, 2 USD, 1 EUR."
+    "evidence": [
+      "2026-11-13, branch feat/ingestion-xlon-gbx (fresh from main 733268f; reuses the unmerged 2026-11-10 London commit 7cb85b6, old branch kept as backup/ingestion-xlon-gbx-2026-11-10). .\\init.ps1 as a child process with process redirect: exit 0, Baseline OK (phpunit 1029 passed / 6 skipped, 11133 assertions; Vitest 69 files / 609; SPA lint, typecheck, build; engine pytest 203). Pint --test passed on the changed PHP files.",
+      "Engine (engine/tests/test_london.py, offline): real AZN.L GBp fixture -> GBX with prices unchanged (505 bars); GBP/gbp stay GBP, USD/EUR upper-cased; consecutive-close ratio >= 40 rejected both ways, 39.999 accepted, GBX cap 1,000,000 inclusive, non-positive/non-finite closes rejected; guard London-only; 502 with no Stooq fallback; BT-A.L identity kept; AZN.L without market / with XPAR / XMAD -> 422; UK-only bank holidays absent in London and present in SAN.PA; every snapshot field checked pence vs pounds (ratio fields equal, price fields x100).",
+      "Laravel (tests/Feature/LondonIngestionTest.php, 9 tests): ListingMarket XLON/GBX/.L rules; no schedule event, universe or strip entry without a seeded XLON universe; 16 holidays are weekdays and London-only vs XPAR; 12:30 early closes; latestSession across GMT/BST and the US-offset weeks; 17:15 Europe/London event (cron 15 17 * * 1-5) skipping 28 Dec 2026 and running on 24 Dec; GBP/USD/EUR on GBX Instruments fail currency_mismatch, no bars, run partial; new stored-data guard: a whole series relabelled to pounds fails price_scale_mismatch with nothing overwritten, run partial, guard London-only and tolerant of a gap; fixture pipeline stores pence, snapshots, GBX Candidate payload, sector filters 422, US-only availability false, no US-only stage.",
+      "Vitest: Close heading and chip Cierre (GBX) >= 500 / Close (GBX) with a fixture universe, chart header AstraZeneca / Health Care / LSE / GBX (middle-dot separated) with no US-only requests, formatPrice keeps pence (13,930.00 / 13.930,00, 95.88, no symbol), EUR -> GBX universe switch clears the Close bounds.",
+      "Live (2026-11-13, in-process engine app, real Yahoo, no DB writes): AZN.L, BT-A.L, LLOY.L with market=XLON -> GBX, 507 sessions each, weekdays only, no bar on 2026-05-04/05-25/08-31, bar on 2026-05-01, max day-over-day close ratio 1.11; SAN.PA XPAR -> EUR 511, bars on those three UK dates, none on 04-03/04-06/05-01. Committed AZN.L fixture equals the live closes on all 503 overlapping sessions. Calendar: all 16 committed 2026/2027 closures equal gov.uk bank-holidays.json (England and Wales); the LSE business-days page lists the same closures from 31 Aug 2026 and the 12:30 half days on 24/31 Dec 2026 and 2027.",
+      "Not verified: PostgreSQL CI (not pushed); production pipeline durations of four European runs under the 3600 s lock wait (needs a seeded London universe, universe-ftse100); a real ingestion:pipeline --market=XLON against a database with real London members (fixture pipeline only). Independent validation pending."
+    ],
+    "notes": "Planned 2026-11-08; implemented 2026-11-13. Pence stored and shown as quoted with code GBX (no arithmetic, not ISO 4217); fixes the engine upper-casing of Yahoo GBp to GBP. Scale-jump guard in the engine (consecutive closes) plus, beyond the spec text, a Laravel stored-vs-incoming check (price_scale_mismatch), both XLON-only. No universe, seeder or public surface (universe-ftse100 next). SPA gains the XLON code and labels now for fixture tests."
   },
   {
     "id": "universe-ftse100",
