@@ -1108,27 +1108,13 @@
   {
     "id": "guest-disabled-nav",
     "area": "frontend",
-    "planning_spec": "docs/specs/guest-disabled-registered-options.md (prepared 2026-11-12)",
     "title": "Header tabs and entry pages for registered-only areas",
-    "user_visible_behavior": "Mercado and Portal tabs are focusable dimmed entries with a sign-in (or not-available-yet) reason for those who cannot open them, and become links when the user logs in.",
+    "status": "accepted",
     "depends_on": [
       "guest-disabled-primitive",
       "market-context-ui",
       "user-portal"
-    ],
-    "status": "passing",
-    "verification": [
-      "Vitest: AppHeader (Visitor, pending, user without access, user with access, Admin; flag on and off), MarketPage, RequireAuth with next",
-      "Keyboard-only pass (Tab, Enter, Escape) and accessibility-tree check of aria-disabled and description",
-      "Real browser pass as a Visitor then logging in and out in the same SPA at 390 and 1440 px, light and dark, es and en, with the network list proving no request to a registered-only API and bounding boxes proving no layout shift",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [
-      "2026-11-13 branch feat/guest-disabled-nav, SPA only, no backend diff: AppHeader renders Portal (NAV_ITEMS registeredOnly) and Mercado through RegisteredOnly when the session cannot open them; ReturnTo (components/HeaderNavTab.tsx) makes the popover links carry next=/portal or next=/mercado; Mercado flag off or no access = UnreleasedNavTab (focusable aria-disabled, reason-only bubble, no sign-in link); pending account = confirm-email reason with Account link (Mercado only when confirming unlocks it); loading = dimmed, no reason. MarketSignInBox and HistoryPanel sign-in links now carry next (current page).",
-      "Vitest: AppHeader.test.tsx rewritten (12 tests: loading, Visitor flag on/off, user without access, pending flag on/off, Admin preview and capability, Portal guest/loading/pending/signed-in nested active, flip on login/logout without remount, popover next and Escape focus return, no fetch and no notifications request as Visitor); RequireAuth next=/portal; MarketPage box next=/mercado; MarketContextStrip status outside aria-busy. Full Vitest 69 files / 604 passed; lint 0 errors.",
-      "init.ps1 run as child process with process redirect: see PROGRESS.md 2026-11-13 guest-disabled-nav entry."
-    ],
-    "notes": "Planned 2026-11-12. Mercado page keeps the sign-in box (no fake data); Admin tab, bell and account chip stay hidden. Not verified by the implementer: real-browser pass (keyboard, accessibility tree, 390/1440, light/dark, es/en, network). Header 162->210 px at 390 px (guest vs signed-in) is caused by the top-row session cluster wrapping (bell + account chip + sign-out), not by the nav row; left unchanged, flagged for the validator/owner."
+    ]
   },
   {
     "id": "portal-tabs",
