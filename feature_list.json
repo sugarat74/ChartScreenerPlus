@@ -1095,31 +1095,15 @@
   {
     "id": "guest-disabled-chart",
     "area": "frontend",
-    "planning_spec": "docs/specs/guest-disabled-registered-options.md (prepared 2026-11-12)",
     "title": "Chart registered-only options visible but disabled for Visitors",
-    "user_visible_behavior": "A Visitor sees the Jev forecast, the AI Company Card, the Seguir button and the Market Context strip dimmed with a sign-in reason; they become usable when the user logs in, without leaving the chart.",
+    "status": "accepted",
     "depends_on": [
       "guest-disabled-primitive",
       "pronostico-jev",
       "ai-company-card",
       "watchlist",
       "market-context-patterns"
-    ],
-    "status": "passing",
-    "verification": [
-      "Vitest: ForecastPanel, CompanyCardPanel, WatchlistButton, MarketContextStrip and the chart page in each auth state; no forecast, company-card, watchlist or market-context request for a Visitor; #ai-company-card scrolls for a Visitor and a signed-in user",
-      "Panels stay hidden when availability says the market has no forecast or card (non-US stock, ETF)",
-      "curl guest POST forecast and GET company-card still 401",
-      "Real browser pass as a Visitor then logging in and out in the same SPA at 390 and 1440 px, light and dark, es and en, with the network list proving no request to a registered-only API and bounding boxes proving no layout shift",
-      ".\\init.ps1 passes"
-    ],
-    "evidence": [
-      "2026-11-13 implementation (SPA only, no backend diff, branch feat/guest-disabled-chart): ForecastPanel and CompanyCardPanel render their real chrome inside RegisteredOnlyPanel (fields natively disabled, one reason row, one tab stop) and gate every effect on useRegisteredOnly().state === 'enabled'; WatchlistButton is the same Seguir button wrapped by RegisteredOnly (aria-disabled, sign-in popover with next, no link, GET /watchlist only when enabled); MarketContextStrip shows a no-figures DisabledStrip frame through RegisteredOnlyPanel with the access seam (signIn and loading; hidden and ETFs render nothing; a mid-visit API 401 keeps the plain sign-in box). The #ai-company-card scroll no longer needs a session. availability false (non-US) still hides the panels. Removed orphan key watchlist.signInToFollow (es/en).",
-      "Vitest: 69 files / 596 passed (new WatchlistButton.test.tsx; rewritten guest/loading/pending/signed-in/flip-on-login-logout and no-request tests in ForecastPanel, CompanyCardPanel, MarketContextStrip and InstrumentChartPage tests, including chart page flip without refetching the chart, ETF and non-US hidden for a Visitor, deep-link scroll for a Visitor). Lint 0 errors, build clean.",
-      "init.ps1 run as a child process with process-level redirect: exit with 'Baseline OK' (phpunit 1020 passed / 6 skipped, Vitest 596, engine 177).",
-      "2026-11-13 independent validator: ACCEPT with one medium finding (Market Context strip frame differed between Visitor and signed-in: reason slot and a taller enabled strip, ~37 px shift). Fixed (owner option 1): one outer structure in every state (RegisteredOnlyPanel reserved reason slot plus a same-tree PlaceholderStrip mirroring the ready strip) and a Vitest structure-parity test. The real-browser pass was performed by the validator. Still not verified: real touch and screen reader, the enabled layout with real Market Context and Company Card data, login from another tab, email-pending in a browser, 1440 dark by computed styles only; curl guest 401 on the three routes (backend untouched, existing feature tests green)."
-    ],
-    "notes": "Planned 2026-11-12. Planning only. Supersedes for presentation the hidden Jev and Company Card panels of premium-panels-auth-only."
+    ]
   },
   {
     "id": "guest-disabled-nav",
