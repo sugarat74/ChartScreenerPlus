@@ -561,7 +561,7 @@ export const en: Messages = {
     colAtrPct: 'ATR %',
     colStochK: 'Stoch %K',
     indicators: {
-      toggle: 'Indicators',
+      toggle: 'More columns',
       forced: 'Shown because an indicator filter or sort is active.',
     },
     signalsCell: {
