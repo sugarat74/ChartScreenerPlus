@@ -826,7 +826,6 @@ export const en: Messages = {
     removing: 'Removing…',
     remove: 'Remove',
     checking: 'Checking…',
-    signInToFollow: 'Sign in to follow',
     following: 'Following',
     follow: 'Follow',
     saving: 'Saving…',

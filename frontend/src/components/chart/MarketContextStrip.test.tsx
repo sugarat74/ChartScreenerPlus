@@ -138,17 +138,25 @@ describe('MarketContextStrip access and request states (Scenario 2)', () => {
     expect(within(screen.getByRole('region', { name: 'Contexto de mercado' })).getByText('Vista previa')).toBeTruthy()
   })
 
-  it('a Visitor with the flag on gets a dashed sign-in box', () => {
+  it('a Visitor with the flag on gets the real frame disabled with the reason and one sign-in link, no figures', () => {
     show({ status: 'off' }, { status: 'signIn', preview: false })
 
-    expect(screen.getByText('Inicia sesión para ver el sector y el entorno de mercado de este valor.')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Iniciar sesión' }).getAttribute('href')).toBe('/login')
-    expect(screen.queryByRole('region')).toBeNull()
+    const strip = screen.getByRole('region', { name: 'Contexto de mercado' })
+    expect(strip.textContent).toContain('Sector: —')
+    expect(strip.textContent).toContain('Entorno: —')
+    expect(strip.closest('fieldset')?.hasAttribute('disabled')).toBe(true)
+    expect(screen.getByText('Disponible al iniciar sesión')).toBeTruthy()
+    const links = screen.getAllByRole('link')
+    expect(links).toHaveLength(1)
+    expect(links[0].getAttribute('href')).toMatch(/^\/login/)
+    expect(screen.queryByText('Ver contexto de mercado')).toBeNull()
   })
 
-  it('renders nothing while loading access or for a hidden user', () => {
-    const { container } = show({ status: 'off' }, { status: 'loading', preview: false })
-    expect(container.textContent).toBe('')
+  it('shows the dimmed frame with no reason while access loads, and nothing for a hidden user', () => {
+    show({ status: 'off' }, { status: 'loading', preview: false })
+    expect(screen.getByRole('region', { name: 'Contexto de mercado' })).toBeTruthy()
+    expect(screen.queryByText('Disponible al iniciar sesión')).toBeNull()
+    expect(screen.queryByRole('link')).toBeNull()
     cleanup()
     const hidden = show({ status: 'off' }, { status: 'hidden', preview: false })
     expect(hidden.container.textContent).toBe('')
