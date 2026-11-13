@@ -175,6 +175,50 @@ describe('MarketContextStrip access and request states (Scenario 2)', () => {
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toBeTruthy()
   })
 
+  it('keeps the same outer structure for a Visitor, a request in flight and the data (no shift at login)', () => {
+    const shape = (root: HTMLElement) => {
+      const slot = within(root).getByTestId('registered-only-reason')
+      const strip = within(root).getByRole('region', { name: 'Contexto de mercado' })
+      const wrapper = slot.parentElement as HTMLElement
+      return {
+        slotFirst: wrapper.firstElementChild === slot,
+        slotEmpty: slot.textContent === '',
+        slotClass: slot.className,
+        wrapperClass: wrapper.className.replace('opacity-60', '').trim(),
+        fieldset: strip.closest('fieldset') !== null,
+        children: Array.from(strip.children).map((child) => (child.tagName === 'A' ? 'SPAN' : child.tagName)),
+        listItems: strip.querySelectorAll('li').length,
+        footer: strip.querySelector('footer') !== null,
+      }
+    }
+
+    const guest = show({ status: 'off' }, { status: 'signIn', preview: false })
+    const guestShape = shape(guest.container)
+    expect(guestShape.slotEmpty).toBe(false)
+    cleanup()
+
+    const loading = show({ status: 'loading' })
+    const loadingShape = shape(loading.container)
+    cleanup()
+
+    const data = show(ready(AAPL_CONTEXT))
+    const dataShape = shape(data.container)
+
+    expect(loadingShape.slotEmpty).toBe(true)
+    expect(dataShape.slotEmpty).toBe(true)
+    for (const other of [loadingShape, dataShape]) {
+      expect(other.slotFirst).toBe(true)
+      expect(other.slotClass).toBe(guestShape.slotClass)
+      expect(other.wrapperClass).toBe(guestShape.wrapperClass)
+      expect(other.fieldset).toBe(true)
+      expect(other.listItems).toBe(guestShape.listItems)
+      expect(other.footer).toBe(true)
+    }
+    // The link row is a placeholder span until the data brings the real link. Skeleton and Visitor frames share the very same tree (title row, list, link slot, footer).
+    expect(loadingShape.children).toEqual(guestShape.children)
+    expect(guestShape.children).toEqual(dataShape.children)
+  })
+
   it('an error offers a retry', () => {
     const onRetry = vi.fn()
     show({ status: 'error' }, ALLOWED, onRetry)

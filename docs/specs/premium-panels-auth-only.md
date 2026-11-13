@@ -8,7 +8,7 @@
 - `status`: `not_started` (planned 2026-10-15 on `origin/main` 012334a)
 - `source`: `feature_list.json`
 
-> **Superseded 2026-11-12 for presentation (the shared primitive shipped in `guest-disabled-primitive`; the Screener surfaces in `guest-disabled-screener`; the chart surfaces (Jev, Company Card, Watchlist toggle, Market Context strip) in `guest-disabled-chart`):** the owner asked that registered-only options be visible but disabled for Visitors (`docs/specs/guest-disabled-registered-options.md`). The statements below that a Visitor sees none of the Jev panel, the Company Card panel or the "Ficha IA" row link, and the Scenarios 1, 2, 3 and 5 that assert it, will be replaced by `guest-disabled-chart` and `guest-disabled-screener`. The sign-in-only access rule, the `useSignedIn` seam and the unchanged `401` API stay valid.
+> **Superseded 2026-11-12 for presentation (the shared primitive shipped in `guest-disabled-primitive`; the Screener surfaces in `guest-disabled-screener`; the chart surfaces (Jev, Company Card, Watchlist toggle, Market Context strip) in `guest-disabled-chart`):** the owner asked that registered-only options be visible but disabled for Visitors (`docs/specs/guest-disabled-registered-options.md`). The statements below that a Visitor sees none of the Jev panel, the Company Card panel or the "Ficha IA" row link, and the Scenarios 1, 2, 3 and 5 that assert it, are replaced by `guest-disabled-chart` and `guest-disabled-screener` (shipped). The sign-in-only access rule, the `useSignedIn` seam and the unchanged `401` API stay valid.
 
 ## Goal
 
