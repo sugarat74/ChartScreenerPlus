@@ -690,6 +690,9 @@ export const es = {
     intro: 'Tus Screeners guardados, tu watchlist personal y tus alertas en un solo lugar.',
     notificationsLink: 'Ver notificaciones',
     accountLink: 'Mi cuenta',
+    tabsLabel: 'Secciones del Portal',
+    tabScreeners: 'Screeners guardados',
+    tabWatchlist: 'Watchlist',
   },
   account: {
     badge: 'Mi cuenta',

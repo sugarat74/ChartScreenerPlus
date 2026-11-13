@@ -10,13 +10,14 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import RequireAuth from '../auth/RequireAuth.tsx'
 import { useAuth } from '../auth/useAuth.ts'
 import PortalSavedScreeners from '../components/portal/PortalSavedScreeners.tsx'
 import { usePortalAlerts } from '../components/portal/usePortalAlerts.ts'
 import WatchlistAlertForm from '../components/portal/WatchlistAlertForm.tsx'
 import WatchlistPatternAlertForm from '../components/portal/WatchlistPatternAlertForm.tsx'
+import PortalTabs, { PortalTabPanel } from '../components/portal/PortalTabs.tsx'
 import AlertEmailOptIn from '../components/portal/AlertEmailOptIn.tsx'
 import WatchlistTable from '../components/watchlist/WatchlistTable.tsx'
 import { useI18n, useTranslateRef } from '../i18n/useI18n.ts'
@@ -193,6 +194,13 @@ function WatchlistPanel() {
   )
 }
 
+type PortalTab = 'screeners' | 'watchlist'
+const DEFAULT_TAB: PortalTab = 'screeners'
+
+function parseTab(value: string | null): PortalTab {
+  return value === 'watchlist' || value === 'screeners' ? value : DEFAULT_TAB
+}
+
 export default function PortalPage() {
   return (
     <RequireAuth>
@@ -207,6 +215,19 @@ function PortalContent() {
   const watchlistAlert = alerts.alerts.find((alert) => alert.kind === 'watchlist_signal')
   const patternAlert = alerts.alerts.find((alert) => alert.kind === 'watchlist_pattern')
   const alertsUnavailable = alerts.loading || alerts.error !== null
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseTab(searchParams.get('tab'))
+
+  function selectTab(next: PortalTab) {
+    setSearchParams(
+      (current) => {
+        const params = new URLSearchParams(current)
+        params.set('tab', next)
+        return params
+      },
+      { replace: true },
+    )
+  }
 
   return (
     <section className="flex flex-col gap-6">
@@ -257,29 +278,42 @@ function PortalContent() {
         </div>
       ) : null}
 
-      <div className="grid gap-8 xl:grid-cols-2 xl:items-start">
+      <AlertEmailOptIn />
+
+      <PortalTabs
+        label={t('portal.tabsLabel')}
+        selected={tab}
+        onSelect={selectTab}
+        tabs={[
+          { id: 'screeners', label: t('portal.tabScreeners') },
+          { id: 'watchlist', label: t('portal.tabWatchlist') },
+        ]}
+      />
+
+      {/* Both panels stay mounted (inactive one is `hidden`): no refetch and
+          unsaved alert-form state survives a tab switch. */}
+      <PortalTabPanel id="screeners" selected={tab === 'screeners'} className="min-w-0">
         <PortalSavedScreeners alerts={alerts} />
-        <div className="flex min-w-0 flex-col gap-6">
-          <WatchlistPanel />
-          <WatchlistAlertForm
-            // Remount once the list has loaded so the form starts from the saved types.
-            key={alerts.loading ? 'loading' : 'ready'}
-            alert={watchlistAlert}
-            disabled={alertsUnavailable}
-            onSaved={alerts.upsert}
-            onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}
-          />
-          <WatchlistPatternAlertForm
-            // Remount once the list has loaded so the form starts from the saved choice.
-            key={alerts.loading ? 'pattern-loading' : 'pattern-ready'}
-            alert={patternAlert}
-            disabled={alertsUnavailable}
-            onSaved={alerts.upsert}
-            onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}
-          />
-          <AlertEmailOptIn />
-        </div>
-      </div>
+      </PortalTabPanel>
+      <PortalTabPanel id="watchlist" selected={tab === 'watchlist'} className="flex min-w-0 flex-col gap-6">
+        <WatchlistPanel />
+        <WatchlistAlertForm
+          // Remount once the list has loaded so the form starts from the saved types.
+          key={alerts.loading ? 'loading' : 'ready'}
+          alert={watchlistAlert}
+          disabled={alertsUnavailable}
+          onSaved={alerts.upsert}
+          onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}
+        />
+        <WatchlistPatternAlertForm
+          // Remount once the list has loaded so the form starts from the saved choice.
+          key={alerts.loading ? 'pattern-loading' : 'pattern-ready'}
+          alert={patternAlert}
+          disabled={alertsUnavailable}
+          onSaved={alerts.upsert}
+          onRemoved={(alertId) => alerts.drop((alert) => alert.id === alertId)}
+        />
+      </PortalTabPanel>
     </section>
   )
 }

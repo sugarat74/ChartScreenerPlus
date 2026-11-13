@@ -2,6 +2,16 @@
 
 Older sessions moved verbatim from `PROGRESS.md`, newest first.
 
+## screener-filter-panel-compact implemented (passing, awaiting validation) - 2026-11-05
+
+- SPA only. The «Criterios técnicos» block is now a compact toolbar: triggers Señales / RSI / Patrones / Sector (value shown, `aria-expanded`/`aria-controls`) opening ONE inline editor card (Esc closes and returns focus, no focus trap), native selects for min RVOL and MA cross, a Price > SMA 200 toggle, header with title, hint, active count and Limpiar filtros. New `ScreenerCriteriaEditors.tsx` (editors extracted unchanged) and `lib/screenerToolbar.ts` (summaries); `ScreenerFilterPanel.tsx` rewritten; es/en `screener.toolbar.*`, `noFiltersHint` removed, `filtersInUrl` is now the Clear button title. DESIGN.md updated. Defaults applied: column funnels untouched, open card not persisted, header count unchanged.
+- Unchanged by design: the 30 criteria keys, `lib/screenerFilters.ts`, `api.ts`, URL, requests, Saved Screeners, AI query, `ScreenerColumnFilters`, `CandidateTable`. Existing tests changed only where the control type changed (sector and pattern controls now live in the card, so those tests open it first: ScreenerFilterPanel, PatternPanel, ScreenerPage, ScreenerUniverse). A page test proves the same request URL for a multi-filter deep link.
+- Measured panel height at rest (scratch DB, Visitor, no sector): 1440 px 587 -> 110 px; 390 px 1303 (es) / 1215 (en) -> 225 px; Visitor with all values: 110 px at 1440, 234 px at 390; Admin with the sector trigger (4 rows, independent validator): ~270-280 px at 390. Open card adds 120-235 px at 1440, up to ~480 px at 390 (Signals). No horizontal scroll at 390 or 1440, light/dark, es/en.
+- Verified: Vitest 443 passed (new: toolbar summaries, a11y, single open card, Esc/focus, RSI commit on Enter/Esc/trigger/other group, every patch, sector states, es/en, page deep link), lint (1 pre-existing warning), tsc, build, `.\init.ps1` Baseline OK (phpunit 970 / 6 skipped, engine 138). Browser pass with Playwright at 390/1440 light/dark es/en: no request per RSI keystroke, one request on Esc, clear resets all controls.
+- Not verified: a real screen reader; Tab order note: the card sits after the toolbar row in the DOM, so a keyboard user Tabs through the remaining toolbar controls to reach it (no focus trap by design).
+- Next: independent validation.
+
+
 ## Market hours status implemented (`market-hours-status`, passing, awaiting validation) - 2026-11-05
 
 - Backend: `ListingMarket::open()`, `config/ingestion.php` gains `market_open`/`early_closes` (US) and `markets.<code>.open`/`early_closes` (XMAD 24 and 31 Dec 14:00; XETR none, those days are closures; US day after Thanksgiving and 24 Dec 13:00), `MarketCalendar::session()/regularHours()/coversYear()/upcomingEvents()`, new `MarketHoursStatus` service and public `GET /api/markets/status` (throttled, markets of the caller's visible universes in US/XMAD/XETR order; UTC ISO instants, `is_open`, `next_open_at`, `next_close_at`, `upcoming`, `calendar_covered`). Schedule and clock only.

@@ -2328,5 +2328,25 @@
       "Independent validation 2026-11-12 (ACCEPT, round 1): diff against main reviewed (no backend diff, registered-only primitive and auth hook byte-unchanged); .init.ps1 as a child process with process-level redirect printed Baseline OK. Real browser pass on an isolated dev server (Laravel 8391 + Vite 5391, scratch SQLite copy, MARKET_CONTEXT_PUBLIC true/false): Visitor at 1440 es light, 390 es light, 390 and 1440 en dark: NL box, Saved Screeners row, row Ficha IA items (aria-disabled, tabindex -1, no href, reason once above the table) and Sector trigger dimmed with lock, reason text 4.5:1 or better, no horizontal overflow at 390; flag off = no Sector trigger; Tab order inside the NL box = one stop (the sign-in link), Saved Screeners one stop; popover opens on click with login/register links carrying next=%2F%3Fsort%3Drvol_desc, Escape closes; Sector editor controls natively disabled. Network capture as Visitor: only GET /api/legal, /markets/status, /universes, /screener, /user (401 on /user expected); none to /screeners, /screener/interpret, /company-card, /watchlist, /alerts, /notifications, /market-context. Login from the popover link returned to the same filtered URL, all options active (0 aria-disabled, input enabled, row link /instruments/JPM#ai-company-card); GET /screeners and /notifications started only after login; logout in the same SPA flipped back to disabled with only POST /logout. Bounding boxes before/after login: NL box, Saved row, table identical except the note slot 17 px (lock icon) vs 16 px signed in, shifting the table 1 px (accepted as negligible). Threshold >15 to >10 in translate.test.ts justified (sectorContext now 14 keys after removing 2; a floor guarding against emptying the catalog)."
     ],
     "notes": "Planned 2026-11-12. Planning only. Supersedes for presentation the hidden Ficha IA row link of premium-panels-auth-only."
+  },
+  {
+    "id": "portal-tabs",
+    "area": "frontend",
+    "title": "Portal split into Saved Screeners and Watchlist tabs",
+    "user_visible_behavior": "The Portal shows a tab bar (Screeners guardados / Watchlist) instead of two columns; one panel at a time in a single column at every width. The tab is kept in ?tab=screeners|watchlist.",
+    "depends_on": [
+      "user-portal"
+    ],
+    "status": "accepted",
+    "verification": [
+      "Vitest: tab switching, URL sync with replace, invalid ?tab fallback, roving tabindex and Arrow/Home/End keys, guest redirect, opt-in above tabs",
+      "Browser pass at 390 and 1440 px, light and dark",
+      ".\\init.ps1 passes"
+    ],
+    "evidence": [
+      "Implemented 2026-11-13: PortalTabs.tsx tablist plus PortalTabPanel; init.ps1 Baseline OK (Vitest 68 files / 584, phpunit 1020, engine 177). New PortalTabs.test.tsx.",
+      "Independent validation 2026-11-13: ACCEPT. init.ps1 child process Baseline OK (Vitest 68 / 584). Real browser pass on isolated servers (Laravel 8411, Vite 5411, scratch SQLite, test user): guest /portal?tab=watchlist redirects to /login?next=... and returns to the same tab after login; ARIA tablist/tab/tabpanel with aria-selected/controls/labelledby, roving tabindex, Arrow/Home/End with wrap move focus and select; inactive panel is hidden with computed display none and 0 height; ?tab= updated with replace (history length unchanged), invalid ?tab=bogus falls back to Saved Screeners; unsaved checkbox in the Watchlist alert form survives a switch; signal alert PATCH 200 and email opt-in PUT 200 (digest enabled for the pass) work; opt-in card sits above the tab bar; no horizontal overflow at 390 and 1440 px, es/en, light/dark. Note: with the digest available the opt-in card takes ~300 px at 390 px, pushing the tabs near the fold."
+    ],
+    "notes": "Owner request 2026-11-13. SPA only. Defaults: default tab Saved Screeners; both panels stay mounted (hidden attribute) so no refetch and unsaved alert-form state survives a switch; AlertEmailOptIn (digest of all alerts) sits above the tab bar; alerts load-error banner stays above the tabs."
   }
 ]

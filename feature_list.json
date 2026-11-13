@@ -1136,5 +1136,14 @@
     ],
     "evidence": [],
     "notes": "Planned 2026-11-12. Planning only. Mercado page keeps the sign-in box (no fake data); Admin tab stays hidden for non-admins."
+  },
+  {
+    "id": "portal-tabs",
+    "area": "frontend",
+    "title": "Portal split into Saved Screeners and Watchlist tabs",
+    "status": "accepted",
+    "depends_on": [
+      "user-portal"
+    ]
   }
 ]

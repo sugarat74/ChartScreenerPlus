@@ -33,7 +33,7 @@ Runtime surfaces, directory boundaries and dependency direction for Chartiko (re
   - `/chart` -> legacy direct link to the "no ticker selected" guidance (anonymous, no request); it is not a navigation tab
   - `/instruments/:ticker` -> instrument chart for one ticker (anonymous deep link)
   - `/admin` -> Admin ingestion panel (admin-only; guest/non-admin see a restricted state); sibling tabs include `/admin/market-context` (Market Context status and reruns)
-  - `/portal` -> Portal (the signed-in user's owned Saved Screeners and Watchlist entries plus their Alert controls; a Visitor is redirected to `/login`)
+  - `/portal` -> Portal (the signed-in user's owned Saved Screeners and Watchlist entries plus their Alert controls, in two tabs selected by `?tab=screeners|watchlist` (`components/portal/PortalTabs.tsx`, both panels stay mounted); a Visitor is redirected to `/login`)
   - `/portal/notificaciones` -> notification inbox (`NotificationsPage`, `NOTIFICATIONS_ROUTE`; `RequireAuth`, noindex; the Portal tab stays active on it)
   - `/login` -> sign-in screen
   - `/register` -> account-creation screen
