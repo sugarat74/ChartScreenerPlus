@@ -144,8 +144,9 @@ describe('Market Context strip and pattern chips (market-context-patterns)', () 
     })
     show('AAPL', ALLOWED)
 
-    const strip = await screen.findByRole('region', { name: 'Contexto de mercado' })
-    expect(strip.textContent).toContain('Sector: Tecnología de la información (XLK)')
+    // The frame shows first as the skeleton, then the data replaces it in place.
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Contexto de mercado' }).textContent).toContain('Sector: Tecnología de la información (XLK)'))
+    const strip = screen.getByRole('region', { name: 'Contexto de mercado' })
     expect(strip.textContent).toContain('Fuerza relativa 1/10')
     expect(within(strip).queryByText('Vista previa')).toBeNull()
     expect(screen.getByText('El contexto es el de la última sesión, no el de la fecha del patrón.')).toBeTruthy()
@@ -159,8 +160,9 @@ describe('Market Context strip and pattern chips (market-context-patterns)', () 
     vi.mocked(instrumentApi.detail).mockResolvedValue(payload({ ticker: 'AAPL', kind: 'stock' }))
     show('AAPL', { ...ALLOWED, role: 'admin' })
 
-    const strip = await screen.findByRole('region', { name: 'Contexto de mercado' })
-    await waitFor(() => expect(within(strip).getByText('Vista previa')).toBeTruthy())
+    await waitFor(() =>
+      expect(within(screen.getByRole('region', { name: 'Contexto de mercado' })).getByText('Vista previa')).toBeTruthy(),
+    )
   })
 
   it('an ETF makes no context request and shows no strip', async () => {
