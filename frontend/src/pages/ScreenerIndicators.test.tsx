@@ -102,7 +102,7 @@ describe('Screener Indicators columns (screener-technical-filters-ui)', () => {
     expect(headings()).toHaveLength(9)
     expect(screenerCalls()).toEqual(['/api/screener?sort=rvol_desc&limit=50'])
     expect(screen.queryByTestId('candidate-adx')).toBeNull()
-    const toggle = screen.getByRole('button', { name: 'Indicadores' })
+    const toggle = screen.getByRole('button', { name: 'Más columnas' })
     expect(toggle.getAttribute('aria-pressed')).toBe('false')
   })
 
@@ -110,19 +110,19 @@ describe('Screener Indicators columns (screener-technical-filters-ui)', () => {
     const view = mount('/')
     await table()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Indicadores' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Más columnas' }))
     expect(headings()).toHaveLength(13)
     expect(headings().slice(9).map((text) => text.replace(/[↕▲▼]/g, '').trim())).toEqual(['ADX (14)', '%B (20, 2)', 'ATR %', 'Estocástico %K'])
     expect(screenerCalls()).toHaveLength(1)
     expect(window.localStorage.getItem(INDICATORS_STORAGE_KEY)).toBe('1')
-    expect(screen.getByRole('button', { name: 'Indicadores' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Más columnas' }).getAttribute('aria-pressed')).toBe('true')
 
     view.unmount()
     mount('/')
     await table()
     expect(headings()).toHaveLength(13)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Indicadores' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Más columnas' }))
     expect(headings()).toHaveLength(9)
     expect(window.localStorage.getItem(INDICATORS_STORAGE_KEY)).toBeNull()
   })
@@ -145,7 +145,7 @@ describe('Screener Indicators columns (screener-technical-filters-ui)', () => {
 
     expect(headings()).toHaveLength(13)
     expect(screenerCalls()).toEqual(['/api/screener?adx_min=25&bb_width_max=10&sort=rvol_desc&limit=50'])
-    const toggle = screen.getByRole('button', { name: 'Indicadores' }) as HTMLButtonElement
+    const toggle = screen.getByRole('button', { name: 'Más columnas' }) as HTMLButtonElement
     expect(toggle.disabled).toBe(true)
     expect(toggle.getAttribute('aria-pressed')).toBe('true')
     expect(screen.getByRole('button', { name: 'Editar filtro: ADX (14) ≥ 25' })).toBeTruthy()
@@ -212,9 +212,9 @@ describe('Screener Indicators columns (screener-technical-filters-ui)', () => {
     await table()
 
     expect(headings()).toHaveLength(9)
-    fireEvent.click(screen.getByRole('button', { name: /^(Indicadores|Indicators)$/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^(Más columnas|More columns)$/ }))
     expect(headings()).toHaveLength(13)
-    fireEvent.click(screen.getByRole('button', { name: /^(Indicadores|Indicators)$/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^(Más columnas|More columns)$/ }))
     expect(headings()).toHaveLength(9)
   })
 })
